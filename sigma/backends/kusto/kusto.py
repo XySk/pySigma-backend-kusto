@@ -373,32 +373,12 @@ class KustoBackend(TextQueryBackend):
         if len(rule.rules) > 1:
             return self._convert_multi_rule_event_count(rule, timestamp_field, query_operator)
 
-        source_rule = rule.rules[0].rule
-        if source_rule is None:
-            raise SigmaConversionError(rule, rule.source, "Kusto event_count source rule reference is unresolved.")
-        source_queries = source_rule.get_conversion_result()
-        source_states = source_rule.get_conversion_states()
-        if not source_queries or not source_states:
-            raise SigmaConversionError(
-                rule, rule.source, "Kusto event_count correlations require a convertible source-rule filter."
-            )
-        if len(source_queries) != len(source_states):
-            raise SigmaConversionError(
-                rule,
-                rule.source,
-                "Kusto event_count source query and conversion state counts do not match.",
-            )
+        source_queries, source_states = self._validate_event_count_source(rule, rule.rules[0].rule)
 
         queries = []
         for index, source_query in enumerate(source_queries):
             source_state = source_states[index]
             table = source_state.processing_state.get("query_table")
-            if not table:
-                raise SigmaConversionError(
-                    rule,
-                    rule.source,
-                    "Kusto event_count correlations require a source rule with a mapped query table.",
-                )
 
             group_fields = [self._map_correlation_field(table, field) for field in rule.group_by or []]
             summarize_fields = [
@@ -416,30 +396,34 @@ class KustoBackend(TextQueryBackend):
             )
         return queries
 
+    @staticmethod
+    def _validate_event_count_source(rule, source_rule):
+        if source_rule is None:
+            raise SigmaConversionError(rule, rule.source, "Kusto event_count source rule reference is unresolved.")
+        queries = source_rule.get_conversion_result()
+        states = source_rule.get_conversion_states()
+        if not queries or not states:
+            raise SigmaConversionError(
+                rule, rule.source, "Kusto event_count correlations require a convertible source-rule filter."
+            )
+        if len(queries) != len(states):
+            raise SigmaConversionError(
+                rule, rule.source, "Kusto event_count source query and conversion state counts do not match."
+            )
+        if not all(state.processing_state.get("query_table") for state in states):
+            raise SigmaConversionError(
+                rule, rule.source, "Kusto event_count correlations require a source rule with a mapped query table."
+            )
+        return queries, states
+
     def _convert_multi_rule_event_count(self, rule, timestamp_field, query_operator):
         source_fields = {timestamp_field, *(rule.group_by or [])}
         for alias in rule.aliases:
             source_fields.add(alias.alias)
             source_fields.update(alias.mapping.values())
         for reference in rule.rules:
-            source_rule = getattr(reference, "rule", None)
-            if source_rule is None:
-                raise SigmaConversionError(rule, rule.source, "Kusto event_count source rule reference is unresolved.")
-            queries = source_rule.get_conversion_result()
-            states = source_rule.get_conversion_states()
-            if not queries or not states:
-                raise SigmaConversionError(
-                    rule, rule.source, "Kusto event_count correlations require a convertible source-rule filter."
-                )
-            if len(queries) != len(states):
-                raise SigmaConversionError(
-                    rule, rule.source, "Kusto event_count source query and conversion state counts do not match."
-                )
+            _, states = self._validate_event_count_source(rule, getattr(reference, "rule", None))
             tables = [state.processing_state.get("query_table") for state in states]
-            if not all(tables):
-                raise SigmaConversionError(
-                    rule, rule.source, "Kusto event_count correlations require a source rule with a mapped query table."
-                )
             if len(set(tables)) != 1:
                 raise SigmaConversionError(
                     rule,
