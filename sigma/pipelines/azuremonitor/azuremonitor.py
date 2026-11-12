@@ -241,6 +241,7 @@ def azure_monitor_pipeline(query_table: Optional[str] = None) -> ProcessingPipel
         name="Generic Log Sources to Azure Monitor tables and fields",
         priority=10,
         items=pipeline_items,
+        vars={"kusto_field_mappings": AZURE_MONITOR_FIELD_MAPPINGS},
         allowed_backends=frozenset(["kusto"]),
         postprocessing_items=[create_prepend_query_table_item()],
     )

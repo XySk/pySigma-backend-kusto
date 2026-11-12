@@ -242,6 +242,7 @@ def sentinel_asim_pipeline(
         name="Generic Log Sources to Sentinel ASIM tables and fields",
         priority=10,
         items=pipeline_items,
+        vars={"kusto_field_mappings": SENTINEL_ASIM_FIELD_MAPPINGS},
         allowed_backends=frozenset(["kusto"]),
         postprocessing_items=[create_prepend_query_table_item()],
     )
