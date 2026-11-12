@@ -281,9 +281,20 @@ class KustoBackend(TextQueryBackend):
             raise SigmaConversionError(
                 rule, rule.source, "Kusto event_count correlations do not support group-by aliases."
             )
-        if rule.condition.op != SigmaCorrelationConditionOperator.GTE:
+        condition_operators = {
+            SigmaCorrelationConditionOperator.GT: ">",
+            SigmaCorrelationConditionOperator.GTE: ">=",
+            SigmaCorrelationConditionOperator.LT: "<",
+            SigmaCorrelationConditionOperator.LTE: "<=",
+            SigmaCorrelationConditionOperator.EQ: "==",
+            SigmaCorrelationConditionOperator.NEQ: "!=",
+        }
+        query_operator = condition_operators.get(rule.condition.op)
+        if query_operator is None:
             raise SigmaConversionError(
-                rule, rule.source, "Kusto event_count correlations currently support only gte conditions."
+                rule,
+                rule.source,
+                "Kusto event_count correlations require one of the single gt, gte, lt, lte, eq, or neq conditions.",
             )
 
         timestamp_field = self.backend_options.get("correlation_timestamp_field")
@@ -323,7 +334,7 @@ class KustoBackend(TextQueryBackend):
         query = (
             f"{table}\n| where {source_filter}\n"
             f"| summarize EventCount = count() by {', '.join(summarize_fields)}\n"
-            f"| where EventCount >= {rule.condition.count}"
+            f"| where EventCount {query_operator} {rule.condition.count}"
         )
         return [query]
 
