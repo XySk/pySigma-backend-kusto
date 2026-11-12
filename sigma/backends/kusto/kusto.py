@@ -1,4 +1,6 @@
+import json
 import re
+from copy import deepcopy
 from typing import ClassVar, Dict, Pattern, Tuple, Type, Union
 
 from sigma.conditions import (
@@ -16,6 +18,30 @@ from sigma.exceptions import SigmaConversionError
 from sigma.types import SigmaCompareExpression, SigmaNumber, SigmaString, SpecialChars
 
 
+class _CorrelationQueryExpression(str):
+    """Quote the source identity supplied by pySigma as a literal Kusto string."""
+
+    def format(self, *, rule, ruleid, query, normalization, **kwargs):
+        table = rule.get_conversion_states()[0].processing_state["query_table"]
+        prefix = f"{table}\n| where "
+        if not query.startswith(prefix):
+            query = prefix + query
+        return super().format(
+            ruleid=json.dumps(str(ruleid), ensure_ascii=False),
+            rule_column=normalization.rule_column,
+            query=query,
+            normalization=normalization,
+            **kwargs,
+        )
+
+
+class _CorrelationNormalization(str):
+    def __new__(cls, expression, rule_column):
+        instance = super().__new__(cls, expression)
+        instance.rule_column = rule_column
+        return instance
+
+
 class KustoBackend(TextQueryBackend):
     """Microsoft 365 Defender KQL Backend."""
 
@@ -30,6 +56,11 @@ class KustoBackend(TextQueryBackend):
     correlation_methods: ClassVar[set[str]] = {"default"}
     default_correlation_method: ClassVar[str] = "default"
     finalize_correlation_subqueries: ClassVar[bool] = True
+    correlation_search_multi_rule_expression: ClassVar[str] = "union {queries}"
+    correlation_search_multi_rule_query_expression: ClassVar[str] = _CorrelationQueryExpression(
+        "({query}{normalization}\n| extend {rule_column} = {ruleid})"
+    )
+    correlation_search_multi_rule_query_expression_joiner: ClassVar[str] = ",\n"
 
     # Operator precedence
     parenthesize = True
@@ -168,6 +199,40 @@ class KustoBackend(TextQueryBackend):
 
     # Override methods
 
+    def finalize_query(self, rule, query, index, state, output_format):
+        # Pipeline state is reset for the next source rule. Keep the mapping used
+        # for this search with its conversion state for later normalization.
+        state.processing_state["kusto_field_mappings"] = deepcopy(
+            self.last_processing_pipeline.vars.get("kusto_field_mappings")
+        )
+        state.processing_state["kusto_source_fields"] = self._correlation_source_fields(rule, state)
+        return super().finalize_query(rule, query, index, state, output_format)
+
+    def _correlation_source_fields(self, rule, state):
+        """Gather known source columns without depending on a live Kusto schema."""
+        fields = set(rule.fields)
+
+        def detection_fields(detection):
+            for item in detection.detection_items:
+                if hasattr(item, "detection_items"):
+                    detection_fields(item)
+                elif item.field is not None:
+                    fields.add(item.field)
+
+        for detection in rule.detection.detections.values():
+            detection_fields(detection)
+        table = state.processing_state.get("query_table")
+        mappings = state.processing_state["kusto_field_mappings"]
+        if mappings is not None:
+            for mapping in (mappings.generic_mappings, mappings.table_mappings.get(table, {})):
+                fields.update(mapping)
+                for target in mapping.values():
+                    fields.update(target if isinstance(target, list) else [target])
+        schema = self.last_processing_pipeline.vars.get("kusto_schema")
+        if schema is not None:
+            fields.update(schema.get_valid_fields(table))
+        return fields
+
     #  For numeric values, need == instead of =~
     def convert_condition_field_eq_val_num(
         self, cond: ConditionFieldEqualsValueExpression, state: ConversionState
@@ -273,11 +338,11 @@ class KustoBackend(TextQueryBackend):
         return queries
 
     def convert_correlation_event_count_rule(self, rule, output_format=None, method="default"):
-        if len(rule.rules) != 1:
+        if not rule.rules:
             raise SigmaConversionError(
-                rule, rule.source, "Kusto event_count correlations must reference exactly one source rule."
+                rule, rule.source, "Kusto event_count correlations must reference at least one source rule."
             )
-        if rule.aliases.aliases:
+        if len(rule.rules) == 1 and rule.aliases.aliases:
             raise SigmaConversionError(
                 rule, rule.source, "Kusto event_count correlations do not support group-by aliases."
             )
@@ -305,32 +370,15 @@ class KustoBackend(TextQueryBackend):
                 "The correlation_timestamp_field backend option is required for event_count correlations.",
             )
 
-        source_rule = rule.rules[0].rule
-        if source_rule is None:
-            raise SigmaConversionError(rule, rule.source, "Kusto event_count source rule reference is unresolved.")
-        source_queries = source_rule.get_conversion_result()
-        source_states = source_rule.get_conversion_states()
-        if not source_queries or not source_states:
-            raise SigmaConversionError(
-                rule, rule.source, "Kusto event_count correlations require a convertible source-rule filter."
-            )
-        if len(source_queries) != len(source_states):
-            raise SigmaConversionError(
-                rule,
-                rule.source,
-                "Kusto event_count source query and conversion state counts do not match.",
-            )
+        if len(rule.rules) > 1:
+            return self._convert_multi_rule_event_count(rule, timestamp_field, query_operator)
+
+        source_queries, source_states = self._validate_event_count_source(rule, rule.rules[0].rule)
 
         queries = []
         for index, source_query in enumerate(source_queries):
             source_state = source_states[index]
             table = source_state.processing_state.get("query_table")
-            if not table:
-                raise SigmaConversionError(
-                    rule,
-                    rule.source,
-                    "Kusto event_count correlations require a source rule with a mapped query table.",
-                )
 
             group_fields = [self._map_correlation_field(table, field) for field in rule.group_by or []]
             summarize_fields = [
@@ -347,6 +395,95 @@ class KustoBackend(TextQueryBackend):
                 f"| where EventCount {query_operator} {rule.condition.count}"
             )
         return queries
+
+    @staticmethod
+    def _validate_event_count_source(rule, source_rule):
+        if source_rule is None:
+            raise SigmaConversionError(rule, rule.source, "Kusto event_count source rule reference is unresolved.")
+        queries = source_rule.get_conversion_result()
+        states = source_rule.get_conversion_states()
+        if not queries or not states:
+            raise SigmaConversionError(
+                rule, rule.source, "Kusto event_count correlations require a convertible source-rule filter."
+            )
+        if len(queries) != len(states):
+            raise SigmaConversionError(
+                rule, rule.source, "Kusto event_count source query and conversion state counts do not match."
+            )
+        if not all(state.processing_state.get("query_table") for state in states):
+            raise SigmaConversionError(
+                rule, rule.source, "Kusto event_count correlations require a source rule with a mapped query table."
+            )
+        return queries, states
+
+    def _convert_multi_rule_event_count(self, rule, timestamp_field, query_operator):
+        source_fields = {timestamp_field, *(rule.group_by or [])}
+        for alias in rule.aliases:
+            source_fields.add(alias.alias)
+            source_fields.update(alias.mapping.values())
+        for reference in rule.rules:
+            _, states = self._validate_event_count_source(rule, getattr(reference, "rule", None))
+            tables = [state.processing_state.get("query_table") for state in states]
+            if len(set(tables)) != 1:
+                raise SigmaConversionError(
+                    rule,
+                    rule.source,
+                    "Kusto event_count searches for one source rule must use the same mapped query table.",
+                )
+            for state in states:
+                source_fields.update(state.processing_state.get("kusto_source_fields", ()))
+
+        def allocate(name):
+            candidate = name
+            suffix = 0
+            while candidate in source_fields:
+                suffix += 1
+                candidate = f"{name}_{suffix}"
+            source_fields.add(candidate)
+            return candidate
+
+        columns = {
+            "timestamp": allocate("_sigma_timestamp"),
+            "rule": allocate("_sigma_rule"),
+            "groups": [allocate(f"_sigma_group_{index}") for index in range(len(rule.group_by or []))],
+        }
+        self._correlation_group_by = rule.group_by or []
+        self._correlation_columns = columns
+        try:
+            search = self.convert_correlation_search(rule)
+        finally:
+            del self._correlation_group_by
+            del self._correlation_columns
+        summarize_fields = [
+            f"WindowStart = bin({columns['timestamp']}, {rule.timespan.spec})",
+            *columns["groups"],
+        ]
+        return [
+            f"{search}\n| summarize EventCount = count() by {', '.join(summarize_fields)}\n"
+            f"| where EventCount {query_operator} {rule.condition.count}"
+        ]
+
+    def convert_correlation_search_field_normalization_expression(self, aliases, rule_reference):
+        source_state = rule_reference.rule.get_conversion_states()[0]
+        table = source_state.processing_state["query_table"]
+        mappings = source_state.processing_state.get("kusto_field_mappings")
+
+        def map_field(field):
+            return mappings.get_field_mapping(table, field) if mappings is not None else field
+
+        timestamp_field = map_field(self.backend_options["correlation_timestamp_field"])
+        columns = self._correlation_columns
+        fields = [f"{columns['timestamp']} = todatetime({self._quote_correlation_field(timestamp_field)})"]
+        for index, field in enumerate(self._correlation_group_by):
+            if field in aliases.aliases:
+                field = aliases.aliases[field].mapping.get(rule_reference, field)
+            mapped_field = map_field(field)
+            fields.append(f"{columns['groups'][index]} = tostring({self._quote_correlation_field(mapped_field)})")
+        return _CorrelationNormalization("\n| extend " + ", ".join(fields), columns["rule"])
+
+    @staticmethod
+    def _quote_correlation_field(field):
+        return "[" + json.dumps(field, ensure_ascii=False) + "]"
 
     def _map_correlation_field(self, table: str, field: str) -> str:
         """Apply the table field mapping exposed by the source processing pipeline."""
