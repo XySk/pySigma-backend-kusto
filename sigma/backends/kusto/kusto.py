@@ -310,45 +310,48 @@ class KustoBackend(TextQueryBackend):
             raise SigmaConversionError(rule, rule.source, "Kusto event_count source rule reference is unresolved.")
         source_queries = source_rule.get_conversion_result()
         source_states = source_rule.get_conversion_states()
-        if not source_queries or len(source_queries) != 1 or not source_states:
+        if not source_queries or not source_states:
             raise SigmaConversionError(
-                rule, rule.source, "Kusto event_count correlations require one convertible source-rule filter."
+                rule, rule.source, "Kusto event_count correlations require a convertible source-rule filter."
+            )
+        if len(source_queries) != len(source_states):
+            raise SigmaConversionError(
+                rule,
+                rule.source,
+                "Kusto event_count source query and conversion state counts do not match.",
             )
 
-        table = source_states[0].processing_state.get("query_table")
-        if not table:
-            raise SigmaConversionError(
-                rule, rule.source, "Kusto event_count correlations require a source rule with a mapped query table."
+        queries = []
+        for index, source_query in enumerate(source_queries):
+            source_state = source_states[index]
+            table = source_state.processing_state.get("query_table")
+            if not table:
+                raise SigmaConversionError(
+                    rule,
+                    rule.source,
+                    "Kusto event_count correlations require a source rule with a mapped query table.",
+                )
+
+            group_fields = [self._map_correlation_field(table, field) for field in rule.group_by or []]
+            summarize_fields = [
+                f"WindowStart = bin({self.escape_and_quote_field(timestamp_field)}, {rule.timespan.spec})",
+                *(self.escape_and_quote_field(field) for field in group_fields),
+            ]
+            table_prefix = f"{table}\n| where "
+            if source_query.startswith(table_prefix):
+                source_query = source_query[len(table_prefix) :]
+
+            queries.append(
+                f"{table}\n| where {source_query}\n"
+                f"| summarize EventCount = count() by {', '.join(summarize_fields)}\n"
+                f"| where EventCount {query_operator} {rule.condition.count}"
             )
-
-        group_fields = [self._map_correlation_field(table, field) for field in rule.group_by or []]
-        summarize_fields = [
-            f"WindowStart = bin({self.escape_and_quote_field(timestamp_field)}, {rule.timespan.spec})",
-            *(self.escape_and_quote_field(field) for field in group_fields),
-        ]
-        source_filter = source_queries[0]
-        table_prefix = f"{table}\n| where "
-        if source_filter.startswith(table_prefix):
-            source_filter = source_filter[len(table_prefix) :]
-
-        query = (
-            f"{table}\n| where {source_filter}\n"
-            f"| summarize EventCount = count() by {', '.join(summarize_fields)}\n"
-            f"| where EventCount {query_operator} {rule.condition.count}"
-        )
-        return [query]
+        return queries
 
     def _map_correlation_field(self, table: str, field: str) -> str:
-        """Apply the source pipeline's table mapping to correlation group-by fields."""
+        """Apply the table field mapping exposed by the source processing pipeline."""
         pipeline = self.last_processing_pipeline
-        if pipeline is not None:
-            for item in pipeline.items:
-                transformation = item.transformation
-                field_mappings = getattr(transformation, "field_mappings", None)
-                if field_mappings is not None and hasattr(field_mappings, "get_field_mapping"):
-                    return field_mappings.get_field_mapping(table, field)
-                mapping = getattr(transformation, "mapping", None)
-                if mapping and field in mapping:
-                    mapped = mapping[field]
-                    return mapped[0] if isinstance(mapped, list) else mapped
+        field_mappings = pipeline.vars.get("kusto_field_mappings") if pipeline is not None else None
+        if field_mappings is not None:
+            return field_mappings.get_field_mapping(table, field)
         return field
