@@ -11,6 +11,8 @@ from sigma.conditions import (
 from sigma.conversion.base import TextQueryBackend
 from sigma.conversion.deferred import DeferredQueryExpression
 from sigma.conversion.state import ConversionState
+from sigma.correlations import SigmaCorrelationConditionOperator, SigmaCorrelationType
+from sigma.exceptions import SigmaConversionError
 from sigma.types import SigmaCompareExpression, SigmaNumber, SigmaString, SpecialChars
 
 
@@ -25,6 +27,9 @@ class KustoBackend(TextQueryBackend):
     }
 
     requires_pipeline: bool = False  # m365 pipeline is automatically applied
+    correlation_methods: ClassVar[set[str]] = {"default"}
+    default_correlation_method: ClassVar[str] = "default"
+    finalize_correlation_subqueries: ClassVar[bool] = True
 
     # Operator precedence
     parenthesize = True
@@ -256,3 +261,83 @@ class KustoBackend(TextQueryBackend):
         # If we have a wildcard in a string, we need to un-escape it
         # See issue #13
         return re.sub(r"\\\*", r"*", converted)
+
+    def convert_correlation_rule(self, rule, output_format=None, method=None):
+        if rule.type != SigmaCorrelationType.EVENT_COUNT:
+            raise SigmaConversionError(rule, rule.source, "Kusto supports only event_count correlation rules.")
+        queries = self.convert_correlation_event_count_rule(rule, output_format, method or "default")
+        rule.set_conversion_result(queries)
+        rule.set_conversion_states(
+            [ConversionState(processing_state=dict(self.last_processing_pipeline.state)) for _ in queries]
+        )
+        return queries
+
+    def convert_correlation_event_count_rule(self, rule, output_format=None, method="default"):
+        if len(rule.rules) != 1:
+            raise SigmaConversionError(
+                rule, rule.source, "Kusto event_count correlations must reference exactly one source rule."
+            )
+        if rule.aliases.aliases:
+            raise SigmaConversionError(
+                rule, rule.source, "Kusto event_count correlations do not support group-by aliases."
+            )
+        if rule.condition.op != SigmaCorrelationConditionOperator.GTE:
+            raise SigmaConversionError(
+                rule, rule.source, "Kusto event_count correlations currently support only gte conditions."
+            )
+
+        timestamp_field = self.backend_options.get("correlation_timestamp_field")
+        if not timestamp_field:
+            raise SigmaConversionError(
+                rule,
+                rule.source,
+                "The correlation_timestamp_field backend option is required for event_count correlations.",
+            )
+
+        source_rule = rule.rules[0].rule
+        if source_rule is None:
+            raise SigmaConversionError(rule, rule.source, "Kusto event_count source rule reference is unresolved.")
+        source_queries = source_rule.get_conversion_result()
+        source_states = source_rule.get_conversion_states()
+        if not source_queries or len(source_queries) != 1 or not source_states:
+            raise SigmaConversionError(
+                rule, rule.source, "Kusto event_count correlations require one convertible source-rule filter."
+            )
+
+        table = source_states[0].processing_state.get("query_table")
+        if not table:
+            raise SigmaConversionError(
+                rule, rule.source, "Kusto event_count correlations require a source rule with a mapped query table."
+            )
+
+        group_fields = [self._map_correlation_field(table, field) for field in rule.group_by or []]
+        summarize_fields = [
+            f"WindowStart = bin({self.escape_and_quote_field(timestamp_field)}, {rule.timespan.spec})",
+            *(self.escape_and_quote_field(field) for field in group_fields),
+        ]
+        source_filter = source_queries[0]
+        table_prefix = f"{table}\n| where "
+        if source_filter.startswith(table_prefix):
+            source_filter = source_filter[len(table_prefix) :]
+
+        query = (
+            f"{table}\n| where {source_filter}\n"
+            f"| summarize EventCount = count() by {', '.join(summarize_fields)}\n"
+            f"| where EventCount >= {rule.condition.count}"
+        )
+        return [query]
+
+    def _map_correlation_field(self, table: str, field: str) -> str:
+        """Apply the source pipeline's table mapping to correlation group-by fields."""
+        pipeline = self.last_processing_pipeline
+        if pipeline is not None:
+            for item in pipeline.items:
+                transformation = item.transformation
+                field_mappings = getattr(transformation, "field_mappings", None)
+                if field_mappings is not None and hasattr(field_mappings, "get_field_mapping"):
+                    return field_mappings.get_field_mapping(table, field)
+                mapping = getattr(transformation, "mapping", None)
+                if mapping and field in mapping:
+                    mapped = mapping[field]
+                    return mapped[0] if isinstance(mapped, list) else mapped
+        return field
