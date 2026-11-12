@@ -19,6 +19,7 @@
     - [🖥️ sigma-cli](#️-sigma-cli)
     - [🐍 Python Script](#-python-script)
   - [🛠️ Advanced Features](#️-advanced-features)
+    - [Event-count correlations](#event-count-correlations)
     - [🔄 Pipeline \& Backend Args (New in 0.2.0)](#-pipeline--backend-args-new-in-020)
     - [🗃️ Custom Table Names (New in 0.3.0) (Beta)](#️-custom-table-names-new-in-030-beta)
   - [🔄 Processing Pipelines](#-processing-pipelines)
@@ -158,6 +159,30 @@ DeviceProcessEvents
 ```
 
 ## 🛠️ Advanced Features
+
+### Event-count correlations
+
+Convert a Sigma collection containing source rules and an `event_count` correlation with the configured event timestamp:
+
+```python
+from pathlib import Path
+from sigma.collection import SigmaCollection
+from sigma.backends.kusto import KustoBackend
+from sigma.pipelines.microsoftxdr import microsoft_xdr_pipeline
+
+collection = SigmaCollection.from_yaml(Path("rules.yml").read_text())
+backend = KustoBackend(
+    processing_pipeline=microsoft_xdr_pipeline(),
+    correlation_timestamp_field="Timestamp",
+)
+queries = backend.convert(collection)
+```
+
+A correlation referencing multiple source rules combines every converted source search with `union`, including searches from different tables. Each branch retains its source columns and adds a mapped `datetime` timestamp, `string` grouping fields, and the source rule's name (or ID when unnamed). Correlation field aliases can map different source fields to the same grouping field. The combined rows are counted by fixed time windows and optional grouping fields, using a single `gt`, `gte`, `lt`, `lte`, `eq`, or `neq` comparison. An event matching two source rules contributes two rows. All searches emitted for one source rule must use the same mapped table.
+
+Normalized columns use `_sigma_timestamp`, `_sigma_group_0`, and `_sigma_rule`, with numeric suffixes to avoid known source names. Known names include detection fields, a rule's `fields` list, correlation fields and aliases, table field mappings, and the pipeline's schema. The built-in pipelines provide their schema through `vars["kusto_schema"]`. Custom pipelines can provide a `BaseSchema` there or list additional source columns in the source rules' `fields`; columns absent from those inputs cannot be discovered during offline conversion. The final aggregate returns the combined count and groups, without the source-rule identity.
+
+Existing single-source correlations retain their query format and behavior.
 
 ### 🔄 Pipeline & Backend Args (New in 0.2.0)
 

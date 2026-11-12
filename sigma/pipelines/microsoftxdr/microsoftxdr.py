@@ -281,7 +281,7 @@ def microsoft_xdr_pipeline(
         name="Generic Log Sources to Windows XDR tables and fields",
         priority=10,
         items=pipeline_items,
-        vars={"kusto_field_mappings": MICROSOFT_XDR_FIELD_MAPPINGS},
+        vars={"kusto_field_mappings": MICROSOFT_XDR_FIELD_MAPPINGS, "kusto_schema": MICROSOFT_XDR_SCHEMA},
         allowed_backends=frozenset(["kusto"]),
         postprocessing_items=[create_prepend_query_table_item()],
     )
