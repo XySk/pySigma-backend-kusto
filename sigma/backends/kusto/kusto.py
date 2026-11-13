@@ -328,20 +328,17 @@ class KustoBackend(TextQueryBackend):
         return re.sub(r"\\\*", r"*", converted)
 
     def convert_correlation_rule(self, rule, output_format=None, method=None):
-        if rule.type == SigmaCorrelationType.TEMPORAL_ORDERED:
-            raise SigmaConversionError(
-                rule, rule.source, "Ordered temporal correlations are not yet supported by Kusto."
-            )
         converters = {
             SigmaCorrelationType.EVENT_COUNT: self.convert_correlation_event_count_rule,
             SigmaCorrelationType.VALUE_COUNT: self.convert_correlation_value_count_rule,
             SigmaCorrelationType.TEMPORAL: self.convert_correlation_temporal_rule,
+            SigmaCorrelationType.TEMPORAL_ORDERED: self.convert_correlation_temporal_ordered_rule,
         }
         if rule.type not in converters:
             raise SigmaConversionError(
                 rule,
                 rule.source,
-                "Kusto supports only event_count, value_count, and unordered temporal correlation rules.",
+                "Kusto supports only event_count, value_count, temporal, and temporal_ordered correlation rules.",
             )
         queries = converters[rule.type](rule, output_format, method or "default")
         rule.set_conversion_result(queries)
@@ -356,6 +353,9 @@ class KustoBackend(TextQueryBackend):
     def convert_correlation_temporal_rule(self, rule, output_format=None, method="default"):
         return self._convert_count_rule(rule)
 
+    def convert_correlation_temporal_ordered_rule(self, rule, output_format=None, method="default"):
+        return self._convert_count_rule(rule)
+
     def convert_correlation_value_count_rule(self, rule, output_format=None, method="default"):
         fields = rule.condition.fieldref
         if not isinstance(fields, list):
@@ -368,7 +368,7 @@ class KustoBackend(TextQueryBackend):
 
     def _convert_count_rule(self, rule, counted_fields=None):
         count_type = rule.type.name.lower()
-        if rule.type == SigmaCorrelationType.TEMPORAL:
+        if rule.type in (SigmaCorrelationType.TEMPORAL, SigmaCorrelationType.TEMPORAL_ORDERED):
             metrics = ["RuleCount"]
         elif counted_fields is None:
             metrics = ["EventCount"]
@@ -440,7 +440,8 @@ class KustoBackend(TextQueryBackend):
         return queries, states
 
     def _convert_count(self, rule, timestamp_field, query_operator, counted_fields, metrics):
-        temporal = rule.type == SigmaCorrelationType.TEMPORAL
+        ordered = rule.type == SigmaCorrelationType.TEMPORAL_ORDERED
+        temporal = rule.type in (SigmaCorrelationType.TEMPORAL, SigmaCorrelationType.TEMPORAL_ORDERED)
         source_fields = {timestamp_field, *(rule.group_by or []), *(counted_fields or [])}
         for alias in rule.aliases:
             source_fields.add(alias.alias)
@@ -459,12 +460,32 @@ class KustoBackend(TextQueryBackend):
 
         threshold = rule.condition.count if rule.condition is not None else len(rule.rules)
         original_correlation = rule.custom_attributes.get("correlation")
-        if temporal and (
+        omitted_condition = (
             rule.condition is None or original_correlation is not None and original_correlation.get("condition") is None
-        ):
+        )
+        source_type_count = len({id(reference.rule) for reference in rule.rules})
+        if temporal and omitted_condition:
             # pySigma supplies a default >= list length. Repeated references to
             # the same resolved source still represent only one rule type.
-            threshold = len({id(reference.rule) for reference in rule.rules})
+            threshold = source_type_count
+        if ordered and not omitted_condition:
+            equivalent_full_sequence = (
+                query_operator in (">=", "==")
+                and threshold == source_type_count
+                or query_operator == ">"
+                and threshold == source_type_count - 1
+                or query_operator == "!="
+                and source_type_count == 1
+                and threshold == 0
+            )
+            if not equivalent_full_sequence:
+                raise SigmaConversionError(
+                    rule,
+                    rule.source,
+                    "Kusto temporal_ordered requires the full declared sequence; omit the condition or use "
+                    f"gte: {source_type_count}, eq: {source_type_count}, or gt: {source_type_count - 1}. "
+                    "Partial, subset, and unsatisfiable ordered thresholds are not supported.",
+                )
 
         def allocate(name):
             candidate = name
@@ -491,6 +512,10 @@ class KustoBackend(TextQueryBackend):
                 allocate("_sigma_value" if len(counted_fields) == 1 else f"_sigma_value_{index}")
                 for index in range(len(counted_fields))
             ]
+        if ordered:
+            columns["sequence_start"] = allocate("_sigma_sequence_start")
+            columns["sequence_end"] = allocate("_sigma_sequence_end")
+            columns["steps"] = [allocate(f"_sigma_sequence_{index}") for index in range(len(rule.rules))]
         self._correlation_group_by = rule.group_by or []
         self._correlation_counted_fields = counted_fields or []
         self._correlation_columns = columns
@@ -511,6 +536,8 @@ class KustoBackend(TextQueryBackend):
         span = rule.timespan.spec if rule.timespan.unit in "smhd" else f"{rule.timespan.seconds}s"
         valid_rows = " and ".join([f"isnotnull({timestamp})", *(f"isnotempty({field})" for field in groups)])
         weighted_fields = ", ".join([timestamp, *groups])
+        if ordered:
+            return self._convert_ordered_temporal(rule, search, columns, valid_rows, span, source_type_count)
         anchor_fields = ", ".join([*groups, f"{window_end} = {timestamp}", f"{time_bin} = bin({timestamp}, {span})"])
         join_fields = ", ".join([*groups, time_bin])
         summary_fields = ", ".join([window_end, *groups])
@@ -565,6 +592,52 @@ class KustoBackend(TextQueryBackend):
             f"| where {comparisons}\n"
             f"| project {result_fields}"
         ]
+
+    def _convert_ordered_temporal(self, rule, search, columns, valid_rows, span, source_type_count):
+        timestamp, rule_column, types, start, end, time_bin = (
+            columns[name] for name in ("timestamp", "rule", "weights", "sequence_start", "sequence_end", "bin")
+        )
+        groups, steps = columns["groups"], columns["steps"]
+        identities = [reference.rule.name or str(reference.rule.id) for reference in rule.rules]
+        retained_fields = ", ".join([timestamp, *groups, rule_column])
+        first_fields = ", ".join([f"{start} = {timestamp}", f"{end} = {timestamp}", *groups])
+        candidate_fields = ", ".join([timestamp, *groups, f"{time_bin} = bin({timestamp}, {span})"])
+        join_fields = ", ".join([*groups, time_bin])
+        summary_fields = ", ".join([f"{end} = {timestamp}", *groups])
+        query = (
+            f"let {types} = {search}\n| where {valid_rows}\n| summarize by {retained_fields};\n"
+            f"let {steps[0]} = {types}\n"
+            f"| where {rule_column} == {json.dumps(identities[0], ensure_ascii=False)}\n"
+            f"| project {first_fields};\n"
+        )
+        for index, identity in enumerate(identities[1:], 1):
+            # Each prefix ending at one timestamp needs only its latest viable
+            # start. Any earlier start has the same future ordering constraints
+            # and a tighter expiry, so cannot enable an additional completion.
+            query += (
+                f"let {steps[index]} = {steps[index - 1]}\n"
+                f"| extend {time_bin} = pack_array(bin({start}, {span}), bin({start}, {span}) + {span})\n"
+                f"| mv-expand {time_bin} to typeof(datetime)\n"
+                f"| join kind=inner (\n"
+                f"    {types}\n"
+                f"    | where {rule_column} == {json.dumps(identity, ensure_ascii=False)}\n"
+                f"    | project {candidate_fields}\n"
+                f") on {join_fields}\n"
+                f"| where {timestamp} > {end} and {timestamp} <= {start} + {span}\n"
+                f"| summarize {start} = max({start}) by {summary_fields};\n"
+            )
+        result_fields = ", ".join(
+            [
+                f"WindowStart = {end} - {span}",
+                f"WindowEnd = {end}",
+                *(
+                    self._quote_correlation_field(field) + f" = {column}"
+                    for field, column in zip(rule.group_by or [], groups)
+                ),
+                f"RuleCount = tolong({source_type_count})",
+            ]
+        )
+        return [query + f"{steps[-1]}\n| project {result_fields}"]
 
     def convert_correlation_search_field_normalization_expression(self, aliases, rule_reference):
         source_state = rule_reference.rule.get_conversion_states()[0]

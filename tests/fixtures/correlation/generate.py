@@ -465,7 +465,7 @@ let Events = datatable(Timestamp:string, User:dynamic, Target:dynamic, Marker:st
     )
 
 
-def temporal_query(*, operator=None, threshold=2, groups=(), mapped_sources=False):
+def temporal_query(*, operator=None, threshold=2, groups=(), mapped_sources=False, ordered=False, sequence=None):
     documents = [
         {
             "title": f"Fixture temporal {marker}",
@@ -478,10 +478,11 @@ def temporal_query(*, operator=None, threshold=2, groups=(), mapped_sources=Fals
             },
         }
         for marker, name in [("A", "source-rule"), ("B", "other-rule"), ("C", "third-rule")]
+        if sequence is None or name in sequence
     ]
     correlation = {
-        "type": "temporal",
-        "rules": [document["name"] for document in documents],
+        "type": "temporal_ordered" if ordered else "temporal",
+        "rules": sequence or [document["name"] for document in documents],
         "group-by": list(groups),
         "timespan": "5m",
     }
@@ -668,6 +669,179 @@ let Events = datatable(Timestamp:string, Marker:string) [
     )
 
 
+def ordered_temporal_grouped_fixture():
+    data = """// Full A -> B -> C sequence, strict timestamps, inclusive five-minute TOTAL span.
+// Two searches per source. Rows deliberately arrive out of timestamp order.
+// Repeated alternatives and intervening matches cannot reset a valid prefix.
+// Multiple event tuples completing together must still return one summary.
+let Events = datatable(ProcessTime:string, Case:string, ProcessHost:dynamic, Marker:string) [
+    "2026-01-01T12:05:01Z", "boundary", dynamic("host"), "C",
+    "2026-01-01T12:00:59Z", "boundary", dynamic("host"), "A",
+    "2026-01-01T12:05:59Z", "boundary", dynamic("host"), "C",
+    "2026-01-01T12:00:00Z", "endpoint", dynamic("host"), "A",
+    "2026-01-01T12:05:00Z", "endpoint", dynamic("host"), "C",
+    "2026-01-01T12:00:00Z", "outside", dynamic("host"), "A",
+    "2026-01-01T12:05:00.0000001Z", "outside", dynamic("host"), "C",
+    "2026-01-01T12:04:00Z", "reverse", dynamic("host"), "A",
+    "2026-01-01T12:00:00Z", "reverse", dynamic("host"), "C",
+    "2026-01-01T12:00:00Z", "ties", dynamic("host"), "A",
+    "2026-01-01T12:00:00Z", "ties", dynamic("host"), "C",
+    "2026-01-01T12:00:00Z", "first-tie", dynamic("host"), "A",
+    "2026-01-01T12:01:00Z", "first-tie", dynamic("host"), "C",
+    "2026-01-01T12:00:00Z", "last-tie", dynamic("host"), "A",
+    "2026-01-01T12:01:00Z", "last-tie", dynamic("host"), "C",
+    "2026-01-01T12:00:00Z", "alternatives", dynamic("host"), "A",
+    "2026-01-01T12:03:00Z", "alternatives", dynamic("host"), "A",
+    "2026-01-01T12:01:00Z", "alternatives", dynamic("host"), "C",
+    "2026-01-01T12:04:00Z", "alternatives", dynamic("host"), "C",
+    "2026-01-01T12:05:00Z", "alternatives", dynamic("host"), "C",
+    "2026-01-01T12:00:00Z", "latest-start", dynamic("host"), "A",
+    "2026-01-01T12:04:00Z", "latest-start", dynamic("host"), "A",
+    "2026-01-01T12:08:00Z", "latest-start", dynamic("host"), "C",
+    "2026-01-01T12:00:00Z", "span", dynamic("host"), "A",
+    "2026-01-01T12:08:00Z", "span", dynamic("host"), "C",
+    "2026-01-01T12:00:00Z", "collapsed", dynamic("host"), "A",
+    "2026-01-01T12:01:00Z", "collapsed", dynamic("host"), "A",
+    "2026-01-01T12:04:00Z", "collapsed", dynamic("host"), "C",
+    "2026-01-01T12:04:00Z", "collapsed", dynamic("host"), "C",
+    "2026-01-01T12:05:00Z", "collapsed", dynamic("host"), "C",
+    "2026-01-01T12:06:00Z", "collapsed", dynamic("host"), "A",
+    "2026-01-01T12:00:00Z", "absent", dynamic("host"), "A",
+    "2026-01-01T12:00:00Z", "split", dynamic("host-a"), "A",
+    "2026-01-01T12:02:00Z", "split", dynamic("host-a"), "C",
+    "2026-01-01T12:00:00Z", "independent", dynamic("host-a"), "A",
+    "2026-01-01T12:02:00Z", "independent", dynamic("host-a"), "C",
+    "2026-01-01T12:00:00Z", "independent", dynamic("host-b"), "A",
+    "2026-01-01T12:03:00Z", "independent", dynamic("host-b"), "C",
+    "2026-01-01T12:00:00Z", "invalid", dynamic("host"), "A",
+    "2026-01-01T12:04:00Z", "invalid", dynamic("host"), "C",
+    "2026-01-01T12:02:00Z", "no-matches", dynamic("host"), "none"
+];
+let OtherEvents = datatable(NetworkTime:string, Case:string, NetworkHost:dynamic, Marker:string) [
+    "2026-01-01T12:04:00Z", "boundary", dynamic("host"), "B",
+    "2026-01-01T12:02:00Z", "endpoint", dynamic("host"), "B",
+    "2026-01-01T12:04:00Z", "outside", dynamic("host"), "B",
+    "2026-01-01T12:02:00Z", "reverse", dynamic("host"), "B",
+    "2026-01-01T12:00:00Z", "ties", dynamic("host"), "B",
+    "2026-01-01T12:00:00Z", "first-tie", dynamic("host"), "B",
+    "2026-01-01T12:01:00Z", "last-tie", dynamic("host"), "B",
+    "2026-01-01T12:02:00Z", "alternatives", dynamic("host"), "B",
+    "2026-01-01T12:04:30Z", "alternatives", dynamic("host"), "B",
+    "2026-01-01T12:04:30Z", "latest-start", dynamic("host"), "B",
+    "2026-01-01T12:04:00Z", "span", dynamic("host"), "B",
+    "2026-01-01T12:02:00Z", "collapsed", dynamic("host"), "B",
+    "2026-01-01T12:03:00Z", "collapsed", dynamic("host"), "B",
+    "2026-01-01T12:01:00Z", "absent", dynamic("host"), "B",
+    "2026-01-01T12:01:00Z", "split", dynamic("host-b"), "B",
+    "2026-01-01T12:01:00Z", "independent", dynamic("host-a"), "B",
+    "2026-01-01T12:02:00Z", "independent", dynamic("host-b"), "B",
+    "invalid", "invalid", dynamic("host"), "B",
+    "2026-01-01T12:02:00Z", "invalid", dynamic(null), "B",
+    "2026-01-01T12:03:00Z", "invalid", dynamic(""), "B",
+    "2026-01-01T12:01:00Z", "", dynamic("host"), "B"
+];
+"""
+    expected = """let Expected = datatable(WindowStart:datetime, WindowEnd:datetime, Case:string, Host:string, RuleCount:long) [
+    datetime(2026-01-01T12:00:01Z), datetime(2026-01-01T12:05:01Z), "boundary", "host", 3,
+    datetime(2026-01-01T12:00:59Z), datetime(2026-01-01T12:05:59Z), "boundary", "host", 3,
+    datetime(2026-01-01T12:00:00Z), datetime(2026-01-01T12:05:00Z), "endpoint", "host", 3,
+    datetime(2026-01-01T11:59:00Z), datetime(2026-01-01T12:04:00Z), "alternatives", "host", 3,
+    datetime(2026-01-01T12:00:00Z), datetime(2026-01-01T12:05:00Z), "alternatives", "host", 3,
+    datetime(2026-01-01T12:03:00Z), datetime(2026-01-01T12:08:00Z), "latest-start", "host", 3,
+    datetime(2026-01-01T11:59:00Z), datetime(2026-01-01T12:04:00Z), "collapsed", "host", 3,
+    datetime(2026-01-01T12:00:00Z), datetime(2026-01-01T12:05:00Z), "collapsed", "host", 3,
+    datetime(2026-01-01T11:57:00Z), datetime(2026-01-01T12:02:00Z), "independent", "host-a", 3,
+    datetime(2026-01-01T11:58:00Z), datetime(2026-01-01T12:03:00Z), "independent", "host-b", 3
+];
+"""
+    return (
+        HEADER
+        + data
+        + "let Actual = () {\n"
+        + temporal_query(groups=("Case", "Host"), mapped_sources=True, ordered=True)
+        + "\n};\n"
+        + expected
+        + check("Actual()", "Expected", ["WindowStart", "WindowEnd", "Case", "Host", "RuleCount"])
+    )
+
+
+def ordered_temporal_ungrouped_fixture():
+    data = """// A -> B -> C completes at 12:03, 12:05, 12:06, and 12:23.
+// The one-tick-outside completion and tied B/C at 12:22 fail.
+// A -> A -> B completes only at B timestamps 12:02, 12:04, and 12:22.
+// Repeated rule-list positions require separate strictly later matches;
+// their RuleCount remains the distinct type count (2).
+let Events = datatable(Timestamp:string, Marker:string) [
+    "2026-01-01T12:00:00Z", "A",
+    "2026-01-01T12:00:00Z", "A",
+    "2026-01-01T12:00:00Z", "B",
+    "2026-01-01T12:01:00Z", "A",
+    "2026-01-01T12:02:00Z", "B",
+    "2026-01-01T12:03:00Z", "C",
+    "2026-01-01T12:03:00Z", "C",
+    "2026-01-01T12:04:00Z", "B",
+    "2026-01-01T12:05:00Z", "C",
+    "2026-01-01T12:06:00Z", "C",
+    "2026-01-01T12:06:00.0000001Z", "C",
+    "2026-01-01T12:08:00Z", "C",
+    "2026-01-01T12:20:00Z", "A",
+    "2026-01-01T12:21:00Z", "A",
+    "2026-01-01T12:22:00Z", "B",
+    "2026-01-01T12:22:00Z", "C",
+    "2026-01-01T12:23:00Z", "C",
+    "2026-01-01T12:30:00Z", "none",
+    "invalid", "C"
+];
+"""
+    scenarios = [("default", None, 3), ("gte_3", "gte", 3), ("eq_3", "eq", 3), ("gt_2", "gt", 2)]
+    functions = "".join(
+        f"let {name} = () {{\n{temporal_query(operator=op, threshold=threshold, ordered=True)}\n}};\n"
+        for name, op, threshold in scenarios
+    )
+    functions += (
+        "let Repeated = () {\n"
+        + temporal_query(
+            ordered=True, operator="eq", threshold=2, sequence=["source-rule", "source-rule", "other-rule"]
+        )
+        + "\n};\n"
+    )
+    actual = (
+        "let Actual = union\n"
+        + ",\n".join(f'    ({name}() | extend Scenario = "{name}")' for name, _, _ in scenarios)
+        + ',\n    (Repeated() | extend Scenario = "repeated");\n'
+    )
+    expected = """let Expected = datatable(Scenario:string, WindowStart:datetime, WindowEnd:datetime, RuleCount:long) [
+    "default", datetime(2026-01-01T11:58:00Z), datetime(2026-01-01T12:03:00Z), 3,
+    "default", datetime(2026-01-01T12:00:00Z), datetime(2026-01-01T12:05:00Z), 3,
+    "default", datetime(2026-01-01T12:01:00Z), datetime(2026-01-01T12:06:00Z), 3,
+    "default", datetime(2026-01-01T12:18:00Z), datetime(2026-01-01T12:23:00Z), 3,
+    "gte_3", datetime(2026-01-01T11:58:00Z), datetime(2026-01-01T12:03:00Z), 3,
+    "gte_3", datetime(2026-01-01T12:00:00Z), datetime(2026-01-01T12:05:00Z), 3,
+    "gte_3", datetime(2026-01-01T12:01:00Z), datetime(2026-01-01T12:06:00Z), 3,
+    "gte_3", datetime(2026-01-01T12:18:00Z), datetime(2026-01-01T12:23:00Z), 3,
+    "eq_3", datetime(2026-01-01T11:58:00Z), datetime(2026-01-01T12:03:00Z), 3,
+    "eq_3", datetime(2026-01-01T12:00:00Z), datetime(2026-01-01T12:05:00Z), 3,
+    "eq_3", datetime(2026-01-01T12:01:00Z), datetime(2026-01-01T12:06:00Z), 3,
+    "eq_3", datetime(2026-01-01T12:18:00Z), datetime(2026-01-01T12:23:00Z), 3,
+    "gt_2", datetime(2026-01-01T11:58:00Z), datetime(2026-01-01T12:03:00Z), 3,
+    "gt_2", datetime(2026-01-01T12:00:00Z), datetime(2026-01-01T12:05:00Z), 3,
+    "gt_2", datetime(2026-01-01T12:01:00Z), datetime(2026-01-01T12:06:00Z), 3,
+    "gt_2", datetime(2026-01-01T12:18:00Z), datetime(2026-01-01T12:23:00Z), 3,
+    "repeated", datetime(2026-01-01T11:57:00Z), datetime(2026-01-01T12:02:00Z), 2,
+    "repeated", datetime(2026-01-01T11:59:00Z), datetime(2026-01-01T12:04:00Z), 2,
+    "repeated", datetime(2026-01-01T12:17:00Z), datetime(2026-01-01T12:22:00Z), 2
+];
+"""
+    return (
+        HEADER
+        + data
+        + functions
+        + actual
+        + expected
+        + check("Actual", "Expected", ["Scenario", "WindowStart", "WindowEnd", "RuleCount"])
+    )
+
+
 def fixtures():
     return {
         "event_count_grouped.kql": grouped_fixture(),
@@ -679,6 +853,8 @@ def fixtures():
         "value_count_multi_field_comparisons.kql": multi_field_value_count_comparisons_fixture(),
         "temporal_grouped.kql": temporal_grouped_fixture(),
         "temporal_comparisons.kql": temporal_comparisons_fixture(),
+        "temporal_ordered_grouped.kql": ordered_temporal_grouped_fixture(),
+        "temporal_ordered_ungrouped.kql": ordered_temporal_ungrouped_fixture(),
     }
 
 
