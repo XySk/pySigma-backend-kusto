@@ -19,7 +19,7 @@
     - [🖥️ sigma-cli](#️-sigma-cli)
     - [🐍 Python Script](#-python-script)
   - [🛠️ Advanced Features](#️-advanced-features)
-    - [Event-count correlations](#event-count-correlations)
+    - [Count correlations](#count-correlations)
     - [🔄 Pipeline \& Backend Args (New in 0.2.0)](#-pipeline--backend-args-new-in-020)
     - [🗃️ Custom Table Names (New in 0.3.0) (Beta)](#️-custom-table-names-new-in-030-beta)
   - [🔄 Processing Pipelines](#-processing-pipelines)
@@ -160,9 +160,9 @@ DeviceProcessEvents
 
 ## 🛠️ Advanced Features
 
-### Event-count correlations
+### Count correlations
 
-Convert a Sigma collection containing source rules and an `event_count` correlation with the configured event timestamp:
+Convert a Sigma collection containing source rules and an `event_count` or single-field `value_count` correlation with the configured event timestamp:
 
 ```python
 from pathlib import Path
@@ -178,19 +178,34 @@ backend = KustoBackend(
 queries = backend.convert(collection)
 ```
 
-A correlation combines every converted source search with `union`, including multiple searches emitted for one source rule and searches from different tables. Each branch retains its source columns and adds a mapped `datetime` timestamp, `string` grouping fields, and the source rule's name (or ID when unnamed). Correlation field aliases work for single-source and multi-source correlations. Timestamp and grouping fields use each source's mappings. All searches emitted for one source rule must use the same mapped table.
+A correlation combines every converted source search with `union`, including multiple searches emitted for one source rule and searches from different tables. Each branch retains its source columns and adds a mapped `datetime` timestamp, `string` grouping and counted fields, and the source rule's name (or ID when unnamed). Correlation field aliases work for grouping and counted fields in single-source and multi-source correlations. Timestamp, grouping, and counted fields use each source's mappings. All searches emitted for one source rule must use the same mapped table.
 
 Event counts use **exact sliding windows by default**. For each distinct valid matching-event timestamp in each correlation group, the query counts all source matches in the inclusive interval `[timestamp - timespan, timestamp]`, then applies a single `gt`, `gte`, `lt`, `lte`, `eq`, or `neq` comparison. For example, events at 12:00:59 and 12:05:01 belong together in the five-minute window ending at 12:05:01. Events exactly five minutes apart also belong together. Simultaneous matches participate in one evaluation with their complete count. Matching several source rules or searches contributes a row for every match; physical events are not deduplicated.
 
-Every qualifying evaluation returns `WindowStart`, `WindowEnd`, the requested grouping fields, and `EventCount`. `WindowStart` is `WindowEnd - timespan`. Each joint set of grouping values is independent; omitting `group-by` defines one group. Overlapping qualifying windows remain separate summaries. No evaluation is generated solely because an event expires, and conditions such as `eq: 0` do not invent empty-window results. Invalid timestamps and null or empty grouping values are excluded before establishing evaluation timestamps. Group names `WindowStart`, `WindowEnd`, and `EventCount` are rejected because they conflict with the result columns.
+For `value_count`, specify the counted field in the condition:
+
+```yaml
+correlation:
+  type: value_count
+  rules: [source-rule]
+  group-by: [DeviceName]
+  timespan: 5m
+  condition:
+    field: User
+    gte: 2
+```
+
+Value counts use the same exact sliding windows and six comparisons. Each window counts distinct nonempty string-normalized values across all its source matches. A value repeated at different timestamps or across searches and rules counts once. Null or empty counted values contribute no value, but their otherwise valid events still establish evaluation timestamps. Such an anchored window can have `ValueCount = 0`, and may satisfy `eq: 0`. A one-element `field` list is also accepted; multiple counted fields are not yet supported.
+
+Every qualifying evaluation returns `WindowStart`, `WindowEnd`, the requested grouping fields, and `EventCount` or `ValueCount`. `WindowStart` is `WindowEnd - timespan`. Each joint set of grouping values is independent; omitting `group-by` defines one group. Overlapping qualifying windows remain separate summaries. No evaluation is generated solely because an event expires, and count conditions do not invent empty-window results. Invalid timestamps and null or empty grouping values are excluded before establishing evaluation timestamps. Group names `WindowStart`, `WindowEnd`, and the relevant count metric are rejected because they conflict with the result columns.
 
 Normalized columns and window intermediates use names beginning with `_sigma_`, with numeric suffixes to avoid known source names. Known names include detection fields, a rule's `fields` list, correlation fields and aliases, table field mappings, and the pipeline's schema. The built-in pipelines provide their schema through `vars["kusto_schema"]`. Custom pipelines can provide a `BaseSchema` there or list additional source columns in the source rules' `fields`; columns absent from those inputs cannot be discovered during offline conversion. Source columns and rule identity remain available during source assembly; the final aggregate returns only the window, groups, and count.
 
 The caller owns time-range selection, scheduling, and filtering the reported results. Conversion adds no implicit time filter. Supply at least one full timespan of preceding source history before the first reportable window end, then filter the summaries to the reporting range. Without that history, early windows may have incomplete counts. Timespans must be positive. Sigma weeks, months, and years use pySigma's fixed second lengths, rather than calendar intervals.
 
-This changes two previous behaviors: sliding windows replace fixed non-overlapping bins, and several searches from one source rule now feed one aggregate instead of separate aggregates. Ordinary detection queries and pySigma's `generate` control for standalone source output retain their behavior. This delivery supports `event_count` with detection-rule sources. `value_count`, `temporal`, `temporal_ordered`, and chained correlation sources raise conversion errors until their stages are implemented. A count condition must still contain exactly one comparison; range conditions remain unsupported.
+This changes two previous behaviors: sliding windows replace fixed non-overlapping bins, and several searches from one source rule now feed one aggregate instead of separate aggregates. Ordinary detection queries and pySigma's `generate` control for standalone source output retain their behavior. This delivery supports `event_count` and single-field `value_count` with detection-rule sources. Multiple counted fields, `temporal`, `temporal_ordered`, and chained correlation sources raise conversion errors until their stages are implemented. A count condition must still contain exactly one comparison; range conditions remain unsupported.
 
-The exact baseline preaggregates matches by timestamp and group, pairs candidate contributions using explicit inner joins and bins, applies the actual inclusive timestamp predicate, and sums the integer weights. Bins prune candidates; they do not determine window membership. Dense groups, especially ungrouped streams, can create quadratic intermediate joins. There are no silent caps, sampling, or truncation, and throughput has not been benchmarked. [Deterministic KQL fixtures](tests/fixtures/correlation/README.md) provide worked expected summaries and execution instructions; they are prepared fixtures, not evidence of live engine execution.
+The exact event-count baseline preaggregates matches by timestamp and group, pairs candidate contributions using explicit inner joins and bins, applies the actual inclusive timestamp predicate, and sums the integer weights. Value counts retain actual values through the same candidate pairing and apply exact `count_distinctif` over the whole window. [Kusto documents this function as preview](https://learn.microsoft.com/en-us/kusto/query/count-distinctif-aggregation-function); exceeding its 100-million-unique-value limit raises an engine error. Bins prune candidates; they do not determine window membership. Dense groups, especially ungrouped streams, can create quadratic intermediate joins. There are no silent caps, sampling, or truncation, and throughput has not been benchmarked. [Deterministic KQL fixtures](tests/fixtures/correlation/README.md) provide worked expected summaries and execution instructions; they are prepared fixtures, not evidence of live engine execution.
 
 ### 🔄 Pipeline & Backend Args (New in 0.2.0)
 

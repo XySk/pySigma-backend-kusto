@@ -328,9 +328,15 @@ class KustoBackend(TextQueryBackend):
         return re.sub(r"\\\*", r"*", converted)
 
     def convert_correlation_rule(self, rule, output_format=None, method=None):
-        if rule.type != SigmaCorrelationType.EVENT_COUNT:
-            raise SigmaConversionError(rule, rule.source, "Kusto supports only event_count correlation rules.")
-        queries = self.convert_correlation_event_count_rule(rule, output_format, method or "default")
+        converters = {
+            SigmaCorrelationType.EVENT_COUNT: self.convert_correlation_event_count_rule,
+            SigmaCorrelationType.VALUE_COUNT: self.convert_correlation_value_count_rule,
+        }
+        if rule.type not in converters:
+            raise SigmaConversionError(
+                rule, rule.source, "Kusto supports only event_count and value_count correlation rules."
+            )
+        queries = converters[rule.type](rule, output_format, method or "default")
         rule.set_conversion_result(queries)
         rule.set_conversion_states(
             [ConversionState(processing_state=dict(self.last_processing_pipeline.state)) for _ in queries]
@@ -338,19 +344,34 @@ class KustoBackend(TextQueryBackend):
         return queries
 
     def convert_correlation_event_count_rule(self, rule, output_format=None, method="default"):
+        return self._convert_count_rule(rule)
+
+    def convert_correlation_value_count_rule(self, rule, output_format=None, method="default"):
+        field = rule.condition.fieldref
+        if isinstance(field, list) and len(field) == 1:
+            field = field[0]
+        if not isinstance(field, str) or not field:
+            raise SigmaConversionError(
+                rule, rule.source, "Kusto value_count currently supports exactly one counted field."
+            )
+        return self._convert_count_rule(rule, field)
+
+    def _convert_count_rule(self, rule, counted_field=None):
+        count_type = rule.type.name.lower()
+        metric = "ValueCount" if counted_field is not None else "EventCount"
         if rule.timespan.seconds <= 0:
             raise SigmaConversionError(rule, rule.source, "Kusto correlations require a positive timespan.")
-        conflicting_fields = {"WindowStart", "WindowEnd", "EventCount"}.intersection(rule.group_by or [])
+        conflicting_fields = {"WindowStart", "WindowEnd", metric}.intersection(rule.group_by or [])
         if conflicting_fields:
             raise SigmaConversionError(
                 rule,
                 rule.source,
-                "Kusto event_count grouping fields conflict with result columns: "
+                f"Kusto {count_type} grouping fields conflict with result columns: "
                 + ", ".join(sorted(conflicting_fields)),
             )
         if not rule.rules:
             raise SigmaConversionError(
-                rule, rule.source, "Kusto event_count correlations must reference at least one source rule."
+                rule, rule.source, f"Kusto {count_type} correlations must reference at least one source rule."
             )
         condition_operators = {
             SigmaCorrelationConditionOperator.GT: ">",
@@ -365,7 +386,7 @@ class KustoBackend(TextQueryBackend):
             raise SigmaConversionError(
                 rule,
                 rule.source,
-                "Kusto event_count correlations require one of the single gt, gte, lt, lte, eq, or neq conditions.",
+                f"Kusto {count_type} correlations require one of the single gt, gte, lt, lte, eq, or neq conditions.",
             )
 
         timestamp_field = self.backend_options.get("correlation_timestamp_field")
@@ -373,46 +394,49 @@ class KustoBackend(TextQueryBackend):
             raise SigmaConversionError(
                 rule,
                 rule.source,
-                "The correlation_timestamp_field backend option is required for event_count correlations.",
+                f"The correlation_timestamp_field backend option is required for {count_type} correlations.",
             )
 
-        return self._convert_event_count(rule, timestamp_field, query_operator)
+        return self._convert_count(rule, timestamp_field, query_operator, counted_field)
 
     @staticmethod
-    def _validate_event_count_source(rule, source_rule):
+    def _validate_count_source(rule, source_rule):
+        count_type = rule.type.name.lower()
         if source_rule is None:
-            raise SigmaConversionError(rule, rule.source, "Kusto event_count source rule reference is unresolved.")
+            raise SigmaConversionError(rule, rule.source, f"Kusto {count_type} source rule reference is unresolved.")
         if isinstance(source_rule, SigmaCorrelationRule):
             raise SigmaConversionError(rule, rule.source, "Chained correlation sources are not yet supported by Kusto.")
         queries = source_rule.get_conversion_result()
         states = source_rule.get_conversion_states()
         if not queries or not states:
             raise SigmaConversionError(
-                rule, rule.source, "Kusto event_count correlations require a convertible source-rule filter."
+                rule, rule.source, f"Kusto {count_type} correlations require a convertible source-rule filter."
             )
         if len(queries) != len(states):
             raise SigmaConversionError(
-                rule, rule.source, "Kusto event_count source query and conversion state counts do not match."
+                rule, rule.source, f"Kusto {count_type} source query and conversion state counts do not match."
             )
         if not all(state.processing_state.get("query_table") for state in states):
             raise SigmaConversionError(
-                rule, rule.source, "Kusto event_count correlations require a source rule with a mapped query table."
+                rule, rule.source, f"Kusto {count_type} correlations require a source rule with a mapped query table."
             )
         return queries, states
 
-    def _convert_event_count(self, rule, timestamp_field, query_operator):
+    def _convert_count(self, rule, timestamp_field, query_operator, counted_field=None):
         source_fields = {timestamp_field, *(rule.group_by or [])}
+        if counted_field is not None:
+            source_fields.add(counted_field)
         for alias in rule.aliases:
             source_fields.add(alias.alias)
             source_fields.update(alias.mapping.values())
         for reference in rule.rules:
-            _, states = self._validate_event_count_source(rule, getattr(reference, "rule", None))
+            _, states = self._validate_count_source(rule, getattr(reference, "rule", None))
             tables = [state.processing_state.get("query_table") for state in states]
             if len(set(tables)) != 1:
                 raise SigmaConversionError(
                     rule,
                     rule.source,
-                    "Kusto event_count searches for one source rule must use the same mapped query table.",
+                    f"Kusto {rule.type.name.lower()} searches for one source rule must use the same mapped query table.",
                 )
             for state in states:
                 source_fields.update(state.processing_state.get("kusto_source_fields", ()))
@@ -433,19 +457,24 @@ class KustoBackend(TextQueryBackend):
             "weight": allocate("_sigma_weight"),
             "window_end": allocate("_sigma_window_end"),
             "bin": allocate("_sigma_bin"),
-            "weights": allocate("_sigma_weights"),
+            "weights": allocate("_sigma_weights" if counted_field is None else "_sigma_values"),
         }
+        if counted_field is not None:
+            columns["value"] = allocate("_sigma_value")
         self._correlation_group_by = rule.group_by or []
+        self._correlation_counted_field = counted_field
         self._correlation_columns = columns
         try:
             search = self.convert_correlation_search(rule)
         finally:
             del self._correlation_group_by
+            del self._correlation_counted_field
             del self._correlation_columns
         timestamp, weight, window_end, time_bin, weights = (
             columns[name] for name in ("timestamp", "weight", "window_end", "bin", "weights")
         )
         groups = columns["groups"]
+        metric = "EventCount" if counted_field is None else "ValueCount"
         # Sigma's weeks, months, and years have fixed second lengths. Kusto
         # timespan literals do not accept those units.
         span = rule.timespan.spec if rule.timespan.unit in "smhd" else f"{rule.timespan.seconds}s"
@@ -462,26 +491,37 @@ class KustoBackend(TextQueryBackend):
                     f"{self._quote_correlation_field(field)} = {column}"
                     for field, column in zip(rule.group_by or [], groups)
                 ),
-                "EventCount",
+                metric,
             ]
         )
-        # Each exact timestamp is one evaluation anchor, with all simultaneous
-        # source matches retained in its weight. Bins only prune candidate pairs:
-        # a contribution belongs to its own bin and the following anchor bin.
+        if counted_field is None:
+            preaggregate = f"| summarize {weight} = count() by {weighted_fields}"
+            distinct_anchors = ""
+            aggregate = f"sum({weight})"
+        else:
+            value = columns["value"]
+            # Retain values, including empty ones that still establish anchors.
+            # A value occurring at multiple timestamps counts once per window.
+            preaggregate = f"| summarize by {weighted_fields}, {value}"
+            distinct_anchors = "| distinct *\n"
+            aggregate = f"count_distinctif({value}, isnotempty({value}))"
+        # Bins only prune candidate pairs: a contribution belongs to its own bin
+        # and the following anchor bin. Actual timestamps determine membership.
         return [
             f"let {weights} = {search}\n"
             f"| where {valid_rows}\n"
-            f"| summarize {weight} = count() by {weighted_fields};\n"
+            f"{preaggregate};\n"
             f"{weights}\n"
             f"| project {anchor_fields}\n"
+            f"{distinct_anchors}"
             f"| join kind=inner (\n"
             f"    {weights}\n"
             f"    | extend {time_bin} = pack_array(bin({timestamp}, {span}), bin({timestamp}, {span}) + {span})\n"
             f"    | mv-expand {time_bin} to typeof(datetime)\n"
             f") on {join_fields}\n"
             f"| where {timestamp} between (({window_end} - {span}) .. {window_end})\n"
-            f"| summarize EventCount = sum({weight}) by {summary_fields}\n"
-            f"| where EventCount {query_operator} {rule.condition.count}\n"
+            f"| summarize {metric} = {aggregate} by {summary_fields}\n"
+            f"| where {metric} {query_operator} {rule.condition.count}\n"
             f"| project {result_fields}"
         ]
 
@@ -501,6 +541,12 @@ class KustoBackend(TextQueryBackend):
                 field = aliases.aliases[field].mapping.get(rule_reference, field)
             mapped_field = map_field(field)
             fields.append(f"{columns['groups'][index]} = tostring({self._quote_correlation_field(mapped_field)})")
+        counted_field = self._correlation_counted_field
+        if counted_field is not None:
+            if counted_field in aliases.aliases:
+                counted_field = aliases.aliases[counted_field].mapping.get(rule_reference, counted_field)
+            mapped_field = map_field(counted_field)
+            fields.append(f"{columns['value']} = tostring({self._quote_correlation_field(mapped_field)})")
         return _CorrelationNormalization("\n| extend " + ", ".join(fields), columns["rule"])
 
     @staticmethod

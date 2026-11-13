@@ -46,7 +46,9 @@ def event_count_correlation(*, group_by=(), condition: str = "gte: 2", generate:
     return "\n".join(lines) + "\n"
 
 
-def multi_rule_collection(*, source_conditions="selection", condition="gte: 2", group_by=(), aliases=""):
+def multi_rule_collection(
+    *, source_conditions="selection", condition="gte: 2", group_by=(), aliases="", counted_field=None
+):
     collection = (
         correlation_collection(event_count_correlation(), source_conditions=source_conditions).rules[0].to_dict()
     )
@@ -57,9 +59,11 @@ def multi_rule_collection(*, source_conditions="selection", condition="gte: 2", 
         "logsource": {"category": "network_connection", "product": "windows"},
         "detection": {"selection": {"DestinationPort": 443}, "condition": "selection"},
     }
-    correlation = event_count_correlation(group_by=group_by, condition=condition).replace(
-        "    - source-rule", "    - source-rule\n    - other-rule"
-    )
+    correlation = (
+        event_count_correlation(group_by=group_by, condition=condition)
+        if counted_field is None
+        else value_count_correlation(field=counted_field, group_by=group_by, condition=condition)
+    ).replace("    - source-rule", "    - source-rule\n    - other-rule")
     return SigmaCollection.from_yaml(
         yaml.safe_dump(collection)
         + "---\n"
@@ -68,6 +72,158 @@ def multi_rule_collection(*, source_conditions="selection", condition="gte: 2", 
         + correlation
         + aliases
     )
+
+
+def value_count_correlation(*, field="User", group_by=(), condition="gte: 2", generate=False):
+    return (
+        event_count_correlation(group_by=group_by, condition=condition, generate=generate)
+        .replace("type: event_count", "type: value_count")
+        .replace("  condition:\n", f"  condition:\n    field: {field}\n")
+    )
+
+
+def test_value_count_retains_values_for_exact_window_wide_counts_and_missing_value_anchors():
+    backend = KustoBackend(
+        processing_pipeline=microsoft_365_defender_pipeline(), correlation_timestamp_field="Timestamp"
+    )
+
+    (query,) = backend.convert(correlation_collection(value_count_correlation(condition="eq: 0")))
+
+    assert '_sigma_value = tostring(["AccountName"])' in query
+    assert "| where isnotnull(_sigma_timestamp)\n| summarize by _sigma_timestamp, _sigma_value;" in query
+    assert (
+        "| project _sigma_window_end = _sigma_timestamp, _sigma_bin = bin(_sigma_timestamp, 5m)\n| distinct *\n"
+        in query
+    )
+    assert "| join kind=inner (\n    _sigma_values\n" in query
+    assert "| where _sigma_timestamp between ((_sigma_window_end - 5m) .. _sigma_window_end)\n" in query
+    assert (
+        "| summarize ValueCount = count_distinctif(_sigma_value, isnotempty(_sigma_value)) by _sigma_window_end\n"
+        in query
+    )
+    assert "| where ValueCount == 0\n" in query
+    assert query.endswith("| project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ValueCount")
+
+
+@pytest.mark.parametrize(
+    ("operator", "query_operator"),
+    [("gt", ">"), ("gte", ">="), ("lt", "<"), ("lte", "<="), ("eq", "=="), ("neq", "!=")],
+)
+def test_value_count_applies_each_comparison_after_exact_aggregation(operator, query_operator):
+    backend = KustoBackend(
+        processing_pipeline=microsoft_365_defender_pipeline(), correlation_timestamp_field="Timestamp"
+    )
+
+    (query,) = backend.convert(
+        correlation_collection(value_count_correlation(group_by=("DeviceName",), condition=f"{operator}: 2"))
+    )
+
+    assert (
+        "| summarize ValueCount = count_distinctif(_sigma_value, isnotempty(_sigma_value)) "
+        f"by _sigma_window_end, _sigma_group_0\n| where ValueCount {query_operator} 2\n"
+    ) in query
+    assert query.endswith('["DeviceName"] = _sigma_group_0, ValueCount')
+
+
+def test_value_count_maps_counted_and_grouping_aliases_per_source_table_and_retains_all_searches():
+    collection = multi_rule_collection(
+        source_conditions="[selection, alternate]",
+        counted_field="Actor",
+        group_by=("Host", "DeviceName"),
+        aliases=(
+            "  aliases:\n    Actor:\n      source-rule: User\n      other-rule: SourceUser\n"
+            "    Host:\n      source-rule: Computer\n      other-rule: SourceComputer\n"
+        ),
+    )
+    pipeline = microsoft_365_defender_pipeline()
+    pipeline.vars["kusto_field_mappings"] = FieldMappings(
+        table_mappings={
+            "DeviceProcessEvents": {"EventTime": "ProcessTime", "User": "ProcessUser", "Computer": "ProcessHost"}
+        }
+    )
+    backend = KustoBackend(processing_pipeline=pipeline, correlation_timestamp_field="EventTime")
+
+    def change_other_mapping(rule, output_format, index, condition, result):
+        if rule.name == "other-rule":
+            backend.last_processing_pipeline.vars["kusto_field_mappings"] = FieldMappings(
+                table_mappings={
+                    "DeviceNetworkEvents": {
+                        "EventTime": "NetworkTime",
+                        "SourceUser": "NetworkUser",
+                        "SourceComputer": "NetworkHost",
+                    }
+                }
+            )
+        return result
+
+    (query,) = backend.convert(collection, callback=change_other_mapping)
+
+    assert query.count("(DeviceProcessEvents\n| where ") == 2
+    assert query.count("(DeviceNetworkEvents\n| where ") == 1
+    assert query.count('_sigma_value = tostring(["ProcessUser"])') == 2
+    assert '_sigma_value = tostring(["NetworkUser"])' in query
+    assert 'todatetime(["ProcessTime"]), _sigma_group_0 = tostring(["ProcessHost"])' in query
+    assert 'todatetime(["NetworkTime"]), _sigma_group_0 = tostring(["NetworkHost"])' in query
+    assert (
+        "| where isnotnull(_sigma_timestamp) and isnotempty(_sigma_group_0) and isnotempty(_sigma_group_1)\n" in query
+    )
+    assert query.count("| summarize ValueCount") == 1
+    assert query.endswith('["Host"] = _sigma_group_0, ["DeviceName"] = _sigma_group_1, ValueCount')
+
+
+def test_single_source_value_count_aliases_quoted_counted_fields_without_overwriting_source_columns():
+    correlation = value_count_correlation(field="Actor") + "  aliases:\n    Actor:\n      source-rule: User\n"
+    collection = correlation_collection(correlation, source_conditions="[selection, alternate]")
+    collection.rules[0].fields = [
+        "_sigma_values",
+        "_sigma_value",
+        "_sigma_timestamp",
+        "_sigma_window_end",
+        "_sigma_bin",
+    ]
+    pipeline = microsoft_365_defender_pipeline()
+    pipeline.vars["kusto_field_mappings"] = FieldMappings(generic_mappings={"User": 'Actor\'s "Name"'})
+    backend = KustoBackend(processing_pipeline=pipeline, correlation_timestamp_field="Timestamp")
+
+    (query,) = backend.convert(collection)
+
+    assert query.startswith("let _sigma_values_1 = union ")
+    assert query.count('_sigma_value_1 = tostring(["Actor\'s \\"Name\\""])') == 2
+    assert "| project " not in query.split("| summarize by")[0]
+    assert "| summarize by _sigma_timestamp_1, _sigma_value_1;" in query
+    assert "count_distinctif(_sigma_value_1, isnotempty(_sigma_value_1)) by _sigma_window_end_1" in query
+    assert "_sigma_bin_1 = bin(_sigma_timestamp_1, 5m)" in query
+
+
+@pytest.mark.parametrize("field", ["[User, DeviceName]", "[]", "''", "42"])
+def test_value_count_rejects_multiple_or_invalid_counted_fields(field):
+    backend = KustoBackend(
+        processing_pipeline=microsoft_365_defender_pipeline(), correlation_timestamp_field="Timestamp"
+    )
+
+    with pytest.raises(SigmaError, match="value_count currently supports exactly one counted field"):
+        backend.convert(correlation_collection(value_count_correlation(field=field)))
+
+
+def test_value_count_accepts_a_single_field_list_and_preserves_source_generation():
+    backend = KustoBackend(
+        processing_pipeline=microsoft_365_defender_pipeline(), correlation_timestamp_field="Timestamp"
+    )
+
+    standalone, query = backend.convert(correlation_collection(value_count_correlation(field="[User]", generate=True)))
+
+    assert standalone == 'DeviceProcessEvents\n| where ProcessCommandLine =~ "suspicious.exe"'
+    assert '_sigma_value = tostring(["AccountName"])' in query
+
+
+@pytest.mark.parametrize("group", ["WindowStart", "WindowEnd", "ValueCount"])
+def test_value_count_rejects_group_names_that_collide_with_result_columns(group):
+    backend = KustoBackend(
+        processing_pipeline=microsoft_365_defender_pipeline(), correlation_timestamp_field="Timestamp"
+    )
+
+    with pytest.raises(SigmaError, match="value_count grouping fields conflict with result columns"):
+        backend.convert(correlation_collection(value_count_correlation(group_by=(group,))))
 
 
 def test_single_source_event_count_combines_searches_and_maps_aliases():
@@ -147,8 +303,9 @@ def test_event_count_uses_exact_inclusive_windows_at_distinct_event_timestamps()
         ("different-tables", "same mapped query table"),
     ],
 )
-def test_multi_rule_event_count_rejects_invalid_source_conversion_state(invalid_state, error):
-    collection = multi_rule_collection(source_conditions="[selection, alternate]")
+@pytest.mark.parametrize("counted_field", [None, "User"])
+def test_count_correlations_reject_invalid_source_conversion_state(invalid_state, error, counted_field):
+    collection = multi_rule_collection(source_conditions="[selection, alternate]", counted_field=counted_field)
     backend = KustoBackend(
         processing_pipeline=microsoft_365_defender_pipeline(),
         correlation_timestamp_field="Timestamp",
@@ -356,19 +513,21 @@ def test_event_count_correlation_rejects_unpaired_source_query_states():
         )
 
 
-def test_event_count_correlation_requires_timestamp_option():
+@pytest.mark.parametrize("correlation", [event_count_correlation, value_count_correlation])
+def test_count_correlations_require_timestamp_option(correlation):
     backend = KustoBackend(processing_pipeline=microsoft_365_defender_pipeline())
 
     with pytest.raises(SigmaError, match="correlation_timestamp_field"):
-        backend.convert(correlation_collection(event_count_correlation(group_by=("User",))))
+        backend.convert(correlation_collection(correlation(group_by=("DeviceName",))))
 
 
 @pytest.mark.parametrize("span", ["0m", "-5m"])
-def test_event_count_requires_a_positive_timespan(span):
+@pytest.mark.parametrize("correlation_rule", [event_count_correlation, value_count_correlation])
+def test_count_correlations_require_a_positive_timespan(span, correlation_rule):
     backend = KustoBackend(
         processing_pipeline=microsoft_365_defender_pipeline(), correlation_timestamp_field="Timestamp"
     )
-    correlation = event_count_correlation().replace("5m", span)
+    correlation = correlation_rule().replace("5m", span)
 
     with pytest.raises(SigmaError, match="positive timespan"):
         backend.convert(correlation_collection(correlation))
@@ -398,9 +557,10 @@ def test_event_count_rejects_group_names_that_collide_with_result_metrics(group)
         backend.convert(correlation_collection(event_count_correlation(group_by=(group,))))
 
 
-def test_event_count_rejects_chained_sources_until_chaining_is_supported():
+@pytest.mark.parametrize("parent_rule", [event_count_correlation, value_count_correlation])
+def test_count_correlations_reject_chained_sources_until_chaining_is_supported(parent_rule):
     child = event_count_correlation().replace("correlation:", "name: child-correlation\ncorrelation:")
-    parent = event_count_correlation().replace("source-rule", "child-correlation")
+    parent = parent_rule().replace("source-rule", "child-correlation")
     collection = SigmaCollection.from_yaml(
         "---\n".join(
             [
