@@ -342,10 +342,6 @@ class KustoBackend(TextQueryBackend):
             raise SigmaConversionError(
                 rule, rule.source, "Kusto event_count correlations must reference at least one source rule."
             )
-        if len(rule.rules) == 1 and rule.aliases.aliases:
-            raise SigmaConversionError(
-                rule, rule.source, "Kusto event_count correlations do not support group-by aliases."
-            )
         condition_operators = {
             SigmaCorrelationConditionOperator.GT: ">",
             SigmaCorrelationConditionOperator.GTE: ">=",
@@ -370,31 +366,7 @@ class KustoBackend(TextQueryBackend):
                 "The correlation_timestamp_field backend option is required for event_count correlations.",
             )
 
-        if len(rule.rules) > 1:
-            return self._convert_multi_rule_event_count(rule, timestamp_field, query_operator)
-
-        source_queries, source_states = self._validate_event_count_source(rule, rule.rules[0].rule)
-
-        queries = []
-        for index, source_query in enumerate(source_queries):
-            source_state = source_states[index]
-            table = source_state.processing_state.get("query_table")
-
-            group_fields = [self._map_correlation_field(table, field) for field in rule.group_by or []]
-            summarize_fields = [
-                f"WindowStart = bin({self.escape_and_quote_field(timestamp_field)}, {rule.timespan.spec})",
-                *(self.escape_and_quote_field(field) for field in group_fields),
-            ]
-            table_prefix = f"{table}\n| where "
-            if source_query.startswith(table_prefix):
-                source_query = source_query[len(table_prefix) :]
-
-            queries.append(
-                f"{table}\n| where {source_query}\n"
-                f"| summarize EventCount = count() by {', '.join(summarize_fields)}\n"
-                f"| where EventCount {query_operator} {rule.condition.count}"
-            )
-        return queries
+        return self._convert_event_count(rule, timestamp_field, query_operator)
 
     @staticmethod
     def _validate_event_count_source(rule, source_rule):
@@ -416,7 +388,7 @@ class KustoBackend(TextQueryBackend):
             )
         return queries, states
 
-    def _convert_multi_rule_event_count(self, rule, timestamp_field, query_operator):
+    def _convert_event_count(self, rule, timestamp_field, query_operator):
         source_fields = {timestamp_field, *(rule.group_by or [])}
         for alias in rule.aliases:
             source_fields.add(alias.alias)
@@ -485,10 +457,3 @@ class KustoBackend(TextQueryBackend):
     def _quote_correlation_field(field):
         return "[" + json.dumps(field, ensure_ascii=False) + "]"
 
-    def _map_correlation_field(self, table: str, field: str) -> str:
-        """Apply the table field mapping exposed by the source processing pipeline."""
-        pipeline = self.last_processing_pipeline
-        field_mappings = pipeline.vars.get("kusto_field_mappings") if pipeline is not None else None
-        if field_mappings is not None:
-            return field_mappings.get_field_mapping(table, field)
-        return field

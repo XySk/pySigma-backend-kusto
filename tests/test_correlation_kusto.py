@@ -67,6 +67,23 @@ def multi_rule_collection(*, source_conditions="selection", condition="gte: 2", 
     )
 
 
+def test_single_source_event_count_combines_searches_and_maps_aliases():
+    correlation = event_count_correlation(group_by=("Actor",)) + (
+        "  aliases:\n    Actor:\n      source-rule: User\n"
+    )
+    backend = KustoBackend(
+        processing_pipeline=microsoft_365_defender_pipeline(),
+        correlation_timestamp_field="Timestamp",
+    )
+
+    (query,) = backend.convert(correlation_collection(correlation, source_conditions="[selection, alternate]"))
+
+    assert query.count('(DeviceProcessEvents\n| where ') == 2
+    assert query.count('_sigma_group_0 = tostring(["AccountName"])') == 2
+    assert query.count('| extend _sigma_rule = "source-rule"') == 2
+    assert query.count("| summarize EventCount") == 1
+
+
 def test_multi_rule_event_count_combines_source_tables_before_counting():
     backend = KustoBackend(
         processing_pipeline=microsoft_365_defender_pipeline(),
@@ -221,7 +238,7 @@ def test_multi_rule_event_count_retains_every_search_and_duplicate_rule_matches(
     ("operator", "query_operator"),
     [("gt", ">"), ("gte", ">="), ("lt", "<"), ("lte", "<="), ("eq", "=="), ("neq", "!=")],
 )
-def test_event_count_correlation_uses_source_pipeline_and_fixed_window(operator, query_operator):
+def test_event_count_correlation_uses_source_pipeline_and_comparison(operator, query_operator):
     backend = KustoBackend(
         processing_pipeline=microsoft_365_defender_pipeline(),
         correlation_timestamp_field="TimestampField",
@@ -231,11 +248,10 @@ def test_event_count_correlation_uses_source_pipeline_and_fixed_window(operator,
         correlation_collection(event_count_correlation(group_by=("User",), condition=f"{operator}: 2"))
     )
 
-    assert result == [
-        'DeviceProcessEvents\n| where ProcessCommandLine =~ "suspicious.exe"\n'
-        "| summarize EventCount = count() by WindowStart = bin(TimestampField, 5m), AccountName\n"
-        f"| where EventCount {query_operator} 2"
-    ]
+    (query,) = result
+    assert '(DeviceProcessEvents\n| where ProcessCommandLine =~ "suspicious.exe"\n' in query
+    assert '_sigma_timestamp = todatetime(["TimestampField"]), _sigma_group_0 = tostring(["AccountName"])' in query
+    assert query.endswith(f"| where EventCount {query_operator} 2")
 
 
 def test_event_count_correlation_preserves_multiple_source_queries():
@@ -251,14 +267,11 @@ def test_event_count_correlation_preserves_multiple_source_queries():
         )
     )
 
-    assert result == [
-        'DeviceProcessEvents\n| where ProcessCommandLine =~ "suspicious.exe"\n'
-        "| summarize EventCount = count() by WindowStart = bin(TimestampField, 5m)\n"
-        "| where EventCount >= 2",
-        'DeviceProcessEvents\n| where FolderPath =~ "suspicious.exe"\n'
-        "| summarize EventCount = count() by WindowStart = bin(TimestampField, 5m)\n"
-        "| where EventCount >= 2",
-    ]
+    (query,) = result
+    assert '(DeviceProcessEvents\n| where ProcessCommandLine =~ "suspicious.exe"\n' in query
+    assert '(DeviceProcessEvents\n| where FolderPath =~ "suspicious.exe"\n' in query
+    assert query.count('| extend _sigma_rule = "source-rule"') == 2
+    assert query.count("| summarize EventCount") == 1
 
 
 def test_event_count_correlation_rejects_unpaired_source_query_states():
@@ -366,9 +379,7 @@ def test_generate_controls_standalone_source_query():
     )
     collection = correlation_collection(event_count_correlation(group_by=("User",), generate=True))
 
-    assert backend.convert(collection) == [
-        'DeviceProcessEvents\n| where ProcessCommandLine =~ "suspicious.exe"',
-        'DeviceProcessEvents\n| where ProcessCommandLine =~ "suspicious.exe"\n'
-        "| summarize EventCount = count() by WindowStart = bin(TimestampField, 5m), AccountName\n"
-        "| where EventCount >= 2",
-    ]
+    standalone, correlation = backend.convert(collection)
+    assert standalone == 'DeviceProcessEvents\n| where ProcessCommandLine =~ "suspicious.exe"'
+    assert '(DeviceProcessEvents\n| where ProcessCommandLine =~ "suspicious.exe"\n' in correlation
+    assert correlation.endswith("| where EventCount >= 2")
