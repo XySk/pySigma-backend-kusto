@@ -47,7 +47,13 @@ def event_count_correlation(*, group_by=(), condition: str = "gte: 2", generate:
 
 
 def multi_rule_collection(
-    *, source_conditions="selection", condition="gte: 2", group_by=(), aliases="", counted_field=None
+    *,
+    source_conditions="selection",
+    condition="gte: 2",
+    group_by=(),
+    aliases="",
+    counted_field=None,
+    other_source_conditions="selection",
 ):
     collection = (
         correlation_collection(event_count_correlation(), source_conditions=source_conditions).rules[0].to_dict()
@@ -57,7 +63,7 @@ def multi_rule_collection(
         "name": "other-rule",
         "id": "22222222-2222-2222-2222-222222222222",
         "logsource": {"category": "network_connection", "product": "windows"},
-        "detection": {"selection": {"DestinationPort": 443}, "condition": "selection"},
+        "detection": {"selection": {"DestinationPort": 443}, "condition": other_source_conditions},
     }
     correlation = (
         event_count_correlation(group_by=group_by, condition=condition)
@@ -103,6 +109,115 @@ def test_value_count_retains_values_for_exact_window_wide_counts_and_missing_val
     )
     assert "| where ValueCount == 0\n" in query
     assert query.endswith("| project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ValueCount")
+
+
+@pytest.mark.parametrize(
+    ("operator", "query_operator", "threshold"),
+    [("gt", ">", 2), ("gte", ">=", 2), ("lt", "<", 2), ("lte", "<=", 2), ("eq", "==", 0), ("neq", "!=", 2)],
+)
+def test_multi_field_value_count_requires_each_exact_count_and_retains_missing_value_anchors(
+    operator, query_operator, threshold
+):
+    backend = KustoBackend(
+        processing_pipeline=microsoft_365_defender_pipeline(), correlation_timestamp_field="Timestamp"
+    )
+
+    (query,) = backend.convert(
+        correlation_collection(
+            value_count_correlation(
+                field="[User, Target]", group_by=("DeviceName",), condition=f"{operator}: {threshold}"
+            )
+        )
+    )
+
+    assert '_sigma_value_0 = tostring(["AccountName"]), _sigma_value_1 = tostring(["Target"])' in query
+    assert (
+        "| where isnotnull(_sigma_timestamp) and isnotempty(_sigma_group_0)\n"
+        "| summarize by _sigma_timestamp, _sigma_group_0, _sigma_value_0, _sigma_value_1;\n"
+    ) in query
+    assert "| distinct *\n| join kind=inner (" in query
+    assert "| where _sigma_timestamp between ((_sigma_window_end - 5m) .. _sigma_window_end)\n" in query
+    assert (
+        '| summarize ["ValueCount_User"] = count_distinctif(_sigma_value_0, isnotempty(_sigma_value_0)), '
+        '["ValueCount_Target"] = count_distinctif(_sigma_value_1, isnotempty(_sigma_value_1)) '
+        "by _sigma_window_end, _sigma_group_0\n"
+        f'| where ["ValueCount_User"] {query_operator} {threshold} '
+        f'and ["ValueCount_Target"] {query_operator} {threshold}\n'
+    ) in query
+    assert query.endswith('["DeviceName"] = _sigma_group_0, ["ValueCount_User"], ["ValueCount_Target"]')
+
+
+def test_multi_field_value_count_maps_each_counted_alias_for_all_source_searches():
+    collection = multi_rule_collection(
+        source_conditions="[selection, alternate]",
+        other_source_conditions=["selection", "selection"],
+        counted_field="[Actor, Target]",
+        group_by=("Host",),
+        aliases=(
+            "  aliases:\n    Actor:\n      source-rule: User\n      other-rule: SourceUser\n"
+            "    Target:\n      source-rule: File\n      other-rule: Destination\n"
+            "    Host:\n      source-rule: Computer\n      other-rule: SourceComputer\n"
+        ),
+    )
+    pipeline = microsoft_365_defender_pipeline()
+    pipeline.vars["kusto_field_mappings"] = FieldMappings(
+        table_mappings={
+            "DeviceProcessEvents": {
+                "EventTime": "ProcessTime",
+                "User": "ProcessUser",
+                "File": "ProcessTarget",
+                "Computer": "ProcessHost",
+            },
+            "DeviceNetworkEvents": {
+                "EventTime": "NetworkTime",
+                "SourceUser": "NetworkUser",
+                "Destination": "NetworkTarget",
+                "SourceComputer": "NetworkHost",
+            },
+        }
+    )
+
+    (query,) = KustoBackend(processing_pipeline=pipeline, correlation_timestamp_field="EventTime").convert(collection)
+
+    assert query.count("(DeviceProcessEvents\n| where ") == 2
+    assert query.count("(DeviceNetworkEvents\n| where ") == 2
+    assert query.count('_sigma_value_0 = tostring(["ProcessUser"]), _sigma_value_1 = tostring(["ProcessTarget"])') == 2
+    assert query.count('_sigma_value_0 = tostring(["NetworkUser"]), _sigma_value_1 = tostring(["NetworkTarget"])') == 2
+    assert query.count('todatetime(["ProcessTime"]), _sigma_group_0 = tostring(["ProcessHost"])') == 2
+    assert query.count('todatetime(["NetworkTime"]), _sigma_group_0 = tostring(["NetworkHost"])') == 2
+    assert query.count('| summarize ["ValueCount_Actor"]') == 1
+    assert query.endswith('["Host"] = _sigma_group_0, ["ValueCount_Actor"], ["ValueCount_Target"]')
+
+
+def test_multi_field_value_count_quotes_metrics_and_preserves_colliding_source_columns_and_generation():
+    counted = yaml.safe_dump(['Actor\'s "Name"', "_sigma_value_0"], default_flow_style=True).strip()
+    collection = correlation_collection(value_count_correlation(field=counted, generate=True))
+    collection.rules[0].fields = ["_sigma_value_0", "_sigma_value_1", "_sigma_values"]
+    backend = KustoBackend(
+        processing_pipeline=microsoft_365_defender_pipeline(), correlation_timestamp_field="Timestamp"
+    )
+
+    standalone, query = backend.convert(collection)
+
+    assert standalone == 'DeviceProcessEvents\n| where ProcessCommandLine =~ "suspicious.exe"'
+    assert query.startswith("let _sigma_values_1 = union ")
+    assert '_sigma_value_0_1 = tostring(["Actor\'s \\"Name\\""])' in query
+    assert '_sigma_value_1_1 = tostring(["_sigma_value_0"])' in query
+    assert "| project " not in query.split("| summarize by")[0]
+    assert (
+        '["ValueCount_Actor\'s \\"Name\\""] = count_distinctif(_sigma_value_0_1, isnotempty(_sigma_value_0_1))' in query
+    )
+    assert query.endswith('["ValueCount_Actor\'s \\"Name\\""], ["ValueCount__sigma_value_0"]')
+
+
+@pytest.mark.parametrize("group", ["WindowStart", "WindowEnd", "ValueCount_User", "ValueCount_Target"])
+def test_multi_field_value_count_rejects_group_names_that_collide_with_per_field_metrics(group):
+    backend = KustoBackend(
+        processing_pipeline=microsoft_365_defender_pipeline(), correlation_timestamp_field="Timestamp"
+    )
+
+    with pytest.raises(SigmaError, match="value_count grouping fields conflict with result columns"):
+        backend.convert(correlation_collection(value_count_correlation(field="[User, Target]", group_by=(group,))))
 
 
 @pytest.mark.parametrize(
@@ -195,14 +310,23 @@ def test_single_source_value_count_aliases_quoted_counted_fields_without_overwri
     assert "_sigma_bin_1 = bin(_sigma_timestamp_1, 5m)" in query
 
 
-@pytest.mark.parametrize("field", ["[User, DeviceName]", "[]", "''", "42"])
-def test_value_count_rejects_multiple_or_invalid_counted_fields(field):
+@pytest.mark.parametrize("field", ["[]", "''", "42", "[User, '']", "[User, 42]"])
+def test_value_count_rejects_invalid_counted_fields(field):
     backend = KustoBackend(
         processing_pipeline=microsoft_365_defender_pipeline(), correlation_timestamp_field="Timestamp"
     )
 
-    with pytest.raises(SigmaError, match="value_count currently supports exactly one counted field"):
+    with pytest.raises(SigmaError, match="value_count requires nonempty counted field names"):
         backend.convert(correlation_collection(value_count_correlation(field=field)))
+
+
+def test_value_count_rejects_duplicate_counted_fields_with_ambiguous_result_metrics():
+    backend = KustoBackend(
+        processing_pipeline=microsoft_365_defender_pipeline(), correlation_timestamp_field="Timestamp"
+    )
+
+    with pytest.raises(SigmaError, match="value_count counted field names must be unique"):
+        backend.convert(correlation_collection(value_count_correlation(field="[User, User]")))
 
 
 def test_value_count_accepts_a_single_field_list_and_preserves_source_generation():

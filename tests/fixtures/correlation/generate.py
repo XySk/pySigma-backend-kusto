@@ -58,6 +58,7 @@ def query(*, operator="gte", threshold=2, groups=(), duplicate_sources=False, co
         documents[-1]["correlation"]["aliases"] = {
             "Actor": {"source-rule": "User", "other-rule": "Account"},
             "Host": {"source-rule": "Computer", "other-rule": "Device"},
+            "Target": {"source-rule": "File", "other-rule": "Destination"},
         }
     collection = SigmaCollection.from_yaml(yaml.safe_dump_all(documents))
     transformations = [{"type": "set_state", "key": "query_table", "val": "Events"}]
@@ -74,8 +75,18 @@ def query(*, operator="gte", threshold=2, groups=(), duplicate_sources=False, co
     if mapped_sources:
         pipeline.vars["kusto_field_mappings"] = FieldMappings(
             table_mappings={
-                "Events": {"Timestamp": "ProcessTime", "User": "ProcessUser", "Computer": "ProcessHost"},
-                "OtherEvents": {"Timestamp": "NetworkTime", "Account": "NetworkUser", "Device": "NetworkHost"},
+                "Events": {
+                    "Timestamp": "ProcessTime",
+                    "User": "ProcessUser",
+                    "Computer": "ProcessHost",
+                    "File": "ProcessTarget",
+                },
+                "OtherEvents": {
+                    "Timestamp": "NetworkTime",
+                    "Account": "NetworkUser",
+                    "Device": "NetworkHost",
+                    "Destination": "NetworkTarget",
+                },
             }
         )
     (converted,) = KustoBackend(processing_pipeline=pipeline, correlation_timestamp_field="Timestamp").convert(
@@ -325,6 +336,135 @@ let Events = datatable(Timestamp:string, User:dynamic, Marker:string) [
     )
 
 
+def multi_field_value_count_grouped_fixture():
+    data = """// Every row matches two searches. Repeated values across searches/tables count once.
+// two-users and two-targets each have two distinct tuples, but fail one count >= 2.
+// missing-values contributes each field separately, then retains an all-missing anchor.
+let Events = datatable(ProcessTime:string, Case:string, ProcessHost:dynamic, ProcessUser:dynamic, ProcessTarget:dynamic, Marker:string) [
+    "2026-01-01T12:00:00Z", "two-users", dynamic("host"), dynamic("alice"), dynamic("A"), "match",
+    "2026-01-01T12:00:00Z", "two-targets", dynamic("host"), dynamic("alice"), dynamic("A"), "match",
+    "2026-01-01T12:00:59Z", "boundary", dynamic("host"), dynamic("alice"), dynamic("A"), "match",
+    "2026-01-01T12:05:01Z", "boundary", dynamic("host"), dynamic("bob"), dynamic("B"), "match",
+    "2026-01-01T12:06:00Z", "boundary", dynamic("host"), dynamic("carol"), dynamic("C"), "match",
+    "2026-01-01T12:00:00Z", "endpoint", dynamic("host"), dynamic("alice"), dynamic("A"), "match",
+    "2026-01-01T12:00:00Z", "outside", dynamic("host"), dynamic("alice"), dynamic("A"), "match",
+    "2026-01-01T12:00:00Z", "ties", dynamic("host"), dynamic("alice"), dynamic("A"), "match",
+    "2026-01-01T12:01:00Z", "ties", dynamic("host"), dynamic("alice"), dynamic("A"), "match",
+    "2026-01-01T12:00:00Z", "missing-values", dynamic("host"), dynamic("alice"), dynamic(null), "match",
+    "2026-01-01T12:01:00Z", "missing-values", dynamic("host"), dynamic("bob"), dynamic(""), "match",
+    "2026-01-01T12:02:00Z", "missing-values", dynamic("host"), dynamic(null), dynamic(null), "match",
+    "2026-01-01T12:03:00Z", "missing-values", dynamic(null), dynamic("carol"), dynamic("C"), "match",
+    "invalid", "missing-values", dynamic("host"), dynamic("carol"), dynamic("C"), "match",
+    "2026-01-01T12:04:00Z", "", dynamic("host"), dynamic("carol"), dynamic("C"), "match",
+    "2026-01-01T12:00:00Z", "split", dynamic("host"), dynamic("alice"), dynamic("A"), "match"
+];
+let OtherEvents = datatable(NetworkTime:string, Case:string, NetworkHost:dynamic, NetworkUser:dynamic, NetworkTarget:dynamic, Marker:string) [
+    "2026-01-01T12:01:00Z", "two-users", dynamic("host"), dynamic("bob"), dynamic("A"), "match",
+    "2026-01-01T12:01:00Z", "two-targets", dynamic("host"), dynamic("alice"), dynamic("B"), "match",
+    "2026-01-01T12:00:59Z", "boundary", dynamic("host"), dynamic("alice"), dynamic("A"), "match",
+    "2026-01-01T12:05:01Z", "boundary", dynamic("host"), dynamic("bob"), dynamic("B"), "match",
+    "2026-01-01T12:05:00Z", "endpoint", dynamic("host"), dynamic("bob"), dynamic("B"), "match",
+    "2026-01-01T12:05:00.0000001Z", "outside", dynamic("host"), dynamic("bob"), dynamic("B"), "match",
+    "2026-01-01T12:00:00Z", "ties", dynamic("host"), dynamic("bob"), dynamic("B"), "match",
+    "2026-01-01T12:00:00Z", "missing-values", dynamic("host"), dynamic(null), dynamic("A"), "match",
+    "2026-01-01T12:01:00Z", "missing-values", dynamic("host"), dynamic(""), dynamic("B"), "match",
+    "2026-01-01T12:01:00Z", "split", dynamic("other-host"), dynamic("bob"), dynamic("B"), "match"
+];
+"""
+    expected = """let Expected = datatable(WindowStart:datetime, WindowEnd:datetime, Case:string, Host:string, ValueCount_Actor:long, ValueCount_Target:long) [
+    datetime(2026-01-01T12:00:01Z), datetime(2026-01-01T12:05:01Z), "boundary", "host", 2, 2,
+    datetime(2026-01-01T12:01:00Z), datetime(2026-01-01T12:06:00Z), "boundary", "host", 2, 2,
+    datetime(2026-01-01T12:00:00Z), datetime(2026-01-01T12:05:00Z), "endpoint", "host", 2, 2,
+    datetime(2026-01-01T11:55:00Z), datetime(2026-01-01T12:00:00Z), "ties", "host", 2, 2,
+    datetime(2026-01-01T11:56:00Z), datetime(2026-01-01T12:01:00Z), "ties", "host", 2, 2,
+    datetime(2026-01-01T11:56:00Z), datetime(2026-01-01T12:01:00Z), "missing-values", "host", 2, 2,
+    datetime(2026-01-01T11:57:00Z), datetime(2026-01-01T12:02:00Z), "missing-values", "host", 2, 2
+];
+"""
+    return (
+        HEADER
+        + data
+        + "let Actual = () {\n"
+        + query(groups=("Case", "Host"), counted_field=["Actor", "Target"], duplicate_sources=True, mapped_sources=True)
+        + "\n};\n"
+        + expected
+        + check(
+            "Actual()",
+            "Expected",
+            ["WindowStart", "WindowEnd", "Case", "Host", "ValueCount_Actor", "ValueCount_Target"],
+        )
+    )
+
+
+def multi_field_value_count_comparisons_fixture():
+    data = """// Anchors and independent (User, Target) counts:
+// 12:00=(0,0), 12:01=(1,0), 12:02=(1,1), 12:03=(2,1), 12:04=(2,2),
+// 12:05=(3,3), 12:06=(3,3), 12:06:00.0000001=(2,3), 12:20=(0,0).
+// Counts differ when only one field has a value; both must pass every comparison.
+// All-missing events retain anchors. Expiration without an event creates none.
+let Events = datatable(Timestamp:string, User:dynamic, Target:dynamic, Marker:string) [
+    "2026-01-01T12:00:00Z", dynamic(null), dynamic(null), "match",
+    "2026-01-01T12:00:00Z", dynamic(""), dynamic(""), "match",
+    "2026-01-01T12:01:00Z", dynamic("alice"), dynamic(null), "match",
+    "2026-01-01T12:02:00Z", dynamic(null), dynamic("A"), "match",
+    "2026-01-01T12:03:00Z", dynamic("bob"), dynamic("A"), "match",
+    "2026-01-01T12:04:00Z", dynamic("bob"), dynamic("B"), "match",
+    "2026-01-01T12:04:00Z", dynamic("bob"), dynamic("B"), "match",
+    "2026-01-01T12:05:00Z", dynamic("carol"), dynamic("C"), "match",
+    "2026-01-01T12:06:00Z", dynamic(null), dynamic(""), "match",
+    "2026-01-01T12:06:00.0000001Z", dynamic(""), dynamic(null), "match",
+    "2026-01-01T12:20:00Z", dynamic(null), dynamic(null), "match",
+    "invalid", dynamic("dave"), dynamic("D"), "match"
+];
+"""
+    scenarios = [("gt", 2), ("gte", 2), ("lt", 2), ("lte", 2), ("eq", 2), ("neq", 2), ("eq", 0)]
+    functions = "".join(
+        f"let {op}_{threshold} = () {{\n{query(operator=op, threshold=threshold, counted_field=['User', 'Target'])}\n}};\n"
+        for op, threshold in scenarios
+    )
+    actual = (
+        "let Actual = union\n"
+        + ",\n".join(f'    ({op}_{threshold}() | extend Scenario = "{op}_{threshold}")' for op, threshold in scenarios)
+        + ";\n"
+    )
+    expected = """let Expected = datatable(Scenario:string, WindowStart:datetime, WindowEnd:datetime, ValueCount_User:long, ValueCount_Target:long) [
+    "gt_2", datetime(2026-01-01T12:00:00Z), datetime(2026-01-01T12:05:00Z), 3, 3,
+    "gt_2", datetime(2026-01-01T12:01:00Z), datetime(2026-01-01T12:06:00Z), 3, 3,
+    "gte_2", datetime(2026-01-01T11:59:00Z), datetime(2026-01-01T12:04:00Z), 2, 2,
+    "gte_2", datetime(2026-01-01T12:00:00Z), datetime(2026-01-01T12:05:00Z), 3, 3,
+    "gte_2", datetime(2026-01-01T12:01:00Z), datetime(2026-01-01T12:06:00Z), 3, 3,
+    "gte_2", datetime(2026-01-01T12:01:00.0000001Z), datetime(2026-01-01T12:06:00.0000001Z), 2, 3,
+    "lt_2", datetime(2026-01-01T11:55:00Z), datetime(2026-01-01T12:00:00Z), 0, 0,
+    "lt_2", datetime(2026-01-01T11:56:00Z), datetime(2026-01-01T12:01:00Z), 1, 0,
+    "lt_2", datetime(2026-01-01T11:57:00Z), datetime(2026-01-01T12:02:00Z), 1, 1,
+    "lt_2", datetime(2026-01-01T12:15:00Z), datetime(2026-01-01T12:20:00Z), 0, 0,
+    "lte_2", datetime(2026-01-01T11:55:00Z), datetime(2026-01-01T12:00:00Z), 0, 0,
+    "lte_2", datetime(2026-01-01T11:56:00Z), datetime(2026-01-01T12:01:00Z), 1, 0,
+    "lte_2", datetime(2026-01-01T11:57:00Z), datetime(2026-01-01T12:02:00Z), 1, 1,
+    "lte_2", datetime(2026-01-01T11:58:00Z), datetime(2026-01-01T12:03:00Z), 2, 1,
+    "lte_2", datetime(2026-01-01T11:59:00Z), datetime(2026-01-01T12:04:00Z), 2, 2,
+    "lte_2", datetime(2026-01-01T12:15:00Z), datetime(2026-01-01T12:20:00Z), 0, 0,
+    "eq_2", datetime(2026-01-01T11:59:00Z), datetime(2026-01-01T12:04:00Z), 2, 2,
+    "neq_2", datetime(2026-01-01T11:55:00Z), datetime(2026-01-01T12:00:00Z), 0, 0,
+    "neq_2", datetime(2026-01-01T11:56:00Z), datetime(2026-01-01T12:01:00Z), 1, 0,
+    "neq_2", datetime(2026-01-01T11:57:00Z), datetime(2026-01-01T12:02:00Z), 1, 1,
+    "neq_2", datetime(2026-01-01T12:00:00Z), datetime(2026-01-01T12:05:00Z), 3, 3,
+    "neq_2", datetime(2026-01-01T12:01:00Z), datetime(2026-01-01T12:06:00Z), 3, 3,
+    "neq_2", datetime(2026-01-01T12:15:00Z), datetime(2026-01-01T12:20:00Z), 0, 0,
+    "eq_0", datetime(2026-01-01T11:55:00Z), datetime(2026-01-01T12:00:00Z), 0, 0,
+    "eq_0", datetime(2026-01-01T12:15:00Z), datetime(2026-01-01T12:20:00Z), 0, 0
+];
+"""
+    return (
+        HEADER
+        + data
+        + functions
+        + actual
+        + expected
+        + check("Actual", "Expected", ["Scenario", "WindowStart", "WindowEnd", "ValueCount_User", "ValueCount_Target"])
+    )
+
+
 def fixtures():
     return {
         "event_count_grouped.kql": grouped_fixture(),
@@ -332,6 +472,8 @@ def fixtures():
         "event_count_comparisons.kql": comparisons_fixture(),
         "value_count_grouped.kql": value_count_grouped_fixture(),
         "value_count_comparisons.kql": value_count_comparisons_fixture(),
+        "value_count_multi_field_grouped.kql": multi_field_value_count_grouped_fixture(),
+        "value_count_multi_field_comparisons.kql": multi_field_value_count_comparisons_fixture(),
     }
 
 
