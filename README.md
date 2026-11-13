@@ -160,9 +160,9 @@ DeviceProcessEvents
 
 ## 🛠️ Advanced Features
 
-### Count correlations
+### Count and temporal correlations
 
-Convert a Sigma collection containing source rules and an `event_count` or `value_count` correlation with the configured event timestamp:
+Convert a Sigma collection containing source rules and an `event_count`, `value_count`, or unordered `temporal` correlation with the configured event timestamp:
 
 ```python
 from pathlib import Path
@@ -199,15 +199,29 @@ Value counts use the same exact sliding windows and six comparisons. Each window
 
 To require several fields, use a list such as `field: [User, Target]`. Each field's exact count must satisfy the same comparison and threshold in the same window; the comparisons are combined with **AND**. Two users accessing one target fail `gte: 2`, while two users accessing two targets can pass. Missing values are ignored separately for each field, retaining anchors even when every counted value is missing. The result returns `ValueCount_User` and `ValueCount_Target`. In general, multiple fields return `ValueCount_<field>` using the logical condition field name (including an alias name), with quoting for names containing spaces or punctuation. Counted field names must be nonempty and unique.
 
-Every qualifying evaluation returns `WindowStart`, `WindowEnd`, the requested grouping fields, and `EventCount`, `ValueCount`, or the per-field value counts. `WindowStart` is `WindowEnd - timespan`. Each joint set of grouping values is independent; omitting `group-by` defines one group. Overlapping qualifying windows remain separate summaries. No evaluation is generated solely because an event expires, and count conditions do not invent empty-window results. Invalid timestamps and null or empty grouping values are excluded before establishing evaluation timestamps. Group names `WindowStart`, `WindowEnd`, and the returned count metrics are rejected because they conflict with the result columns.
+For unordered `temporal`, omit the condition to require every referenced source-rule type:
+
+```yaml
+correlation:
+  type: temporal
+  rules: [first-rule, second-rule, third-rule]
+  group-by: [DeviceName]
+  timespan: 5m
+```
+
+The returned `RuleCount` is the exact number of distinct matching source-rule types in the inclusive window. Repeated matches or searches from one rule count as one type. Repeated references to the same source, including references using its name and ID, also represent one type. An explicit condition applies any of the same six comparisons to `RuleCount`; for example, adding `condition: {gte: 2}` to the three-rule example accepts any two types without requiring the third. A type with no matches contributes nothing, and `eq: 0` cannot create an empty-window evaluation.
+
+Unordered temporal correlations accept any event order and tied timestamps. Every contributing combination must fit within one complete timespan: A at 12:00, B at 12:04, and C at 12:08 cannot satisfy a five-minute default-all correlation. Several qualifying combinations ending at one timestamp in the same group return one summary; later qualifying event timestamps retain their own overlapping summaries.
+
+Every qualifying evaluation returns `WindowStart`, `WindowEnd`, the requested grouping fields, and `EventCount`, `ValueCount`, the per-field value counts, or temporal `RuleCount`. `WindowStart` is `WindowEnd - timespan`. Each joint set of grouping values is independent; omitting `group-by` defines one group. Overlapping qualifying windows remain separate summaries. No evaluation is generated solely because an event expires, and count conditions do not invent empty-window results. Invalid timestamps and null or empty grouping values are excluded before establishing evaluation timestamps. Group names `WindowStart`, `WindowEnd`, and the returned count metrics are rejected because they conflict with the result columns.
 
 Normalized columns and window intermediates use names beginning with `_sigma_`, with numeric suffixes to avoid known source names. Known names include detection fields, a rule's `fields` list, correlation fields and aliases, table field mappings, and the pipeline's schema. The built-in pipelines provide their schema through `vars["kusto_schema"]`. Custom pipelines can provide a `BaseSchema` there or list additional source columns in the source rules' `fields`; columns absent from those inputs cannot be discovered during offline conversion. Source columns and rule identity remain available during source assembly; the final aggregate returns only the window, groups, and counts.
 
 The caller owns time-range selection, scheduling, and filtering the reported results. Conversion adds no implicit time filter. Supply at least one full timespan of preceding source history before the first reportable window end, then filter the summaries to the reporting range. Without that history, early windows may have incomplete counts. Timespans must be positive. Sigma weeks, months, and years use pySigma's fixed second lengths, rather than calendar intervals.
 
-This changes two previous behaviors: sliding windows replace fixed non-overlapping bins, and several searches from one source rule now feed one aggregate instead of separate aggregates. Ordinary detection queries and pySigma's `generate` control for standalone source output retain their behavior. This delivery supports `event_count` and `value_count` with detection-rule sources. `temporal`, `temporal_ordered`, and chained correlation sources raise conversion errors until their stages are implemented. A count condition must still contain exactly one comparison; range conditions remain unsupported.
+This changes two previous behaviors: sliding windows replace fixed non-overlapping bins, and several searches from one source rule now feed one aggregate instead of separate aggregates. Ordinary detection queries and pySigma's `generate` control for standalone source output retain their behavior. This delivery supports `event_count`, `value_count`, and unordered `temporal` with detection-rule sources. `temporal_ordered` and chained correlation sources raise clear conversion errors until their stages are implemented. A count condition must still contain exactly one comparison; range conditions remain unsupported.
 
-The exact event-count baseline preaggregates matches by timestamp and group, pairs candidate contributions using explicit inner joins and bins, applies the actual inclusive timestamp predicate, and sums the integer weights. Value counts retain actual values through the same candidate pairing and apply exact `count_distinctif` over the whole window. [Kusto documents this function as preview](https://learn.microsoft.com/en-us/kusto/query/count-distinctif-aggregation-function); exceeding its 100-million-unique-value limit raises an engine error. Bins prune candidates; they do not determine window membership. Dense groups, especially ungrouped streams, can create quadratic intermediate joins. There are no silent caps, sampling, or truncation, and throughput has not been benchmarked. [Deterministic KQL fixtures](tests/fixtures/correlation/README.md) provide worked expected summaries and execution instructions; they are prepared fixtures, not evidence of live engine execution.
+The exact event-count baseline preaggregates matches by timestamp and group, pairs candidate contributions using explicit inner joins and bins, applies the actual inclusive timestamp predicate, and sums the integer weights. Value counts retain actual values through the same candidate pairing and apply exact `count_distinctif` over the whole window. Temporal correlations retain source-rule identities and use the same exact aggregation to count types over the whole window. [Kusto documents this function as preview](https://learn.microsoft.com/en-us/kusto/query/count-distinctif-aggregation-function); exceeding its 100-million-unique-value limit raises an engine error. Bins prune candidates; they do not determine window membership. Dense groups, especially ungrouped streams, can create quadratic intermediate joins. There are no silent caps, sampling, or truncation, and throughput has not been benchmarked. [Deterministic KQL fixtures](tests/fixtures/correlation/README.md) provide worked expected summaries and execution instructions; they are prepared fixtures, not evidence of live engine execution.
 
 ### 🔄 Pipeline & Backend Args (New in 0.2.0)
 
