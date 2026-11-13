@@ -328,13 +328,20 @@ class KustoBackend(TextQueryBackend):
         return re.sub(r"\\\*", r"*", converted)
 
     def convert_correlation_rule(self, rule, output_format=None, method=None):
+        if rule.type == SigmaCorrelationType.TEMPORAL_ORDERED:
+            raise SigmaConversionError(
+                rule, rule.source, "Ordered temporal correlations are not yet supported by Kusto."
+            )
         converters = {
             SigmaCorrelationType.EVENT_COUNT: self.convert_correlation_event_count_rule,
             SigmaCorrelationType.VALUE_COUNT: self.convert_correlation_value_count_rule,
+            SigmaCorrelationType.TEMPORAL: self.convert_correlation_temporal_rule,
         }
         if rule.type not in converters:
             raise SigmaConversionError(
-                rule, rule.source, "Kusto supports only event_count and value_count correlation rules."
+                rule,
+                rule.source,
+                "Kusto supports only event_count, value_count, and unordered temporal correlation rules.",
             )
         queries = converters[rule.type](rule, output_format, method or "default")
         rule.set_conversion_result(queries)
@@ -344,6 +351,9 @@ class KustoBackend(TextQueryBackend):
         return queries
 
     def convert_correlation_event_count_rule(self, rule, output_format=None, method="default"):
+        return self._convert_count_rule(rule)
+
+    def convert_correlation_temporal_rule(self, rule, output_format=None, method="default"):
         return self._convert_count_rule(rule)
 
     def convert_correlation_value_count_rule(self, rule, output_format=None, method="default"):
@@ -358,7 +368,9 @@ class KustoBackend(TextQueryBackend):
 
     def _convert_count_rule(self, rule, counted_fields=None):
         count_type = rule.type.name.lower()
-        if counted_fields is None:
+        if rule.type == SigmaCorrelationType.TEMPORAL:
+            metrics = ["RuleCount"]
+        elif counted_fields is None:
             metrics = ["EventCount"]
         elif len(counted_fields) == 1:
             metrics = ["ValueCount"]
@@ -386,7 +398,7 @@ class KustoBackend(TextQueryBackend):
             SigmaCorrelationConditionOperator.EQ: "==",
             SigmaCorrelationConditionOperator.NEQ: "!=",
         }
-        query_operator = condition_operators.get(rule.condition.op)
+        query_operator = condition_operators.get(rule.condition.op) if rule.condition is not None else ">="
         if query_operator is None:
             raise SigmaConversionError(
                 rule,
@@ -428,6 +440,7 @@ class KustoBackend(TextQueryBackend):
         return queries, states
 
     def _convert_count(self, rule, timestamp_field, query_operator, counted_fields, metrics):
+        temporal = rule.type == SigmaCorrelationType.TEMPORAL
         source_fields = {timestamp_field, *(rule.group_by or []), *(counted_fields or [])}
         for alias in rule.aliases:
             source_fields.add(alias.alias)
@@ -443,6 +456,15 @@ class KustoBackend(TextQueryBackend):
                 )
             for state in states:
                 source_fields.update(state.processing_state.get("kusto_source_fields", ()))
+
+        threshold = rule.condition.count if rule.condition is not None else len(rule.rules)
+        original_correlation = rule.custom_attributes.get("correlation")
+        if temporal and (
+            rule.condition is None or original_correlation is not None and original_correlation.get("condition") is None
+        ):
+            # pySigma supplies a default >= list length. Repeated references to
+            # the same resolved source still represent only one rule type.
+            threshold = len({id(reference.rule) for reference in rule.rules})
 
         def allocate(name):
             candidate = name
@@ -460,7 +482,9 @@ class KustoBackend(TextQueryBackend):
             "weight": allocate("_sigma_weight"),
             "window_end": allocate("_sigma_window_end"),
             "bin": allocate("_sigma_bin"),
-            "weights": allocate("_sigma_weights" if counted_fields is None else "_sigma_values"),
+            "weights": allocate(
+                "_sigma_types" if temporal else "_sigma_weights" if counted_fields is None else "_sigma_values"
+            ),
         }
         if counted_fields is not None:
             columns["values"] = [
@@ -501,7 +525,13 @@ class KustoBackend(TextQueryBackend):
                 *metrics,
             ]
         )
-        if counted_fields is None:
+        if temporal:
+            # One retained rule identity per timestamp/group is sufficient for
+            # exact type counts; repetitions never become additional types.
+            preaggregate = f"| summarize by {weighted_fields}, {columns['rule']}"
+            distinct_anchors = "| distinct *\n"
+            aggregates = [f"RuleCount = count_distinctif({columns['rule']}, isnotempty({columns['rule']}))"]
+        elif counted_fields is None:
             preaggregate = f"| summarize {weight} = count() by {weighted_fields}"
             distinct_anchors = ""
             aggregates = [f"EventCount = sum({weight})"]
@@ -515,7 +545,7 @@ class KustoBackend(TextQueryBackend):
                 f"{metric} = count_distinctif({value}, isnotempty({value}))"
                 for metric, value in zip(metrics, columns["values"])
             ]
-        comparisons = " and ".join(f"{metric} {query_operator} {rule.condition.count}" for metric in metrics)
+        comparisons = " and ".join(f"{metric} {query_operator} {threshold}" for metric in metrics)
         # Bins only prune candidate pairs: a contribution belongs to its own bin
         # and the following anchor bin. Actual timestamps determine membership.
         return [
@@ -544,18 +574,27 @@ class KustoBackend(TextQueryBackend):
         def map_field(field):
             return mappings.get_field_mapping(table, field) if mappings is not None else field
 
+        def map_alias(field):
+            if field not in aliases.aliases:
+                return field
+            alias = aliases.aliases[field]
+            # A name and UUID may resolve to the same source rule even though
+            # pySigma's references compare by their original spelling.
+            return alias.mapping.get(
+                rule_reference,
+                next(
+                    (name for reference, name in alias.mapping.items() if reference.rule is rule_reference.rule), field
+                ),
+            )
+
         timestamp_field = map_field(self.backend_options["correlation_timestamp_field"])
         columns = self._correlation_columns
         fields = [f"{columns['timestamp']} = todatetime({self._quote_correlation_field(timestamp_field)})"]
         for index, field in enumerate(self._correlation_group_by):
-            if field in aliases.aliases:
-                field = aliases.aliases[field].mapping.get(rule_reference, field)
-            mapped_field = map_field(field)
+            mapped_field = map_field(map_alias(field))
             fields.append(f"{columns['groups'][index]} = tostring({self._quote_correlation_field(mapped_field)})")
         for index, counted_field in enumerate(self._correlation_counted_fields):
-            if counted_field in aliases.aliases:
-                counted_field = aliases.aliases[counted_field].mapping.get(rule_reference, counted_field)
-            mapped_field = map_field(counted_field)
+            mapped_field = map_field(map_alias(counted_field))
             fields.append(f"{columns['values'][index]} = tostring({self._quote_correlation_field(mapped_field)})")
         return _CorrelationNormalization("\n| extend " + ", ".join(fields), columns["rule"])
 

@@ -88,6 +88,208 @@ def value_count_correlation(*, field="User", group_by=(), condition="gte: 2", ge
     )
 
 
+def temporal_correlation(*, group_by=(), condition=None, generate=False):
+    correlation = event_count_correlation(group_by=group_by, condition=condition or "gte: 1", generate=generate)
+    correlation = correlation.replace("type: event_count", "type: temporal")
+    return correlation if condition is not None else correlation.replace("  condition:\n    gte: 1\n", "")
+
+
+def temporal_collection(*, condition=None, third_source=True, **kwargs):
+    documents = [rule.to_dict() for rule in multi_rule_collection(**kwargs).rules]
+    correlation = documents.pop()
+    correlation["correlation"]["type"] = "temporal"
+    correlation["correlation"].pop("condition")
+    if condition is not None:
+        correlation["correlation"]["condition"] = condition
+    if third_source:
+        documents.append(
+            {
+                **documents[0],
+                "title": "Third source rule",
+                "name": "third-rule",
+                "id": "33333333-3333-3333-3333-333333333333",
+            }
+        )
+        correlation["correlation"]["rules"].append("third-rule")
+    return SigmaCollection.from_yaml(yaml.safe_dump_all([*documents, correlation]))
+
+
+def test_temporal_defaults_to_all_source_types_in_exact_event_driven_windows():
+    backend = KustoBackend(
+        processing_pipeline=microsoft_365_defender_pipeline(), correlation_timestamp_field="Timestamp"
+    )
+
+    (query,) = backend.convert(temporal_collection())
+
+    assert '| extend _sigma_rule = "source-rule"' in query
+    assert '| extend _sigma_rule = "other-rule"' in query
+    assert '| extend _sigma_rule = "third-rule"' in query
+    assert "| where isnotnull(_sigma_timestamp)\n| summarize by _sigma_timestamp, _sigma_rule;\n" in query
+    assert (
+        "| project _sigma_window_end = _sigma_timestamp, _sigma_bin = bin(_sigma_timestamp, 5m)\n"
+        "| distinct *\n| join kind=inner (\n"
+    ) in query
+    assert "| where _sigma_timestamp between ((_sigma_window_end - 5m) .. _sigma_window_end)\n" in query
+    assert (
+        "| summarize RuleCount = count_distinctif(_sigma_rule, isnotempty(_sigma_rule)) by _sigma_window_end\n" in query
+    )
+    assert "| where RuleCount >= 3\n" in query
+    assert query.endswith("| project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, RuleCount")
+
+
+@pytest.mark.parametrize(
+    ("operator", "query_operator"),
+    [("gt", ">"), ("gte", ">="), ("lt", "<"), ("lte", "<="), ("eq", "=="), ("neq", "!=")],
+)
+def test_temporal_explicit_conditions_compare_distinct_types_without_requiring_all(operator, query_operator):
+    backend = KustoBackend(
+        processing_pipeline=microsoft_365_defender_pipeline(), correlation_timestamp_field="Timestamp"
+    )
+
+    (query,) = backend.convert(temporal_collection(condition={operator: 2}))
+
+    assert f"| where RuleCount {query_operator} 2\n" in query
+    assert "RuleCount >= 3" not in query
+    assert "RuleCount = count_distinctif(_sigma_rule, isnotempty(_sigma_rule))" in query
+    assert "make_set(" not in query
+    assert "dcount(" not in query
+
+
+@pytest.mark.parametrize(("condition", "threshold"), [(None, 1), ({"gte": 2}, 2)])
+def test_temporal_repeated_references_are_one_type_but_do_not_change_explicit_thresholds(condition, threshold):
+    correlation = temporal_correlation(condition="gte: 2" if condition else None).replace(
+        "    - source-rule", "    - source-rule\n    - 11111111-1111-1111-1111-111111111111"
+    )
+    backend = KustoBackend(
+        processing_pipeline=microsoft_365_defender_pipeline(), correlation_timestamp_field="Timestamp"
+    )
+
+    (query,) = backend.convert(correlation_collection(correlation))
+
+    assert query.count('| extend _sigma_rule = "source-rule"') == 2
+    assert f"| where RuleCount >= {threshold}\n" in query
+
+
+@pytest.mark.parametrize(
+    ("correlation_rule", "metric"),
+    [
+        (event_count_correlation, "EventCount"),
+        (value_count_correlation, "ValueCount"),
+        (temporal_correlation, "RuleCount"),
+    ],
+)
+def test_correlation_aliases_resolve_rule_identity_across_name_and_id_references(correlation_rule, metric):
+    kwargs = {"field": "Actor"} if correlation_rule is value_count_correlation else {}
+    correlation = correlation_rule(group_by=("Actor",), **kwargs).replace(
+        "    - source-rule", "    - 11111111-1111-1111-1111-111111111111"
+    )
+    correlation += "  aliases:\n    Actor:\n      source-rule: User\n"
+    backend = KustoBackend(
+        processing_pipeline=microsoft_365_defender_pipeline(), correlation_timestamp_field="Timestamp"
+    )
+
+    (query,) = backend.convert(correlation_collection(correlation))
+
+    assert '_sigma_group_0 = tostring(["AccountName"])' in query
+    assert query.endswith(f'["Actor"] = _sigma_group_0, {metric}')
+    if correlation_rule is value_count_correlation:
+        assert '_sigma_value = tostring(["AccountName"])' in query
+
+
+def test_temporal_maps_group_aliases_and_timestamps_for_all_searches_across_tables():
+    collection = temporal_collection(
+        third_source=False,
+        source_conditions="[selection, alternate]",
+        other_source_conditions=["selection", "selection"],
+        group_by=("Host", "User"),
+        aliases="  aliases:\n    Host:\n      source-rule: Computer\n      other-rule: SourceComputer\n",
+    )
+    pipeline = microsoft_365_defender_pipeline()
+    pipeline.vars["kusto_field_mappings"] = FieldMappings(
+        table_mappings={
+            "DeviceProcessEvents": {"EventTime": "ProcessTime", "Computer": "ProcessHost", "User": "ProcessUser"},
+            "DeviceNetworkEvents": {"EventTime": "NetworkTime", "SourceComputer": "NetworkHost", "User": "NetworkUser"},
+        }
+    )
+
+    (query,) = KustoBackend(processing_pipeline=pipeline, correlation_timestamp_field="EventTime").convert(collection)
+
+    assert query.count("(DeviceProcessEvents\n| where ") == 2
+    assert query.count("(DeviceNetworkEvents\n| where ") == 2
+    assert (
+        query.count(
+            'todatetime(["ProcessTime"]), _sigma_group_0 = tostring(["ProcessHost"]), _sigma_group_1 = tostring(["ProcessUser"])'
+        )
+        == 2
+    )
+    assert (
+        query.count(
+            'todatetime(["NetworkTime"]), _sigma_group_0 = tostring(["NetworkHost"]), _sigma_group_1 = tostring(["NetworkUser"])'
+        )
+        == 2
+    )
+    assert (
+        "| where isnotnull(_sigma_timestamp) and isnotempty(_sigma_group_0) and isnotempty(_sigma_group_1)\n" in query
+    )
+    assert "| summarize by _sigma_timestamp, _sigma_group_0, _sigma_group_1, _sigma_rule;" in query
+    assert ") on _sigma_group_0, _sigma_group_1, _sigma_bin\n" in query
+    assert (
+        "| summarize RuleCount = count_distinctif(_sigma_rule, isnotempty(_sigma_rule)) by _sigma_window_end, _sigma_group_0, _sigma_group_1\n"
+        in query
+    )
+    assert query.endswith('["Host"] = _sigma_group_0, ["User"] = _sigma_group_1, RuleCount')
+
+
+@pytest.mark.parametrize("named", [True, False])
+def test_temporal_preserves_colliding_source_columns_escaped_identity_and_standalone_searches(named):
+    collection = correlation_collection(temporal_correlation(generate=True), source_conditions="[selection, alternate]")
+    documents = [rule.to_dict() for rule in collection.rules]
+    source = documents[0]
+    source["fields"] = ["_sigma_timestamp", "_sigma_rule", "_sigma_rule_1", "_sigma_types"]
+    if named:
+        source["name"] = 'source"rule'
+        identity = 'source\\"rule'
+    else:
+        source.pop("name")
+        identity = source["id"]
+    documents[-1]["correlation"]["rules"] = [source["id"]]
+    documents[-1]["correlation"]["generate"] = True
+    backend = KustoBackend(
+        processing_pipeline=microsoft_365_defender_pipeline(), correlation_timestamp_field="Timestamp"
+    )
+
+    *standalone, query = backend.convert(SigmaCollection.from_yaml(yaml.safe_dump_all(documents)))
+
+    assert len(standalone) == 2
+    assert standalone[0] == 'DeviceProcessEvents\n| where ProcessCommandLine =~ "suspicious.exe"'
+    assert query.startswith("let _sigma_types_1 = union ")
+    assert query.count('_sigma_timestamp_1 = todatetime(["Timestamp"])') == 2
+    assert query.count(f'| extend _sigma_rule_2 = "{identity}"') == 2
+    assert "| summarize by _sigma_timestamp_1, _sigma_rule_2;" in query
+    assert "RuleCount = count_distinctif(_sigma_rule_2, isnotempty(_sigma_rule_2))" in query
+
+
+@pytest.mark.parametrize("group", ["WindowStart", "WindowEnd", "RuleCount"])
+def test_temporal_rejects_group_names_that_collide_with_results(group):
+    backend = KustoBackend(
+        processing_pipeline=microsoft_365_defender_pipeline(), correlation_timestamp_field="Timestamp"
+    )
+
+    with pytest.raises(SigmaError, match="grouping fields conflict with result columns"):
+        backend.convert(correlation_collection(temporal_correlation(group_by=(group,))))
+
+
+def test_ordered_temporal_remains_clearly_unsupported():
+    backend = KustoBackend(
+        processing_pipeline=microsoft_365_defender_pipeline(), correlation_timestamp_field="Timestamp"
+    )
+
+    with pytest.raises(SigmaError, match="Ordered temporal correlations are not yet supported"):
+        backend.convert(
+            correlation_collection(temporal_correlation().replace("type: temporal", "type: temporal_ordered"))
+        )
+
+
 def test_value_count_retains_values_for_exact_window_wide_counts_and_missing_value_anchors():
     backend = KustoBackend(
         processing_pipeline=microsoft_365_defender_pipeline(), correlation_timestamp_field="Timestamp"
@@ -427,9 +629,13 @@ def test_event_count_uses_exact_inclusive_windows_at_distinct_event_timestamps()
         ("different-tables", "same mapped query table"),
     ],
 )
-@pytest.mark.parametrize("counted_field", [None, "User"])
+@pytest.mark.parametrize("counted_field", [None, "User", "temporal"])
 def test_count_correlations_reject_invalid_source_conversion_state(invalid_state, error, counted_field):
-    collection = multi_rule_collection(source_conditions="[selection, alternate]", counted_field=counted_field)
+    collection = (
+        temporal_collection(third_source=False, source_conditions="[selection, alternate]")
+        if counted_field == "temporal"
+        else multi_rule_collection(source_conditions="[selection, alternate]", counted_field=counted_field)
+    )
     backend = KustoBackend(
         processing_pipeline=microsoft_365_defender_pipeline(),
         correlation_timestamp_field="Timestamp",
@@ -637,7 +843,7 @@ def test_event_count_correlation_rejects_unpaired_source_query_states():
         )
 
 
-@pytest.mark.parametrize("correlation", [event_count_correlation, value_count_correlation])
+@pytest.mark.parametrize("correlation", [event_count_correlation, value_count_correlation, temporal_correlation])
 def test_count_correlations_require_timestamp_option(correlation):
     backend = KustoBackend(processing_pipeline=microsoft_365_defender_pipeline())
 
@@ -646,7 +852,7 @@ def test_count_correlations_require_timestamp_option(correlation):
 
 
 @pytest.mark.parametrize("span", ["0m", "-5m"])
-@pytest.mark.parametrize("correlation_rule", [event_count_correlation, value_count_correlation])
+@pytest.mark.parametrize("correlation_rule", [event_count_correlation, value_count_correlation, temporal_correlation])
 def test_count_correlations_require_a_positive_timespan(span, correlation_rule):
     backend = KustoBackend(
         processing_pipeline=microsoft_365_defender_pipeline(), correlation_timestamp_field="Timestamp"
@@ -681,7 +887,7 @@ def test_event_count_rejects_group_names_that_collide_with_result_metrics(group)
         backend.convert(correlation_collection(event_count_correlation(group_by=(group,))))
 
 
-@pytest.mark.parametrize("parent_rule", [event_count_correlation, value_count_correlation])
+@pytest.mark.parametrize("parent_rule", [event_count_correlation, value_count_correlation, temporal_correlation])
 def test_count_correlations_reject_chained_sources_until_chaining_is_supported(parent_rule):
     child = event_count_correlation().replace("correlation:", "name: child-correlation\ncorrelation:")
     parent = parent_rule().replace("source-rule", "child-correlation")
@@ -706,7 +912,7 @@ def test_count_correlations_reject_chained_sources_until_chaining_is_supported(p
     "correlation",
     [
         """correlation:
-  type: temporal
+  type: temporal_ordered
   rules:
     - source-rule
   timespan: 5m
