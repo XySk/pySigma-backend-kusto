@@ -13,7 +13,7 @@ from sigma.conditions import (
 from sigma.conversion.base import TextQueryBackend
 from sigma.conversion.deferred import DeferredQueryExpression
 from sigma.conversion.state import ConversionState
-from sigma.correlations import SigmaCorrelationConditionOperator, SigmaCorrelationType
+from sigma.correlations import SigmaCorrelationConditionOperator, SigmaCorrelationRule, SigmaCorrelationType
 from sigma.exceptions import SigmaConversionError
 from sigma.types import SigmaCompareExpression, SigmaNumber, SigmaString, SpecialChars
 
@@ -338,6 +338,16 @@ class KustoBackend(TextQueryBackend):
         return queries
 
     def convert_correlation_event_count_rule(self, rule, output_format=None, method="default"):
+        if rule.timespan.seconds <= 0:
+            raise SigmaConversionError(rule, rule.source, "Kusto correlations require a positive timespan.")
+        conflicting_fields = {"WindowStart", "WindowEnd", "EventCount"}.intersection(rule.group_by or [])
+        if conflicting_fields:
+            raise SigmaConversionError(
+                rule,
+                rule.source,
+                "Kusto event_count grouping fields conflict with result columns: "
+                + ", ".join(sorted(conflicting_fields)),
+            )
         if not rule.rules:
             raise SigmaConversionError(
                 rule, rule.source, "Kusto event_count correlations must reference at least one source rule."
@@ -372,6 +382,8 @@ class KustoBackend(TextQueryBackend):
     def _validate_event_count_source(rule, source_rule):
         if source_rule is None:
             raise SigmaConversionError(rule, rule.source, "Kusto event_count source rule reference is unresolved.")
+        if isinstance(source_rule, SigmaCorrelationRule):
+            raise SigmaConversionError(rule, rule.source, "Chained correlation sources are not yet supported by Kusto.")
         queries = source_rule.get_conversion_result()
         states = source_rule.get_conversion_states()
         if not queries or not states:
@@ -418,6 +430,10 @@ class KustoBackend(TextQueryBackend):
             "timestamp": allocate("_sigma_timestamp"),
             "rule": allocate("_sigma_rule"),
             "groups": [allocate(f"_sigma_group_{index}") for index in range(len(rule.group_by or []))],
+            "weight": allocate("_sigma_weight"),
+            "window_end": allocate("_sigma_window_end"),
+            "bin": allocate("_sigma_bin"),
+            "weights": allocate("_sigma_weights"),
         }
         self._correlation_group_by = rule.group_by or []
         self._correlation_columns = columns
@@ -426,13 +442,47 @@ class KustoBackend(TextQueryBackend):
         finally:
             del self._correlation_group_by
             del self._correlation_columns
-        summarize_fields = [
-            f"WindowStart = bin({columns['timestamp']}, {rule.timespan.spec})",
-            *columns["groups"],
-        ]
+        timestamp, weight, window_end, time_bin, weights = (
+            columns[name] for name in ("timestamp", "weight", "window_end", "bin", "weights")
+        )
+        groups = columns["groups"]
+        # Sigma's weeks, months, and years have fixed second lengths. Kusto
+        # timespan literals do not accept those units.
+        span = rule.timespan.spec if rule.timespan.unit in "smhd" else f"{rule.timespan.seconds}s"
+        valid_rows = " and ".join([f"isnotnull({timestamp})", *(f"isnotempty({field})" for field in groups)])
+        weighted_fields = ", ".join([timestamp, *groups])
+        anchor_fields = ", ".join([*groups, f"{window_end} = {timestamp}", f"{time_bin} = bin({timestamp}, {span})"])
+        join_fields = ", ".join([*groups, time_bin])
+        summary_fields = ", ".join([window_end, *groups])
+        result_fields = ", ".join(
+            [
+                f"WindowStart = {window_end} - {span}",
+                f"WindowEnd = {window_end}",
+                *(
+                    f"{self._quote_correlation_field(field)} = {column}"
+                    for field, column in zip(rule.group_by or [], groups)
+                ),
+                "EventCount",
+            ]
+        )
+        # Each exact timestamp is one evaluation anchor, with all simultaneous
+        # source matches retained in its weight. Bins only prune candidate pairs:
+        # a contribution belongs to its own bin and the following anchor bin.
         return [
-            f"{search}\n| summarize EventCount = count() by {', '.join(summarize_fields)}\n"
-            f"| where EventCount {query_operator} {rule.condition.count}"
+            f"let {weights} = {search}\n"
+            f"| where {valid_rows}\n"
+            f"| summarize {weight} = count() by {weighted_fields};\n"
+            f"{weights}\n"
+            f"| project {anchor_fields}\n"
+            f"| join kind=inner (\n"
+            f"    {weights}\n"
+            f"    | extend {time_bin} = pack_array(bin({timestamp}, {span}), bin({timestamp}, {span}) + {span})\n"
+            f"    | mv-expand {time_bin} to typeof(datetime)\n"
+            f") on {join_fields}\n"
+            f"| where {timestamp} between (({window_end} - {span}) .. {window_end})\n"
+            f"| summarize EventCount = sum({weight}) by {summary_fields}\n"
+            f"| where EventCount {query_operator} {rule.condition.count}\n"
+            f"| project {result_fields}"
         ]
 
     def convert_correlation_search_field_normalization_expression(self, aliases, rule_reference):
@@ -456,4 +506,3 @@ class KustoBackend(TextQueryBackend):
     @staticmethod
     def _quote_correlation_field(field):
         return "[" + json.dumps(field, ensure_ascii=False) + "]"
-
