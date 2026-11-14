@@ -989,30 +989,6 @@ def test_event_count_rejects_group_names_that_collide_with_result_metrics(group)
         backend.convert(correlation_collection(event_count_correlation(group_by=(group,))))
 
 
-@pytest.mark.parametrize(
-    "parent_rule",
-    [value_count_correlation, temporal_correlation, ordered_temporal_correlation],
-)
-def test_count_correlations_reject_chained_sources_until_chaining_is_supported(parent_rule):
-    child = event_count_correlation().replace("correlation:", "name: child-correlation\ncorrelation:")
-    parent = parent_rule().replace("source-rule", "child-correlation")
-    collection = SigmaCollection.from_yaml(
-        "---\n".join(
-            [
-                yaml.safe_dump(correlation_collection(event_count_correlation()).rules[0].to_dict()),
-                "title: Child\n" + child,
-                "title: Parent\n" + parent,
-            ]
-        )
-    )
-    backend = KustoBackend(
-        processing_pipeline=microsoft_365_defender_pipeline(), correlation_timestamp_field="Timestamp"
-    )
-
-    with pytest.raises(SigmaError, match="Chained correlation sources are not yet supported"):
-        backend.convert(collection)
-
-
 def chained_event_count_collection(
     *, child_groups=(), parent_groups=(), child_generate=False, parent_generate=False, parent_condition="gte: 2"
 ):
@@ -1159,19 +1135,6 @@ def test_event_count_chain_applies_parent_comparisons_after_counting_child_summa
         f"| summarize EventCount = sum(_sigma_weight) by _sigma_window_end\n| where EventCount {query_operator} 2\n"
         in query
     )
-
-
-@pytest.mark.parametrize("child_rule", [value_count_correlation, temporal_correlation, ordered_temporal_correlation])
-def test_event_count_parent_rejects_non_event_count_child_types_until_next_slice(child_rule):
-    source = correlation_collection(event_count_correlation()).rules[0].to_dict()
-    child = "title: Child\nname: child-correlation\n" + child_rule()
-    parent = "title: Parent\n" + event_count_correlation().replace("source-rule", "child-correlation")
-    backend = KustoBackend(
-        processing_pipeline=microsoft_365_defender_pipeline(), correlation_timestamp_field="Timestamp"
-    )
-
-    with pytest.raises(SigmaError, match="only event_count parents consuming event_count children"):
-        backend.convert(SigmaCollection.from_yaml(yaml.safe_dump(source) + "---\n" + child + "---\n" + parent))
 
 
 @pytest.mark.parametrize(

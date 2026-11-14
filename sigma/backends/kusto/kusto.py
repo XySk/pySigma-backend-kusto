@@ -413,6 +413,13 @@ class KustoBackend(TextQueryBackend):
 
         queries = self._convert_count(rule, timestamp_field, query_operator, counted_fields, metrics)
         result_fields = {"WindowStart", "WindowEnd", *(rule.group_by or []), *metrics}
+        source_tables = set().union(
+            *(
+                self._correlation_source_tables(state)
+                for reference in rule.rules
+                for state in reference.rule.get_conversion_states()
+            )
+        )
         # Summaries expose their result columns, independent of source tables
         # and the pipeline mappings that produced their underlying events.
         rule.set_conversion_states(
@@ -422,6 +429,7 @@ class KustoBackend(TextQueryBackend):
                         "kusto_result_fields": result_fields.copy(),
                         "kusto_source_fields": result_fields.copy(),
                         "kusto_result_timestamp": "WindowEnd",
+                        "kusto_source_tables": source_tables.copy(),
                     }
                 )
                 for _ in queries
@@ -430,20 +438,20 @@ class KustoBackend(TextQueryBackend):
         return queries
 
     @staticmethod
+    def _correlation_source_tables(state):
+        # These identities only reserve query-binding names. They never supply
+        # a child's table, mappings, timestamp, or returned field schema.
+        tables = set(state.processing_state.get("kusto_source_tables", ()))
+        if table := state.processing_state.get("query_table"):
+            tables.add(table)
+        return tables
+
+    @staticmethod
     def _validate_count_source(rule, source_rule):
         count_type = rule.type.name.lower()
         if source_rule is None:
             raise SigmaConversionError(rule, rule.source, f"Kusto {count_type} source rule reference is unresolved.")
         child = isinstance(source_rule, SigmaCorrelationRule)
-        if child and (
-            rule.type != SigmaCorrelationType.EVENT_COUNT or source_rule.type != SigmaCorrelationType.EVENT_COUNT
-        ):
-            raise SigmaConversionError(
-                rule,
-                rule.source,
-                "Chained correlation sources are not yet supported for this combination by Kusto; "
-                "only event_count parents consuming event_count children are supported.",
-            )
         queries = source_rule.get_conversion_result()
         states = source_rule.get_conversion_states()
         if not queries or not states:
@@ -522,6 +530,7 @@ class KustoBackend(TextQueryBackend):
                 )
             for state in states:
                 source_fields.update(state.processing_state.get("kusto_source_fields", ()))
+                source_fields.update(self._correlation_source_tables(state))
 
         threshold = rule.condition.count if rule.condition is not None else len(rule.rules)
         original_correlation = rule.custom_attributes.get("correlation")
@@ -602,7 +611,10 @@ class KustoBackend(TextQueryBackend):
         valid_rows = " and ".join([f"isnotnull({timestamp})", *(f"isnotempty({field})" for field in groups)])
         weighted_fields = ", ".join([timestamp, *groups])
         if ordered:
-            return self._convert_ordered_temporal(rule, search, columns, valid_rows, span, source_type_count)
+            return [
+                definitions + query
+                for query in self._convert_ordered_temporal(rule, search, columns, valid_rows, span, source_type_count)
+            ]
         anchor_fields = ", ".join([*groups, f"{window_end} = {timestamp}", f"{time_bin} = bin({timestamp}, {span})"])
         join_fields = ", ".join([*groups, time_bin])
         summary_fields = ", ".join([window_end, *groups])
