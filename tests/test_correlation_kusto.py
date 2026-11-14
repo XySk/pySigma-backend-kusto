@@ -207,7 +207,7 @@ def test_correlation_aliases_resolve_rule_identity_across_name_and_id_references
     assert '_sigma_group_0 = tostring(["AccountName"])' in query
     assert query.endswith(f'["Actor"] = _sigma_group_0, {metric}')
     if correlation_rule is value_count_correlation:
-        assert '_sigma_value = tostring(["AccountName"])' in query
+        assert '_sigma_value = pack_array(gettype(["AccountName"]), ["AccountName"])' in query
 
 
 @pytest.mark.parametrize("ordered", [False, True])
@@ -384,6 +384,35 @@ def test_ordered_temporal_repeated_list_positions_require_separate_later_matches
     assert query.endswith("RuleCount = tolong(1)")
 
 
+def test_value_count_preserves_typed_dynamic_identity_before_exact_distinct_aggregation():
+    pipeline = ProcessingPipeline.from_dict(
+        {"transformations": [{"type": "set_state", "key": "query_table", "val": "Events"}]}
+    )
+    backend = KustoBackend(processing_pipeline=pipeline, correlation_timestamp_field="Timestamp")
+
+    (query,) = backend.convert(correlation_collection(value_count_correlation(field="Value")))
+
+    # dynamic(1) and dynamic("1") must remain distinct, including when JSON
+    # serialization collides for extended types nested in arrays or bags.
+    assert '_sigma_value = pack_array(gettype(["Value"]), ["Value"])' in query
+    assert 'strcat("0:", tostring(_sigma_value[0]))' in query
+    assert "_sigma_value == _sigma_other_value" in query
+    assert "_sigma_value = minif(_sigma_other_id, isnotempty(tostring(_sigma_value[1]))" in query
+    assert "ValueCount = count_distinctif(_sigma_value, isnotempty(_sigma_value))" in query
+
+
+def test_value_count_treats_repeated_real_nan_as_one_typed_value():
+    pipeline = ProcessingPipeline.from_dict(
+        {"transformations": [{"type": "set_state", "key": "query_table", "val": "Events"}]}
+    )
+    backend = KustoBackend(processing_pipeline=pipeline, correlation_timestamp_field="Timestamp")
+
+    (query,) = backend.convert(correlation_collection(value_count_correlation(field="Value")))
+
+    assert 'tostring(_sigma_value[0]) == "real" and tostring(_sigma_other_value[0]) == "real"' in query
+    assert "isnan(toreal(_sigma_value[1])) and isnan(toreal(_sigma_other_value[1]))" in query
+
+
 def test_value_count_retains_values_for_exact_window_wide_counts_and_missing_value_anchors():
     backend = KustoBackend(
         processing_pipeline=microsoft_365_defender_pipeline(), correlation_timestamp_field="Timestamp"
@@ -391,7 +420,7 @@ def test_value_count_retains_values_for_exact_window_wide_counts_and_missing_val
 
     (query,) = backend.convert(correlation_collection(value_count_correlation(condition="eq: 0")))
 
-    assert '_sigma_value = tostring(["AccountName"])' in query
+    assert '_sigma_value = pack_array(gettype(["AccountName"]), ["AccountName"])' in query
     assert "| where isnotnull(_sigma_timestamp)\n| summarize by _sigma_timestamp, _sigma_value;" in query
     assert (
         "| project _sigma_window_end = _sigma_timestamp, _sigma_bin = bin(_sigma_timestamp, 5m)\n| distinct *\n"
@@ -426,7 +455,10 @@ def test_multi_field_value_count_requires_each_exact_count_and_retains_missing_v
         )
     )
 
-    assert '_sigma_value_0 = tostring(["AccountName"]), _sigma_value_1 = tostring(["Target"])' in query
+    assert (
+        '_sigma_value_0 = pack_array(gettype(["AccountName"]), ["AccountName"]), _sigma_value_1 = pack_array(gettype(["Target"]), ["Target"])'
+        in query
+    )
     assert (
         "| where isnotnull(_sigma_timestamp) and isnotempty(_sigma_group_0)\n"
         "| summarize by _sigma_timestamp, _sigma_group_0, _sigma_value_0, _sigma_value_1;\n"
@@ -477,8 +509,18 @@ def test_multi_field_value_count_maps_each_counted_alias_for_all_source_searches
 
     assert query.count("(DeviceProcessEvents\n| where ") == 2
     assert query.count("(DeviceNetworkEvents\n| where ") == 2
-    assert query.count('_sigma_value_0 = tostring(["ProcessUser"]), _sigma_value_1 = tostring(["ProcessTarget"])') == 2
-    assert query.count('_sigma_value_0 = tostring(["NetworkUser"]), _sigma_value_1 = tostring(["NetworkTarget"])') == 2
+    assert (
+        query.count(
+            '_sigma_value_0 = pack_array(gettype(["ProcessUser"]), ["ProcessUser"]), _sigma_value_1 = pack_array(gettype(["ProcessTarget"]), ["ProcessTarget"])'
+        )
+        == 2
+    )
+    assert (
+        query.count(
+            '_sigma_value_0 = pack_array(gettype(["NetworkUser"]), ["NetworkUser"]), _sigma_value_1 = pack_array(gettype(["NetworkTarget"]), ["NetworkTarget"])'
+        )
+        == 2
+    )
     assert query.count('todatetime(["ProcessTime"]), _sigma_group_0 = tostring(["ProcessHost"])') == 2
     assert query.count('todatetime(["NetworkTime"]), _sigma_group_0 = tostring(["NetworkHost"])') == 2
     assert query.count('| summarize ["ValueCount_Actor"]') == 1
@@ -496,10 +538,10 @@ def test_multi_field_value_count_quotes_metrics_and_preserves_colliding_source_c
     standalone, query = backend.convert(collection)
 
     assert standalone == 'DeviceProcessEvents\n| where ProcessCommandLine =~ "suspicious.exe"'
-    assert query.startswith("let _sigma_values_1 = union ")
-    assert '_sigma_value_0_1 = tostring(["Actor\'s \\"Name\\""])' in query
-    assert '_sigma_value_1_1 = tostring(["_sigma_value_0"])' in query
-    assert "| project " not in query.split("| summarize by")[0]
+    assert "let _sigma_values_1 = _sigma_value_identities\n" in query
+    assert '_sigma_value_0_1 = pack_array(gettype(["Actor\'s \\"Name\\""]), ["Actor\'s \\"Name\\""])' in query
+    assert '_sigma_value_1_1 = pack_array(gettype(["_sigma_value_0"]), ["_sigma_value_0"])' in query
+    assert "| project " not in query.split("| extend _sigma_timestamp")[0]
     assert (
         '["ValueCount_Actor\'s \\"Name\\""] = count_distinctif(_sigma_value_0_1, isnotempty(_sigma_value_0_1))' in query
     )
@@ -571,8 +613,8 @@ def test_value_count_maps_counted_and_grouping_aliases_per_source_table_and_reta
 
     assert query.count("(DeviceProcessEvents\n| where ") == 2
     assert query.count("(DeviceNetworkEvents\n| where ") == 1
-    assert query.count('_sigma_value = tostring(["ProcessUser"])') == 2
-    assert '_sigma_value = tostring(["NetworkUser"])' in query
+    assert query.count('_sigma_value = pack_array(gettype(["ProcessUser"]), ["ProcessUser"])') == 2
+    assert '_sigma_value = pack_array(gettype(["NetworkUser"]), ["NetworkUser"])' in query
     assert 'todatetime(["ProcessTime"]), _sigma_group_0 = tostring(["ProcessHost"])' in query
     assert 'todatetime(["NetworkTime"]), _sigma_group_0 = tostring(["NetworkHost"])' in query
     assert (
@@ -598,9 +640,9 @@ def test_single_source_value_count_aliases_quoted_counted_fields_without_overwri
 
     (query,) = backend.convert(collection)
 
-    assert query.startswith("let _sigma_values_1 = union ")
-    assert query.count('_sigma_value_1 = tostring(["Actor\'s \\"Name\\""])') == 2
-    assert "| project " not in query.split("| summarize by")[0]
+    assert "let _sigma_values_1 = _sigma_value_identities\n" in query
+    assert query.count('_sigma_value_1 = pack_array(gettype(["Actor\'s \\"Name\\""]), ["Actor\'s \\"Name\\""])') == 2
+    assert "| project " not in query.split("| extend _sigma_timestamp")[0]
     assert "| summarize by _sigma_timestamp_1, _sigma_value_1;" in query
     assert "count_distinctif(_sigma_value_1, isnotempty(_sigma_value_1)) by _sigma_window_end_1" in query
     assert "_sigma_bin_1 = bin(_sigma_timestamp_1, 5m)" in query
@@ -633,7 +675,7 @@ def test_value_count_accepts_a_single_field_list_and_preserves_source_generation
     standalone, query = backend.convert(correlation_collection(value_count_correlation(field="[User]", generate=True)))
 
     assert standalone == 'DeviceProcessEvents\n| where ProcessCommandLine =~ "suspicious.exe"'
-    assert '_sigma_value = tostring(["AccountName"])' in query
+    assert '_sigma_value = pack_array(gettype(["AccountName"]), ["AccountName"])' in query
 
 
 @pytest.mark.parametrize("group", ["WindowStart", "WindowEnd", "ValueCount"])

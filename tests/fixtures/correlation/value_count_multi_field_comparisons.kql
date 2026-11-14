@@ -22,10 +22,24 @@ let Events = datatable(Timestamp:string, User:dynamic, Target:dynamic, Marker:st
     "invalid", dynamic("dave"), dynamic("D"), "match"
 ];
 let gt_2 = () {
-let _sigma_values = union (Events
+let _sigma_value_input = materialize(union (Events
 | where Marker =~ "match"
-| extend _sigma_timestamp = todatetime(["Timestamp"]), _sigma_value_0 = tostring(["User"]), _sigma_value_1 = tostring(["Target"])
+| extend _sigma_timestamp = todatetime(["Timestamp"]), _sigma_value_0 = pack_array(gettype(["User"]), ["User"]), _sigma_value_1 = pack_array(gettype(["Target"]), ["Target"])
 | extend _sigma_rule = "source-rule")
+| where isnotnull(_sigma_timestamp)
+| project _sigma_timestamp, _sigma_value_0, _sigma_value_1
+| serialize _sigma_value_id = row_number());
+let _sigma_value_identities = _sigma_value_input
+| extend _sigma_value_key = pack_array(strcat("0:", tostring(_sigma_value_0[0])), strcat("1:", tostring(_sigma_value_1[0])))
+| mv-expand _sigma_value_key to typeof(string)
+| join kind=inner (
+    _sigma_value_input
+    | extend _sigma_value_key = pack_array(strcat("0:", tostring(_sigma_value_0[0])), strcat("1:", tostring(_sigma_value_1[0])))
+    | mv-expand _sigma_value_key to typeof(string)
+    | project _sigma_value_key, _sigma_other_id = _sigma_value_id, _sigma_other_value_0 = _sigma_value_0, _sigma_other_value_1 = _sigma_value_1
+) on _sigma_value_key
+| summarize _sigma_timestamp = take_any(_sigma_timestamp), _sigma_value_0 = minif(_sigma_other_id, isnotempty(tostring(_sigma_value_0[1])) and (_sigma_value_id == _sigma_other_id or _sigma_value_0 == _sigma_other_value_0 or (tostring(_sigma_value_0[0]) == "real" and tostring(_sigma_other_value_0[0]) == "real" and isnan(toreal(_sigma_value_0[1])) and isnan(toreal(_sigma_other_value_0[1]))))), _sigma_value_1 = minif(_sigma_other_id, isnotempty(tostring(_sigma_value_1[1])) and (_sigma_value_id == _sigma_other_id or _sigma_value_1 == _sigma_other_value_1 or (tostring(_sigma_value_1[0]) == "real" and tostring(_sigma_other_value_1[0]) == "real" and isnan(toreal(_sigma_value_1[1])) and isnan(toreal(_sigma_other_value_1[1]))))) by _sigma_value_id;
+let _sigma_values = _sigma_value_identities
 | where isnotnull(_sigma_timestamp)
 | summarize by _sigma_timestamp, _sigma_value_0, _sigma_value_1;
 _sigma_values
@@ -42,10 +56,24 @@ _sigma_values
 | project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ["ValueCount_User"], ["ValueCount_Target"]
 };
 let gte_2 = () {
-let _sigma_values = union (Events
+let _sigma_value_input = materialize(union (Events
 | where Marker =~ "match"
-| extend _sigma_timestamp = todatetime(["Timestamp"]), _sigma_value_0 = tostring(["User"]), _sigma_value_1 = tostring(["Target"])
+| extend _sigma_timestamp = todatetime(["Timestamp"]), _sigma_value_0 = pack_array(gettype(["User"]), ["User"]), _sigma_value_1 = pack_array(gettype(["Target"]), ["Target"])
 | extend _sigma_rule = "source-rule")
+| where isnotnull(_sigma_timestamp)
+| project _sigma_timestamp, _sigma_value_0, _sigma_value_1
+| serialize _sigma_value_id = row_number());
+let _sigma_value_identities = _sigma_value_input
+| extend _sigma_value_key = pack_array(strcat("0:", tostring(_sigma_value_0[0])), strcat("1:", tostring(_sigma_value_1[0])))
+| mv-expand _sigma_value_key to typeof(string)
+| join kind=inner (
+    _sigma_value_input
+    | extend _sigma_value_key = pack_array(strcat("0:", tostring(_sigma_value_0[0])), strcat("1:", tostring(_sigma_value_1[0])))
+    | mv-expand _sigma_value_key to typeof(string)
+    | project _sigma_value_key, _sigma_other_id = _sigma_value_id, _sigma_other_value_0 = _sigma_value_0, _sigma_other_value_1 = _sigma_value_1
+) on _sigma_value_key
+| summarize _sigma_timestamp = take_any(_sigma_timestamp), _sigma_value_0 = minif(_sigma_other_id, isnotempty(tostring(_sigma_value_0[1])) and (_sigma_value_id == _sigma_other_id or _sigma_value_0 == _sigma_other_value_0 or (tostring(_sigma_value_0[0]) == "real" and tostring(_sigma_other_value_0[0]) == "real" and isnan(toreal(_sigma_value_0[1])) and isnan(toreal(_sigma_other_value_0[1]))))), _sigma_value_1 = minif(_sigma_other_id, isnotempty(tostring(_sigma_value_1[1])) and (_sigma_value_id == _sigma_other_id or _sigma_value_1 == _sigma_other_value_1 or (tostring(_sigma_value_1[0]) == "real" and tostring(_sigma_other_value_1[0]) == "real" and isnan(toreal(_sigma_value_1[1])) and isnan(toreal(_sigma_other_value_1[1]))))) by _sigma_value_id;
+let _sigma_values = _sigma_value_identities
 | where isnotnull(_sigma_timestamp)
 | summarize by _sigma_timestamp, _sigma_value_0, _sigma_value_1;
 _sigma_values
@@ -62,10 +90,24 @@ _sigma_values
 | project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ["ValueCount_User"], ["ValueCount_Target"]
 };
 let lt_2 = () {
-let _sigma_values = union (Events
+let _sigma_value_input = materialize(union (Events
 | where Marker =~ "match"
-| extend _sigma_timestamp = todatetime(["Timestamp"]), _sigma_value_0 = tostring(["User"]), _sigma_value_1 = tostring(["Target"])
+| extend _sigma_timestamp = todatetime(["Timestamp"]), _sigma_value_0 = pack_array(gettype(["User"]), ["User"]), _sigma_value_1 = pack_array(gettype(["Target"]), ["Target"])
 | extend _sigma_rule = "source-rule")
+| where isnotnull(_sigma_timestamp)
+| project _sigma_timestamp, _sigma_value_0, _sigma_value_1
+| serialize _sigma_value_id = row_number());
+let _sigma_value_identities = _sigma_value_input
+| extend _sigma_value_key = pack_array(strcat("0:", tostring(_sigma_value_0[0])), strcat("1:", tostring(_sigma_value_1[0])))
+| mv-expand _sigma_value_key to typeof(string)
+| join kind=inner (
+    _sigma_value_input
+    | extend _sigma_value_key = pack_array(strcat("0:", tostring(_sigma_value_0[0])), strcat("1:", tostring(_sigma_value_1[0])))
+    | mv-expand _sigma_value_key to typeof(string)
+    | project _sigma_value_key, _sigma_other_id = _sigma_value_id, _sigma_other_value_0 = _sigma_value_0, _sigma_other_value_1 = _sigma_value_1
+) on _sigma_value_key
+| summarize _sigma_timestamp = take_any(_sigma_timestamp), _sigma_value_0 = minif(_sigma_other_id, isnotempty(tostring(_sigma_value_0[1])) and (_sigma_value_id == _sigma_other_id or _sigma_value_0 == _sigma_other_value_0 or (tostring(_sigma_value_0[0]) == "real" and tostring(_sigma_other_value_0[0]) == "real" and isnan(toreal(_sigma_value_0[1])) and isnan(toreal(_sigma_other_value_0[1]))))), _sigma_value_1 = minif(_sigma_other_id, isnotempty(tostring(_sigma_value_1[1])) and (_sigma_value_id == _sigma_other_id or _sigma_value_1 == _sigma_other_value_1 or (tostring(_sigma_value_1[0]) == "real" and tostring(_sigma_other_value_1[0]) == "real" and isnan(toreal(_sigma_value_1[1])) and isnan(toreal(_sigma_other_value_1[1]))))) by _sigma_value_id;
+let _sigma_values = _sigma_value_identities
 | where isnotnull(_sigma_timestamp)
 | summarize by _sigma_timestamp, _sigma_value_0, _sigma_value_1;
 _sigma_values
@@ -82,10 +124,24 @@ _sigma_values
 | project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ["ValueCount_User"], ["ValueCount_Target"]
 };
 let lte_2 = () {
-let _sigma_values = union (Events
+let _sigma_value_input = materialize(union (Events
 | where Marker =~ "match"
-| extend _sigma_timestamp = todatetime(["Timestamp"]), _sigma_value_0 = tostring(["User"]), _sigma_value_1 = tostring(["Target"])
+| extend _sigma_timestamp = todatetime(["Timestamp"]), _sigma_value_0 = pack_array(gettype(["User"]), ["User"]), _sigma_value_1 = pack_array(gettype(["Target"]), ["Target"])
 | extend _sigma_rule = "source-rule")
+| where isnotnull(_sigma_timestamp)
+| project _sigma_timestamp, _sigma_value_0, _sigma_value_1
+| serialize _sigma_value_id = row_number());
+let _sigma_value_identities = _sigma_value_input
+| extend _sigma_value_key = pack_array(strcat("0:", tostring(_sigma_value_0[0])), strcat("1:", tostring(_sigma_value_1[0])))
+| mv-expand _sigma_value_key to typeof(string)
+| join kind=inner (
+    _sigma_value_input
+    | extend _sigma_value_key = pack_array(strcat("0:", tostring(_sigma_value_0[0])), strcat("1:", tostring(_sigma_value_1[0])))
+    | mv-expand _sigma_value_key to typeof(string)
+    | project _sigma_value_key, _sigma_other_id = _sigma_value_id, _sigma_other_value_0 = _sigma_value_0, _sigma_other_value_1 = _sigma_value_1
+) on _sigma_value_key
+| summarize _sigma_timestamp = take_any(_sigma_timestamp), _sigma_value_0 = minif(_sigma_other_id, isnotempty(tostring(_sigma_value_0[1])) and (_sigma_value_id == _sigma_other_id or _sigma_value_0 == _sigma_other_value_0 or (tostring(_sigma_value_0[0]) == "real" and tostring(_sigma_other_value_0[0]) == "real" and isnan(toreal(_sigma_value_0[1])) and isnan(toreal(_sigma_other_value_0[1]))))), _sigma_value_1 = minif(_sigma_other_id, isnotempty(tostring(_sigma_value_1[1])) and (_sigma_value_id == _sigma_other_id or _sigma_value_1 == _sigma_other_value_1 or (tostring(_sigma_value_1[0]) == "real" and tostring(_sigma_other_value_1[0]) == "real" and isnan(toreal(_sigma_value_1[1])) and isnan(toreal(_sigma_other_value_1[1]))))) by _sigma_value_id;
+let _sigma_values = _sigma_value_identities
 | where isnotnull(_sigma_timestamp)
 | summarize by _sigma_timestamp, _sigma_value_0, _sigma_value_1;
 _sigma_values
@@ -102,10 +158,24 @@ _sigma_values
 | project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ["ValueCount_User"], ["ValueCount_Target"]
 };
 let eq_2 = () {
-let _sigma_values = union (Events
+let _sigma_value_input = materialize(union (Events
 | where Marker =~ "match"
-| extend _sigma_timestamp = todatetime(["Timestamp"]), _sigma_value_0 = tostring(["User"]), _sigma_value_1 = tostring(["Target"])
+| extend _sigma_timestamp = todatetime(["Timestamp"]), _sigma_value_0 = pack_array(gettype(["User"]), ["User"]), _sigma_value_1 = pack_array(gettype(["Target"]), ["Target"])
 | extend _sigma_rule = "source-rule")
+| where isnotnull(_sigma_timestamp)
+| project _sigma_timestamp, _sigma_value_0, _sigma_value_1
+| serialize _sigma_value_id = row_number());
+let _sigma_value_identities = _sigma_value_input
+| extend _sigma_value_key = pack_array(strcat("0:", tostring(_sigma_value_0[0])), strcat("1:", tostring(_sigma_value_1[0])))
+| mv-expand _sigma_value_key to typeof(string)
+| join kind=inner (
+    _sigma_value_input
+    | extend _sigma_value_key = pack_array(strcat("0:", tostring(_sigma_value_0[0])), strcat("1:", tostring(_sigma_value_1[0])))
+    | mv-expand _sigma_value_key to typeof(string)
+    | project _sigma_value_key, _sigma_other_id = _sigma_value_id, _sigma_other_value_0 = _sigma_value_0, _sigma_other_value_1 = _sigma_value_1
+) on _sigma_value_key
+| summarize _sigma_timestamp = take_any(_sigma_timestamp), _sigma_value_0 = minif(_sigma_other_id, isnotempty(tostring(_sigma_value_0[1])) and (_sigma_value_id == _sigma_other_id or _sigma_value_0 == _sigma_other_value_0 or (tostring(_sigma_value_0[0]) == "real" and tostring(_sigma_other_value_0[0]) == "real" and isnan(toreal(_sigma_value_0[1])) and isnan(toreal(_sigma_other_value_0[1]))))), _sigma_value_1 = minif(_sigma_other_id, isnotempty(tostring(_sigma_value_1[1])) and (_sigma_value_id == _sigma_other_id or _sigma_value_1 == _sigma_other_value_1 or (tostring(_sigma_value_1[0]) == "real" and tostring(_sigma_other_value_1[0]) == "real" and isnan(toreal(_sigma_value_1[1])) and isnan(toreal(_sigma_other_value_1[1]))))) by _sigma_value_id;
+let _sigma_values = _sigma_value_identities
 | where isnotnull(_sigma_timestamp)
 | summarize by _sigma_timestamp, _sigma_value_0, _sigma_value_1;
 _sigma_values
@@ -122,10 +192,24 @@ _sigma_values
 | project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ["ValueCount_User"], ["ValueCount_Target"]
 };
 let neq_2 = () {
-let _sigma_values = union (Events
+let _sigma_value_input = materialize(union (Events
 | where Marker =~ "match"
-| extend _sigma_timestamp = todatetime(["Timestamp"]), _sigma_value_0 = tostring(["User"]), _sigma_value_1 = tostring(["Target"])
+| extend _sigma_timestamp = todatetime(["Timestamp"]), _sigma_value_0 = pack_array(gettype(["User"]), ["User"]), _sigma_value_1 = pack_array(gettype(["Target"]), ["Target"])
 | extend _sigma_rule = "source-rule")
+| where isnotnull(_sigma_timestamp)
+| project _sigma_timestamp, _sigma_value_0, _sigma_value_1
+| serialize _sigma_value_id = row_number());
+let _sigma_value_identities = _sigma_value_input
+| extend _sigma_value_key = pack_array(strcat("0:", tostring(_sigma_value_0[0])), strcat("1:", tostring(_sigma_value_1[0])))
+| mv-expand _sigma_value_key to typeof(string)
+| join kind=inner (
+    _sigma_value_input
+    | extend _sigma_value_key = pack_array(strcat("0:", tostring(_sigma_value_0[0])), strcat("1:", tostring(_sigma_value_1[0])))
+    | mv-expand _sigma_value_key to typeof(string)
+    | project _sigma_value_key, _sigma_other_id = _sigma_value_id, _sigma_other_value_0 = _sigma_value_0, _sigma_other_value_1 = _sigma_value_1
+) on _sigma_value_key
+| summarize _sigma_timestamp = take_any(_sigma_timestamp), _sigma_value_0 = minif(_sigma_other_id, isnotempty(tostring(_sigma_value_0[1])) and (_sigma_value_id == _sigma_other_id or _sigma_value_0 == _sigma_other_value_0 or (tostring(_sigma_value_0[0]) == "real" and tostring(_sigma_other_value_0[0]) == "real" and isnan(toreal(_sigma_value_0[1])) and isnan(toreal(_sigma_other_value_0[1]))))), _sigma_value_1 = minif(_sigma_other_id, isnotempty(tostring(_sigma_value_1[1])) and (_sigma_value_id == _sigma_other_id or _sigma_value_1 == _sigma_other_value_1 or (tostring(_sigma_value_1[0]) == "real" and tostring(_sigma_other_value_1[0]) == "real" and isnan(toreal(_sigma_value_1[1])) and isnan(toreal(_sigma_other_value_1[1]))))) by _sigma_value_id;
+let _sigma_values = _sigma_value_identities
 | where isnotnull(_sigma_timestamp)
 | summarize by _sigma_timestamp, _sigma_value_0, _sigma_value_1;
 _sigma_values
@@ -142,10 +226,24 @@ _sigma_values
 | project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ["ValueCount_User"], ["ValueCount_Target"]
 };
 let eq_0 = () {
-let _sigma_values = union (Events
+let _sigma_value_input = materialize(union (Events
 | where Marker =~ "match"
-| extend _sigma_timestamp = todatetime(["Timestamp"]), _sigma_value_0 = tostring(["User"]), _sigma_value_1 = tostring(["Target"])
+| extend _sigma_timestamp = todatetime(["Timestamp"]), _sigma_value_0 = pack_array(gettype(["User"]), ["User"]), _sigma_value_1 = pack_array(gettype(["Target"]), ["Target"])
 | extend _sigma_rule = "source-rule")
+| where isnotnull(_sigma_timestamp)
+| project _sigma_timestamp, _sigma_value_0, _sigma_value_1
+| serialize _sigma_value_id = row_number());
+let _sigma_value_identities = _sigma_value_input
+| extend _sigma_value_key = pack_array(strcat("0:", tostring(_sigma_value_0[0])), strcat("1:", tostring(_sigma_value_1[0])))
+| mv-expand _sigma_value_key to typeof(string)
+| join kind=inner (
+    _sigma_value_input
+    | extend _sigma_value_key = pack_array(strcat("0:", tostring(_sigma_value_0[0])), strcat("1:", tostring(_sigma_value_1[0])))
+    | mv-expand _sigma_value_key to typeof(string)
+    | project _sigma_value_key, _sigma_other_id = _sigma_value_id, _sigma_other_value_0 = _sigma_value_0, _sigma_other_value_1 = _sigma_value_1
+) on _sigma_value_key
+| summarize _sigma_timestamp = take_any(_sigma_timestamp), _sigma_value_0 = minif(_sigma_other_id, isnotempty(tostring(_sigma_value_0[1])) and (_sigma_value_id == _sigma_other_id or _sigma_value_0 == _sigma_other_value_0 or (tostring(_sigma_value_0[0]) == "real" and tostring(_sigma_other_value_0[0]) == "real" and isnan(toreal(_sigma_value_0[1])) and isnan(toreal(_sigma_other_value_0[1]))))), _sigma_value_1 = minif(_sigma_other_id, isnotempty(tostring(_sigma_value_1[1])) and (_sigma_value_id == _sigma_other_id or _sigma_value_1 == _sigma_other_value_1 or (tostring(_sigma_value_1[0]) == "real" and tostring(_sigma_other_value_1[0]) == "real" and isnan(toreal(_sigma_value_1[1])) and isnan(toreal(_sigma_other_value_1[1]))))) by _sigma_value_id;
+let _sigma_values = _sigma_value_identities
 | where isnotnull(_sigma_timestamp)
 | summarize by _sigma_timestamp, _sigma_value_0, _sigma_value_1;
 _sigma_values

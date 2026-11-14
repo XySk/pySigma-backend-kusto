@@ -1,52 +1,10 @@
 """Chained correlation contracts through parsed collection conversion."""
 
 import pytest
-import yaml
 
-from sigma.backends.kusto import KustoBackend
-from sigma.collection import SigmaCollection
 from sigma.exceptions import SigmaError
 from sigma.pipelines.kusto_common.schema import FieldMappings
-from sigma.processing.pipeline import ProcessingPipeline
-
-
-def source_document(name="source-rule", *, product="fixture", marker="match"):
-    return {
-        "title": name,
-        "name": name,
-        "logsource": {"product": product},
-        "detection": {"selection": {"Marker": marker}, "condition": "selection"},
-    }
-
-
-def correlation_document(name, kind, rules, *, groups=("Host",), field=None, condition=None, span="5m", **kwargs):
-    correlation = {"type": kind, "rules": rules, "timespan": span, "group-by": list(groups), **kwargs}
-    if condition is not None or kind in ("event_count", "value_count"):
-        correlation["condition"] = dict(condition or {"gte": 2})
-    if kind == "value_count":
-        correlation["condition"]["field"] = field or "User"
-    return {"title": name, "name": name, "correlation": correlation}
-
-
-def convert_documents(documents, *, mappings=None, tables=("Events", "NetworkEvents")):
-    pipeline = ProcessingPipeline.from_dict(
-        {
-            "transformations": [
-                {"type": "set_state", "key": "query_table", "val": tables[0]},
-                {
-                    "type": "set_state",
-                    "key": "query_table",
-                    "val": tables[1],
-                    "rule_conditions": [{"type": "logsource", "product": "network"}],
-                },
-            ]
-        }
-    )
-    if mappings is not None:
-        pipeline.vars["kusto_field_mappings"] = mappings
-    return KustoBackend(processing_pipeline=pipeline, correlation_timestamp_field="Timestamp").convert(
-        SigmaCollection.from_yaml(yaml.safe_dump_all(documents))
-    )
+from tests.correlation_helpers import convert_documents, correlation_document, source_document
 
 
 def test_value_count_parent_counts_child_value_metric_as_one_exact_value_per_summary():
@@ -59,7 +17,7 @@ def test_value_count_parent_counts_child_value_metric_as_one_exact_value_per_sum
     (query,) = convert_documents(documents)
 
     assert '_sigma_timestamp = todatetime(["WindowEnd"])' in query
-    assert '_sigma_value = tostring(["ValueCount"])' in query
+    assert '_sigma_value = pack_array(gettype(["ValueCount"]), ["ValueCount"])' in query
     assert query.count("ValueCount = count_distinctif(_sigma_value, isnotempty(_sigma_value))") == 2
     assert query.endswith('["Host"] = _sigma_group_0, ValueCount')
 
@@ -113,7 +71,7 @@ def test_all_supported_types_produce_and_consume_child_summaries(producer, consu
     assert '| extend _sigma_rule = "child"' in parent
     assert f", {METRICS[consumer]}" in parent.splitlines()[-1]
     if consumer == "value_count":
-        assert f'_sigma_value = tostring(["{METRICS[producer]}"])' in parent
+        assert f'_sigma_value = pack_array(gettype(["{METRICS[producer]}"]), ["{METRICS[producer]}"])' in parent
     if consumer == "event_count":
         assert "_sigma_weight = count()" in parent
         assert "sum(_sigma_weight)" in parent
@@ -149,7 +107,7 @@ def test_child_window_fields_group_and_actual_metric_can_all_be_aliased_without_
     parent_query = query.split("\n};\n", 1)[1]
     assert '_sigma_timestamp = todatetime(["WindowEnd"])' in parent_query
     for column, field in enumerate(["WindowStart", "WindowEnd", METRICS[producer], "Host"]):
-        assert f'_sigma_value_{column} = tostring(["{field}"])' in parent_query
+        assert f'_sigma_value_{column} = pack_array(gettype(["{field}"]), ["{field}"])' in parent_query
     assert "Wrong" not in query
     assert 'todatetime(["PhysicalTime"])' in query
     assert 'tostring(["PhysicalHost"])' in query
@@ -170,7 +128,10 @@ def test_value_parent_counts_child_metric_and_host_independently_with_and(operat
 
     (query,) = convert_documents(documents)
 
-    assert '_sigma_value_0 = tostring(["EventCount"]), _sigma_value_1 = tostring(["Host"])' in query
+    assert (
+        '_sigma_value_0 = pack_array(gettype(["EventCount"]), ["EventCount"]), _sigma_value_1 = pack_array(gettype(["Host"]), ["Host"])'
+        in query
+    )
     assert '["ValueCount_EventCount"] = count_distinctif(_sigma_value_0, isnotempty(_sigma_value_0))' in query
     assert '["ValueCount_Host"] = count_distinctif(_sigma_value_1, isnotempty(_sigma_value_1))' in query
     assert f'| where ["ValueCount_EventCount"] {query_operator} 2 and ["ValueCount_Host"] {query_operator} 2\n' in query
@@ -186,7 +147,10 @@ def test_multifield_child_exposes_each_metric_for_counting_without_an_invented_v
 
     (query,) = convert_documents(documents)
 
-    assert '_sigma_value_0 = tostring(["ValueCount_User"]), _sigma_value_1 = tostring(["ValueCount_Target"])' in query
+    assert (
+        '_sigma_value_0 = pack_array(gettype(["ValueCount_User"]), ["ValueCount_User"]), _sigma_value_1 = pack_array(gettype(["ValueCount_Target"]), ["ValueCount_Target"])'
+        in query
+    )
     assert query.endswith('["Host"] = _sigma_group_0, ["ValueCount_ValueCount_User"], ["ValueCount_ValueCount_Target"]')
 
 
@@ -319,7 +283,7 @@ def test_multilevel_mixed_sources_keep_result_names_and_scope_bindings_separate_
     assert 'tostring(["NetworkScope"])' in query
     assert 'tostring(["Case"])' in query
     assert 'tostring(["Tenant"])' in query
-    assert 'tostring(["EventCount"])' in query
+    assert 'pack_array(gettype(["EventCount"]), ["EventCount"])' in query
     assert query.count('todatetime(["WindowEnd"])') == 2
     assert "Wrong" not in query
     assert "ago(" not in query

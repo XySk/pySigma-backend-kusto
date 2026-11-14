@@ -14,14 +14,28 @@ let Events = datatable(Timestamp:string, Case:string, Host:string, User:string, 
 ];
 let Actual = () {
 let _sigma_child_0 = () {
-let _sigma_values = union (Events
+let _sigma_value_input = materialize(union (Events
 | where Marker =~ "V1"
-| extend _sigma_timestamp = todatetime(["Timestamp"]), _sigma_group_0 = tostring(["Case"]), _sigma_group_1 = tostring(["Host"]), _sigma_value = tostring(["User"])
+| extend _sigma_timestamp = todatetime(["Timestamp"]), _sigma_group_0 = tostring(["Case"]), _sigma_group_1 = tostring(["Host"]), _sigma_value = pack_array(gettype(["User"]), ["User"])
 | extend _sigma_rule = "V1"),
 (Events
 | where Marker =~ "V2"
-| extend _sigma_timestamp = todatetime(["Timestamp"]), _sigma_group_0 = tostring(["Case"]), _sigma_group_1 = tostring(["Host"]), _sigma_value = tostring(["User"])
+| extend _sigma_timestamp = todatetime(["Timestamp"]), _sigma_group_0 = tostring(["Case"]), _sigma_group_1 = tostring(["Host"]), _sigma_value = pack_array(gettype(["User"]), ["User"])
 | extend _sigma_rule = "V2")
+| where isnotnull(_sigma_timestamp) and isnotempty(_sigma_group_0) and isnotempty(_sigma_group_1)
+| project _sigma_timestamp, _sigma_group_0, _sigma_group_1, _sigma_value
+| serialize _sigma_value_id = row_number());
+let _sigma_value_identities = _sigma_value_input
+| extend _sigma_value_key = pack_array(strcat("0:", tostring(_sigma_value[0])))
+| mv-expand _sigma_value_key to typeof(string)
+| join kind=inner (
+    _sigma_value_input
+    | extend _sigma_value_key = pack_array(strcat("0:", tostring(_sigma_value[0])))
+    | mv-expand _sigma_value_key to typeof(string)
+    | project _sigma_group_0, _sigma_group_1, _sigma_value_key, _sigma_other_id = _sigma_value_id, _sigma_other_value = _sigma_value
+) on _sigma_group_0, _sigma_group_1, _sigma_value_key
+| summarize _sigma_timestamp = take_any(_sigma_timestamp), _sigma_group_0 = take_any(_sigma_group_0), _sigma_group_1 = take_any(_sigma_group_1), _sigma_value = minif(_sigma_other_id, isnotempty(tostring(_sigma_value[1])) and (_sigma_value_id == _sigma_other_id or _sigma_value == _sigma_other_value or (tostring(_sigma_value[0]) == "real" and tostring(_sigma_other_value[0]) == "real" and isnan(toreal(_sigma_value[1])) and isnan(toreal(_sigma_other_value[1]))))) by _sigma_value_id;
+let _sigma_values = _sigma_value_identities
 | where isnotnull(_sigma_timestamp) and isnotempty(_sigma_group_0) and isnotempty(_sigma_group_1)
 | summarize by _sigma_timestamp, _sigma_group_0, _sigma_group_1, _sigma_value;
 _sigma_values

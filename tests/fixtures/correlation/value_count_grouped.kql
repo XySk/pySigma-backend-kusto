@@ -31,22 +31,36 @@ let OtherEvents = datatable(NetworkTime:string, Case:string, NetworkHost:dynamic
     "2026-01-01T12:01:00Z", "missing-anchor", dynamic("host"), dynamic(""), "match"
 ];
 let Actual = () {
-let _sigma_values = union (Events
+let _sigma_value_input = materialize(union (Events
 | where Marker =~ "match"
-| extend _sigma_timestamp = todatetime(["ProcessTime"]), _sigma_group_0 = tostring(["Case"]), _sigma_group_1 = tostring(["ProcessHost"]), _sigma_value = tostring(["ProcessUser"])
+| extend _sigma_timestamp = todatetime(["ProcessTime"]), _sigma_group_0 = tostring(["Case"]), _sigma_group_1 = tostring(["ProcessHost"]), _sigma_value = pack_array(gettype(["ProcessUser"]), ["ProcessUser"])
 | extend _sigma_rule = "source-rule"),
 (Events
 | where Marker =~ "match"
-| extend _sigma_timestamp = todatetime(["ProcessTime"]), _sigma_group_0 = tostring(["Case"]), _sigma_group_1 = tostring(["ProcessHost"]), _sigma_value = tostring(["ProcessUser"])
+| extend _sigma_timestamp = todatetime(["ProcessTime"]), _sigma_group_0 = tostring(["Case"]), _sigma_group_1 = tostring(["ProcessHost"]), _sigma_value = pack_array(gettype(["ProcessUser"]), ["ProcessUser"])
 | extend _sigma_rule = "source-rule"),
 (OtherEvents
 | where Marker =~ "match"
-| extend _sigma_timestamp = todatetime(["NetworkTime"]), _sigma_group_0 = tostring(["Case"]), _sigma_group_1 = tostring(["NetworkHost"]), _sigma_value = tostring(["NetworkUser"])
+| extend _sigma_timestamp = todatetime(["NetworkTime"]), _sigma_group_0 = tostring(["Case"]), _sigma_group_1 = tostring(["NetworkHost"]), _sigma_value = pack_array(gettype(["NetworkUser"]), ["NetworkUser"])
 | extend _sigma_rule = "other-rule"),
 (OtherEvents
 | where Marker =~ "match"
-| extend _sigma_timestamp = todatetime(["NetworkTime"]), _sigma_group_0 = tostring(["Case"]), _sigma_group_1 = tostring(["NetworkHost"]), _sigma_value = tostring(["NetworkUser"])
+| extend _sigma_timestamp = todatetime(["NetworkTime"]), _sigma_group_0 = tostring(["Case"]), _sigma_group_1 = tostring(["NetworkHost"]), _sigma_value = pack_array(gettype(["NetworkUser"]), ["NetworkUser"])
 | extend _sigma_rule = "other-rule")
+| where isnotnull(_sigma_timestamp) and isnotempty(_sigma_group_0) and isnotempty(_sigma_group_1)
+| project _sigma_timestamp, _sigma_group_0, _sigma_group_1, _sigma_value
+| serialize _sigma_value_id = row_number());
+let _sigma_value_identities = _sigma_value_input
+| extend _sigma_value_key = pack_array(strcat("0:", tostring(_sigma_value[0])))
+| mv-expand _sigma_value_key to typeof(string)
+| join kind=inner (
+    _sigma_value_input
+    | extend _sigma_value_key = pack_array(strcat("0:", tostring(_sigma_value[0])))
+    | mv-expand _sigma_value_key to typeof(string)
+    | project _sigma_group_0, _sigma_group_1, _sigma_value_key, _sigma_other_id = _sigma_value_id, _sigma_other_value = _sigma_value
+) on _sigma_group_0, _sigma_group_1, _sigma_value_key
+| summarize _sigma_timestamp = take_any(_sigma_timestamp), _sigma_group_0 = take_any(_sigma_group_0), _sigma_group_1 = take_any(_sigma_group_1), _sigma_value = minif(_sigma_other_id, isnotempty(tostring(_sigma_value[1])) and (_sigma_value_id == _sigma_other_id or _sigma_value == _sigma_other_value or (tostring(_sigma_value[0]) == "real" and tostring(_sigma_other_value[0]) == "real" and isnan(toreal(_sigma_value[1])) and isnan(toreal(_sigma_other_value[1]))))) by _sigma_value_id;
+let _sigma_values = _sigma_value_identities
 | where isnotnull(_sigma_timestamp) and isnotempty(_sigma_group_0) and isnotempty(_sigma_group_1)
 | summarize by _sigma_timestamp, _sigma_group_0, _sigma_group_1, _sigma_value;
 _sigma_values

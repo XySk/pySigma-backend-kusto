@@ -12,6 +12,11 @@ from sigma.backends.kusto import KustoBackend
 from sigma.collection import SigmaCollection
 from sigma.pipelines.kusto_common.schema import FieldMappings
 from sigma.processing.pipeline import ProcessingPipeline
+from tests.correlation_helpers import (
+    convert_documents,
+    correlation_document as chain_correlation,
+    source_document as chain_source,
+)
 
 DESTINATION = Path(__file__).parent
 
@@ -1053,40 +1058,10 @@ let Events = datatable(ProcessTime:string, Case:string, ProcessUser:string, Proc
     )
 
 
-def chain_source(name, marker, *, product="fixture"):
-    return {
-        "title": name,
-        "name": name,
-        "logsource": {"product": product},
-        "detection": {"selection": {"Marker": marker}, "condition": "selection"},
-    }
-
-
-def chain_correlation(name, kind, rules, *, groups=("Case", "Host"), field=None, span="5m", condition=None, **kwargs):
-    correlation = {"type": kind, "rules": rules, "group-by": list(groups), "timespan": span, **kwargs}
-    if condition is not None or kind in ("event_count", "value_count"):
-        correlation["condition"] = dict(condition or {"gte": 2})
-    if field is not None:
-        correlation["condition"]["field"] = field
-    return {"title": name, "name": name, "correlation": correlation}
-
-
 def full_chain_fixture(documents, data, expected, fields, *, mapped=False):
-    pipeline = ProcessingPipeline.from_dict(
-        {
-            "transformations": [
-                {"type": "set_state", "key": "query_table", "val": "Events"},
-                {
-                    "type": "set_state",
-                    "key": "query_table",
-                    "val": "NetworkEvents",
-                    "rule_conditions": [{"type": "logsource", "product": "network"}],
-                },
-            ]
-        }
-    )
+    mappings = None
     if mapped:
-        pipeline.vars["kusto_field_mappings"] = FieldMappings(
+        mappings = FieldMappings(
             table_mappings={
                 "Events": {
                     "Timestamp": "ProcessTime",
@@ -1104,9 +1079,7 @@ def full_chain_fixture(documents, data, expected, fields, *, mapped=False):
                 },
             }
         )
-    (converted,) = KustoBackend(processing_pipeline=pipeline, correlation_timestamp_field="Timestamp").convert(
-        SigmaCollection.from_yaml(yaml.safe_dump_all(documents))
-    )
+    (converted,) = convert_documents(documents, mappings=mappings)
     return (
         HEADER + data + "let Actual = () {\n" + converted + "\n};\n" + expected + check("Actual()", "Expected", fields)
     )
@@ -1115,7 +1088,7 @@ def full_chain_fixture(documents, data, expected, fields, *, mapped=False):
 def all_type_chained_metrics_fixture():
     documents = [
         chain_source("E", "E"),
-        chain_correlation("C", "event_count", ["E"]),
+        chain_correlation("C", "event_count", ["E"], groups=("Case", "Host")),
         chain_correlation("P", "value_count", ["C"], groups=("Case",), field=["EventCount", "Host"]),
     ]
     data = """// Child counts: pass/a @01=2, @02=3; pass/b @02=2.
@@ -1153,8 +1126,8 @@ def chained_value_temporal_fixture():
         chain_source("V1", "V1"),
         chain_source("V2", "V2"),
         chain_source("D", "D"),
-        chain_correlation("C", "value_count", ["V1", "V2"], field="User"),
-        chain_correlation("P", "temporal", ["C", "D"]),
+        chain_correlation("C", "value_count", ["V1", "V2"], groups=("Case", "Host"), field="User"),
+        chain_correlation("P", "temporal", ["C", "D"], groups=("Case", "Host")),
     ]
     data = """// C has ValueCount 2 at 01 and 3 at 02; both remain one immediate source type.
 // D ties C at 01. Unordered temporal permits ties and returns two overlapping summaries.
@@ -1180,8 +1153,8 @@ def chained_strict_order_fixture():
         chain_source("TA", "TA"),
         chain_source("TB", "TB"),
         chain_source("D", "D"),
-        chain_correlation("C", "temporal", ["TA", "TB"]),
-        chain_correlation("P", "temporal_ordered", ["C", "D"]),
+        chain_correlation("C", "temporal", ["TA", "TB"], groups=("Case", "Host")),
+        chain_correlation("P", "temporal_ordered", ["C", "D"], groups=("Case", "Host")),
     ]
     data = """// C ends at 01 and 02. D before/tied with the first WindowEnd cannot complete P.
 // D at 02 and 03 complete P once per end, despite multiple viable child summaries.
@@ -1218,8 +1191,8 @@ def chained_ordered_event_fixture():
     documents = [
         chain_source("OA", "OA"),
         chain_source("OB", "OB"),
-        chain_correlation("C", "temporal_ordered", ["OA", "OB"]),
-        chain_correlation("P", "event_count", ["C"]),
+        chain_correlation("C", "temporal_ordered", ["OA", "OB"], groups=("Case", "Host")),
+        chain_correlation("P", "event_count", ["C"], groups=("Case", "Host")),
     ]
     data = """// Ordered child summaries at 01 and 02 each have RuleCount 2, but contribute once.
 let Events = datatable(Timestamp:string, Case:string, Host:string, Marker:string) [
@@ -1241,7 +1214,7 @@ def chained_multilevel_fixture():
     documents = [
         chain_source("E", "E"),
         chain_source("D", "D", product="network"),
-        chain_correlation("C", "event_count", ["E"], span="2m"),
+        chain_correlation("C", "event_count", ["E"], groups=("Case", "Host"), span="2m"),
         chain_correlation(
             "M",
             "value_count",
@@ -1312,6 +1285,116 @@ let Events = datatable(Timestamp:string, User:dynamic, Marker:string) [
     return full_chain_fixture(documents, data, expected, ["WindowStart", "WindowEnd", "ValueCount"])
 
 
+def typed_value_count_fixture():
+    documents = [
+        chain_source("E", "match"),
+        chain_correlation("C", "value_count", ["E"], groups=("Case",), field="Value"),
+    ]
+    data = """// Typed scalar values, nested extended values, and unordered bag slots.
+// Textual extended values are deliberately constructed without parsing JSON.
+let Extended = pack_array(datetime(2020-01-01), 1s, guid(00000000-0000-0000-0000-000000000001));
+let Text = pack_array(tostring(Extended[0]), tostring(Extended[1]), tostring(Extended[2]));
+let Events = union (datatable(Timestamp:string, Case:string, Value:dynamic, Marker:string) [
+    "2026-01-01T12:00:00Z", "scalar", dynamic(1), "match",
+    "2026-01-01T12:01:00Z", "scalar", dynamic("1"), "match",
+    "2026-01-01T12:02:00Z", "scalar", dynamic(real(1)), "match",
+    "2026-01-01T12:03:00Z", "scalar", dynamic(null), "match",
+    "2026-01-01T12:04:00Z", "scalar", dynamic(""), "match",
+    "2026-01-01T12:00:00Z", "bag", dynamic({"a":1,"b":{"x":2,"y":3}}), "match",
+    "2026-01-01T12:01:00Z", "bag", dynamic({"b":{"y":3,"x":2},"a":1}), "match",
+    "2026-01-01T12:02:00Z", "bag", dynamic({"a":2,"b":{"x":2,"y":3}}), "match",
+    "2026-01-01T12:00:00Z", "containers", dynamic([]), "match",
+    "2026-01-01T12:01:00Z", "containers", dynamic({}), "match",
+    "2026-01-01T12:00:00Z", "nan", dynamic(real(nan)), "match",
+    "2026-01-01T12:01:00Z", "nan", dynamic(real(nan)), "match",
+    "2026-01-01T12:02:00Z", "nan", dynamic("NaN"), "match",
+    "2026-01-01T12:00:00Z", "signed-zero", dynamic(real(0.0)), "match",
+    "2026-01-01T12:01:00Z", "signed-zero", dynamic(real(-0.0)), "match",
+    "2026-01-01T12:02:00Z", "signed-zero", dynamic("0"), "match",
+    "2026-01-01T12:00:00Z", "nested-nan", dynamic([real(nan)]), "match",
+    "2026-01-01T12:01:00Z", "nested-nan", dynamic([real(nan)]), "match",
+    "2026-01-01T12:02:00Z", "nested-nan", dynamic(["NaN"]), "match",
+    "invalid", "scalar", dynamic("ignored"), "match"
+]),
+(print Timestamp="2026-01-01T12:00:00Z", Case="array", Value=Extended, Marker="match"),
+(print Timestamp="2026-01-01T12:01:00Z", Case="array", Value=Text, Marker="match"),
+(print Timestamp="2026-01-01T12:00:00Z", Case="nested-bag", Value=bag_pack("a", Extended), Marker="match"),
+(print Timestamp="2026-01-01T12:01:00Z", Case="nested-bag", Value=bag_pack("a", Text), Marker="match");
+"""
+    expected = """let Expected = datatable(WindowStart:datetime, WindowEnd:datetime, Case:string, ValueCount:long) [
+    datetime(2026-01-01T11:56:00Z), datetime(2026-01-01T12:01:00Z), "scalar", 2,
+    datetime(2026-01-01T11:57:00Z), datetime(2026-01-01T12:02:00Z), "scalar", 3,
+    datetime(2026-01-01T11:58:00Z), datetime(2026-01-01T12:03:00Z), "scalar", 3,
+    datetime(2026-01-01T11:59:00Z), datetime(2026-01-01T12:04:00Z), "scalar", 3,
+    datetime(2026-01-01T11:57:00Z), datetime(2026-01-01T12:02:00Z), "bag", 2,
+    datetime(2026-01-01T11:56:00Z), datetime(2026-01-01T12:01:00Z), "containers", 2,
+    datetime(2026-01-01T11:56:00Z), datetime(2026-01-01T12:01:00Z), "array", 2,
+    datetime(2026-01-01T11:56:00Z), datetime(2026-01-01T12:01:00Z), "nested-bag", 2,
+    datetime(2026-01-01T11:57:00Z), datetime(2026-01-01T12:02:00Z), "nan", 2,
+    datetime(2026-01-01T11:57:00Z), datetime(2026-01-01T12:02:00Z), "signed-zero", 2,
+    datetime(2026-01-01T11:57:00Z), datetime(2026-01-01T12:02:00Z), "nested-nan", 2
+];
+"""
+    return full_chain_fixture(documents, data, expected, ["WindowStart", "WindowEnd", "Case", "ValueCount"])
+
+
+def typed_multi_field_value_count_fixture():
+    documents = [
+        chain_source("E", "match"),
+        chain_correlation("C", "value_count", ["E"], groups=("Case",), field=["Value", "Other"]),
+    ]
+    data = """// At 01, Value has two typed values but Other has one reordered bag.
+// At 02 both independent counts reach two; missing values at 03 preserve the anchor.
+let Events = datatable(Timestamp:string, Case:string, Value:dynamic, Other:dynamic, Marker:string) [
+    "2026-01-01T12:00:00Z", "both", dynamic(1), dynamic({"a":1,"b":2}), "match",
+    "2026-01-01T12:01:00Z", "both", dynamic("1"), dynamic({"b":2,"a":1}), "match",
+    "2026-01-01T12:02:00Z", "both", dynamic(1), dynamic({"a":2,"b":2}), "match",
+    "2026-01-01T12:03:00Z", "both", dynamic(null), dynamic(""), "match"
+];
+"""
+    expected = """let Expected = datatable(WindowStart:datetime, WindowEnd:datetime, Case:string, ValueCount_Value:long, ValueCount_Other:long) [
+    datetime(2026-01-01T11:57:00Z), datetime(2026-01-01T12:02:00Z), "both", 2, 2,
+    datetime(2026-01-01T11:58:00Z), datetime(2026-01-01T12:03:00Z), "both", 2, 2
+];
+"""
+    return full_chain_fixture(
+        documents, data, expected, ["WindowStart", "WindowEnd", "Case", "ValueCount_Value", "ValueCount_Other"]
+    )
+
+
+def typed_chained_value_count_fixture():
+    documents = [
+        chain_source("E", "E"),
+        chain_source("D", "D"),
+        chain_correlation("C", "value_count", ["E"], groups=("Case",), field="User", condition={"eq": 0}),
+        chain_correlation(
+            "P",
+            "value_count",
+            ["C", "D"],
+            groups=("Case",),
+            field=["Metric", "End"],
+            aliases={"Metric": {"C": "ValueCount", "D": "User"}, "End": {"C": "WindowEnd", "D": "End"}},
+        ),
+    ]
+    data = """// The child returns metric long(0), which differs from direct string "0".
+// Two child datetime ends plus one direct string end are three distinct End values.
+let Events = datatable(Timestamp:string, Case:string, User:dynamic, End:dynamic, Marker:string) [
+    "2026-01-01T12:00:00Z", "typed-chain", dynamic(null), dynamic(null), "E",
+    "2026-01-01T12:01:00Z", "typed-chain", dynamic(""), dynamic(null), "E",
+    "2026-01-01T12:01:00Z", "typed-chain", dynamic("0"), dynamic("2026-01-01T12:00:00.0000000Z"), "D",
+    "2026-01-01T12:02:00Z", "typed-chain", dynamic(null), dynamic(""), "D"
+];
+"""
+    expected = """let Expected = datatable(WindowStart:datetime, WindowEnd:datetime, Case:string, ValueCount_Metric:long, ValueCount_End:long) [
+    datetime(2026-01-01T11:56:00Z), datetime(2026-01-01T12:01:00Z), "typed-chain", 2, 3,
+    datetime(2026-01-01T11:57:00Z), datetime(2026-01-01T12:02:00Z), "typed-chain", 2, 3
+];
+"""
+    return full_chain_fixture(
+        documents, data, expected, ["WindowStart", "WindowEnd", "Case", "ValueCount_Metric", "ValueCount_End"]
+    )
+
+
 def fixtures():
     return {
         "event_count_grouped.kql": grouped_fixture(),
@@ -1334,6 +1417,9 @@ def fixtures():
         "chained_ordered_event.kql": chained_ordered_event_fixture(),
         "chained_multilevel.kql": chained_multilevel_fixture(),
         "chained_zero_metric.kql": chained_zero_metric_fixture(),
+        "value_count_typed.kql": typed_value_count_fixture(),
+        "value_count_typed_multi_field.kql": typed_multi_field_value_count_fixture(),
+        "value_count_typed_chained.kql": typed_chained_value_count_fixture(),
     }
 
 
