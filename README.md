@@ -19,7 +19,7 @@
     - [🖥️ sigma-cli](#️-sigma-cli)
     - [🐍 Python Script](#-python-script)
   - [🛠️ Advanced Features](#️-advanced-features)
-    - [Event-count correlations](#event-count-correlations)
+    - [Count and temporal correlations](#count-and-temporal-correlations)
     - [🔄 Pipeline \& Backend Args (New in 0.2.0)](#-pipeline--backend-args-new-in-020)
     - [🗃️ Custom Table Names (New in 0.3.0) (Beta)](#️-custom-table-names-new-in-030-beta)
   - [🔄 Processing Pipelines](#-processing-pipelines)
@@ -160,9 +160,9 @@ DeviceProcessEvents
 
 ## 🛠️ Advanced Features
 
-### Event-count correlations
+### Count and temporal correlations
 
-Convert a Sigma collection containing source rules and an `event_count` correlation with the configured event timestamp:
+Convert a Sigma collection containing source rules and an `event_count`, `value_count`, `temporal`, or `temporal_ordered` correlation with the configured event timestamp:
 
 ```python
 from pathlib import Path
@@ -178,11 +178,108 @@ backend = KustoBackend(
 queries = backend.convert(collection)
 ```
 
-A correlation referencing multiple source rules combines every converted source search with `union`, including searches from different tables. Each branch retains its source columns and adds a mapped `datetime` timestamp, `string` grouping fields, and the source rule's name (or ID when unnamed). Correlation field aliases can map different source fields to the same grouping field. The combined rows are counted by fixed time windows and optional grouping fields, using a single `gt`, `gte`, `lt`, `lte`, `eq`, or `neq` comparison. An event matching two source rules contributes two rows. All searches emitted for one source rule must use the same mapped table.
+A correlation combines every converted source search with `union`, including multiple searches emitted for one source rule and searches from different tables. Each branch retains its source columns and adds a mapped `datetime` timestamp, `string` grouping and counted fields, and the source rule's name (or ID when unnamed). Correlation field aliases work for grouping and counted fields in single-source and multi-source correlations. Timestamp, grouping, and counted fields use each source's mappings. All searches emitted for one source rule must use the same mapped table.
 
-Normalized columns use `_sigma_timestamp`, `_sigma_group_0`, and `_sigma_rule`, with numeric suffixes to avoid known source names. Known names include detection fields, a rule's `fields` list, correlation fields and aliases, table field mappings, and the pipeline's schema. The built-in pipelines provide their schema through `vars["kusto_schema"]`. Custom pipelines can provide a `BaseSchema` there or list additional source columns in the source rules' `fields`; columns absent from those inputs cannot be discovered during offline conversion. The final aggregate returns the combined count and groups, without the source-rule identity.
+Event counts use **exact sliding windows by default**. For each distinct valid matching-event timestamp in each correlation group, the query counts all source matches in the inclusive interval `[timestamp - timespan, timestamp]`, then applies a single `gt`, `gte`, `lt`, `lte`, `eq`, or `neq` comparison. For example, events at 12:00:59 and 12:05:01 belong together in the five-minute window ending at 12:05:01. Events exactly five minutes apart also belong together. Simultaneous matches participate in one evaluation with their complete count. Matching several source rules or searches contributes a row for every match; physical events are not deduplicated.
 
-Existing single-source correlations retain their query format and behavior.
+For `value_count`, specify the counted field in the condition:
+
+```yaml
+correlation:
+  type: value_count
+  rules: [source-rule]
+  group-by: [DeviceName]
+  timespan: 5m
+  condition:
+    field: User
+    gte: 2
+```
+
+Value counts use the same exact sliding windows and six comparisons. Each window counts distinct nonempty string-normalized values across all its source matches. A value repeated at different timestamps or across searches and rules counts once. Null or empty counted values contribute no value, but their otherwise valid events still establish evaluation timestamps. Such an anchored window can have `ValueCount = 0`, and may satisfy `eq: 0`. A scalar field or a one-element list returns the established `ValueCount` metric.
+
+To require several fields, use a list such as `field: [User, Target]`. Each field's exact count must satisfy the same comparison and threshold in the same window; the comparisons are combined with **AND**. Two users accessing one target fail `gte: 2`, while two users accessing two targets can pass. Missing values are ignored separately for each field, retaining anchors even when every counted value is missing. The result returns `ValueCount_User` and `ValueCount_Target`. In general, multiple fields return `ValueCount_<field>` using the logical condition field name (including an alias name), with quoting for names containing spaces or punctuation. Counted field names must be nonempty and unique.
+
+For unordered `temporal`, omit the condition to require every referenced source-rule type:
+
+```yaml
+correlation:
+  type: temporal
+  rules: [first-rule, second-rule, third-rule]
+  group-by: [DeviceName]
+  timespan: 5m
+```
+
+The returned `RuleCount` is the exact number of distinct matching source-rule types in the inclusive window. Repeated matches or searches from one rule count as one type. Repeated references to the same source, including references using its name and ID, also represent one type. An explicit condition applies any of the same six comparisons to `RuleCount`; for example, adding `condition: {gte: 2}` to the three-rule example accepts any two types without requiring the third. A type with no matches contributes nothing, and `eq: 0` cannot create an empty-window evaluation.
+
+Unordered temporal correlations accept any event order and tied timestamps. Every contributing combination must fit within one complete timespan: A at 12:00, B at 12:04, and C at 12:08 cannot satisfy a five-minute default-all correlation. Several qualifying combinations ending at one timestamp in the same group return one summary; later qualifying event timestamps retain their own overlapping summaries.
+
+For `temporal_ordered`, the declared list defines the complete sequence:
+
+```yaml
+correlation:
+  type: temporal_ordered
+  rules: [first-rule, second-rule, third-rule]
+  group-by: [DeviceName]
+  timespan: 5m
+```
+
+Every step must have a **strictly later timestamp** than its predecessor. Equal timestamps cannot establish order. The first and final steps must fit within the inclusive timespan; checking adjacent gaps is insufficient. Intervening and repeated matches do not reset valid alternatives. Results occur at final-step completion timestamps, with one summary per group/completion timestamp even when many event combinations qualify. Later completions retain their overlapping summaries; a later match of an earlier step alone does not create another completion.
+
+The initial ordered implementation requires the full declared sequence. Omit `condition`, or use a comparison equivalent to requiring all distinct source-rule types: with three types, `gte: 3`, `eq: 3`, and `gt: 2` are equivalent. Other thresholds raise an actionable conversion error because partial ordered subsets have no defined interpretation. With one type, `neq: 0` is also equivalent. Repeated list positions, including the same source referenced by name and ID, require separate matches at strictly increasing timestamps; for example, `[first-rule, first-rule, second-rule]` requires two successive first-rule matches followed by second-rule. `RuleCount` still reports the distinct type count (two in that example), so explicit conditions use that count. An omitted condition always requires every declared position.
+
+Every qualifying evaluation returns `WindowStart`, `WindowEnd`, the requested grouping fields, and `EventCount`, `ValueCount`, the per-field value counts, or temporal `RuleCount`. `WindowStart` is `WindowEnd - timespan`. Each joint set of grouping values is independent; omitting `group-by` defines one group. Overlapping qualifying windows remain separate summaries. No evaluation is generated solely because an event expires, and count conditions do not invent empty-window results. Invalid timestamps and null or empty grouping values are excluded before establishing evaluation timestamps. Group names `WindowStart`, `WindowEnd`, and the returned count metrics are rejected because they conflict with the result columns.
+
+All four supported correlation types (`event_count`, `value_count`, `temporal`, and `temporal_ordered`) can produce child summaries and consume them, including mixed direct detection sources and multiple correlation levels. Ordered parents retain the full-sequence condition restriction described above. For example, an `event_count` parent can consume an `event_count` child alongside a direct detection:
+
+```yaml
+title: Child count
+name: child-count
+correlation:
+  type: event_count
+  rules: [source-rule]
+  group-by: [User]
+  timespan: 5m
+  condition: {gte: 10}
+---
+title: Parent count
+correlation:
+  type: event_count
+  rules: [child-count, direct-rule]
+  group-by: [User]
+  timespan: 2m
+  condition: {gte: 2}
+```
+
+Include the referenced detection rules in the same collection. Each qualifying child summary contributes **one** parent source match at the child's `WindowEnd`, even when the child reports `EventCount = 10`. The parent applies its own grouping, timespan, and comparison. Overlapping child summaries remain separate matches; distinct child groups can combine when the parent groups by fewer fields.
+
+Each child's returned grouping fields, `WindowStart`, `WindowEnd`, and actual metrics are available as input fields:
+
+| Child type | Returned metrics |
+| --- | --- |
+| `event_count` | `EventCount` |
+| `value_count`, one counted field | `ValueCount` |
+| `value_count`, multiple counted fields | `ValueCount_<logical field>` for each field |
+| `temporal`, `temporal_ordered` | `RuleCount` |
+
+These fields use the child's logical result names, without reapplying detection-table mappings. Parent aliases can map to those names; for example, `ChildSize: {child-count: EventCount}` makes the child metric available as a grouping field named `ChildSize`. Window fields can likewise be aliased to avoid conflicting with the parent's result column names. Conversion rejects required fields absent from the child's result schema, including original detection fields discarded by aggregation or grouping fields removed by an intermediate correlation. Both child and direct branches follow the same normalization and invalid-input exclusions.
+
+A value-count parent can count a returned metric exactly: `condition: {field: EventCount, gte: 2}` requires at least two distinct child count values. Using `field: [EventCount, Host]` requires both independent exact counts to pass and returns `ValueCount_EventCount` and `ValueCount_Host`. Zero is a valid metric value. A metric never multiplies a child's contribution. Temporal parents count distinct identities of their immediate child and detection sources, regardless of descendant identities or metric sizes. Ordered parents apply strict order to the child summaries' `WindowEnd` timestamps; a tie cannot complete the next step, and the entire immediate sequence must fit within the parent's timespan.
+
+Each correlation's `generate` controls standalone output of its immediate referenced sources: the parent's setting controls child output, and the child's setting controls its own sources' output. Suppressed intermediate queries remain available within consumers. This applies at every level, including shared children; following pySigma behavior, a consumer with `generate: false` suppresses standalone output even when another consumer has `generate: true`.
+
+Normalized columns and window intermediates use names beginning with `_sigma_`, with numeric suffixes to avoid known source names. Known names include detection fields, a rule's `fields` list, correlation fields and aliases, table field mappings, the pipeline's schema, and source-table names throughout a chain. Complete child queries use scoped functions so their internal bindings remain local. The built-in pipelines provide their schema through `vars["kusto_schema"]`. Custom pipelines can provide a `BaseSchema` there or list additional source columns in the source rules' `fields`; columns absent from those inputs cannot be discovered during offline conversion. Source columns and rule identity remain available during source assembly; the final aggregate returns only the window, groups, and counts.
+
+The caller owns time-range selection, scheduling, and filtering the reported results. Conversion adds no implicit time filter. Supply at least one full timespan of preceding source history before the first reportable window end, then filter the summaries to the reporting range. Without that history, early windows may have incomplete counts. Timespans must be positive. Sigma weeks, months, and years use pySigma's fixed second lengths, rather than calendar intervals.
+
+For chains, supply the accumulated lookback along each dependency path. The five-minute child and two-minute parent above require seven minutes of preceding detection-source history before the first reportable parent window end; a direct source used only by the parent needs two minutes. Keep the necessary child summaries available, then filter the final parent results to the reporting range. Conversion does not add or expand time filters.
+
+For a concrete three-level example, [the multilevel fixture](tests/fixtures/correlation/chained_multilevel.kql) uses a two-minute event-count child, a three-minute value-count middle, and a four-minute ordered parent with a direct detection branch. Raw events at 11:58 and 12:00 produce a child count of two at 12:00; three raw events at 12:03 produce a child count of three. The middle sees the distinct metrics `{2, 3}` in its inclusive 12:00–12:03 window. A direct event at 12:07 completes the parent's sequence exactly four minutes later. The final result depends on the raw 11:58 event: the longest dependency path requires **2 + 3 + 4 = 9 minutes** of history, while the direct branch requires four minutes. A direct event tied at 12:03 or one tick beyond 12:07 does not complete that sequence.
+
+This changes two previous behaviors: sliding windows replace fixed non-overlapping bins, and several searches from one source rule now feed one aggregate instead of separate aggregates. Ordinary detection queries and pySigma's `generate` control for standalone source output retain their behavior. A count condition must still contain exactly one comparison; range conditions remain unsupported.
+
+The exact event-count baseline preaggregates matches by timestamp and group, pairs candidate contributions using explicit inner joins and bins, applies the actual inclusive timestamp predicate, and sums the integer weights. Value counts first assign scalar identities to native typed values, then apply exact `count_distinctif` over the whole window. Unordered temporal correlations retain source-rule identities and use the same exact aggregation to count types over the whole window. [Kusto documents this function as preview](https://learn.microsoft.com/en-us/kusto/query/count-distinctif-aggregation-function); exceeding its 100-million-unique-value limit raises an engine error. Ordered temporal correlations instead extend valid prefixes one declared step at a time with explicit inner joins, strict timestamp comparisons, and an inclusive total-span bound. For each group and prefix-end timestamp, only the latest viable start is needed: an earlier start has the same future ordering constraints and expires sooner. This collapses alternatives after each step while preserving every possible completion. Bins prune candidates; they do not determine window membership. Dense groups, especially ungrouped streams, can create quadratic intermediate joins. There are no silent caps, sampling, or truncation, and throughput has not been benchmarked. [Deterministic KQL fixtures](tests/fixtures/correlation/README.md) provide worked expected summaries and execution instructions; they are prepared fixtures, not evidence of live engine execution.
+
+Counted-value normalization uses `pack_array(gettype(field), field)` to retain the runtime type and original value. Thus numeric `1`, real `1.0`, and string `"1"` remain separate; native dynamic equality compares arrays in order and property bags by their mappings, including nested values. Null and empty strings receive no identity while their rows still establish anchors; zero and empty arrays/bags remain values. Repeated top-level real NaNs receive one identity explicitly. Each field receives its own identities. Values are never parsed from strings or serialized to decide equality, since [dynamic values can contain extended types and unordered bag slots](https://learn.microsoft.com/en-us/kusto/query/scalar-data-types/dynamic). The [Kusto language signature excludes dynamic input from `count_distinctif`](https://github.com/microsoft/Kusto-Query-Language/blob/master/src/Kusto.Language/Aggregates.cs), so a self-join within each correlation group compares native values of the same runtime type and chooses the smallest stable row ID as their scalar identity. IDs are labels: their representative row may lie outside a later window. This extra join can be quadratic over the supplied group history, even when windows are sparse. Normalized rows and IDs are cached once with [`materialize()`](https://learn.microsoft.com/en-us/kusto/query/materialize-function); its shared 5 GB per-node cache limit aborts the query on exhaustion. No values are silently discarded to meet a limit.
 
 ### 🔄 Pipeline & Backend Args (New in 0.2.0)
 
