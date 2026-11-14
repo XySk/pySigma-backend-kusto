@@ -229,11 +229,38 @@ The initial ordered implementation requires the full declared sequence. Omit `co
 
 Every qualifying evaluation returns `WindowStart`, `WindowEnd`, the requested grouping fields, and `EventCount`, `ValueCount`, the per-field value counts, or temporal `RuleCount`. `WindowStart` is `WindowEnd - timespan`. Each joint set of grouping values is independent; omitting `group-by` defines one group. Overlapping qualifying windows remain separate summaries. No evaluation is generated solely because an event expires, and count conditions do not invent empty-window results. Invalid timestamps and null or empty grouping values are excluded before establishing evaluation timestamps. Group names `WindowStart`, `WindowEnd`, and the returned count metrics are rejected because they conflict with the result columns.
 
+An `event_count` parent can consume an `event_count` child alongside direct detection sources:
+
+```yaml
+title: Child count
+name: child-count
+correlation:
+  type: event_count
+  rules: [source-rule]
+  group-by: [User]
+  timespan: 5m
+  condition: {gte: 10}
+---
+title: Parent count
+correlation:
+  type: event_count
+  rules: [child-count, direct-rule]
+  group-by: [User]
+  timespan: 2m
+  condition: {gte: 2}
+```
+
+Include the referenced detection rules in the same collection. Each qualifying child summary contributes **one** parent source match at the child's `WindowEnd`, even when the child reports `EventCount = 10`. The parent applies its own grouping, timespan, and comparison. Overlapping child summaries remain separate matches; distinct child groups can combine when the parent groups by fewer fields.
+
+The child's returned grouping fields, `WindowStart`, `WindowEnd`, and `EventCount` are available as input fields. They use the child's logical result names, without reapplying detection-table mappings. Parent aliases can map to those names; for example, `ChildSize: {child-count: EventCount}` makes the child metric available as a grouping field named `ChildSize`. The metric remains a field and never multiplies the child's contribution. Conversion rejects required fields absent from the child's result schema, including original detection fields discarded by aggregation. Both child and direct branches follow the same normalization and invalid-input exclusions. Each correlation's `generate` controls standalone output of its referenced sources: the parent's setting controls child output, and the child's setting controls detection-source output.
+
 Normalized columns and window intermediates use names beginning with `_sigma_`, with numeric suffixes to avoid known source names. Known names include detection fields, a rule's `fields` list, correlation fields and aliases, table field mappings, and the pipeline's schema. The built-in pipelines provide their schema through `vars["kusto_schema"]`. Custom pipelines can provide a `BaseSchema` there or list additional source columns in the source rules' `fields`; columns absent from those inputs cannot be discovered during offline conversion. Source columns and rule identity remain available during source assembly; the final aggregate returns only the window, groups, and counts.
 
 The caller owns time-range selection, scheduling, and filtering the reported results. Conversion adds no implicit time filter. Supply at least one full timespan of preceding source history before the first reportable window end, then filter the summaries to the reporting range. Without that history, early windows may have incomplete counts. Timespans must be positive. Sigma weeks, months, and years use pySigma's fixed second lengths, rather than calendar intervals.
 
-This changes two previous behaviors: sliding windows replace fixed non-overlapping bins, and several searches from one source rule now feed one aggregate instead of separate aggregates. Ordinary detection queries and pySigma's `generate` control for standalone source output retain their behavior. This delivery supports `event_count`, `value_count`, `temporal`, and full-sequence `temporal_ordered` with detection-rule sources. Chained correlation sources raise a clear conversion error until their stage is implemented. A count condition must still contain exactly one comparison; range conditions remain unsupported.
+For chains, supply the accumulated lookback along each dependency path. The five-minute child and two-minute parent above require seven minutes of preceding detection-source history before the first reportable parent window end; a direct source used only by the parent needs two minutes. Keep the necessary child summaries available, then filter the final parent results to the reporting range. Conversion does not add or expand time filters.
+
+This changes two previous behaviors: sliding windows replace fixed non-overlapping bins, and several searches from one source rule now feed one aggregate instead of separate aggregates. Ordinary detection queries and pySigma's `generate` control for standalone source output retain their behavior. This delivery supports `event_count`, `value_count`, `temporal`, and full-sequence `temporal_ordered` with detection-rule sources, plus `event_count` parents consuming `event_count` children. Other chained type combinations raise a clear conversion error until the next stage. A count condition must still contain exactly one comparison; range conditions remain unsupported.
 
 The exact event-count baseline preaggregates matches by timestamp and group, pairs candidate contributions using explicit inner joins and bins, applies the actual inclusive timestamp predicate, and sums the integer weights. Value counts retain actual values through the same candidate pairing and apply exact `count_distinctif` over the whole window. Unordered temporal correlations retain source-rule identities and use the same exact aggregation to count types over the whole window. [Kusto documents this function as preview](https://learn.microsoft.com/en-us/kusto/query/count-distinctif-aggregation-function); exceeding its 100-million-unique-value limit raises an engine error. Ordered temporal correlations instead extend valid prefixes one declared step at a time with explicit inner joins, strict timestamp comparisons, and an inclusive total-span bound. For each group and prefix-end timestamp, only the latest viable start is needed: an earlier start has the same future ordering constraints and expires sooner. This collapses alternatives after each step while preserving every possible completion. Bins prune candidates; they do not determine window membership. Dense groups, especially ungrouped streams, can create quadratic intermediate joins. There are no silent caps, sampling, or truncation, and throughput has not been benchmarked. [Deterministic KQL fixtures](tests/fixtures/correlation/README.md) provide worked expected summaries and execution instructions; they are prepared fixtures, not evidence of live engine execution.
 

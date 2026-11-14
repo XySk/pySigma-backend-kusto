@@ -991,7 +991,7 @@ def test_event_count_rejects_group_names_that_collide_with_result_metrics(group)
 
 @pytest.mark.parametrize(
     "parent_rule",
-    [event_count_correlation, value_count_correlation, temporal_correlation, ordered_temporal_correlation],
+    [value_count_correlation, temporal_correlation, ordered_temporal_correlation],
 )
 def test_count_correlations_reject_chained_sources_until_chaining_is_supported(parent_rule):
     child = event_count_correlation().replace("correlation:", "name: child-correlation\ncorrelation:")
@@ -1011,6 +1011,167 @@ def test_count_correlations_reject_chained_sources_until_chaining_is_supported(p
 
     with pytest.raises(SigmaError, match="Chained correlation sources are not yet supported"):
         backend.convert(collection)
+
+
+def chained_event_count_collection(
+    *, child_groups=(), parent_groups=(), child_generate=False, parent_generate=False, parent_condition="gte: 2"
+):
+    source = correlation_collection(event_count_correlation()).rules[0].to_dict()
+    child = event_count_correlation(group_by=child_groups, condition="gte: 10", generate=child_generate)
+    child = "title: Child\nname: child-correlation\n" + child
+    parent = event_count_correlation(group_by=parent_groups, generate=parent_generate, condition=parent_condition)
+    parent = "title: Parent\n" + parent.replace("source-rule", "child-correlation").replace(
+        "timespan: 5m", "timespan: 2m"
+    )
+    return SigmaCollection.from_yaml(yaml.safe_dump(source) + "---\n" + child + "---\n" + parent)
+
+
+def test_event_count_parent_counts_child_summaries_at_window_end_without_expanding_their_counts():
+    backend = KustoBackend(
+        processing_pipeline=microsoft_365_defender_pipeline(), correlation_timestamp_field="Timestamp"
+    )
+
+    (query,) = backend.convert(chained_event_count_collection())
+
+    assert query.startswith("let _sigma_child_0 = () {\nlet _sigma_weights = union (DeviceProcessEvents\n| where ")
+    assert "| where EventCount >= 10\n" in query
+    assert "WindowEnd = _sigma_window_end, EventCount\n};\nlet _sigma_weights = union (_sigma_child_0()\n" in query
+    assert '_sigma_timestamp = todatetime(["WindowEnd"])' in query
+    assert '| extend _sigma_rule = "child-correlation")\n' in query
+    assert query.count("| summarize _sigma_weight = count() by _sigma_timestamp;") == 2
+    assert "| where _sigma_timestamp between ((_sigma_window_end - 2m) .. _sigma_window_end)" in query
+    assert query.endswith("| project WindowStart = _sigma_window_end - 2m, WindowEnd = _sigma_window_end, EventCount")
+
+
+@pytest.mark.parametrize("field", ["User", "CommandLine", "Timestamp"])
+def test_event_count_parent_rejects_fields_discarded_by_child_aggregation(field):
+    backend = KustoBackend(
+        processing_pipeline=microsoft_365_defender_pipeline(), correlation_timestamp_field="Timestamp"
+    )
+
+    with pytest.raises(SigmaError, match=f"child-correlation.*does not return required field.*{field}"):
+        backend.convert(chained_event_count_collection(parent_groups=(field,)))
+
+
+def test_event_count_parent_resolves_child_group_and_metric_aliases_without_remapping_result_fields():
+    collection = chained_event_count_collection(child_groups=("User",), parent_groups=("Actor", "ChildCount"))
+    documents = [rule.to_dict() for rule in collection.rules]
+    documents[1]["id"] = "22222222-2222-2222-2222-222222222222"
+    documents[2]["correlation"]["rules"] = [documents[1]["id"]]
+    documents[2]["correlation"]["aliases"] = {
+        "Actor": {"child-correlation": "User"},
+        "ChildCount": {"child-correlation": "EventCount"},
+    }
+    backend = KustoBackend(
+        processing_pipeline=microsoft_365_defender_pipeline(), correlation_timestamp_field="Timestamp"
+    )
+
+    (query,) = backend.convert(SigmaCollection.from_yaml(yaml.safe_dump_all(documents)))
+
+    assert '_sigma_group_0 = tostring(["AccountName"])' in query
+    assert '_sigma_group_0 = tostring(["User"])' in query
+    assert '_sigma_group_1 = tostring(["EventCount"])' in query
+    assert query.endswith('["Actor"] = _sigma_group_0, ["ChildCount"] = _sigma_group_1, EventCount')
+
+
+def test_event_count_parent_combines_direct_searches_with_child_groups_and_preserves_internal_name_collisions():
+    collection = chained_event_count_collection(
+        child_groups=("User", "_sigma_timestamp", "_sigma_child_0"), parent_groups=("Actor",)
+    )
+    source, child, parent = [rule.to_dict() for rule in collection.rules]
+    source["detection"]["condition"] = ["selection", "alternate"]
+    direct = multi_rule_collection(other_source_conditions=["selection", "selection"]).rules[1].to_dict()
+    parent["correlation"]["rules"].append("other-rule")
+    parent["correlation"]["aliases"] = {"Actor": {"child-correlation": "User", "other-rule": "User"}}
+    backend = KustoBackend(
+        processing_pipeline=microsoft_365_defender_pipeline(), correlation_timestamp_field="Timestamp"
+    )
+
+    (query,) = backend.convert(SigmaCollection.from_yaml(yaml.safe_dump_all([parent, child, source, direct])))
+
+    assert query.startswith("let _sigma_child_0_1 = () {\n")
+    assert query.count("(DeviceProcessEvents\n| where ") == 2
+    assert query.count("(DeviceNetworkEvents\n| where ") == 2
+    assert '_sigma_timestamp_1 = todatetime(["WindowEnd"]), _sigma_group_0 = tostring(["User"])' in query
+    assert (
+        '_sigma_timestamp_1 = todatetime(["Timestamp"]), _sigma_group_0 = tostring(["InitiatingProcessAccountName"])'
+        in query
+    )
+    assert query.endswith('["Actor"] = _sigma_group_0, EventCount')
+
+
+@pytest.mark.parametrize("missing", ["kusto_result_fields", "kusto_result_timestamp"])
+def test_event_count_chain_rejects_missing_child_result_schema_or_time_metadata(missing):
+    documents = [rule.to_dict() for rule in chained_event_count_collection().rules]
+    documents.insert(2, multi_rule_collection().rules[1].to_dict())
+    documents[-1]["correlation"]["rules"].append("other-rule")
+    collection = SigmaCollection.from_yaml(yaml.safe_dump_all(documents))
+    backend = KustoBackend(
+        processing_pipeline=microsoft_365_defender_pipeline(), correlation_timestamp_field="Timestamp"
+    )
+
+    def remove_child_metadata(rule, output_format, index, condition, result):
+        if rule.name == "other-rule":
+            child = next(rule for rule in collection.rules if rule.name == "child-correlation")
+            child.get_conversion_states()[0].processing_state.pop(missing)
+        return result
+
+    with pytest.raises(SigmaError, match="child result schema and timestamp metadata"):
+        backend.convert(collection, callback=remove_child_metadata)
+
+
+@pytest.mark.parametrize(
+    ("child_generate", "parent_generate", "output_count"),
+    [(False, False, 1), (False, True, 2), (True, False, 2), (True, True, 3)],
+)
+def test_event_count_chain_honors_generation_of_child_and_detection_queries(
+    child_generate, parent_generate, output_count
+):
+    backend = KustoBackend(
+        processing_pipeline=microsoft_365_defender_pipeline(), correlation_timestamp_field="Timestamp"
+    )
+
+    queries = backend.convert(
+        chained_event_count_collection(child_generate=child_generate, parent_generate=parent_generate)
+    )
+
+    assert len(queries) == output_count
+    if child_generate:
+        assert queries[0] == 'DeviceProcessEvents\n| where ProcessCommandLine =~ "suspicious.exe"'
+    if parent_generate:
+        assert "| where EventCount >= 10\n" in queries[-2]
+        assert "_sigma_child_0" not in queries[-2]
+    assert "_sigma_child_0()" in queries[-1]
+
+
+@pytest.mark.parametrize(
+    ("operator", "query_operator"),
+    [("gt", ">"), ("gte", ">="), ("lt", "<"), ("lte", "<="), ("eq", "=="), ("neq", "!=")],
+)
+def test_event_count_chain_applies_parent_comparisons_after_counting_child_summaries(operator, query_operator):
+    backend = KustoBackend(
+        processing_pipeline=microsoft_365_defender_pipeline(), correlation_timestamp_field="Timestamp"
+    )
+
+    (query,) = backend.convert(chained_event_count_collection(parent_condition=f"{operator}: 2"))
+
+    assert (
+        f"| summarize EventCount = sum(_sigma_weight) by _sigma_window_end\n| where EventCount {query_operator} 2\n"
+        in query
+    )
+
+
+@pytest.mark.parametrize("child_rule", [value_count_correlation, temporal_correlation, ordered_temporal_correlation])
+def test_event_count_parent_rejects_non_event_count_child_types_until_next_slice(child_rule):
+    source = correlation_collection(event_count_correlation()).rules[0].to_dict()
+    child = "title: Child\nname: child-correlation\n" + child_rule()
+    parent = "title: Parent\n" + event_count_correlation().replace("source-rule", "child-correlation")
+    backend = KustoBackend(
+        processing_pipeline=microsoft_365_defender_pipeline(), correlation_timestamp_field="Timestamp"
+    )
+
+    with pytest.raises(SigmaError, match="only event_count parents consuming event_count children"):
+        backend.convert(SigmaCollection.from_yaml(yaml.safe_dump(source) + "---\n" + child + "---\n" + parent))
 
 
 @pytest.mark.parametrize(

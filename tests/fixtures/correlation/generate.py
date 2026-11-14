@@ -842,6 +842,217 @@ let Events = datatable(Timestamp:string, Marker:string) [
     )
 
 
+def chained_query(*, operator="gte", threshold=2, grouped=False, mixed=False, metric_group=False, parent_span="2m"):
+    source = {
+        "title": "Child detection source",
+        "name": "source-rule",
+        "logsource": {"product": "fixture"},
+        "detection": {"selection": {"Marker": "match"}, "condition": "selection"},
+    }
+    child = {
+        "title": "Child event count",
+        "name": "child-rule",
+        "correlation": {
+            "type": "event_count",
+            "rules": ["source-rule"],
+            "timespan": "5m",
+            "condition": {"gte": 2},
+        },
+    }
+    parent = {
+        "title": "Parent event count",
+        "correlation": {
+            "type": "event_count",
+            "rules": ["child-rule"],
+            "timespan": parent_span,
+            "condition": {operator: threshold},
+        },
+    }
+    documents = [source, child]
+    if mixed:
+        documents.append({**source, "name": "direct-rule", "logsource": {"product": "direct-fixture"}})
+        parent["correlation"]["rules"].append("direct-rule")
+    if grouped:
+        child["correlation"]["group-by"] = ["Case", "Actor", "Host"]
+        child["correlation"]["aliases"] = {"Actor": {"source-rule": "User"}, "Host": {"source-rule": "Computer"}}
+        parent["correlation"]["group-by"] = ["Case", "Actor"]
+        parent["correlation"]["aliases"] = {
+            "Actor": {"child-rule": "Actor", "direct-rule": "Account"} if mixed else {"child-rule": "Actor"}
+        }
+    if metric_group:
+        parent["correlation"]["group-by"].append("ChildCount")
+        parent["correlation"]["aliases"]["ChildCount"] = {"child-rule": "EventCount"}
+    documents.append(parent)
+    pipeline = ProcessingPipeline.from_dict(
+        {
+            "transformations": [
+                {"type": "set_state", "key": "query_table", "val": "Events"},
+                {
+                    "type": "set_state",
+                    "key": "query_table",
+                    "val": "OtherEvents",
+                    "rule_conditions": [{"type": "logsource", "product": "direct-fixture"}],
+                },
+            ]
+        }
+    )
+    pipeline.vars["kusto_field_mappings"] = FieldMappings(
+        table_mappings={
+            "Events": {"Timestamp": "ProcessTime", "User": "ProcessUser", "Computer": "ProcessHost"},
+            "OtherEvents": {"Timestamp": "NetworkTime", "Account": "NetworkUser"},
+        }
+    )
+    (converted,) = KustoBackend(processing_pipeline=pipeline, correlation_timestamp_field="Timestamp").convert(
+        SigmaCollection.from_yaml(yaml.safe_dump_all(documents))
+    )
+    return converted
+
+
+def chained_grouped_fixture():
+    data = """// Child windows last five minutes; parent windows last two minutes.
+// Parent grouping drops Host, combines child summaries with direct detections,
+// and resolves Actor from returned child fields or mapped direct source fields.
+let Events = datatable(ProcessTime:string, Case:string, ProcessUser:dynamic, ProcessHost:string, Marker:string) [
+    "2026-01-01T12:00:00Z", "child-time", dynamic("alice"), "h1", "match",
+    "2026-01-01T12:04:00Z", "child-time", dynamic("alice"), "h1", "match",
+    "2026-01-01T12:00:00Z", "overlap", dynamic("alice"), "h1", "match",
+    "2026-01-01T12:01:00Z", "overlap", dynamic("alice"), "h1", "match",
+    "2026-01-01T12:02:00Z", "overlap", dynamic("alice"), "h1", "match",
+    "2026-01-01T12:00:00Z", "coarsen", dynamic("alice"), "h1", "match",
+    "2026-01-01T12:00:00Z", "coarsen", dynamic("alice"), "h1", "match",
+    "2026-01-01T12:00:00Z", "coarsen", dynamic("alice"), "h2", "match",
+    "2026-01-01T12:00:00Z", "coarsen", dynamic("alice"), "h2", "match",
+    "2026-01-01T12:00:00Z", "parent-span", dynamic("alice"), "h1", "match",
+    "2026-01-01T12:04:00Z", "parent-span", dynamic("alice"), "h1", "match",
+    "2026-01-01T12:05:00Z", "parent-span", dynamic("alice"), "h1", "match",
+    "2026-01-01T12:00:00Z", "outside", dynamic("alice"), "h1", "match",
+    "2026-01-01T12:04:00Z", "outside", dynamic("alice"), "h1", "match",
+    "2026-01-01T12:00:00Z", "split", dynamic("alice"), "h1", "match",
+    "2026-01-01T12:01:00Z", "split", dynamic("alice"), "h1", "match",
+    "2026-01-01T12:00:00Z", "missing", dynamic("alice"), "h1", "match",
+    "2026-01-01T12:01:00Z", "missing", dynamic("alice"), "h1", "match",
+    "invalid", "missing", dynamic("alice"), "h1", "match",
+    "2026-01-01T12:02:00Z", "missing", dynamic(""), "h1", "match",
+    "2026-01-01T12:03:00Z", "missing", dynamic(null), "h1", "match",
+    "2026-01-01T12:00:00Z", "", dynamic("alice"), "h1", "match",
+    "2026-01-01T12:01:00Z", "", dynamic("alice"), "h1", "match",
+"""
+    # Ten simultaneous physical rows yield a single child summary with
+    # EventCount=10. It cannot satisfy the parent's gte:2 without another match.
+    data += ",\n".join(
+        f'    "2026-01-01T12:00:00Z", "{case}", dynamic("alice"), "h1", "match"'
+        for case in ("ten", "ten-alone")
+        for _ in range(10)
+    )
+    data += """
+];
+let OtherEvents = datatable(NetworkTime:string, Case:string, NetworkUser:dynamic, Marker:string) [
+    "2026-01-01T12:06:00Z", "child-time", dynamic("alice"), "match",
+    "2026-01-01T12:01:00Z", "ten", dynamic("alice"), "match",
+    "2026-01-01T12:06:00.0000001Z", "outside", dynamic("alice"), "match",
+    "2026-01-01T12:02:00Z", "split", dynamic("bob"), "match",
+    "invalid", "missing", dynamic("alice"), "match",
+    "2026-01-01T12:02:00Z", "missing", dynamic(""), "match",
+    "2026-01-01T12:03:00Z", "missing", dynamic(null), "match",
+    "2026-01-01T12:01:00Z", "", dynamic("alice"), "match"
+];
+"""
+    expected = """let Expected = datatable(WindowStart:datetime, WindowEnd:datetime, Case:string, Actor:string, EventCount:long) [
+    datetime(2026-01-01T12:04:00Z), datetime(2026-01-01T12:06:00Z), "child-time", "alice", 2,
+    datetime(2026-01-01T12:00:00Z), datetime(2026-01-01T12:02:00Z), "overlap", "alice", 2,
+    datetime(2026-01-01T11:58:00Z), datetime(2026-01-01T12:00:00Z), "coarsen", "alice", 2,
+    datetime(2026-01-01T12:03:00Z), datetime(2026-01-01T12:05:00Z), "parent-span", "alice", 2,
+    datetime(2026-01-01T11:59:00Z), datetime(2026-01-01T12:01:00Z), "ten", "alice", 2
+];
+"""
+    return (
+        HEADER
+        + data
+        + "let Actual = () {\n"
+        + chained_query(grouped=True, mixed=True)
+        + "\n};\n"
+        + expected
+        + check("Actual()", "Expected", ["WindowStart", "WindowEnd", "Case", "Actor", "EventCount"])
+    )
+
+
+def chained_comparisons_fixture():
+    data = """// Child summaries end at 12:00, 12:01, 12:02, 12:07, and 12:07:00.0000001.
+// Their EventCounts are 2, 3, 4, 2, 2. Each contributes exactly once to the parent.
+// Parent counts at those anchors are 1, 2, 3, 1, 2; expiry alone creates no anchor.
+let Events = datatable(ProcessTime:string, Marker:string) [
+    "2026-01-01T12:00:00Z", "match",
+    "2026-01-01T12:00:00Z", "match",
+    "2026-01-01T12:01:00Z", "match",
+    "2026-01-01T12:02:00Z", "match",
+    "2026-01-01T12:07:00Z", "match",
+    "2026-01-01T12:07:00.0000001Z", "match",
+    "invalid", "match"
+];
+"""
+    scenarios = [("gt", 2), ("gte", 2), ("lt", 2), ("lte", 2), ("eq", 2), ("neq", 2), ("eq", 0)]
+    functions = "".join(
+        f"let {op}_{threshold} = () {{\n{chained_query(operator=op, threshold=threshold)}\n}};\n"
+        for op, threshold in scenarios
+    )
+    actual = (
+        "let Actual = union\n"
+        + ",\n".join(f'    ({op}_{threshold}() | extend Scenario = "{op}_{threshold}")' for op, threshold in scenarios)
+        + ";\n"
+    )
+    expected = """let Expected = datatable(Scenario:string, WindowStart:datetime, WindowEnd:datetime, EventCount:long) [
+    "gt_2", datetime(2026-01-01T12:00:00Z), datetime(2026-01-01T12:02:00Z), 3,
+    "gte_2", datetime(2026-01-01T11:59:00Z), datetime(2026-01-01T12:01:00Z), 2,
+    "gte_2", datetime(2026-01-01T12:00:00Z), datetime(2026-01-01T12:02:00Z), 3,
+    "gte_2", datetime(2026-01-01T12:05:00.0000001Z), datetime(2026-01-01T12:07:00.0000001Z), 2,
+    "lt_2", datetime(2026-01-01T11:58:00Z), datetime(2026-01-01T12:00:00Z), 1,
+    "lt_2", datetime(2026-01-01T12:05:00Z), datetime(2026-01-01T12:07:00Z), 1,
+    "lte_2", datetime(2026-01-01T11:58:00Z), datetime(2026-01-01T12:00:00Z), 1,
+    "lte_2", datetime(2026-01-01T11:59:00Z), datetime(2026-01-01T12:01:00Z), 2,
+    "lte_2", datetime(2026-01-01T12:05:00Z), datetime(2026-01-01T12:07:00Z), 1,
+    "lte_2", datetime(2026-01-01T12:05:00.0000001Z), datetime(2026-01-01T12:07:00.0000001Z), 2,
+    "eq_2", datetime(2026-01-01T11:59:00Z), datetime(2026-01-01T12:01:00Z), 2,
+    "eq_2", datetime(2026-01-01T12:05:00.0000001Z), datetime(2026-01-01T12:07:00.0000001Z), 2,
+    "neq_2", datetime(2026-01-01T11:58:00Z), datetime(2026-01-01T12:00:00Z), 1,
+    "neq_2", datetime(2026-01-01T12:00:00Z), datetime(2026-01-01T12:02:00Z), 3,
+    "neq_2", datetime(2026-01-01T12:05:00Z), datetime(2026-01-01T12:07:00Z), 1
+];
+"""
+    return (
+        HEADER
+        + data
+        + functions
+        + actual
+        + expected
+        + check("Actual", "Expected", ["Scenario", "WindowStart", "WindowEnd", "EventCount"])
+    )
+
+
+def chained_metrics_fixture():
+    data = """// Child EventCounts are 2 at 12:00, 3 at 12:05, and 2 one tick later.
+// Grouping the parent by the child's count metric joins the two count=2 summaries.
+let Events = datatable(ProcessTime:string, Case:string, ProcessUser:string, ProcessHost:string, Marker:string) [
+    "2026-01-01T12:00:00Z", "metric", "alice", "h1", "match",
+    "2026-01-01T12:00:00Z", "metric", "alice", "h1", "match",
+    "2026-01-01T12:05:00Z", "metric", "alice", "h1", "match",
+    "2026-01-01T12:05:00.0000001Z", "metric", "alice", "h1", "match"
+];
+"""
+    expected = """let Expected = datatable(WindowStart:datetime, WindowEnd:datetime, Case:string, Actor:string, ChildCount:string, EventCount:long) [
+    datetime(2026-01-01T11:55:00.0000001Z), datetime(2026-01-01T12:05:00.0000001Z), "metric", "alice", "2", 2
+];
+"""
+    return (
+        HEADER
+        + data
+        + "let Actual = () {\n"
+        + chained_query(grouped=True, metric_group=True, parent_span="10m")
+        + "\n};\n"
+        + expected
+        + check("Actual()", "Expected", ["WindowStart", "WindowEnd", "Case", "Actor", "ChildCount", "EventCount"])
+    )
+
+
 def fixtures():
     return {
         "event_count_grouped.kql": grouped_fixture(),
@@ -855,6 +1066,9 @@ def fixtures():
         "temporal_comparisons.kql": temporal_comparisons_fixture(),
         "temporal_ordered_grouped.kql": ordered_temporal_grouped_fixture(),
         "temporal_ordered_ungrouped.kql": ordered_temporal_ungrouped_fixture(),
+        "event_count_chained_grouped.kql": chained_grouped_fixture(),
+        "event_count_chained_comparisons.kql": chained_comparisons_fixture(),
+        "event_count_chained_metrics.kql": chained_metrics_fixture(),
     }
 
 
