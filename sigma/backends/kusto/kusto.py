@@ -618,17 +618,7 @@ class KustoBackend(TextQueryBackend):
         anchor_fields = ", ".join([*groups, f"{window_end} = {timestamp}", f"{time_bin} = bin({timestamp}, {span})"])
         join_fields = ", ".join([*groups, time_bin])
         summary_fields = ", ".join([window_end, *groups])
-        result_fields = ", ".join(
-            [
-                f"WindowStart = {window_end} - {span}",
-                f"WindowEnd = {window_end}",
-                *(
-                    f"{self._quote_correlation_field(field)} = {column}"
-                    for field, column in zip(rule.group_by or [], groups)
-                ),
-                *metrics,
-            ]
-        )
+        result_fields = self._correlation_result_projection(rule, groups, window_end, span, metrics)
         if temporal:
             # One retained rule identity per timestamp/group is sufficient for
             # exact type counts; repetitions never become additional types.
@@ -640,9 +630,10 @@ class KustoBackend(TextQueryBackend):
             distinct_anchors = ""
             aggregates = [f"EventCount = sum({weight})"]
         else:
-            # Retain values, including empty ones that still establish anchors.
-            # Deduplicating complete rows here does not determine cardinality:
-            # each field is counted independently across the entire window.
+            definitions += self._counted_value_identities(search, columns, valid_rows, allocate)
+            search = columns["identities"]
+            # Scalar identities retain empty-value rows as anchors. Each field
+            # is still counted independently across the entire window.
             preaggregate = f"| summarize by {weighted_fields}, {', '.join(columns['values'])}"
             distinct_anchors = "| distinct *\n"
             aggregates = [
@@ -669,6 +660,42 @@ class KustoBackend(TextQueryBackend):
             f"| where {comparisons}\n"
             f"| project {result_fields}"
         ]
+
+    def _counted_value_identities(self, search, columns, valid_rows, allocate):
+        # count_distinctif() and summarize-by do not accept dynamic values.
+        # Join on field index/runtime type only. Native equality checks the
+        # boxed value without serializing extended or nested values to JSON.
+        source = allocate("_sigma_value_input")
+        identities = columns["identities"] = allocate("_sigma_value_identities")
+        row_id, other_id, key = (allocate(name) for name in ("_sigma_value_id", "_sigma_other_id", "_sigma_value_key"))
+        values, groups = columns["values"], columns["groups"]
+        others = [
+            allocate("_sigma_other_value" if len(values) == 1 else f"_sigma_other_value_{i}")
+            for i in range(len(values))
+        ]
+        retained = ", ".join([columns["timestamp"], *groups, *values])
+        keys = ", ".join(f'strcat("{index}:", tostring({value}[0]))' for index, value in enumerate(values))
+        candidates = f"| extend {key} = pack_array({keys})\n| mv-expand {key} to typeof(string)\n"
+        right_fields = ", ".join(
+            [*groups, key, f"{other_id} = {row_id}", *(f"{other} = {value}" for other, value in zip(others, values))]
+        )
+        aggregates = [f"{field} = take_any({field})" for field in [columns["timestamp"], *groups]]
+        aggregates.extend(
+            f"{value} = minif({other_id}, isnotempty(tostring({value}[1])) and "
+            f"({row_id} == {other_id} or {value} == {other} or "
+            f'(tostring({value}[0]) == "real" and tostring({other}[0]) == "real" and '
+            f"isnan(toreal({value}[1])) and isnan(toreal({other}[1])))))"
+            for value, other in zip(values, others)
+        )
+        return (
+            f"let {source} = materialize({search}\n| where {valid_rows}\n"
+            f"| project {retained}\n| serialize {row_id} = row_number());\n"
+            f"let {identities} = {source}\n{candidates}"
+            f"| join kind=inner (\n    {source}\n"
+            + "".join(f"    {line}\n" for line in candidates.rstrip().splitlines())
+            + f"    | project {right_fields}\n) on {', '.join([*groups, key])}\n"
+            f"| summarize {', '.join(aggregates)} by {row_id};\n"
+        )
 
     def _convert_ordered_temporal(self, rule, search, columns, valid_rows, span, source_type_count):
         timestamp, rule_column, types, start, end, time_bin = (
@@ -703,18 +730,23 @@ class KustoBackend(TextQueryBackend):
                 f"| where {timestamp} > {end} and {timestamp} <= {start} + {span}\n"
                 f"| summarize {start} = max({start}) by {summary_fields};\n"
             )
-        result_fields = ", ".join(
-            [
-                f"WindowStart = {end} - {span}",
-                f"WindowEnd = {end}",
-                *(
-                    self._quote_correlation_field(field) + f" = {column}"
-                    for field, column in zip(rule.group_by or [], groups)
-                ),
-                f"RuleCount = tolong({source_type_count})",
-            ]
+        result_fields = self._correlation_result_projection(
+            rule, groups, end, span, [f"RuleCount = tolong({source_type_count})"]
         )
         return [query + f"{steps[-1]}\n| project {result_fields}"]
+
+    def _correlation_result_projection(self, rule, groups, window_end, span, metrics):
+        return ", ".join(
+            [
+                f"WindowStart = {window_end} - {span}",
+                f"WindowEnd = {window_end}",
+                *(
+                    f"{self._quote_correlation_field(field)} = {column}"
+                    for field, column in zip(rule.group_by or [], groups)
+                ),
+                *metrics,
+            ]
+        )
 
     def convert_correlation_search_field_normalization_expression(self, aliases, rule_reference):
         source_state = rule_reference.rule.get_conversion_states()[0]
@@ -761,7 +793,8 @@ class KustoBackend(TextQueryBackend):
             fields.append(f"{columns['groups'][index]} = tostring({self._quote_correlation_field(mapped_field)})")
         for index, counted_field in enumerate(self._correlation_counted_fields):
             mapped_field = map_field(map_alias(counted_field))
-            fields.append(f"{columns['values'][index]} = tostring({self._quote_correlation_field(mapped_field)})")
+            quoted = self._quote_correlation_field(mapped_field)
+            fields.append(f"{columns['values'][index]} = pack_array(gettype({quoted}), {quoted})")
         return _CorrelationNormalization("\n| extend " + ", ".join(fields), columns["rule"])
 
     @staticmethod
