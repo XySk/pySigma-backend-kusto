@@ -1876,11 +1876,13 @@ def fixtures():
     from tests.fixtures.correlation.average import average_fixtures
     from tests.fixtures.correlation.boolean_generate import fixtures as boolean_fixtures
     from tests.fixtures.correlation.context import fixtures as context_fixtures, nested_fixture
+    from tests.fixtures.correlation.count_context import fixtures as count_context_fixtures
 
     return {
         **average_fixtures(check, HEADER),
         **boolean_fixtures(),
         **context_fixtures(),
+        **count_context_fixtures(),
         "context_nested.kql": nested_fixture(),
         "event_count_grouped.kql": grouped_fixture(),
         "event_count_duplicate_sources.kql": duplicate_fixture(),
