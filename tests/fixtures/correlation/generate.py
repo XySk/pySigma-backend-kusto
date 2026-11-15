@@ -230,6 +230,237 @@ let Events = datatable(Timestamp:string, Marker:string) [
     )
 
 
+def value_percentile_aliases_fixture():
+    first = chain_source("first", "a")
+    first["detection"]["again"] = {"Marker": "a"}
+    first["detection"]["condition"] = ["selection", "again"]
+    second = chain_source("second", "b", product="network")
+    rule = chain_correlation(
+        "percentile",
+        "value_percentile",
+        ["first", "second"],
+        groups=("Actor",),
+        condition={"field": "Measurement", "percentile": 50, "gte": 0},
+        aliases={"Actor": {"first": "Host", "second": "Account"}, "Measurement": {"first": "Low", "second": "High"}},
+    )
+    (q,) = convert_documents([first, second, rule])
+    data = """let Events = datatable(Timestamp:datetime, Host:string, Low:long, Marker:string) [
+datetime(2026-01-01T12:00:00Z), "alice", 1, "a"
+];
+let NetworkEvents = datatable(Timestamp:datetime, Account:string, High:long, Marker:string) [
+datetime(2026-01-01T12:00:00Z), "alice", 100, "b",
+datetime(2026-01-01T12:00:00Z), "alice", 200, "b",
+datetime(2026-01-01T12:01:00Z), "alice", 300, "b"
+];
+"""
+    # Both searches for first contribute: [1,1,100,200], then
+    # [1,1,100,200,300]. Their medians are 1 and 100 respectively.
+    expected = """let Expected = datatable(WindowStart:datetime, WindowEnd:datetime, Actor:string, ValuePercentile:long) [
+datetime(2026-01-01T11:55:00Z), datetime(2026-01-01T12:00:00Z), "alice", 1,
+datetime(2026-01-01T11:56:00Z), datetime(2026-01-01T12:01:00Z), "alice", 100
+];
+"""
+    return (
+        HEADER
+        + data
+        + "let Actual = () {\n"
+        + q
+        + "\n};\n"
+        + expected
+        + check(
+            "Actual() | project WindowStart, WindowEnd, Actor, ValuePercentile=tolong(ValuePercentile)",
+            "Expected",
+            ["WindowStart", "WindowEnd", "Actor", "ValuePercentile"],
+        )
+    )
+
+
+def value_percentile_population_fixture():
+    data = """let Events = range Amount from 1 to 101 step 1
+| extend Timestamp=datetime(2026-01-01T12:00:00Z), Marker="match";
+"""
+    functions, calls = [], []
+    for selector in (0, 1, 50, 99, 100):
+        rule = chain_correlation(
+            "percentile",
+            "value_percentile",
+            ["source-rule"],
+            groups=(),
+            condition={"field": "Amount", "percentile": selector, "gte": 0},
+        )
+        (q,) = convert_documents([chain_source(), rule])
+        functions.append(f"let p_{selector} = () {{\n{q}\n}};\n")
+        calls.append(f"(p_{selector}() | project Selector={selector}, Value=tolong(ValuePercentile))")
+    expected = """let Expected = datatable(Selector:long, Value:long) [0,1, 1,2, 50,51, 99,100, 100,101];
+"""
+    return (
+        HEADER
+        + data
+        + "".join(functions)
+        + "let Actual = union "
+        + ",\n".join(calls)
+        + ";\n"
+        + expected
+        + check("Actual", "Expected", ["Selector", "Value"])
+    )
+
+
+def value_percentile_comparisons_fixture():
+    data = """let BaseEvents = datatable(Timestamp:string, Host:string, Amount:dynamic, Marker:string) [
+"2026-01-01T12:00:00Z", "rank", dynamic(1), "match",
+"2026-01-01T12:00:00Z", "rank", dynamic(2), "match",
+"2026-01-01T12:00:00Z", "rank", dynamic(100), "match",
+"2026-01-01T12:00:00Z", "rank", dynamic(200), "match",
+"2026-01-01T12:05:00Z", "rank", dynamic("bad"), "match",
+"2026-01-01T12:05:00.0000001Z", "rank", dynamic(0), "match",
+"2026-01-01T12:00:00Z", "zero", dynamic(0), "match",
+"2026-01-01T12:00:00Z", "zero", dynamic(0), "match",
+"2026-01-01T12:00:00Z", "zero", dynamic(10), "match",
+"2026-01-01T12:01:00Z", "zero", dynamic(5), "match",
+"2026-01-01T12:02:00Z", "zero", dynamic(5), "match",
+"2026-01-01T12:00:00Z", "empty", dynamic("7"), "match",
+"2026-01-01T12:01:00Z", "empty", dynamic(null), "match",
+"2026-01-01T12:00:00Z", "real", dynamic(-1.5), "match",
+"2026-01-01T12:00:00Z", "real", dynamic(0), "match",
+"2026-01-01T12:00:00Z", "real", dynamic(2.5), "match",
+"2026-01-01T12:00:00Z", "real", dynamic(10), "match",
+"bad", "rank", dynamic(-100), "match",
+"2026-01-01T12:00:00Z", "", dynamic(-100), "match"
+];
+let Events = union BaseEvents,
+(print Timestamp="2026-01-01T12:00:00Z", Host="real", Amount=pack_array(real(nan))[0], Marker="match"),
+(print Timestamp="2026-01-01T12:00:00Z", Host="real", Amount=pack_array(real(+inf))[0], Marker="match"),
+(print Timestamp="2026-01-01T12:00:00Z", Host="real", Amount=pack_array(real(-inf))[0], Marker="match"),
+(print Timestamp="2026-01-01T12:00:00Z", Host="real", Amount=dynamic(true), Marker="match");
+"""
+    # Worked median summaries: four tied values select 2; a missing-value
+    # endpoint leaves that median unchanged. A tick later only zero remains.
+    summaries = [
+        ("11:55:00", "12:00:00", "rank", 2),
+        ("12:00:00", "12:05:00", "rank", 2),
+        ("12:00:00.0000001", "12:05:00.0000001", "rank", 0),
+        ("11:55:00", "12:00:00", "zero", 0),
+        ("11:56:00", "12:01:00", "zero", 0),
+        ("11:57:00", "12:02:00", "zero", 5),
+        ("11:55:00", "12:00:00", "real", 0),
+    ]
+    comparisons = {
+        "gt": lambda x: x > 2.5,
+        "gte": lambda x: x >= 2.5,
+        "lt": lambda x: x < 2.5,
+        "lte": lambda x: x <= 2.5,
+        "eq": lambda x: x == 2.5,
+        "neq": lambda x: x != 2.5,
+    }
+    functions, calls, rows = [], [], []
+    for op, predicate in comparisons.items():
+        rule = chain_correlation(
+            "percentile", "value_percentile", ["source-rule"], condition={"field": "Amount", "percentile": 50, op: 2.5}
+        )
+        (q,) = convert_documents([chain_source(), rule])
+        functions.append(f"let p_{op} = () {{\n{q}\n}};\n")
+        calls.append(
+            f'(p_{op}() | project Scenario="{op}", WindowStart, WindowEnd, Host, ValuePercentile=toreal(ValuePercentile))'
+        )
+        for start, end, host, value in summaries:
+            if predicate(value):
+                rows.append(f'"{op}", datetime(2026-01-01T{start}Z), datetime(2026-01-01T{end}Z), "{host}", {value}')
+    expected = (
+        "let Expected = datatable(Scenario:string, WindowStart:datetime, WindowEnd:datetime, Host:string, ValuePercentile:real) [\n"
+        + ",\n".join(rows)
+        + "\n];\n"
+    )
+    return (
+        HEADER
+        + data
+        + "".join(functions)
+        + "let Actual = union "
+        + ",\n".join(calls)
+        + ";\n"
+        + expected
+        + check("Actual", "Expected", ["Scenario", "WindowStart", "WindowEnd", "Host", "ValuePercentile"])
+    )
+
+
+def value_percentile_endpoints_fixture():
+    data = """let Events = datatable(Timestamp:datetime, Host:string, Amount:dynamic, Marker:string) [
+datetime(2026-01-01T12:00:00Z), "long", dynamic(9223372036854775807), "match",
+datetime(2026-01-01T12:00:00Z), "long", dynamic(9223372036854775806), "match",
+datetime(2026-01-01T12:00:00Z), "extreme", dynamic(1e300), "match",
+datetime(2026-01-01T12:00:00Z), "extreme", dynamic(-1e300), "match"
+];
+"""
+    functions, calls = [], []
+    for selector in (0, 50, 100):
+        rule = chain_correlation(
+            "percentile",
+            "value_percentile",
+            ["source-rule"],
+            condition={"field": "Amount", "percentile": selector, "neq": 0},
+        )
+        (q,) = convert_documents([chain_source(), rule])
+        functions.append(f"let p_{selector} = () {{\n{q}\n}};\n")
+        # String projection preserves the two adjacent signed-long values.
+        calls.append(f"(p_{selector}() | project Selector={selector}, Host, Value=tostring(ValuePercentile))")
+    expected = """let Expected = datatable(Selector:long, Host:string, Value:string) [
+0, "long", "9223372036854775806", 50, "long", "9223372036854775806", 100, "long", "9223372036854775807",
+0, "extreme", "-1e300", 50, "extreme", "-1e300", 100, "extreme", "1e300"
+];
+"""
+    return (
+        HEADER
+        + data
+        + "".join(functions)
+        + "let Actual = union "
+        + ",\n".join(calls)
+        + ";\n"
+        + expected
+        + check("Actual", "Expected", ["Selector", "Host", "Value"])
+    )
+
+
+def value_percentile_chained_fixture():
+    data = """let Events = datatable(Timestamp:datetime, Host:string, Amount:long, Marker:string) [
+datetime(2026-01-01T12:00:00Z), "alice", 1, "match",
+datetime(2026-01-01T12:00:00Z), "alice", 2, "match",
+datetime(2026-01-01T12:00:00Z), "alice", 100, "match",
+datetime(2026-01-01T12:00:00Z), "alice", 200, "match",
+datetime(2026-01-01T12:01:00Z), "alice", 100, "match"
+];
+"""
+    documents = [
+        chain_source(),
+        chain_correlation(
+            "child", "value_percentile", ["source-rule"], condition={"field": "Amount", "percentile": 50, "gte": 0}
+        ),
+        chain_correlation("sum", "value_sum", ["child"], condition={"field": "ValuePercentile", "gte": 0}),
+        chain_correlation(
+            "parent", "value_percentile", ["sum"], condition={"field": "ValueSum", "percentile": 100, "gte": 0}
+        ),
+    ]
+    (q,) = convert_documents(documents)
+    # Child medians are 2 then 100; sum summaries are 2 then 102;
+    # percentile consumes each sum once at its own WindowEnd.
+    expected = """let Expected = datatable(WindowStart:datetime, WindowEnd:datetime, Host:string, ValuePercentile:long) [
+datetime(2026-01-01T11:55:00Z), datetime(2026-01-01T12:00:00Z), "alice", 2,
+datetime(2026-01-01T11:56:00Z), datetime(2026-01-01T12:01:00Z), "alice", 102
+];
+"""
+    return (
+        HEADER
+        + data
+        + "let Actual = () {\n"
+        + q
+        + "\n};\n"
+        + expected
+        + check(
+            "Actual() | project WindowStart, WindowEnd, Host, ValuePercentile=tolong(ValuePercentile)",
+            "Expected",
+            ["WindowStart", "WindowEnd", "Host", "ValuePercentile"],
+        )
+    )
+
+
 def value_sum_comparisons_fixture():
     # One result per distinct timestamp, with sums worked from source rows:
     # mixed = 7, 7, 8, 1; empty = 0, 0. The one-tick-late anchor
@@ -1640,6 +1871,11 @@ def fixtures():
         "event_count_grouped.kql": grouped_fixture(),
         "event_count_duplicate_sources.kql": duplicate_fixture(),
         "event_count_comparisons.kql": comparisons_fixture(),
+        "value_percentile_population.kql": value_percentile_population_fixture(),
+        "value_percentile_aliases.kql": value_percentile_aliases_fixture(),
+        "value_percentile_comparisons.kql": value_percentile_comparisons_fixture(),
+        "value_percentile_endpoints.kql": value_percentile_endpoints_fixture(),
+        "value_percentile_chained.kql": value_percentile_chained_fixture(),
         "value_sum_comparisons.kql": value_sum_comparisons_fixture(),
         "value_sum_chained.kql": value_sum_chained_fixture(),
         "value_sum_reals.kql": value_sum_reals_fixture(),

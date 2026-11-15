@@ -1188,7 +1188,7 @@ def test_event_count_chain_applies_parent_comparisons_after_counting_child_summa
     - source-rule
   timespan: 5m
   condition:
-    percentile: 50
+    percentile: -1
     field: User
     gte: 2
 """,

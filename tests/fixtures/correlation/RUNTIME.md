@@ -85,3 +85,29 @@ throughput claim.
 The same engine rejected the existing value-count fixtures with `SEM0001: Cannot compare dynamic values without explicit cast`. The emitted identity self-join compares boxed dynamic values directly. This also prevents chains containing value-count summaries from passing runtime acceptance. A singleton set-difference experiment passed scalar cases but distinguished equivalent reordered bags and signed zero; it was discarded. Canonical JSON alone loses nested extended runtime types. No replacement with those semantic losses has been adopted.
 
 Fixture inputs were corrected to construct real NaN and datetime-like strings at runtime: `dynamic(real(nan))` becomes a string, while an ISO datetime string inside a dynamic literal becomes a datetime. Public conversion tests passing does not resolve the query error. The full regression gate for issue #18 and integrated acceptance for #17 remain open.
+
+## Exact nearest-rank percentile — ticket #20
+
+Executed 2026-11-15 through the emulator's `/v1/rest/query` endpoint against
+`NetDefaultDB`, engine `2026.11.15.0741-2645-8e3387b-master`, using the image
+and digest recorded above. Every delivered percentile fixture completed
+successfully with zero primary-result rows (zero multiset differences):
+
+| Fixture | Observed outcome |
+| --- | --- |
+| `value_percentile_comparisons.kql` | All six comparisons, fractional threshold, median 2 for `[1,2,100,200]`, duplicates, zero, finite-input exclusions, undefined windows including `neq`, inclusive boundaries, overlaps and independent groups. |
+| `value_percentile_endpoints.kql` | Selectors 0, 50 and 100 select exact adjacent signed-long maxima and finite double extremes ±1e300. |
+| `value_percentile_population.kql` | Population 101 selects values 1, 2, 51, 100 and 101 for selectors 0, 1, 50, 99 and 100. |
+| `value_percentile_aliases.kql` | Group/measured aliases across tables and repeated source searches preserve multiplicity: medians 1 then 100. |
+| `value_percentile_chained.kql` | Percentile → sum → percentile returns 2 then 102, consuming scalar child metrics once at their `WindowEnd`. |
+
+Initial fixture execution exposed a duplicate `let Events` binding and the
+engine's lowercase exponent rendering for dynamic doubles. The fixture bindings
+and literal expected strings were corrected, and both affected fixtures reran
+successfully. No production query correction was needed from these executions.
+The rank query sorts all observations without a capped collection. It uses a
+real primary sort key and decimal tie-break to retain ordering of adjacent long
+values that share a double representation; selected values retain their type.
+Materialization uses the engine's shared 5 GB per-node cache and can fail
+explicitly on exhaustion. These deterministic result checks do not establish
+throughput or production memory capacity.
