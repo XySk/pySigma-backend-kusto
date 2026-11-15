@@ -133,7 +133,7 @@ let Actual=(){
         + """
 };
 let Observed=Actual() | project WindowEnd,Kind=gettype(Actor),EventCount;
-let Expected=datatable(Kind:string) ["bool","datetime","timespan","guid","real","long","string","array","dictionary"]
+let Expected=datatable(Kind:string) ["bool","datetime","timespan","guid","double","long","string","array","dictionary"]
 | extend WindowEnd=datetime(2026-01-01T12:00:00Z),EventCount=tolong(1);
 union (Observed | extend Delta=1),(Expected | extend Delta=-1)
 | summarize Delta=sum(Delta) by WindowEnd,Kind,EventCount

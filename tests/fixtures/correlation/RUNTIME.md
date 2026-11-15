@@ -491,3 +491,47 @@ under `/tmp/kusto-final-29`. Response SHA-256 values were
 (event count) and
 `1faa2d4e4c7f6ec4b1860ab6b409d185e8605144bb5b9b72a32c5d2c9ca9821e`
 (extended chain).
+
+
+# Typed-grouping continuation: all nine owned fixtures passed
+
+Continued the preceding frozen typed-grouping batch at
+`2026-11-15T17:42:27.768048+00:00` after correcting exactly the expected runtime
+**type label** `real` to Kusto's `double` in the extended-chain fixture.
+Source values, types, group membership, and expected multiplicity were unchanged.
+The other **159 fixture hashes were verified unchanged**. The regenerated
+manifest SHA-256 is
+`bc938f31dbb39f6038731538067a4332cea3e8593bd7c66dd2c07f94741a00e6`.
+The initial failed response and its history remain recorded above.
+
+The strict harness ran the corrected extended chain and the seven previously
+unexecuted fixtures serially. Every continuation response had HTTP 200, exactly
+one empty primary diagnostic table, and exactly one completion with
+`HasErrors=false` and `Cancelled=false`. Together with the unchanged event-count
+fixture's initial PASS, **all nine typed-grouping acceptance fixtures passed**.
+This supersedes the preceding batch's incomplete typed-grouping status only;
+it does not establish acceptance of the other spec #17 stages.
+
+| Fixture | SHA-256 | Seconds | Result |
+| --- | --- | --- | --- |
+| `typed_grouping_extended_chain.kql` | `1ca1df81e490c52ba9812f3ad7edea856f02d26b63ba97f87534f277701c4beb` | 10.456 | PASS |
+| `typed_grouping_mixed_chain.kql` | `3477779da7956ddaec0370a6c80e91fafa725ecbbc737967748a09f593fa0359` | 119.505 | PASS |
+| `typed_grouping_temporal.kql` | `e842e58a5db9ce4ab94651cc045b6cb7fb25c1eb23245b1e1cb7a2963dee834e` | 1.052 | PASS |
+| `typed_grouping_temporal_ordered.kql` | `83dc7309081074751fbc7696b7917818e4e8460775d1ef7f2b1718b6439f3373` | 1.008 | PASS |
+| `typed_grouping_value_avg.kql` | `e9d50251dbafbc8b7faf278a0091511124ee6e25afcf1f66c83474de911ac112` | 0.985 | PASS |
+| `typed_grouping_value_count.kql` | `5bfbc6bec9e76ac446ff900447b6f321e5299779bf066545bc84e1652fb83546` | 1.397 | PASS |
+| `typed_grouping_value_percentile.kql` | `a20650cf85435ce2a3ff3694b8f8f6ea3001dca22570b1439b46df07a0dd56e6` | 1.595 | PASS |
+| `typed_grouping_value_sum.kql` | `ef2e5d7fa7a28ec4ec6ae18fd7ac8e96719ec53bf288b0f9bf175bcaacc5788c` | 1.366 | PASS |
+
+The engine and database were unchanged: product version
+`2026.11.15.0741-2645-8e3387b-master`, build `1.0.9815.14081`, `NetDefaultDB`.
+The emulator stayed at 12 GiB with
+`max_memory_consumption_per_query_per_node=12884901888` and a 360-second client
+limit. No memory increase or resource-failure retry occurred. The 119.505-second
+mixed-chain result establishes correctness for this example, not throughput.
+The continuation's durable local version response, requests, responses, and
+runner record are under `/tmp/kusto-final-29-corrected-escalated`. An initial
+sandbox connection failure before any continuation query was retained under
+`/tmp/kusto-final-29-corrected`; the authorized harness then ran with local
+emulator access. Full configured pytest after the label correction passed all
+585 tests with 96.15% coverage; Ruff and diff checks passed.

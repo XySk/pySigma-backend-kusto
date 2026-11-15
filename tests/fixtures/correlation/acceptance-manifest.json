@@ -634,7 +634,7 @@
     },
     {
       "name": "typed_grouping_extended_chain.kql",
-      "sha256": "7d2a7eaddf679ebff1728ccc5c8afcfabcd7f806aa72417cd29fdc2cb75ad61a",
+      "sha256": "1ca1df81e490c52ba9812f3ad7edea856f02d26b63ba97f87534f277701c4beb",
       "expected_error": null
     },
     {
