@@ -341,7 +341,7 @@ class KustoBackend(TextQueryBackend):
         wildcard_exprs_list = []
         if list_wildcards:
             for arg in list_wildcards:
-                new_cond = ConditionFieldEqualsValueExpression(field=field, value=arg)
+                new_cond = ConditionFieldEqualsValueExpression(field=cond.args[0].field, value=arg)
                 if arg[1:-1].contains_special():  # Wildcard in string, not at start or end.
                     # We need to get rid of all wildcards, and create a 'and contains' for each element in the list
                     expr = f"{self.token_separator}{self.and_token}{self.token_separator}".join(
@@ -640,18 +640,26 @@ class KustoBackend(TextQueryBackend):
             )
         return query, (), ()
 
+    @staticmethod
+    def _name_allocator(reserved):
+        """Allocate unique helper identifiers within the caller's reserved scope."""
+
+        def allocate(base):
+            candidate, suffix = base, 0
+            while candidate in reserved:
+                suffix += 1
+                candidate = f"{base}_{suffix}"
+            reserved.add(candidate)
+            return candidate
+
+        return allocate
+
     def _shared_child_source(self, reference_index, query_index, query):
         shared = self._correlation_shared_children
         key = (reference_index, query_index)
         if key not in shared["bindings"]:
 
-            def allocate(base):
-                candidate, suffix = base, 0
-                while candidate in shared["reserved"]:
-                    suffix += 1
-                    candidate = f"{base}_{suffix}"
-                shared["reserved"].add(candidate)
-                return candidate
+            allocate = self._name_allocator(shared["reserved"])
 
             function, results = allocate("_sigma_shared_child"), allocate("_sigma_shared_results")
             shared["definitions"].extend(
@@ -903,13 +911,7 @@ class KustoBackend(TextQueryBackend):
         reserved = set(context_fields) | set(rule.group_by or [])
         reserved.update(re.findall(r"[A-Za-z_][A-Za-z_0-9]*", "\n".join(queries)))
 
-        def allocate(base):
-            name, index = base, 0
-            while name in reserved:
-                index += 1
-                name = f"{base}_{index}"
-            reserved.add(name)
-            return name
+        allocate = self._name_allocator(reserved)
 
         columns = {
             "timestamp": allocate("_sigma_context_timestamp"),
@@ -1277,14 +1279,7 @@ class KustoBackend(TextQueryBackend):
                     "Partial, subset, and unsatisfiable ordered thresholds are not supported.",
                 )
 
-        def allocate(name):
-            candidate = name
-            suffix = 0
-            while candidate in source_fields:
-                suffix += 1
-                candidate = f"{name}_{suffix}"
-            source_fields.add(candidate)
-            return candidate
+        allocate = self._name_allocator(source_fields)
 
         columns = {
             "timestamp": allocate("_sigma_timestamp"),
@@ -1872,6 +1867,7 @@ class KustoBackend(TextQueryBackend):
                 fields.append(f"{columns['groups'][index]} = {boxed(mapped_field)}")
             else:
                 fields.append(f"{columns['groups'][index]} = tostring({self._quote_correlation_field(mapped_field)})")
+        retained_group = expanded
         for index, counted_field in enumerate(self._correlation_counted_fields):
             mapped_field = map_field(map_alias(counted_field))
             fields.append(f"{columns['values'][index]} = {boxed(mapped_field)}")
@@ -1880,12 +1876,19 @@ class KustoBackend(TextQueryBackend):
             fields.append(f"{column} = {boxed(mapped_field)}")
         result = _CorrelationNormalization("\n| extend " + ", ".join(fields), columns["rule"])
         result.expands_context = expanded
-        result.expansion = (
-            f"\n| mv-expand {row_column} = "
-            f"{self._quote_correlation_field(source_state.processing_state['kusto_context_rows'])}"
-            if expanded
-            else ""
-        )
+        if expanded:
+            context_rows = self._quote_correlation_field(source_state.processing_state["kusto_context_rows"])
+            if (
+                self._correlation_counted_fields
+                and not retained_group
+                and not getattr(self, "_correlation_context_fields", [])
+            ):
+                # Empty retained measurements still establish a metric anchor.
+                # Retention and missing retained grouping keys must stay empty.
+                context_rows = f"iff(array_length({context_rows}) == 0, dynamic([null]), {context_rows})"
+            result.expansion = f"\n| mv-expand {row_column} = {context_rows}"
+        else:
+            result.expansion = ""
         return result
 
     @staticmethod

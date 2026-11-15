@@ -202,3 +202,21 @@ def test_mapped_child_context_parent_fixture_is_generated_through_public_convers
     )
     assert 'todatetime(["WindowEnd"])' in query
     assert "| mv-expand _sigma_child_context_row" in query
+
+
+@pytest.mark.parametrize("physical", ["Field Space", 'Actor "Name"', "Target\\Name"])
+def test_mapped_mixed_literal_wildcard_detection_escapes_each_branch_once(physical):
+    import json
+
+    import yaml
+
+    from sigma.collection import SigmaCollection
+    from tests.correlation_helpers import source_document
+
+    source = source_document()
+    source["detection"]["selection"] = {"User": ["fixed", "*suffix"]}
+    (query,) = KustoBackend(processing_pipeline=mapping_pipeline({"User": physical})).convert(
+        SigmaCollection.from_yaml(yaml.safe_dump(source))
+    )
+    field = "[" + json.dumps(physical) + "]"
+    assert query == f'{field} in~ ("fixed") or {field} endswith "suffix"'

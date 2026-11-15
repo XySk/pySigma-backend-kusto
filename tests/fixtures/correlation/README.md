@@ -137,3 +137,11 @@ Empty populations include numeric strings, nulls, NaN and infinities, and use
 `neq` to check undefined averages/percentiles. The boundary fixture compares
 exact selected long text above 2^53 and includes repeated doubles outside decimal
 range. All comparisons require an empty full multiset difference.
+
+`empty_child_context.py` covers absence-only Boolean child matches consumed by
+sum and distinct-count parents. A source row supplies an evaluation timestamp
+but no positive retained values. Ungrouped parents and parents grouped by the scalar child RuleCount metric return zero
+with empty retained collections and relationships; grouping by the missing
+retained Amount excludes the child. `escaped_mixed_detection.kql` verifies a
+mapped field containing a space with both literal and wildcard selection values.
+Expected results are independent literal rows, compared as full multisets.

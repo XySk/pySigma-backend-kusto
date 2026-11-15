@@ -1930,6 +1930,7 @@ def fixtures():
     from tests.fixtures.correlation.boolean_generate import fixtures as boolean_fixtures
     from tests.fixtures.correlation.context import fixtures as context_fixtures, nested_fixture
     from tests.fixtures.correlation.count_context import fixtures as count_context_fixtures
+    from tests.fixtures.correlation.empty_child_context import fixtures as empty_child_fixtures
     from tests.fixtures.correlation.numeric_context import fixtures as numeric_context_fixtures
     from tests.fixtures.correlation.ordered_context import fixtures as ordered_context_fixtures
     from tests.fixtures.correlation.standard_mappings import fixture as standard_mapping_fixture
@@ -1947,6 +1948,7 @@ def fixtures():
         **count_context_fixtures(),
         **ordered_context_fixtures(),
         **numeric_context_fixtures(),
+        **empty_child_fixtures(),
         **temporal_context_fixtures(),
         "context_nested.kql": nested_fixture(),
         "event_count_grouped.kql": grouped_fixture(),
