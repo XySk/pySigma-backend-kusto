@@ -2,6 +2,8 @@
 
 import pytest
 
+from sigma.exceptions import SigmaConversionError
+
 from tests.correlation_helpers import convert_documents, correlation_document, source_document
 
 
@@ -30,7 +32,7 @@ def test_logical_aliases_for_retained_fields_use_child_returned_schema():
 
 def test_missing_retained_field_reports_actual_child_schema():
     docs = documents(groups=("Missing",))
-    with pytest.raises(Exception, match="does not return required field 'Missing'.*Available fields"):
+    with pytest.raises(SigmaConversionError, match="does not return required field 'Missing'.*Available fields"):
         convert_documents(docs)
 
 
@@ -54,3 +56,22 @@ def test_multiple_context_children_and_direct_sources_convert_together():
     (query,) = convert_documents(docs)
     assert '"other-child"' in query
     assert '"direct"' in query
+
+
+def test_child_context_alias_can_reference_uuid_when_parent_uses_logical_name():
+    child_id = "efbfa9b1-4d01-41a0-9596-1b212730afba"
+    docs = documents(groups=("Actor",), aliases={"Actor": {child_id: "User"}})
+    docs[1]["id"] = child_id
+    (query,) = convert_documents(docs)
+    assert "| mv-expand _sigma_child_context_row" in query
+    assert '["Actor"]' in query
+
+
+@pytest.mark.parametrize("kind", ["value_sum", "value_avg", "value_percentile"])
+def test_numeric_child_context_consumption_remains_actionable_until_numeric_slice(kind):
+    docs = documents(kind, groups=(), field="User")
+    docs[-1]["correlation"]["condition"]["field"] = "User"
+    with pytest.raises(
+        SigmaConversionError, match="numeric parents consuming retained child context.*scalar child metrics"
+    ):
+        convert_documents(docs)

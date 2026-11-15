@@ -60,4 +60,34 @@ def fixtures():
         "count_context_ungrouped.kql": fixture(groups=()),
         "count_context_values.kql": fixture("value_count", groups=()),
         "count_context_restricted.kql": fixture("value_count", groups=("Server",)),
+        "count_context_typed.kql": typed_fixture(),
     }
+
+
+def typed_fixture():
+    source = source_document()
+    source["fields"] = ["User"]
+    child = correlation_document("child", "event_count", ["source-rule"], condition={"gte": 1})
+    parent = correlation_document("parent", "event_count", ["child"], groups=("User",), condition={"gte": 1})
+    (query,) = convert_documents([source, child, parent])
+    return (
+        """let Events=datatable(Timestamp:datetime,Host:string,Marker:string,User:dynamic) [
+ datetime(2026-01-01T12:00:00Z),"h","match",dynamic(1),
+ datetime(2026-01-01T12:00:00Z),"h","match",dynamic("1"),
+ datetime(2026-01-01T12:00:00Z),"h","match",dynamic(1)
+];
+let Actual=(){
+"""
+        + query
+        + """
+};
+let Observed=Actual() | project WindowEnd, Kind=gettype(User), Value=tostring(User), EventCount;
+let Expected=datatable(WindowEnd:datetime,Kind:string,Value:string,EventCount:long) [
+ datetime(2026-01-01T12:00:00Z),"long","1",1,
+ datetime(2026-01-01T12:00:00Z),"string","1",1
+];
+union (Observed | extend Delta=1), (Expected | extend Delta=-1)
+| summarize Delta=sum(Delta) by WindowEnd,Kind,Value,EventCount
+| where Delta!=0
+"""
+    )

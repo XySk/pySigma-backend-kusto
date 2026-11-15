@@ -94,3 +94,12 @@ overlapping completions. `context_ordered_ungrouped` and `context_ordered_aliase
 exercise the same membership without grouping and with per-source field aliases.
 The comparison deduplicates evidence within each summary while retaining summary
 multiplicity, so an extra completion cannot disappear in the expected multiset.
+
+`count_context.py` generates count-parent acceptance fixtures through standard
+Sigma parsing and `KustoBackend.convert`. Literal expected summaries verify
+observed User/Server pairs, one child contribution per group, mixed direct/child
+sources, ungrouped child counts, distinct retained users, group-restricted values,
+and numeric/textual values with equal renderings. Collection display order is
+irrelevant; full summary multisets must agree. These fixtures exercise logical
+child fields and child `WindowEnd` timestamps. See `RUNTIME.md` for execution
+results and the emulator resource configuration.

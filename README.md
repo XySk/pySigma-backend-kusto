@@ -330,6 +330,10 @@ Logical field names are preserved through available source mappings and per-sour
 
 Context collection uses complete typed identity traversal and checked collection lengths. Engine traversal, collection, memory, or query limits fail explicitly; values are never silently truncated to fit. The exact implementation can be expensive and no throughput claim is made. Ordered context includes only matches belonging to a successful full sequence completing at that summary timestamp. Every successful alternative contributes, including alternative starts and repeated matches, while early, tied, expired, or otherwise nonparticipating matches contribute nothing. Evidence traversal preserves all complete alternatives without detection-only prefix pruning. Boolean context preserves typed deduplication and observed field relationships from every satisfied alternative. Numeric and temporal parents consuming individual retained values remain follow-up work. Scalar metric chaining retains its existing behavior. [The retained-context runtime fixtures](tests/fixtures/correlation/RUNTIME.md) record successful execution of all six delivered summary types and nested typed values.
 
+Event-count and value-count parents can consume individual retained child values using the child's logical field names or explicit aliases. Expansion follows observed context tuples: retaining `(Alice, server1)` and `(Bob, server2)` never invents cross-pairs. A child contributes once per resulting event-count group, including once to an ungrouped parent; value-count parents count distinct retained values associated with that group. Duplicate source values do not increase these contributions. Other child metrics remain scalar and child timestamps remain `WindowEnd`. Mixed direct and child sources and overlapping summaries preserve their normal source-match multiplicity.
+
+When a parent groups on retained child context, all its sources use exact typed group identity and returned grouping values retain their types. This prerequisite includes nested values and avoids merging numeric `1` with textual `"1"`. Other grouping paths retain the existing string-normalized behavior pending the broader typed-grouping migration. Exact relationship expansion and identity matching can require substantial memory; engine limits fail explicitly.
+
 ### 🔄 Pipeline & Backend Args (New in 0.2.0)
 
 For the `microsoft_xdr_pipeline`:
@@ -641,7 +645,3 @@ Please make sure to update tests as appropriate.
 ## 📄 License
 
 This project is licensed under the GNU Lesser General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
-
-Event-count and value-count parents can consume individual retained child values using the child's logical field names or explicit aliases. Expansion follows observed context tuples: retaining `(Alice, server1)` and `(Bob, server2)` never invents cross-pairs. A child contributes once per resulting event-count group, including once to an ungrouped parent; value-count parents count distinct retained values associated with that group. Duplicate source values do not increase these contributions. Other child metrics remain scalar and child timestamps remain `WindowEnd`. Mixed direct and child sources and overlapping summaries preserve their normal source-match multiplicity.
-
-When a parent groups on retained child context, all its sources use exact typed group identity and returned grouping values retain their types. This prerequisite includes nested values and avoids merging numeric `1` with textual `"1"`. Other grouping paths retain the existing string-normalized behavior pending the broader typed-grouping migration. Exact relationship expansion and identity matching can require substantial memory; engine limits fail explicitly.

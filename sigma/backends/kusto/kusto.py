@@ -476,6 +476,16 @@ class KustoBackend(TextQueryBackend):
                 f"The correlation_timestamp_field backend option is required for {count_type} correlations.",
             )
 
+        if rule.type in (
+            SigmaCorrelationType.VALUE_SUM,
+            SigmaCorrelationType.VALUE_AVG,
+            SigmaCorrelationType.VALUE_PERCENTILE,
+        ) and self._uses_context_groups(rule, [*(rule.group_by or []), *(counted_fields or [])]):
+            raise SigmaConversionError(
+                rule,
+                rule.source,
+                "Kusto numeric parents consuming retained child context are not implemented yet; use scalar child metrics or grouping fields until numeric context aggregation is available.",
+            )
         typed_groups = self._uses_context_groups(rule)
         self._correlation_typed_groups = typed_groups
         try:
@@ -547,15 +557,30 @@ class KustoBackend(TextQueryBackend):
         return queries
 
     @staticmethod
-    def _uses_context_groups(rule):
+    def _uses_context_groups(rule, fields=None):
         for reference in rule.referenced_rules:
             source = reference.rule
             if not isinstance(source, SigmaCorrelationRule):
                 continue
             state = source.get_conversion_states()[0].processing_state
-            for field in rule.group_by or []:
+            for field in (rule.group_by or []) if fields is None else fields:
                 mapped = next(
-                    (alias.mapping.get(reference, field) for alias in rule.aliases if alias.alias == field), field
+                    (
+                        alias.mapping.get(
+                            reference,
+                            next(
+                                (
+                                    name
+                                    for source_reference, name in alias.mapping.items()
+                                    if source_reference.reference in (source.name, str(source.id))
+                                ),
+                                field,
+                            ),
+                        )
+                        for alias in rule.aliases
+                        if alias.alias == field
+                    ),
+                    field,
                 )
                 if mapped in state.get("kusto_context_fields", ()):
                     return True
@@ -565,25 +590,49 @@ class KustoBackend(TextQueryBackend):
         source, row_id = allocate("_sigma_group_input"), allocate("_sigma_group_row")
         tuple_value = allocate("_sigma_group_tuple")
         groups = columns["groups"]
+        values = columns.get("values", []) if columns.get("identify_values") else []
         valid_groups = " and ".join(f"isnotempty(tostring({group}[1]))" for group in groups)
         definitions = (
             f"let {source} = materialize({search}\n| where {valid_groups}\n"
             f"| extend {tuple_value} = pack_array(\"array\", pack_array({', '.join(groups)}))\n"
             f"| serialize {row_id} = row_number());\n"
         )
-        fragment, relation, identity = self._dynamic_value_identity(source, row_id, tuple_value, [], allocate)
+        expanded, component, boxed, expanded_id = [
+            allocate(name)
+            for name in (
+                "_sigma_group_components",
+                "_sigma_group_component",
+                "_sigma_group_box",
+                "_sigma_group_component_id",
+            )
+        ]
+        definitions += (
+            f"let {expanded} = materialize({source}\n"
+            f"| mv-expand with_itemindex={component} {boxed} = pack_array({', '.join([tuple_value, *values])})\n"
+            f"| where {component} == 0 or isnotempty(tostring({boxed}[1]))\n"
+            f"| serialize {expanded_id} = row_number());\n"
+        )
+        fragment, relation, identity = self._dynamic_value_identity(expanded, expanded_id, boxed, [component], allocate)
         definitions += fragment
         cached = allocate("_sigma_group_identity_cache")
-        definitions += f"let {cached} = materialize({relation});\n"
+        definitions += f"let {cached} = materialize({expanded} | join kind=inner ({relation}) on {expanded_id}\n| project {row_id}, {component}, {identity});\n"
+        group_identity = allocate("_sigma_group_key")
+        normalized = f"{source}\n| join kind=inner ({cached} | where {component} == 0 | project {row_id}, {group_identity} = {identity}) on {row_id}\n"
+        replacements = [f"{group} = {group_identity}" for group in groups]
+        for index, value in enumerate(values, 1):
+            value_identity = allocate("_sigma_group_value_identity")
+            normalized += f"| join kind=leftouter ({cached} | where {component} == {index} | project {row_id}, {value_identity} = {identity}) on {row_id}\n"
+            replacements.append(f"{value} = {value_identity}")
+        normalized += "| extend " + ", ".join(replacements)
+        if values:
+            columns["values_preidentified"] = True
         lookup = allocate("_sigma_group_lookup")
         originals = [allocate("_sigma_group_original") for _ in groups]
         aggregates = ", ".join(f"{original} = take_any({group})" for original, group in zip(originals, groups))
         definitions += (
-            f"let {lookup} = materialize({source} | join kind=inner ({cached}) on {row_id}\n"
+            f"let {lookup} = materialize({source} | join kind=inner ({cached} | where {component} == 0) on {row_id}\n"
             f"| summarize {aggregates} by {identity});\n"
         )
-        replacements = ", ".join(f"{group} = {identity}" for group in groups)
-        normalized = f"{source}\n| join kind=inner ({cached}) on {row_id}\n| extend {replacements}"
         lookups = [
             (field, lookup, identity, original) for field, original in zip(self._correlation_group_by, originals)
         ]
@@ -775,9 +824,7 @@ class KustoBackend(TextQueryBackend):
             paths.append(path)
         participating = allocate("_sigma_context_participating")
         selected = allocate("_sigma_context_selected")
-        alternatives = ", ".join(
-            f"({paths[-1]} | project {source_id}, {key} = {row_id})" for row_id in row_ids
-        )
+        alternatives = ", ".join(f"({paths[-1]} | project {source_id}, {key} = {row_id})" for row_id in row_ids)
         definitions += (
             f"let {participating} = union {alternatives}\n| distinct {source_id}, {key};\n"
             f"let {selected} = materialize({matches}\n"
@@ -954,6 +1001,8 @@ class KustoBackend(TextQueryBackend):
         }
         if counted_fields is None and not temporal:
             columns["child_match"] = allocate("_sigma_child_match")
+        if rule.type == SigmaCorrelationType.VALUE_COUNT:
+            columns["identify_values"] = True
         if counted_fields is not None:
             columns["values"] = [
                 allocate("_sigma_value" if len(counted_fields) == 1 else f"_sigma_value_{index}")
@@ -1195,7 +1244,11 @@ class KustoBackend(TextQueryBackend):
         children = [self._boolean_context_expression(rule, arg, presence, source_column, negated) for arg in node.args]
         conjunction = isinstance(node, CorrelationConditionAND) != negated
         truth = "(" + (" and " if conjunction else " or ").join(child[0] for child in children) + ")"
-        evidence = "(" + " or ".join(f"({child_truth} and ({child_evidence}))" for child_truth, child_evidence in children) + ")"
+        evidence = (
+            "("
+            + " or ".join(f"({child_truth} and ({child_evidence}))" for child_truth, child_evidence in children)
+            + ")"
+        )
         return truth, f"({truth} and {evidence})" if conjunction else evidence
 
     def _dynamic_value_identity(self, source, row_id, value, groups, allocate):
@@ -1289,6 +1342,9 @@ class KustoBackend(TextQueryBackend):
         return definitions, n["relation"], n["identity"]
 
     def _counted_value_identities(self, search, columns, valid_rows, allocate):
+        if columns.get("values_preidentified"):
+            identities = columns["identities"] = allocate("_sigma_value_identities")
+            return f"let {identities} = materialize({search}\n| where {valid_rows});\n"
         # Materialize once so every field uses the same source-match IDs.
         source = allocate("_sigma_value_input")
         identities = columns["identities"] = allocate("_sigma_value_identities")

@@ -210,3 +210,31 @@ no throughput claim is made.
 After merging Boolean retained context, all eleven existing non-Boolean context
 fixtures (seven aggregate/temporal/nested and four ordered) were rerun together
 against the same engine and returned empty exact summary multiset difference tables.
+
+# Count parents consuming retained context
+
+Executed on 2026-11-15 against Microsoft Kusto emulator engine
+`2026.11.15.0741-2645-8e3387b-master`, database `NetDefaultDB`, via REST.
+`count_context.py` generates these queries through standard Sigma collection
+parsing and `KustoBackend.convert`; its expected rows are independent literal
+examples. Each check compares full result multisets and requires zero differences.
+
+| Fixture | Observed outcome |
+| --- | --- |
+| `count_context_pairs.kql` | Zero differences: only Alice/server1 and Bob/server2; duplicate retained pairs count each child once per group. |
+| `count_context_mixed.kql` | Zero differences: direct and child sources combine with their established contribution counts. |
+| `count_context_ungrouped.kql` | Zero differences: two child summaries contribute two events despite repeated/multiple context values. |
+| `count_context_values.kql` | Zero differences: ungrouped distinct retained users are Alice and Bob. |
+| `count_context_restricted.kql` | Zero differences: users are restricted to their observed Server group. |
+| `count_context_typed.kql` | Zero differences: numeric 1 and textual "1" return separate typed groups, each counting the child once. |
+
+The initial 4 GiB emulator exhausted memory while processing grouped consumers;
+Kusto query history reported `System.OutOfMemoryException`, surfaced by REST as
+an internal service error. The final fixtures ran with the emulator memory limit
+increased to 12 GiB. Group and counted-value identities share one exact typed
+identity traversal, preventing an unnecessary nested identity stage. An earlier
+grouped value-count query with separate identity stages exceeded a 120-second
+client timeout. These small examples demonstrate correctness under the recorded
+configuration; they establish neither a production capacity target nor a minimum
+memory guarantee. Resource exhaustion fails explicitly and does not truncate
+retained values or invent relationships.
