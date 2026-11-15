@@ -1340,8 +1340,6 @@ class KustoBackend(TextQueryBackend):
         names = [
             "input",
             "steps",
-            "leaves",
-            "counts",
             "relation",
             "bound",
             "iteration",
@@ -1352,11 +1350,11 @@ class KustoBackend(TextQueryBackend):
             "leaf",
             "terminal",
             "finished",
-            "other_id",
-            "other_leaf",
             "count",
-            "other_count",
-            "hits",
+            "canonical",
+            "token",
+            "tokens",
+            "signature",
             "identity",
         ]
         n = {name: allocate("_sigma_identity_" + name) for name in names}
@@ -1364,7 +1362,7 @@ class KustoBackend(TextQueryBackend):
         old = f"s.{stack}"
         top = f"{old}[-1]"
         # Path components are prefix-distinguished and self-delimiting. JSON is
-        # used only for string bag keys, never for identifying runtime values.
+        # used for bag keys; runtime types are encoded separately for every leaf.
         parent = f"array_slice({old}, 0, -2)"
         updated = f"pack_array(bag_pack('v', {top}.v, 'p', {top}.p, 'i', tolong({top}.i) + 1, 'k', {top}.k))"
         key = f"{top}.k[tolong({top}.i)]"
@@ -1373,15 +1371,15 @@ class KustoBackend(TextQueryBackend):
         retained = ", ".join([row_id, *groups])
         # Each tree edge is descended and unwound once. JSON length exceeds
         # its node count, so this bound covers the whole walk without a depth
-        # cap. Check range() capacity first, then check terminal completion.
+        # cap. Include the last available step even when the range is exhausted;
+        # the final guard checks its bound and completion before returning IDs.
         bound, iteration, typ = n["bound"], n["iteration"], n["type"]
         definitions = (
             f"let {n['input']} = materialize({source}\n"
             f"| project {retained}, {n['leaf']} = {value}[1]\n"
             f"| extend {bound} = 3 * strlen(dynamic_to_json({n['leaf']})) + 3);\n"
             f"let {n['steps']} = materialize({n['input']}\n"
-            f"| where assert(toscalar({n['input']} | summarize coalesce(max({bound}), 0)) <= 1048575, 'Kusto dynamic identity traversal exceeds range limit')\n"
-            f"| mv-expand {iteration} = range(0, {bound}, 1) to typeof(long)\n"
+            f"| mv-expand {iteration} = range(0, min_of({bound}, 1048575), 1) to typeof(long)\n"
             f"| sort by {row_id} asc, {iteration} asc\n"
             f"| scan declare ({stack}:dynamic = dynamic([])) with (step s: true => {stack} = case(\n"
             f"    {iteration} == 0, pack_array(bag_pack('v', {n['leaf']}, 'p', '$', 'i', 0, 'k', bag_keys({n['leaf']}))),\n"
@@ -1390,34 +1388,37 @@ class KustoBackend(TextQueryBackend):
             f"    gettype({top}.v) == 'array' and tolong({top}.i) < array_length({top}.v), array_concat({parent}, {updated}, {array_child}),\n"
             f"    {parent});)\n"
             f"| extend {frame} = {stack}[-1]\n"
-            f"| extend {typ} = gettype({frame}.v), {n['terminal']} = {iteration} == {bound}, {n['finished']} = array_length({stack}) == 0\n"
+            f"| extend {typ} = gettype({frame}.v), {n['terminal']} = {iteration} == min_of({bound}, 1048575), {n['finished']} = array_length({stack}) == 0\n"
             f"| where {n['terminal']} or (not({n['finished']}) and ({typ} !in ('array', 'dictionary') or ({typ} == 'array' and array_length({frame}.v) == 0) or ({typ} == 'dictionary' and array_length(bag_keys({frame}.v)) == 0)))\n"
-            f"| project {retained}, {n['path']} = tostring({frame}.p), {typ}, {n['leaf']} = {frame}.v, {n['terminal']}, {n['finished']});\n"
-            f"let {n['leaves']} = {n['steps']}\n"
-            f"| where assert(toscalar({n['steps']} | summarize countif({n['terminal']} and not({n['finished']}))) == 0, 'Kusto dynamic identity traversal incomplete')\n"
-            f"| where not({n['terminal']});\n"
-            f"let {n['counts']} = {n['leaves']} | summarize {n['count']} = count() by {row_id};\n"
+            f"| project {retained}, {n['path']} = tostring({frame}.p), {typ}, {n['leaf']} = {frame}.v, {n['terminal']}, {n['finished']}, {bound});\n"
         )
-        other_fields = ", ".join(
-            [*groups, n["path"], typ, f"{n['other_id']} = {row_id}", f"{n['other_leaf']} = {n['leaf']}"]
+        # Serialize typed scalar leaves, never the original dynamic tree: JSON
+        # alone loses extended runtime types. Full signatures avoid the leaf-pair
+        # self-join whose repeated expansion overwhelms nested query planning.
+        # Native scalar JSON preserves adjacent double/long precision. Normalize
+        # equal signed zeros, NaNs and decimal scales before constructing tokens.
+        leaf = n["leaf"]
+        normalized = (
+            f"case({typ} == 'double' and toreal({leaf}) == 0.0, '0', "
+            f"{typ} == 'double' and isnan(toreal({leaf})), 'nan', "
+            f"{typ} == 'decimal', tostring(todecimal({leaf})), dynamic_to_json({leaf}))"
         )
-        keys = ", ".join([*groups, n["path"], typ])
-        leaf, other = n["leaf"], n["other_leaf"]
-        equality = (
-            f"case({typ} == 'double', (toreal({leaf}) == toreal({other}) or (isnan(toreal({leaf})) and isnan(toreal({other})))), "
-            f"{typ} == 'long', tolong({leaf}) == tolong({other}), "
-            f"{typ} == 'decimal', todecimal({leaf}) == todecimal({other}), "
-            f"tostring({leaf}) == tostring({other}))"
-        )
+        ordered = ", ".join(f"{column} asc" for column in [*groups, n["signature"], row_id])
+        same = " and ".join(f"{column} == s.{column}" for column in [*groups, n["signature"]])
+        # Keep guards in this one summary: branching to independent scalar
+        # checks earlier multiplies the source plan at every correlation level.
+        # A scan assigns the minimum row ID without another canonical self-join.
         definitions += (
-            f"let {n['relation']} = {n['leaves']}\n"
-            f"| join kind=inner ({n['leaves']} | project {other_fields}) on {keys}\n"
-            f"| where {equality}\n"
-            f"| summarize {n['hits']} = count() by {row_id}, {n['other_id']}\n"
-            f"| join kind=inner ({n['counts']}) on {row_id}\n"
-            f"| join kind=inner ({n['counts']} | project {n['other_id']} = {row_id}, {n['other_count']} = {n['count']}) on {n['other_id']}\n"
-            f"| where {n['hits']} == {n['count']} and {n['hits']} == {n['other_count']}\n"
-            f"| summarize {n['identity']} = min({n['other_id']}) by {row_id};\n"
+            f"let {n['canonical']} = materialize({n['steps']}\n"
+            f"| extend {n['token']} = dynamic_to_json(pack_array({n['path']}, {typ}, {normalized}))\n"
+            f"| sort by {row_id} asc, {n['path']} asc\n"
+            f"| summarize {n['tokens']} = make_list_if({n['token']}, not({n['terminal']}), 1048576), {n['count']} = countif(not({n['terminal']})), {n['finished']} = countif({n['terminal']} and (not({n['finished']}) or {bound} > 1048575)) by {retained}\n"
+            f"| extend {n['signature']} = dynamic_to_json({n['tokens']}));\n"
+            f"let {n['relation']} = {n['canonical']}\n"
+            f"| where assert(toscalar({n['canonical']} | summarize countif({n['count']} != array_length({n['tokens']}) or {n['finished']} != 0)) == 0, 'Kusto dynamic identity traversal incomplete or exceeds range limit; signature leaf limit exceeded')\n"
+            f"| sort by {ordered}\n"
+            f"| scan declare ({n['identity']}:long = 0) with (step s: true => {n['identity']} = iff({same}, s.{n['identity']}, {row_id});)\n"
+            f"| project {row_id}, {n['identity']};\n"
         )
         return definitions, n["relation"], n["identity"]
 
