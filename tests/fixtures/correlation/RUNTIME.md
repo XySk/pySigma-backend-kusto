@@ -127,3 +127,32 @@ values that share a double representation; selected values retain their type.
 Materialization uses the engine's shared 5 GB per-node cache and can fail
 explicitly on exhaustion. These deterministic result checks do not establish
 throughput or production memory capacity.
+
+## Retained aggregate and ordinary temporal context (#22)
+
+Executed 2026-11-15 on the same Kusto emulator engine
+`2026.11.15.0741-2645-8e3387b-master`, database `NetDefaultDB`, through `/v2/rest/query`.
+The complete queries are generated through standard Sigma collection parsing and
+`KustoBackend.convert`; `context.py` supplies independently worked expected rows.
+
+| Fixture | Outcome |
+| --- | --- |
+| `context_event_count.kql` | Zero exact multiset differences; metric 3 and two distinct typed User values. |
+| `context_value_count.kql` | Zero differences; distinct measured-value metric 2. |
+| `context_value_sum.kql` | Zero differences; repeated measurements preserve sum 40. |
+| `context_value_avg.kql` | Zero differences; repeated measurements preserve average 40/3. |
+| `context_value_percentile.kql` | Zero differences; exact nearest-rank result 10. |
+| `context_temporal.kql` | Zero differences; ordinary temporal RuleCount remains 1. |
+| `context_nested.kql` | Zero differences; five distinct typed contexts from eight matches, observed tuple membership preserved. |
+
+Every scalar fixture verifies source/correlation request union, duplicate declaration
+and value removal, scalar group output, typed numeric/string identity, and observed
+field relationships. The nested fixture additionally checks reordered bags,
+datetime/string array positions, NaN, and signed zero. The first live probe revealed
+that Kusto `make_list` flattens array inputs one level: an extra array box is required
+to preserve both nested displayed values and the observed relationship tuples.
+Collection lengths are checked against complete counts and fail explicitly on the
+engine collection limit rather than silently truncating. Typed traversal uses the
+shared exact identity helper and its explicit completion/range guards. These tiny
+fixtures establish behavior, not throughput. Ordered/Boolean context membership
+and individual-value consumption by parents are separate follow-up slices.

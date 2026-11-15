@@ -1875,10 +1875,13 @@ let Events = union (datatable(Timestamp:string, Case:string, User:dynamic, End:d
 def fixtures():
     from tests.fixtures.correlation.average import average_fixtures
     from tests.fixtures.correlation.boolean_generate import fixtures as boolean_fixtures
+    from tests.fixtures.correlation.context import fixtures as context_fixtures, nested_fixture
 
     return {
         **average_fixtures(check, HEADER),
         **boolean_fixtures(),
+        **context_fixtures(),
+        "context_nested.kql": nested_fixture(),
         "event_count_grouped.kql": grouped_fixture(),
         "event_count_duplicate_sources.kql": duplicate_fixture(),
         "event_count_comparisons.kql": comparisons_fixture(),

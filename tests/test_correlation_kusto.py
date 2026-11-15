@@ -1,3 +1,4 @@
+from sigma.exceptions import SigmaConversionError
 import runpy
 from pathlib import Path
 
@@ -289,11 +290,15 @@ def test_temporal_preserves_colliding_source_columns_escaped_identity_and_standa
         processing_pipeline=microsoft_365_defender_pipeline(), correlation_timestamp_field="Timestamp"
     )
 
+    if ordered:
+        with pytest.raises(SigmaConversionError, match="retained context for ordered"):
+            backend.convert(SigmaCollection.from_yaml(yaml.safe_dump_all(documents)))
+        return
     *standalone, query = backend.convert(SigmaCollection.from_yaml(yaml.safe_dump_all(documents)))
 
     assert len(standalone) == 2
     assert standalone[0] == 'DeviceProcessEvents\n| where ProcessCommandLine =~ "suspicious.exe"'
-    assert query.startswith("let _sigma_types_1 = union ")
+    assert "let _sigma_types_1 = union " in query
     assert query.count('_sigma_timestamp_1 = todatetime(["Timestamp"])') == 2
     assert query.count(f'| extend _sigma_rule_2 = "{identity}"') == 2
     assert "| summarize by _sigma_timestamp_1, _sigma_rule_2;" in query
@@ -545,7 +550,7 @@ def test_multi_field_value_count_quotes_metrics_and_preserves_colliding_source_c
     assert (
         '["ValueCount_Actor\'s \\"Name\\""] = count_distinctif(_sigma_value_0_1, isnotempty(_sigma_value_0_1))' in query
     )
-    assert query.endswith('["ValueCount_Actor\'s \\"Name\\""], ["ValueCount__sigma_value_0"]')
+    assert '["ValueCount_Actor\'s \\"Name\\""], ["ValueCount__sigma_value_0"]' in query
 
 
 @pytest.mark.parametrize("group", ["WindowStart", "WindowEnd", "ValueCount_User", "ValueCount_Target"])
@@ -877,7 +882,7 @@ def test_event_count_preserves_columns_that_overlap_sliding_window_names():
 
     (query,) = backend.convert(collection)
 
-    assert query.startswith("let _sigma_weights_1 = union (")
+    assert "let _sigma_weights_1 = union (" in query
     assert "| summarize _sigma_weight_1 = count() by _sigma_timestamp, _sigma_group_0;" in query
     assert "_sigma_window_end_1 = _sigma_timestamp, _sigma_bin_1 = bin(_sigma_timestamp, 5m)" in query
     assert "| summarize EventCount = sum(_sigma_weight_1) by _sigma_window_end_1, _sigma_group_0" in query

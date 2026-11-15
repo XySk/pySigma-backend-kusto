@@ -477,7 +477,35 @@ class KustoBackend(TextQueryBackend):
             )
 
         queries = self._convert_count(rule, timestamp_field, query_operator, counted_fields, metrics)
-        result_fields = {"WindowStart", "WindowEnd", *(rule.group_by or []), *metrics}
+        requested_context = list(rule.fields or [])
+        for reference in rule.referenced_rules:
+            for field in reference.rule.fields or []:
+                logical = next((alias.alias for alias in rule.aliases if alias.mapping.get(reference) == field), field)
+                requested_context.append(logical)
+        context_fields = list(dict.fromkeys(requested_context))
+        conflicts = {"WindowStart", "WindowEnd", *metrics}.intersection(context_fields)
+        if conflicts:
+            raise SigmaConversionError(
+                rule,
+                rule.source,
+                "Kusto retained context fields conflict with result columns: "
+                + ", ".join(sorted(conflicts))
+                + ". Use an explicit correlation alias, for example fields: [OriginalWindowEnd] and "
+                "aliases: {OriginalWindowEnd: {source-rule: WindowEnd}}.",
+            )
+        context_fields = [field for field in context_fields if field not in (rule.group_by or [])]
+        context_column = None
+        if context_fields:
+            if rule.type == SigmaCorrelationType.TEMPORAL_ORDERED or boolean:
+                raise SigmaConversionError(
+                    rule,
+                    rule.source,
+                    "Kusto retained context for ordered and Boolean temporal membership is not implemented yet.",
+                )
+            queries, context_column = self._retain_context(rule, queries, context_fields, metrics)
+        result_fields = {"WindowStart", "WindowEnd", *(rule.group_by or []), *metrics, *context_fields}
+        if context_column:
+            result_fields.add(context_column)
         source_tables = set().union(
             *(
                 self._correlation_source_tables(state)
@@ -494,6 +522,8 @@ class KustoBackend(TextQueryBackend):
                         "kusto_result_fields": result_fields.copy(),
                         "kusto_source_fields": result_fields.copy(),
                         "kusto_result_timestamp": "WindowEnd",
+                        "kusto_context_fields": tuple(context_fields),
+                        "kusto_context_rows": context_column,
                         "kusto_source_tables": source_tables.copy(),
                     }
                 )
@@ -501,6 +531,106 @@ class KustoBackend(TextQueryBackend):
             ]
         )
         return queries
+
+    def _retain_context(self, rule, queries, context_fields, metrics):
+        """Attach context from the same source matches without changing metric inputs."""
+        reserved = set(context_fields) | set(rule.group_by or [])
+        reserved.update(re.findall(r"[A-Za-z_][A-Za-z_0-9]*", "\n".join(queries)))
+
+        def allocate(base):
+            name, index = base, 0
+            while name in reserved:
+                index += 1
+                name = f"{base}_{index}"
+            reserved.add(name)
+            return name
+
+        columns = {
+            "timestamp": allocate("_sigma_context_timestamp"),
+            "rule": allocate("_sigma_context_rule"),
+            "groups": [allocate("_sigma_context_group") for _ in (rule.group_by or [])],
+            "values": [],
+            "context": [allocate("_sigma_context_value") for _ in context_fields],
+        }
+        self._correlation_group_by = rule.group_by or []
+        self._correlation_counted_fields = []
+        self._correlation_context_fields = context_fields
+        self._correlation_columns = columns
+        try:
+            definitions, search = self._count_search(rule, allocate)
+        finally:
+            del self._correlation_group_by, self._correlation_counted_fields
+            del self._correlation_context_fields, self._correlation_columns
+        summary_function, summaries, matched = [
+            allocate(name) for name in ("_sigma_context_summary", "_sigma_context_summaries", "_sigma_context_matches")
+        ]
+        source_id, end, key = [
+            allocate(name) for name in ("_sigma_context_id", "_sigma_context_end", "_sigma_context_key")
+        ]
+        relationships, count = [allocate(name) for name in ("_sigma_context_rows", "_sigma_context_count")]
+        groups, timestamp, values = columns["groups"], columns["timestamp"], columns["context"]
+        # A constant joins the single ungrouped partition; grouping never uses context values.
+        join_key = allocate("_sigma_context_partition")
+        group_projection = [
+            f"{column} = {self._quote_correlation_field(field)}" for column, field in zip(groups, rule.group_by or [])
+        ]
+        left_projection = ", ".join([source_id, f"{end} = WindowEnd", *group_projection, f"{join_key} = 1"])
+        right_projection = ", ".join([timestamp, *groups, *values, f"{join_key} = 1"])
+        span = rule.timespan.spec if rule.timespan.unit in "smhd" else f"{rule.timespan.seconds}s"
+        join_fields = ", ".join(groups or [join_key])
+        output = []
+        for query in queries:
+            prefix = (
+                f"let {summary_function} = () {{\n{query}\n}};\n"
+                f"{definitions}let {summaries} = materialize({summary_function}()\n"
+                f"| serialize {source_id} = row_number());\n"
+                f"let {matched} = materialize(\n{summaries} | project {left_projection}\n"
+                f"| join kind=inner (\n{search}\n| project {right_projection}\n) on {join_fields}\n"
+                f"| where {timestamp} between (({end} - {span}) .. {end})\n"
+                f"| serialize {key} = row_number());\n"
+            )
+            prefix += (
+                f"let {relationships} = materialize({matched}\n"
+                f"| summarize {relationships} = make_list(pack_array(pack_array({', '.join(values)})), 1048576), "
+                f"{count} = count() by {source_id});\n"
+            )
+            collections = []
+            for field, value in zip(context_fields, values):
+                binding, collection, amount = [
+                    allocate(name)
+                    for name in ("_sigma_context_distinct", "_sigma_context_collection", "_sigma_context_amount")
+                ]
+                identity_definitions, identity_relation, identity = self._dynamic_value_identity(
+                    matched, key, value, [source_id], allocate
+                )
+                prefix += identity_definitions
+                prefix += (
+                    f"let {binding} = {matched}\n| join kind=inner ({identity_relation}) on {key}\n"
+                    f"| summarize {value} = take_any({value}) by {source_id}, {identity}\n"
+                    f"| summarize {collection} = make_list(pack_array({value}[1]), 1048576), "
+                    f"{amount} = count() by {source_id};\n"
+                )
+                collections.append((binding, collection, amount, field))
+            result = (
+                f"{summaries}\n| join kind=inner ({relationships}) on {source_id}\n"
+                f"| where assert(toscalar({relationships} | summarize n = countif({count} != "
+                f"array_length({relationships})) | project n == 0), "
+                f'"Kusto retained context collection limit exceeded")\n'
+            )
+            for binding, collection, amount, field in collections:
+                result += (
+                    f"| join kind=inner ({binding}) on {source_id}\n"
+                    f"| where assert(toscalar({binding} | summarize n = countif({amount} != "
+                    f"array_length({collection})) | project n == 0), "
+                    f'"Kusto retained context collection limit exceeded")\n'
+                    f"| extend {self._quote_correlation_field(field)} = {collection}\n"
+                )
+            public = ["WindowStart", "WindowEnd", *(rule.group_by or []), *context_fields]
+            result += "| project " + ", ".join(
+                self._quote_correlation_field(field) for field in [*public, *metrics, relationships]
+            )
+            output.append(prefix + result)
+        return output, relationships
 
     @staticmethod
     def _correlation_source_tables(state):
@@ -1086,6 +1216,10 @@ class KustoBackend(TextQueryBackend):
             mapped_field = map_field(map_alias(counted_field))
             quoted = self._quote_correlation_field(mapped_field)
             fields.append(f"{columns['values'][index]} = pack_array(gettype({quoted}), {quoted})")
+        for field, column in zip(getattr(self, "_correlation_context_fields", []), columns.get("context", [])):
+            mapped_field = map_field(map_alias(field))
+            quoted = self._quote_correlation_field(mapped_field)
+            fields.append(f"{column} = pack_array(gettype({quoted}), {quoted})")
         return _CorrelationNormalization("\n| extend " + ", ".join(fields), columns["rule"])
 
     @staticmethod
