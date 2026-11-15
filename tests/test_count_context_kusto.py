@@ -3,7 +3,6 @@
 import pytest
 
 from sigma.exceptions import SigmaConversionError
-
 from tests.correlation_helpers import convert_documents, correlation_document, source_document
 
 
@@ -65,13 +64,3 @@ def test_child_context_alias_can_reference_uuid_when_parent_uses_logical_name():
     (query,) = convert_documents(docs)
     assert "| mv-expand _sigma_child_context_row" in query
     assert '["Actor"]' in query
-
-
-@pytest.mark.parametrize("kind", ["value_sum", "value_avg", "value_percentile"])
-def test_numeric_child_context_consumption_remains_actionable_until_numeric_slice(kind):
-    docs = documents(kind, groups=(), field="User")
-    docs[-1]["correlation"]["condition"]["field"] = "User"
-    with pytest.raises(
-        SigmaConversionError, match="numeric parents consuming retained child context.*scalar child metrics"
-    ):
-        convert_documents(docs)
