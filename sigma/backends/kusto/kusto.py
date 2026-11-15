@@ -476,16 +476,6 @@ class KustoBackend(TextQueryBackend):
                 f"The correlation_timestamp_field backend option is required for {count_type} correlations.",
             )
 
-        if rule.type in (
-            SigmaCorrelationType.VALUE_SUM,
-            SigmaCorrelationType.VALUE_AVG,
-            SigmaCorrelationType.VALUE_PERCENTILE,
-        ) and self._uses_context_groups(rule, [*(rule.group_by or []), *(counted_fields or [])]):
-            raise SigmaConversionError(
-                rule,
-                rule.source,
-                "Kusto numeric parents consuming retained child context are not implemented yet; use scalar child metrics or grouping fields until numeric context aggregation is available.",
-            )
         typed_groups = self._uses_context_groups(rule)
         self._correlation_typed_groups = typed_groups
         try:
@@ -999,7 +989,10 @@ class KustoBackend(TextQueryBackend):
                 "_sigma_types" if temporal else "_sigma_weights" if counted_fields is None else "_sigma_values"
             ),
         }
-        if counted_fields is None and not temporal:
+        numeric_context = rule.type in (
+            SigmaCorrelationType.VALUE_SUM, SigmaCorrelationType.VALUE_AVG, SigmaCorrelationType.VALUE_PERCENTILE
+        ) and self._uses_context_groups(rule, [*(rule.group_by or []), *(counted_fields or [])])
+        if counted_fields is None and not temporal or numeric_context:
             columns["child_match"] = allocate("_sigma_child_match")
         if rule.type == SigmaCorrelationType.VALUE_COUNT:
             columns["identify_values"] = True
@@ -1028,14 +1021,37 @@ class KustoBackend(TextQueryBackend):
                     search, columns, allocate
                 )
                 definitions += group_definitions
-            if "child_match" in columns and getattr(self, "_correlation_typed_groups", False):
+            if "child_match" in columns and (numeric_context or getattr(self, "_correlation_typed_groups", False)):
                 source_matches = allocate("_sigma_parent_matches")
                 child_id = columns["child_match"]
                 definitions += f'let {source_matches} = materialize({search}\n| extend {child_id} = tostring(column_ifexists({json.dumps(child_id)}, "")));\n'
-                keys = ", ".join([child_id, *columns["groups"]])
+                child_matches = f"{source_matches} | where isnotempty({child_id})"
+                keys = [child_id, *columns["groups"]]
+                if numeric_context:
+                    # Restriction to observed group/value relationships has already
+                    # happened during expansion. Deduplicate only within each child
+                    # and resulting group; direct observations retain multiplicity.
+                    value = columns["values"][0]
+                    kind = allocate("_sigma_numeric_kind")
+                    precise = allocate("_sigma_numeric_decimal")
+                    real = allocate("_sigma_numeric_real")
+                    # Decimal preserves exact long/decimal distinctions; the real
+                    # key preserves doubles beyond decimal's range and precision.
+                    # Both keys plus runtime type identify numeric observations
+                    # without serializing values or traversing arbitrary dynamics.
+                    usable = (
+                        f'tostring({value}[0]) in ("int", "long", "real", "double", "decimal") '
+                        f"and isfinite(toreal({value}[1]))"
+                    )
+                    child_matches += (
+                        f' | extend {kind} = iff({usable}, tostring({value}[0]), ""), '
+                        f"{precise} = iff({usable}, todecimal({value}[1]), decimal(null)), "
+                        f"{real} = iff({usable}, toreal({value}[1]), real(null))"
+                    )
+                    keys.extend([kind, precise, real])
                 search = (
                     f"union ({source_matches} | where isempty({child_id})), "
-                    f"({source_matches} | where isnotempty({child_id}) | summarize take_any(*) by {keys})"
+                    f"({child_matches} | summarize take_any(*) by {', '.join(keys)})"
                 )
         finally:
             del self._correlation_group_by

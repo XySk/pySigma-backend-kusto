@@ -103,3 +103,13 @@ and numeric/textual values with equal renderings. Collection display order is
 irrelevant; full summary multisets must agree. These fixtures exercise logical
 child fields and child `WindowEnd` timestamps. See `RUNTIME.md` for execution
 results and the emulator resource configuration.
+
+`numeric_context.py` generates sum, average, and exact nearest-rank parents over
+retained child context. Literal expected rows cover 10,10,20 becoming 10,20
+(sum30, average15, percentile60=20); per-group relationship restriction; separate
+child observations; mixed direct inputs; logical aliases; scalar metrics once
+per child/group; and multilevel retention without reconstructing descendants.
+Empty populations include numeric strings, nulls, NaN and infinities, and use
+`neq` to check undefined averages/percentiles. The boundary fixture compares
+exact selected long text above 2^53 and includes repeated doubles outside decimal
+range. All comparisons require an empty full multiset difference.

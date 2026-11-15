@@ -48,3 +48,12 @@ def convert_documents(documents, *, mappings=None, tables=("Events", "NetworkEve
     return KustoBackend(processing_pipeline=pipeline, correlation_timestamp_field="Timestamp").convert(
         SigmaCollection.from_yaml(yaml.safe_dump_all(documents))
     )
+
+
+def numeric_documents(kind="value_sum", groups=(), field="Amount"):
+    source = source_document()
+    source["fields"] = ["User", "Amount"]
+    child = correlation_document("child", "event_count", ["source-rule"], condition={"gte": 1})
+    parent = correlation_document("parent", kind, ["child"], groups=groups,
+                                  condition={"field": field, "gte": 0})
+    return [source, child, parent]
