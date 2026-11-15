@@ -572,6 +572,29 @@ version, strict harness outcome, error payload, and saved-artifact hashes. Raw
 local requests and responses remain under
 `/tmp/kusto-ticket-27-final-acceptance-9325782-network`.
 
+### Focused numeric fixture preparation: seven minimal cases (offline)
+
+The three simple ungrouped numeric parents, their three empty-population cases,
+and the adjacent-long boundary case now request only `Amount` and use an
+ungrouped child. Those literal inputs have one relevant Host/User combination;
+unused User context and child Host grouping do not affect the agreed numeric
+observations. Every literal input, threshold, expected numeric value, and result
+comparison is unchanged. The cases still require 10,10,20 to contribute sum 30,
+average 15 and percentile(60) 20, preserve zero/undefined empty behavior, and
+select the exact adjacent long at the boundary.
+
+This is fixture preparation only: no engine queries were run for this reduction.
+Grouped/mixed inputs, scalar metrics, multilevel retention and multiple-child
+fixtures were left intact. Their earlier resource failures and unexecuted gates
+remain recorded; these seven focused cases do not establish full-stage runtime
+acceptance. No production code or memory configuration changed.
+
+Preparation verification against diagnostic-fix baseline `d95fa34` confirmed
+exactly seven changed KQL hashes and **153 unchanged hashes**; the complete
+literal data prefixes and observed/expected comparison tails of the seven cases
+were byte-identical. The regenerated 160-entry manifest matched every fixture.
+Configured pytest passed **585 tests with 96.15% coverage**, above the 80% gate;
+Ruff and diff checks passed. No engine calls were made during preparation.
 ### Typed grouped retained-context join correction (2026-11-15)
 
 The standard-mappings diagnostic on candidate `d95fa34` exposed a retained-context
@@ -643,3 +666,12 @@ being `Killed`. Docker's `OOMKilled` flag was false; the runtime OOM diagnosis
 relies on the explicit exception log. Both memory and memory-swap limits remained
 `12884901888` bytes. This confirms the typed-parent attempt failed due to runtime
 memory exhaustion. It remains incomplete and was not retried.
+
+The focused seven-case preparation was subsequently merged with production
+context correction `a75b98b`. Its typed-left projection repair and the separate
+average Machine/context-nested diagnostic fixes were retained unchanged. The
+seven cases regenerated with identical literal inputs and expected-result tails;
+all **155 other fixture hashes** in the 162-entry candidate matched integration.
+The all-fixture generation check and matrix/manifest consistency check passed
+(two targeted tests); Ruff and diff checks passed. This merge performed no
+engine calls, resource changes, or new runtime-completion claims.
