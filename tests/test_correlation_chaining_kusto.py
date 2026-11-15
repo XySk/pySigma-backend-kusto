@@ -5,6 +5,7 @@ import pytest
 from sigma.exceptions import SigmaError
 from sigma.pipelines.kusto_common.schema import FieldMappings
 from tests.correlation_helpers import convert_documents, correlation_document, source_document
+from tests.test_correlation_kusto import final_summary_projection, summary_projections
 
 
 def test_value_count_parent_counts_child_value_metric_as_one_exact_value_per_summary():
@@ -19,7 +20,7 @@ def test_value_count_parent_counts_child_value_metric_as_one_exact_value_per_sum
     assert '_sigma_timestamp = todatetime(["WindowEnd"])' in query
     assert '_sigma_value = pack_array(gettype(["ValueCount"]), ["ValueCount"])' in query
     assert query.count("ValueCount = count_distinctif(_sigma_value, isnotempty(_sigma_value))") == 2
-    assert query.endswith('["Host"] = _sigma_group_0, ValueCount')
+    assert final_summary_projection(query).endswith('["Host"] = _sigma_group_0, ValueCount')
 
 
 def test_ordered_parent_scopes_complete_temporal_child_before_strict_window_end_sequence():
@@ -40,7 +41,7 @@ def test_ordered_parent_scopes_complete_temporal_child_before_strict_window_end_
     assert '| where _sigma_rule == "child"' in query
     assert '| where _sigma_rule == "direct-rule"' in query
     assert "| where _sigma_timestamp > _sigma_sequence_end and _sigma_timestamp <= _sigma_sequence_start + 5m" in query
-    assert query.endswith('["Host"] = _sigma_group_0, RuleCount = tolong(2)')
+    assert final_summary_projection(query).endswith('["Host"] = _sigma_group_0, RuleCount = tolong(2)')
 
 
 TYPES = ["event_count", "value_count", "value_sum", "value_percentile", "temporal", "temporal_ordered"]
@@ -66,12 +67,14 @@ def test_all_supported_types_produce_and_consume_child_summaries(producer, consu
 
     (query,) = convert_documents(documents)
 
-    assert query.startswith("let _sigma_child_0 = () {\n")
-    assert f", {METRICS[producer]}" in query.split("\n};\n")[0].splitlines()[-1]
+    assert len(summary_projections(query)) == 2
+    producer_metric = "RuleCount = tolong(2)" if producer == "temporal_ordered" else METRICS[producer]
+    assert summary_projections(query)[0].endswith(f", {producer_metric}")
     parent = query.split("\n};\n", 1)[1]
     assert '_sigma_timestamp = todatetime(["WindowEnd"]), _sigma_group_0 = tostring(["Host"])' in parent
     assert '| extend _sigma_rule = "child"' in parent
-    assert f", {METRICS[consumer]}" in parent.splitlines()[-1]
+    consumer_metric = "RuleCount = tolong(1)" if consumer == "temporal_ordered" else METRICS[consumer]
+    assert final_summary_projection(query).endswith(f", {consumer_metric}")
     if consumer in ("value_count", "value_sum", "value_percentile"):
         assert f'_sigma_value = pack_array(gettype(["{METRICS[producer]}"]), ["{METRICS[producer]}"])' in parent
     if consumer == "event_count":
@@ -137,7 +140,7 @@ def test_value_parent_counts_child_metric_and_host_independently_with_and(operat
     assert '["ValueCount_EventCount"] = count_distinctif(_sigma_value_0, isnotempty(_sigma_value_0))' in query
     assert '["ValueCount_Host"] = count_distinctif(_sigma_value_1, isnotempty(_sigma_value_1))' in query
     assert f'| where ["ValueCount_EventCount"] {query_operator} 2 and ["ValueCount_Host"] {query_operator} 2\n' in query
-    assert query.endswith('["Case"] = _sigma_group_0, ["ValueCount_EventCount"], ["ValueCount_Host"]')
+    assert final_summary_projection(query).endswith('["Case"] = _sigma_group_0, ["ValueCount_EventCount"], ["ValueCount_Host"]')
 
 
 def test_multifield_child_exposes_each_metric_for_counting_without_an_invented_valuecount():
@@ -153,7 +156,7 @@ def test_multifield_child_exposes_each_metric_for_counting_without_an_invented_v
         '_sigma_value_0 = pack_array(gettype(["ValueCount_User"]), ["ValueCount_User"]), _sigma_value_1 = pack_array(gettype(["ValueCount_Target"]), ["ValueCount_Target"])'
         in query
     )
-    assert query.endswith('["Host"] = _sigma_group_0, ["ValueCount_ValueCount_User"], ["ValueCount_ValueCount_Target"]')
+    assert final_summary_projection(query).endswith('["Host"] = _sigma_group_0, ["ValueCount_ValueCount_User"], ["ValueCount_ValueCount_Target"]')
 
 
 def test_temporal_parent_counts_immediate_child_and_detection_identities():
@@ -185,7 +188,7 @@ def test_ordered_parent_repeated_child_name_and_id_require_separate_times_but_on
 
     assert query.count('| where _sigma_rule == "child"') == 2
     assert "| where _sigma_timestamp > _sigma_sequence_end and _sigma_timestamp <= _sigma_sequence_start + 5m" in query
-    assert query.endswith("RuleCount = tolong(1)")
+    assert final_summary_projection(query).endswith("RuleCount = tolong(1)")
 
 
 @pytest.mark.parametrize("condition", [{"gte": 1}, {"lte": 2}, {"eq": 1}])
@@ -274,9 +277,13 @@ def test_multilevel_mixed_sources_keep_result_names_and_scope_bindings_separate_
 
     (query,) = convert_documents(multilevel_documents(), mappings=mappings)
 
-    assert query.startswith("let _sigma_child_0 = () {\nlet _sigma_child_0 = () {\n")
-    assert query.count("\n};\n") == 2
-    assert query.count("union (_sigma_child_0()") == 2
+    assert len(summary_projections(query)) == 3
+    assert summary_projections(query)[0].endswith(', ["Case"] = _sigma_group_0, ["Host"] = _sigma_group_1, EventCount')
+    assert summary_projections(query)[1].endswith(', ["Tenant"] = _sigma_group_0, ValueCount')
+    assert 'union (_sigma_child_0()' in query
+    assert 'let _sigma_shared_results = materialize(_sigma_shared_child());' in query
+    assert 'union (_sigma_shared_results | where isempty(_sigma_correlation_error)' in query
+    assert '_sigma_shared_results | where isnotempty(_sigma_correlation_error)' in query
     assert '(Events\n| where Marker =~ "match"' in query
     assert '(NetworkEvents\n| where Marker =~ "direct"' in query
     assert 'todatetime(["ProcessTime"])' in query
@@ -290,7 +297,7 @@ def test_multilevel_mixed_sources_keep_result_names_and_scope_bindings_separate_
     assert "Wrong" not in query
     assert "ago(" not in query
     assert "| where _sigma_timestamp > _sigma_sequence_end and _sigma_timestamp <= _sigma_sequence_start + 4m" in query
-    assert query.endswith('["Tenant"] = _sigma_group_0, RuleCount = tolong(2)')
+    assert final_summary_projection(query).endswith('["Tenant"] = _sigma_group_0, RuleCount = tolong(2)')
 
 
 def test_chain_bindings_do_not_shadow_known_tables_in_direct_or_descendant_sources():
@@ -298,12 +305,13 @@ def test_chain_bindings_do_not_shadow_known_tables_in_direct_or_descendant_sourc
 
     # The outer function must avoid the raw table two correlation levels below,
     # and the ordered parent's retained stream must avoid its direct table.
-    assert query.startswith("let _sigma_child_0_1 = () {\nlet _sigma_child_0_1 = () {\n")
+    assert "let _sigma_child_0_1 = () {\n" in query
+    assert "union (_sigma_child_0_1()" in query
     assert '(_sigma_child_0\n| where Marker =~ "match"' in query
     assert '(_sigma_types\n| where Marker =~ "direct"' in query
     assert "let _sigma_child_0 =" not in query
     assert "let _sigma_types =" not in query
-    assert "let _sigma_types_1 = union (_sigma_child_0_1()" in query
+    assert "let _sigma_types_1 = union (_sigma_shared_results | where isempty(_sigma_correlation_error)" in query
 
 
 @pytest.mark.parametrize(
@@ -332,8 +340,8 @@ def test_multilevel_generation_preserves_embedded_summaries_and_emits_immediate_
         elif metric == "direct":
             assert query == 'Marker =~ "direct"'
         else:
-            assert query.endswith(metric)
-    assert queries[-1].count("\n};\n") == 2
+            assert final_summary_projection(query).endswith(metric)
+    assert len(summary_projections(queries[-1])) == 3
 
 
 @pytest.mark.parametrize(
@@ -352,8 +360,8 @@ def test_shared_child_remains_available_to_each_parent_and_any_consumer_can_supp
     queries = convert_documents(documents)
 
     assert len(queries) == count
-    assert queries[-2].endswith("EventCount")
-    assert queries[-1].endswith("ValueCount")
+    assert final_summary_projection(queries[-2]).endswith("EventCount")
+    assert final_summary_projection(queries[-1]).endswith("ValueCount")
     for parent in queries[-2:]:
         assert parent.count("let _sigma_child_0 = () {") == 1
         assert '_sigma_timestamp = todatetime(["WindowEnd"])' in parent

@@ -12,6 +12,16 @@ from sigma.pipelines.microsoft365defender import microsoft_365_defender_pipeline
 from sigma.processing.pipeline import ProcessingPipeline
 
 
+def summary_projections(query):
+    """Public summary columns, independently of surrounding validation bindings."""
+    return [line for line in query.splitlines() if line.startswith("| project WindowStart = ")]
+
+
+def final_summary_projection(query):
+    projections = summary_projections(query)
+    return projections[-1] if projections else ""
+
+
 def correlation_collection(correlation: str = "", source_conditions: str = "selection") -> SigmaCollection:
     return SigmaCollection.from_yaml(
         """
@@ -147,7 +157,7 @@ def test_temporal_defaults_to_all_source_types_in_exact_event_driven_windows():
         "| summarize RuleCount = count_distinctif(_sigma_rule, isnotempty(_sigma_rule)) by _sigma_window_end\n" in query
     )
     assert "| where RuleCount >= 3\n" in query
-    assert query.endswith("| project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, RuleCount")
+    assert final_summary_projection(query).endswith("| project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, RuleCount")
 
 
 @pytest.mark.parametrize(
@@ -205,7 +215,7 @@ def test_correlation_aliases_resolve_rule_identity_across_name_and_id_references
     (query,) = backend.convert(correlation_collection(correlation))
 
     assert '_sigma_group_0 = tostring(["AccountName"])' in query
-    assert query.endswith(f'["Actor"] = _sigma_group_0, {metric}')
+    assert final_summary_projection(query).endswith(f'["Actor"] = _sigma_group_0, {metric}')
     if correlation_rule is value_count_correlation:
         assert '_sigma_value = pack_array(gettype(["AccountName"]), ["AccountName"])' in query
 
@@ -250,13 +260,13 @@ def test_temporal_maps_group_aliases_and_timestamps_for_all_searches_across_tabl
     assert ") on _sigma_group_0, _sigma_group_1, _sigma_bin\n" in query
     if ordered:
         assert "by _sigma_sequence_end = _sigma_timestamp, _sigma_group_0, _sigma_group_1;" in query
-        assert query.endswith('["Host"] = _sigma_group_0, ["User"] = _sigma_group_1, RuleCount = tolong(2)')
+        assert final_summary_projection(query).endswith('["Host"] = _sigma_group_0, ["User"] = _sigma_group_1, RuleCount = tolong(2)')
     else:
         assert (
             "| summarize RuleCount = count_distinctif(_sigma_rule, isnotempty(_sigma_rule)) by _sigma_window_end, _sigma_group_0, _sigma_group_1\n"
             in query
         )
-        assert query.endswith('["Host"] = _sigma_group_0, ["User"] = _sigma_group_1, RuleCount')
+        assert final_summary_projection(query).endswith('["Host"] = _sigma_group_0, ["User"] = _sigma_group_1, RuleCount')
 
 
 @pytest.mark.parametrize("named", [True, False])
@@ -336,7 +346,7 @@ def test_ordered_temporal_requires_the_declared_full_sequence_with_strict_times_
         )
         == 2
     )
-    assert query.endswith(
+    assert final_summary_projection(query).endswith(
         "| project WindowStart = _sigma_sequence_end - 5m, WindowEnd = _sigma_sequence_end, RuleCount = tolong(3)"
     )
 
@@ -365,7 +375,7 @@ def test_ordered_temporal_accepts_equivalent_full_sequence_conditions(condition)
     (query,) = backend.convert(ordered_temporal_collection(condition=condition))
 
     assert query.count("| join kind=inner (") == 2
-    assert query.endswith("RuleCount = tolong(3)")
+    assert final_summary_projection(query).endswith("RuleCount = tolong(3)")
 
 
 @pytest.mark.parametrize("condition", [None, "gte: 1", "eq: 1", "gt: 0", "neq: 0"])
@@ -381,7 +391,7 @@ def test_ordered_temporal_repeated_list_positions_require_separate_later_matches
 
     assert query.count('| where _sigma_rule == "source-rule"') == 2
     assert "| where _sigma_timestamp > _sigma_sequence_end and _sigma_timestamp <= _sigma_sequence_start + 5m" in query
-    assert query.endswith("RuleCount = tolong(1)")
+    assert final_summary_projection(query).endswith("RuleCount = tolong(1)")
 
 
 def test_value_count_preserves_typed_dynamic_identity_before_exact_distinct_aggregation():
@@ -433,7 +443,7 @@ def test_value_count_retains_values_for_exact_window_wide_counts_and_missing_val
         in query
     )
     assert "| where ValueCount == 0\n" in query
-    assert query.endswith("| project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ValueCount")
+    assert final_summary_projection(query).endswith("| project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ValueCount")
 
 
 @pytest.mark.parametrize(
@@ -472,7 +482,7 @@ def test_multi_field_value_count_requires_each_exact_count_and_retains_missing_v
         f'| where ["ValueCount_User"] {query_operator} {threshold} '
         f'and ["ValueCount_Target"] {query_operator} {threshold}\n'
     ) in query
-    assert query.endswith('["DeviceName"] = _sigma_group_0, ["ValueCount_User"], ["ValueCount_Target"]')
+    assert final_summary_projection(query).endswith('["DeviceName"] = _sigma_group_0, ["ValueCount_User"], ["ValueCount_Target"]')
 
 
 def test_multi_field_value_count_maps_each_counted_alias_for_all_source_searches():
@@ -524,7 +534,7 @@ def test_multi_field_value_count_maps_each_counted_alias_for_all_source_searches
     assert query.count('todatetime(["ProcessTime"]), _sigma_group_0 = tostring(["ProcessHost"])') == 2
     assert query.count('todatetime(["NetworkTime"]), _sigma_group_0 = tostring(["NetworkHost"])') == 2
     assert query.count('| summarize ["ValueCount_Actor"]') == 1
-    assert query.endswith('["Host"] = _sigma_group_0, ["ValueCount_Actor"], ["ValueCount_Target"]')
+    assert final_summary_projection(query).endswith('["Host"] = _sigma_group_0, ["ValueCount_Actor"], ["ValueCount_Target"]')
 
 
 def test_multi_field_value_count_quotes_metrics_and_preserves_colliding_source_columns_and_generation():
@@ -575,7 +585,7 @@ def test_value_count_applies_each_comparison_after_exact_aggregation(operator, q
         "| summarize ValueCount = count_distinctif(_sigma_value, isnotempty(_sigma_value)) "
         f"by _sigma_window_end, _sigma_group_0\n| where ValueCount {query_operator} 2\n"
     ) in query
-    assert query.endswith('["DeviceName"] = _sigma_group_0, ValueCount')
+    assert final_summary_projection(query).endswith('["DeviceName"] = _sigma_group_0, ValueCount')
 
 
 def test_value_count_maps_counted_and_grouping_aliases_per_source_table_and_retains_all_searches():
@@ -621,7 +631,7 @@ def test_value_count_maps_counted_and_grouping_aliases_per_source_table_and_reta
         "| where isnotnull(_sigma_timestamp) and isnotempty(_sigma_group_0) and isnotempty(_sigma_group_1)\n" in query
     )
     assert query.count("| summarize ValueCount") == 1
-    assert query.endswith('["Host"] = _sigma_group_0, ["DeviceName"] = _sigma_group_1, ValueCount')
+    assert final_summary_projection(query).endswith('["Host"] = _sigma_group_0, ["DeviceName"] = _sigma_group_1, ValueCount')
 
 
 def test_single_source_value_count_aliases_quoted_counted_fields_without_overwriting_source_columns():
@@ -720,7 +730,7 @@ def test_multi_rule_event_count_combines_source_tables_before_counting():
         '| extend _sigma_rule = "other-rule")\n'
     )
     assert "| summarize EventCount = sum(_sigma_weight) by _sigma_window_end, _sigma_group_0\n" in query
-    assert query.endswith('["User"] = _sigma_group_0, EventCount')
+    assert final_summary_projection(query).endswith('["User"] = _sigma_group_0, EventCount')
 
 
 def test_event_count_uses_exact_inclusive_windows_at_distinct_event_timestamps():
@@ -894,7 +904,7 @@ def test_event_count_quotes_requested_group_names_in_result_summary():
     (query,) = backend.convert(correlation_collection(correlation))
 
     assert '_sigma_group_0 = tostring(["AccountName"])' in query
-    assert query.endswith('["Actor\\" Name"] = _sigma_group_0, EventCount')
+    assert final_summary_projection(query).endswith('["Actor\\" Name"] = _sigma_group_0, EventCount')
 
 
 @pytest.mark.parametrize(
@@ -1058,7 +1068,7 @@ def test_event_count_parent_counts_child_summaries_at_window_end_without_expandi
     assert '| extend _sigma_rule = "child-correlation")\n' in query
     assert query.count("| summarize _sigma_weight = count() by _sigma_timestamp;") == 2
     assert "| where _sigma_timestamp between ((_sigma_window_end - 2m) .. _sigma_window_end)" in query
-    assert query.endswith("| project WindowStart = _sigma_window_end - 2m, WindowEnd = _sigma_window_end, EventCount")
+    assert final_summary_projection(query).endswith("| project WindowStart = _sigma_window_end - 2m, WindowEnd = _sigma_window_end, EventCount")
 
 
 @pytest.mark.parametrize("field", ["User", "CommandLine", "Timestamp"])
@@ -1089,7 +1099,7 @@ def test_event_count_parent_resolves_child_group_and_metric_aliases_without_rema
     assert '_sigma_group_0 = tostring(["AccountName"])' in query
     assert '_sigma_group_0 = tostring(["User"])' in query
     assert '_sigma_group_1 = tostring(["EventCount"])' in query
-    assert query.endswith('["Actor"] = _sigma_group_0, ["ChildCount"] = _sigma_group_1, EventCount')
+    assert final_summary_projection(query).endswith('["Actor"] = _sigma_group_0, ["ChildCount"] = _sigma_group_1, EventCount')
 
 
 def test_event_count_parent_combines_direct_searches_with_child_groups_and_preserves_internal_name_collisions():
@@ -1115,7 +1125,7 @@ def test_event_count_parent_combines_direct_searches_with_child_groups_and_prese
         '_sigma_timestamp_1 = todatetime(["Timestamp"]), _sigma_group_0 = tostring(["InitiatingProcessAccountName"])'
         in query
     )
-    assert query.endswith('["Actor"] = _sigma_group_0, EventCount')
+    assert final_summary_projection(query).endswith('["Actor"] = _sigma_group_0, EventCount')
 
 
 @pytest.mark.parametrize("missing", ["kusto_result_fields", "kusto_result_timestamp"])
