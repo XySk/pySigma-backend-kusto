@@ -1926,6 +1926,7 @@ def fixtures():
     from tests.fixtures.correlation.count_context import fixtures as count_context_fixtures
     from tests.fixtures.correlation.numeric_context import fixtures as numeric_context_fixtures
     from tests.fixtures.correlation.ordered_context import fixtures as ordered_context_fixtures
+    from tests.fixtures.correlation.temporal_context import fixtures as temporal_context_fixtures
 
     return {
         **average_fixtures(check, HEADER),
@@ -1935,6 +1936,7 @@ def fixtures():
         **count_context_fixtures(),
         **ordered_context_fixtures(),
         **numeric_context_fixtures(),
+        **temporal_context_fixtures(),
         "context_nested.kql": nested_fixture(),
         "event_count_grouped.kql": grouped_fixture(),
         "event_count_duplicate_sources.kql": duplicate_fixture(),
