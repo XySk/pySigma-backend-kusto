@@ -178,7 +178,7 @@ backend = KustoBackend(
 queries = backend.convert(collection)
 ```
 
-A correlation combines every converted source search with `union`, including multiple searches emitted for one source rule and searches from different tables. Each branch retains its source columns and adds a mapped `datetime` timestamp, `string` grouping and counted fields, and the source rule's name (or ID when unnamed). Correlation field aliases work for grouping and counted fields in single-source and multi-source correlations. Timestamp, grouping, and counted fields use each source's mappings. All searches emitted for one source rule must use the same mapped table.
+A correlation combines every converted source search with `union`, including multiple searches emitted for one source rule and searches from different tables. Each branch retains its source columns and adds a mapped `datetime` timestamp, typed grouping and counted fields, and the source rule's name (or ID when unnamed). Correlation field aliases work for grouping and counted fields in single-source and multi-source correlations. Timestamp, grouping, and counted fields use each source's mappings. All searches emitted for one source rule must use the same mapped table.
 
 Event counts use **exact sliding windows by default**. For each distinct valid matching-event timestamp in each correlation group, the query counts all source matches in the inclusive interval `[timestamp - timespan, timestamp]`, then applies a single `gt`, `gte`, `lt`, `lte`, `eq`, or `neq` comparison. For example, events at 12:00:59 and 12:05:01 belong together in the five-minute window ending at 12:05:01. Events exactly five minutes apart also belong together. Simultaneous matches participate in one evaluation with their complete count. Matching several source rules or searches contributes a row for every match; physical events are not deduplicated.
 
@@ -195,7 +195,7 @@ correlation:
     gte: 2
 ```
 
-Value counts use the same exact sliding windows and six comparisons. Each window counts distinct nonempty string-normalized values across all its source matches. A value repeated at different timestamps or across searches and rules counts once. Null or empty counted values contribute no value, but their otherwise valid events still establish evaluation timestamps. Such an anchored window can have `ValueCount = 0`, and may satisfy `eq: 0`. A scalar field or a one-element list returns the established `ValueCount` metric.
+Value counts use the same exact sliding windows and six comparisons. Each window counts distinct nonempty typed values across all its source matches. A value repeated at different timestamps or across searches and rules counts once. Null or empty counted values contribute no value, but their otherwise valid events still establish evaluation timestamps. Such an anchored window can have `ValueCount = 0`, and may satisfy `eq: 0`. A scalar field or a one-element list returns the established `ValueCount` metric.
 
 For `value_sum`, specify one measured field and a comparison threshold, including a fractional threshold:
 
@@ -332,7 +332,7 @@ Context collection uses complete typed identity traversal and checked collection
 
 Event-count and value-count parents can consume individual retained child values using the child's logical field names or explicit aliases. Expansion follows observed context tuples: retaining `(Alice, server1)` and `(Bob, server2)` never invents cross-pairs. A child contributes once per resulting event-count group, including once to an ungrouped parent; value-count parents count distinct retained values associated with that group. Duplicate source values do not increase these contributions. Other child metrics remain scalar and child timestamps remain `WindowEnd`. Mixed direct and child sources and overlapping summaries preserve their normal source-match multiplicity.
 
-When a parent groups on retained child context, all its sources use exact typed group identity and returned grouping values retain their types. This prerequisite includes nested values and avoids merging numeric `1` with textual `"1"`. Other grouping paths retain the existing string-normalized behavior pending the broader typed-grouping migration. Exact relationship expansion and identity matching can require substantial memory; engine limits fail explicitly.
+All correlations now use exact typed group identity and return scalar grouping values with their runtime types preserved, including direct sources, mixed schemas, scalar child metrics, retained child context, and multilevel chains. This deliberately changes string-normalized grouping: numeric `1` and textual `"1"` produce separate groups. Multiple grouping fields form one observed tuple; nested arrays preserve element order and property bags compare their typed contents independent of property order. Null or empty grouping values and invalid timestamps remain excluded. Group columns are returned as dynamic values, so downstream consumers should inspect their types or explicitly normalize them when string grouping is desired. Exact relationship expansion and identity matching can require substantial memory; engine limits fail explicitly. No throughput guarantee or silent truncation is introduced.
 
 ### 🔄 Pipeline & Backend Args (New in 0.2.0)
 

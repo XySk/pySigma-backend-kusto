@@ -1879,8 +1879,10 @@ def fixtures():
     from tests.fixtures.correlation.context import fixtures as context_fixtures, nested_fixture
     from tests.fixtures.correlation.count_context import fixtures as count_context_fixtures
     from tests.fixtures.correlation.ordered_context import fixtures as ordered_context_fixtures
+    from tests.fixtures.correlation.typed_grouping import fixtures as typed_grouping_fixtures
 
     return {
+        **typed_grouping_fixtures(),
         **average_fixtures(check, HEADER),
         **boolean_fixtures(),
         **boolean_context_fixtures(),

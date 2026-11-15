@@ -42,21 +42,24 @@ let Events = union (datatable(Timestamp:string, Case:string, Value:dynamic, Mark
 (print Timestamp="2026-01-01T12:01:00Z", Case="deep", Value=Deep, Marker="match"),
 (print Timestamp="2026-01-01T12:02:00Z", Case="deep", Value=pack_array(Deep), Marker="match");
 let Actual = () {
-let _sigma_value_input = materialize(union (Events
+let _sigma_group_input = materialize(union (Events
 | where Marker =~ "match"
-| extend _sigma_timestamp = todatetime(["Timestamp"]), _sigma_group_0 = tostring(["Case"]), _sigma_value = pack_array(gettype(["Value"]), ["Value"])
+| extend _sigma_timestamp = todatetime(["Timestamp"]), _sigma_group_0 = pack_array(gettype(["Case"]), ["Case"]), _sigma_value = pack_array(gettype(["Value"]), ["Value"])
 | extend _sigma_rule = "E")
-| where isnotnull(_sigma_timestamp) and isnotempty(_sigma_group_0)
-| project _sigma_timestamp, _sigma_group_0, _sigma_value
-| serialize _sigma_value_id = row_number());
-let _sigma_present_values = _sigma_value_input | where isnotempty(tostring(_sigma_value[1]));
-let _sigma_identity_input = materialize(_sigma_present_values
-| project _sigma_value_id, _sigma_group_0, _sigma_identity_leaf = _sigma_value[1]
+| where isnotempty(tostring(_sigma_group_0[1]))
+| extend _sigma_group_tuple = pack_array("array", pack_array(_sigma_group_0))
+| serialize _sigma_group_row = row_number());
+let _sigma_group_components = materialize(_sigma_group_input
+| mv-expand with_itemindex=_sigma_group_component _sigma_group_box = pack_array(_sigma_group_tuple, _sigma_value)
+| where _sigma_group_component == 0 or isnotempty(tostring(_sigma_group_box[1]))
+| serialize _sigma_group_component_id = row_number());
+let _sigma_identity_input = materialize(_sigma_group_components
+| project _sigma_group_component_id, _sigma_group_component, _sigma_identity_leaf = _sigma_group_box[1]
 | extend _sigma_identity_bound = 3 * strlen(dynamic_to_json(_sigma_identity_leaf)) + 3);
 let _sigma_identity_steps = materialize(_sigma_identity_input
 | where assert(toscalar(_sigma_identity_input | summarize coalesce(max(_sigma_identity_bound), 0)) <= 1048575, 'Kusto dynamic identity traversal exceeds range limit')
 | mv-expand _sigma_identity_iteration = range(0, _sigma_identity_bound, 1) to typeof(long)
-| sort by _sigma_value_id asc, _sigma_identity_iteration asc
+| sort by _sigma_group_component_id asc, _sigma_identity_iteration asc
 | scan declare (_sigma_identity_stack:dynamic = dynamic([])) with (step s: true => _sigma_identity_stack = case(
     _sigma_identity_iteration == 0, pack_array(bag_pack('v', _sigma_identity_leaf, 'p', '$', 'i', 0, 'k', bag_keys(_sigma_identity_leaf))),
     array_length(s._sigma_identity_stack) == 0, s._sigma_identity_stack,
@@ -66,22 +69,28 @@ let _sigma_identity_steps = materialize(_sigma_identity_input
 | extend _sigma_identity_frame = _sigma_identity_stack[-1]
 | extend _sigma_identity_type = gettype(_sigma_identity_frame.v), _sigma_identity_terminal = _sigma_identity_iteration == _sigma_identity_bound, _sigma_identity_finished = array_length(_sigma_identity_stack) == 0
 | where _sigma_identity_terminal or (not(_sigma_identity_finished) and (_sigma_identity_type !in ('array', 'dictionary') or (_sigma_identity_type == 'array' and array_length(_sigma_identity_frame.v) == 0) or (_sigma_identity_type == 'dictionary' and array_length(bag_keys(_sigma_identity_frame.v)) == 0)))
-| project _sigma_value_id, _sigma_group_0, _sigma_identity_path = tostring(_sigma_identity_frame.p), _sigma_identity_type, _sigma_identity_leaf = _sigma_identity_frame.v, _sigma_identity_terminal, _sigma_identity_finished);
+| project _sigma_group_component_id, _sigma_group_component, _sigma_identity_path = tostring(_sigma_identity_frame.p), _sigma_identity_type, _sigma_identity_leaf = _sigma_identity_frame.v, _sigma_identity_terminal, _sigma_identity_finished);
 let _sigma_identity_leaves = _sigma_identity_steps
 | where assert(toscalar(_sigma_identity_steps | summarize countif(_sigma_identity_terminal and not(_sigma_identity_finished))) == 0, 'Kusto dynamic identity traversal incomplete')
 | where not(_sigma_identity_terminal);
-let _sigma_identity_counts = _sigma_identity_leaves | summarize _sigma_identity_count = count() by _sigma_value_id;
+let _sigma_identity_counts = _sigma_identity_leaves | summarize _sigma_identity_count = count() by _sigma_group_component_id;
 let _sigma_identity_relation = _sigma_identity_leaves
-| join kind=inner (_sigma_identity_leaves | project _sigma_group_0, _sigma_identity_path, _sigma_identity_type, _sigma_identity_other_id = _sigma_value_id, _sigma_identity_other_leaf = _sigma_identity_leaf) on _sigma_group_0, _sigma_identity_path, _sigma_identity_type
+| join kind=inner (_sigma_identity_leaves | project _sigma_group_component, _sigma_identity_path, _sigma_identity_type, _sigma_identity_other_id = _sigma_group_component_id, _sigma_identity_other_leaf = _sigma_identity_leaf) on _sigma_group_component, _sigma_identity_path, _sigma_identity_type
 | where case(_sigma_identity_type == 'double', (toreal(_sigma_identity_leaf) == toreal(_sigma_identity_other_leaf) or (isnan(toreal(_sigma_identity_leaf)) and isnan(toreal(_sigma_identity_other_leaf)))), _sigma_identity_type == 'long', tolong(_sigma_identity_leaf) == tolong(_sigma_identity_other_leaf), _sigma_identity_type == 'decimal', todecimal(_sigma_identity_leaf) == todecimal(_sigma_identity_other_leaf), tostring(_sigma_identity_leaf) == tostring(_sigma_identity_other_leaf))
-| summarize _sigma_identity_hits = count() by _sigma_value_id, _sigma_identity_other_id
-| join kind=inner (_sigma_identity_counts) on _sigma_value_id
-| join kind=inner (_sigma_identity_counts | project _sigma_identity_other_id = _sigma_value_id, _sigma_identity_other_count = _sigma_identity_count) on _sigma_identity_other_id
+| summarize _sigma_identity_hits = count() by _sigma_group_component_id, _sigma_identity_other_id
+| join kind=inner (_sigma_identity_counts) on _sigma_group_component_id
+| join kind=inner (_sigma_identity_counts | project _sigma_identity_other_id = _sigma_group_component_id, _sigma_identity_other_count = _sigma_identity_count) on _sigma_identity_other_id
 | where _sigma_identity_hits == _sigma_identity_count and _sigma_identity_hits == _sigma_identity_other_count
-| summarize _sigma_identity_identity = min(_sigma_identity_other_id) by _sigma_value_id;
-let _sigma_value_identities = _sigma_value_input
-| join kind=leftouter (_sigma_identity_relation) on _sigma_value_id
-| project _sigma_timestamp, _sigma_group_0, _sigma_value = _sigma_identity_identity;
+| summarize _sigma_identity_identity = min(_sigma_identity_other_id) by _sigma_group_component_id;
+let _sigma_group_identity_cache = materialize(_sigma_group_components | join kind=inner (_sigma_identity_relation) on _sigma_group_component_id
+| project _sigma_group_row, _sigma_group_component, _sigma_identity_identity);
+let _sigma_group_lookup = materialize(_sigma_group_input | join kind=inner (_sigma_group_identity_cache | where _sigma_group_component == 0) on _sigma_group_row
+| summarize _sigma_group_original = take_any(_sigma_group_0) by _sigma_identity_identity);
+let _sigma_value_identities = materialize(_sigma_group_input
+| join kind=inner (_sigma_group_identity_cache | where _sigma_group_component == 0 | project _sigma_group_row, _sigma_group_key = _sigma_identity_identity) on _sigma_group_row
+| join kind=leftouter (_sigma_group_identity_cache | where _sigma_group_component == 1 | project _sigma_group_row, _sigma_group_value_identity = _sigma_identity_identity) on _sigma_group_row
+| extend _sigma_group_0 = _sigma_group_key, _sigma_value = _sigma_group_value_identity
+| where isnotnull(_sigma_timestamp) and isnotempty(_sigma_group_0));
 let _sigma_values = _sigma_value_identities
 | where isnotnull(_sigma_timestamp) and isnotempty(_sigma_group_0)
 | summarize by _sigma_timestamp, _sigma_group_0, _sigma_value;
@@ -97,6 +106,10 @@ _sigma_values
 | summarize ValueCount = count_distinctif(_sigma_value, isnotempty(_sigma_value)) by _sigma_window_end, _sigma_group_0
 | where ValueCount >= 2
 | project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ["Case"] = _sigma_group_0, ValueCount
+| join kind=inner (_sigma_group_lookup | project ["Case"] = _sigma_identity_identity, _sigma_group_original) on ["Case"]
+| extend ["Case"] = _sigma_group_original[1]
+| project-away _sigma_group_original
+| project ["WindowStart"], ["WindowEnd"], ["Case"], ["ValueCount"]
 };
 let Expected = datatable(WindowStart:datetime, WindowEnd:datetime, Case:string, ValueCount:long) [
     datetime(2026-01-01T11:56:00Z), datetime(2026-01-01T12:01:00Z), "scalar", 2,

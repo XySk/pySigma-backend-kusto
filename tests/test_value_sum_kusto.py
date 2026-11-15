@@ -34,7 +34,7 @@ def test_sum_compares_fractional_threshold_at_each_exact_window_end(operator, sy
     assert "| where _sigma_timestamp between ((_sigma_window_end - 5m) .. _sigma_window_end)" in query
     assert f"{symbol} decimal(2.5)" in query
     assert f"{symbol} 2.5" in query
-    assert query.endswith('["Host"] = _sigma_group_0, ValueSum')
+    assert '["Host"] = _sigma_group_0, ValueSum' in query
 
 
 def test_sum_conversion_honors_public_correlation_callback():
@@ -61,7 +61,7 @@ def test_sum_conversion_honors_public_correlation_callback():
     )
 
     assert ("sum", 0) in seen
-    assert query.endswith("| take 1")
+    assert "| take 1" in query
 
 
 def test_sum_accepts_kusto_double_values_without_parsing_numeric_strings():

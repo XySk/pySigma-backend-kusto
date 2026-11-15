@@ -24,7 +24,7 @@ def test_percentile_selects_exact_observation_and_preserves_fractional_threshold
     assert 'pack_array(gettype(["Amount"]), ["Amount"])' in query
     assert "percentiles(" not in query
     assert "make_list(" not in query
-    assert query.endswith('["Host"] = _sigma_group_0, ValuePercentile')
+    assert '["Host"] = _sigma_group_0, ValuePercentile' in query
 
 
 @pytest.mark.parametrize("selector", [-1, 101, 49.9, 100.9, -0.5, True, "50"])
