@@ -264,6 +264,43 @@ This helper change alone does **not** repair the larger three-level numeric
 retained-context planning failure: rewriting its seven identity helpers retained
 the literal expected sum 130, but the initial canonical-join candidate exhausted
 memory and the fused-summary/scan candidate exceeded the 180-second client
-limit without a result. That required chain remains unvalidated by this change;
-sharing child-source plans is a separate repair. No throughput or capacity claim
-follows from these small successful fixtures.
+limit without a result. At that revision the required chain was unvalidated;
+the additional repair and successful execution are recorded below. No throughput
+or capacity claim follows from these small successful fixtures.
+
+### Flat validation and numeric retained-context chain (2026-11-15)
+
+The required three-level numeric retained-context fixture now passes on the same
+engine `2026.11.15.0741-2645-8e3387b-master`, database `NetDefaultDB`, with a
+12 GiB emulator container. `numeric_context_nested.kql` returns an empty exact
+multiset difference and `HasErrors=false`: an intermediate sum 140 retains
+amounts 10, 20 and 100, which contribute sum 130 to its parent. This confirms
+retained values do not reconstruct descendant multiplicity.
+
+The structured final query reported execution time 182.4468116 seconds,
+91.886019 seconds of planning CPU and 21,462,032 bytes peak query memory.
+No server timeout override was used. These reported query resources are not a
+production capacity claim. A preceding flat-check prototype also passed the same
+literal expected result, in 211.8873027 seconds.
+
+Sharing materialized child summaries alone, and combining that sharing with the
+typed-signature helper, still failed during planning. The remaining cause was
+recursive validation: Kusto evaluates `assert` during analysis. The final query
+embeds data-only child searches and carries independently scoped validation
+bodies as flat metadata. One outer assertion checks every nonempty diagnostic;
+its literal message lists the possible failure categories. Descendant checks
+remain independent of ancestor qualification and requested context fields.
+See Microsoft's [assert contract](https://learn.microsoft.com/en-us/kusto/query/assert-function).
+
+The final flat candidate also passed four explicit-failure probes. Positive and
+negative signed-long overflow raised an assertion containing
+`Kusto value_sum integer overflow`. The prepared
+`numeric_context_noqual_overflow.kql` raised the same category even though the
+child requires sum zero and its event-count parent requires 999 summaries.
+A diagnostic variant replacing the overflow diagnostic with an unknown nonempty
+sentinel also failed, confirming validation does not depend on a known-message
+whitelist. Successful empty result tables would fail these overflow checks.
+
+This is the focused planning-repair acceptance record. The remaining numeric
+fixture matrix and integrated feature gates are recorded separately after the
+final branches are combined.
