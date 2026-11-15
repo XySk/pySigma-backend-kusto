@@ -1631,7 +1631,10 @@ let Events = union (datatable(Timestamp:string, Case:string, User:dynamic, End:d
 
 
 def fixtures():
+    from tests.fixtures.correlation.boolean_generate import fixtures as boolean_fixtures
+
     return {
+        **boolean_fixtures(),
         "event_count_grouped.kql": grouped_fixture(),
         "event_count_duplicate_sources.kql": duplicate_fixture(),
         "event_count_comparisons.kql": comparisons_fixture(),

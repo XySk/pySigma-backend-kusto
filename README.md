@@ -228,6 +228,23 @@ The returned `RuleCount` is the exact number of distinct matching source-rule ty
 
 Unordered temporal correlations accept any event order and tied timestamps. Every contributing combination must fit within one complete timespan: A at 12:00, B at 12:04, and C at 12:08 cannot satisfy a five-minute default-all correlation. Several qualifying combinations ending at one timestamp in the same group return one summary; later qualifying event timestamps retain their own overlapping summaries.
 
+Boolean `temporal` conditions accept `and`, `or`, `not`, and parentheses through the standard Sigma parser. References can be inferred from the expression or listed explicitly in `rules` (the lists must agree):
+
+```yaml
+correlation:
+  type: temporal
+  condition: A and B and not C
+  group-by:
+    - Computer
+  timespan: 5m
+```
+
+Presence is evaluated within the same group and inclusive trailing window. Repeated matches do not change presence. `not` binds before `and`, which binds before `or`; `(A and B) or C` can match on C alone. Every referenced source, including a negated source, establishes evaluation timestamps. If C at 12:00, A at 12:01, and B at 12:02 fail a five-minute `A and B and not C` condition, C expiring creates no evaluation: another referenced source match is required. Empty streams produce no summaries. `RuleCount` reports all distinct referenced source types present in the qualifying window, including types in other alternatives. Boolean rules support detection and child sources, aliases, and existing generation controls; child matches use `WindowEnd`.
+
+The upstream expression parser accepts identifier-style source names (letters or underscore first, then letters, digits, or underscores); use `name` references rather than UUIDs or hyphenated names in expressions. Invalid syntax and unresolved references raise public parser errors.
+
+Boolean expressions apply to unordered `temporal` correlations. `temporal_ordered` continues to require a full numeric sequence condition. Retained context from satisfied Boolean alternatives is a later delivery stage. Existing numeric temporal conditions retain their distinct-rule-count meaning.
+
 For `temporal_ordered`, the declared list defines the complete sequence:
 
 ```yaml
