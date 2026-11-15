@@ -4,12 +4,14 @@
 // Nonempty rows identify a missing, additional, or duplicated summary.
 // The child returns metric long(0), which differs from direct string "0".
 // Two child datetime ends plus one direct string end are three distinct End values.
-let Events = datatable(Timestamp:string, Case:string, User:dynamic, End:dynamic, Marker:string) [
+let Events = union (datatable(Timestamp:string, Case:string, User:dynamic, End:dynamic, Marker:string) [
     "2026-01-01T12:00:00Z", "typed-chain", dynamic(null), dynamic(null), "E",
     "2026-01-01T12:01:00Z", "typed-chain", dynamic(""), dynamic(null), "E",
-    "2026-01-01T12:01:00Z", "typed-chain", dynamic("0"), dynamic("2026-01-01T12:00:00.0000000Z"), "D",
     "2026-01-01T12:02:00Z", "typed-chain", dynamic(null), dynamic(""), "D"
-];
+]),
+// Construct the text at runtime: dynamic literals promote ISO strings to datetime.
+(print Timestamp="2026-01-01T12:01:00Z", Case="typed-chain", User=pack_array("0")[0],
+    End=pack_array(tostring(datetime(2026-01-01T12:00:00Z)))[0], Marker="D");
 let Actual = () {
 let _sigma_child_0 = () {
 let _sigma_value_input = materialize(union (Events
