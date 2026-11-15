@@ -189,3 +189,16 @@ def test_source_context_alias_accepts_uuid_reference_to_named_source():
         processing_pipeline=mapping_pipeline({"User": "Actor Name"}), correlation_timestamp_field="Timestamp"
     ).convert(collection)
     assert '| project ["WindowStart"], ["WindowEnd"], ["Actor"], ["ValueCount"]' in query
+
+
+def test_mapped_child_context_parent_fixture_is_generated_through_public_conversion():
+    from pathlib import Path
+
+    from tests.fixtures.correlation.standard_mappings import fixture
+
+    query = fixture(parent=True)
+    assert (
+        Path(__file__).with_name("fixtures").joinpath("correlation/standard_mappings_parent.kql").read_text() == query
+    )
+    assert 'todatetime(["WindowEnd"])' in query
+    assert "| mv-expand _sigma_child_context_row" in query

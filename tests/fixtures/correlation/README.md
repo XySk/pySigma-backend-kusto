@@ -100,3 +100,15 @@ parsing and conversion. Run it with `python -m tests.fixtures.correlation.standa
 The fixture compares source-specific standard mappings, escaped columns,
 multiple source searches, aliases and retained logical context against literal
 expected rows; see `RUNTIME.md` for engine execution evidence.
+
+`count_context.py` generates count-parent acceptance fixtures through standard
+Sigma parsing and `KustoBackend.convert`. Literal expected summaries verify
+observed User/Server pairs, one child contribution per group, mixed direct/child
+sources, ungrouped child counts, distinct retained users, group-restricted values,
+and numeric/textual values with equal renderings. Collection display order is
+irrelevant; full summary multisets must agree. These fixtures exercise logical
+child fields and child `WindowEnd` timestamps. See `RUNTIME.md` for execution
+results and the emulator resource configuration.
+
+The same generator also writes `standard_mappings_parent.kql`, verifying that a
+parent consumes individual mapped child context values through logical fields.

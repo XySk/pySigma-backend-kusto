@@ -10,7 +10,7 @@ from sigma.processing.pipeline import ProcessingPipeline
 from tests.correlation_helpers import correlation_document, source_document
 
 
-def fixture():
+def fixture(parent=False):
     first = source_document(product="process")
     first["fields"] = ["User"]
     first["detection"]["condition"] = ["selection", "selection"]
@@ -60,10 +60,15 @@ def fixture():
             ]
         }
     )
+    documents = [first, second, correlation]
+    if parent:
+        documents.append(
+            correlation_document("consumer", "event_count", ["mapped"], groups=("Host", "User"), condition={"gte": 1})
+        )
     (query,) = KustoBackend(processing_pipeline=pipeline, correlation_timestamp_field="Timestamp").convert(
-        SigmaCollection.from_yaml(yaml.safe_dump_all([first, second, correlation]))
+        SigmaCollection.from_yaml(yaml.safe_dump_all(documents))
     )
-    return (
+    result = (
         """// Generated public conversion; two process searches contribute separately.
 let Events=datatable(['Process Time']:datetime, ['Process Host']:string, ['Process Actor']:string,
  ['Process Amount']:long, ['Process Marker']:string) [
@@ -91,6 +96,23 @@ union (Observed | extend Delta=1), (Expected | extend Delta=-1)
 """
     )
 
+    if not parent:
+        return result
+    return (
+        result[: result.index("let Observed=")]
+        + """let Observed=Actual() | project WindowStart, WindowEnd, Host=tostring(Host), Actor=tostring(User), EventCount;
+let Expected=datatable(WindowStart:datetime, WindowEnd:datetime, Host:string, Actor:string, EventCount:long) [
+ datetime(2026-01-01T11:55:00Z), datetime(2026-01-01T12:00:00Z), "h", "Alice", 1,
+ datetime(2026-01-01T11:55:00Z), datetime(2026-01-01T12:00:00Z), "h", "Bob", 1
+];
+union (Observed | extend Delta=1), (Expected | extend Delta=-1)
+| summarize Delta=sum(Delta) by WindowStart, WindowEnd, Host, Actor, EventCount
+| where Delta!=0
+"""
+    )
+
 
 if __name__ == "__main__":
     Path(__file__).with_name("standard_mappings.kql").write_text(fixture())
+
+    Path(__file__).with_name("standard_mappings_parent.kql").write_text(fixture(parent=True))
