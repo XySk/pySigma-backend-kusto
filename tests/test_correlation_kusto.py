@@ -1,4 +1,3 @@
-from sigma.exceptions import SigmaConversionError
 import runpy
 from pathlib import Path
 
@@ -7,7 +6,7 @@ import yaml
 
 from sigma.backends.kusto import KustoBackend
 from sigma.collection import SigmaCollection
-from sigma.exceptions import SigmaError
+from sigma.exceptions import SigmaConversionError, SigmaError
 from sigma.pipelines.kusto_common.schema import BaseSchema, FieldInfo, FieldMappings, TableSchema
 from sigma.pipelines.microsoft365defender import microsoft_365_defender_pipeline
 from sigma.processing.pipeline import ProcessingPipeline
@@ -290,10 +289,6 @@ def test_temporal_preserves_colliding_source_columns_escaped_identity_and_standa
         processing_pipeline=microsoft_365_defender_pipeline(), correlation_timestamp_field="Timestamp"
     )
 
-    if ordered:
-        with pytest.raises(SigmaConversionError, match="retained context for ordered"):
-            backend.convert(SigmaCollection.from_yaml(yaml.safe_dump_all(documents)))
-        return
     *standalone, query = backend.convert(SigmaCollection.from_yaml(yaml.safe_dump_all(documents)))
 
     assert len(standalone) == 2
@@ -306,7 +301,7 @@ def test_temporal_preserves_colliding_source_columns_escaped_identity_and_standa
         assert f'| where _sigma_rule_2 == "{identity}"' in query
         assert "let _sigma_sequence_0_1 = " in query
         assert "_sigma_sequence_start_1 = _sigma_timestamp_1, _sigma_sequence_end_1 = _sigma_timestamp_1" in query
-        assert query.endswith("WindowEnd = _sigma_sequence_end_1, RuleCount = tolong(1)")
+        assert "WindowEnd = _sigma_sequence_end_1, RuleCount = tolong(1)" in query
     else:
         assert "RuleCount = count_distinctif(_sigma_rule_2, isnotempty(_sigma_rule_2))" in query
 

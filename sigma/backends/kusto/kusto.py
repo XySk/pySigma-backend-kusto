@@ -496,12 +496,6 @@ class KustoBackend(TextQueryBackend):
         context_fields = [field for field in context_fields if field not in (rule.group_by or [])]
         context_column = None
         if context_fields:
-            if rule.type == SigmaCorrelationType.TEMPORAL_ORDERED:
-                raise SigmaConversionError(
-                    rule,
-                    rule.source,
-                    "Kusto retained context for ordered and Boolean temporal membership is not implemented yet.",
-                )
             queries, context_column = self._retain_context(rule, queries, context_fields, metrics)
         result_fields = {"WindowStart", "WindowEnd", *(rule.group_by or []), *metrics, *context_fields}
         if context_column:
@@ -589,6 +583,11 @@ class KustoBackend(TextQueryBackend):
                 f"| where {timestamp} between (({end} - {span}) .. {end})\n"
                 f"| serialize {key} = row_number());\n"
             )
+            if rule.type == SigmaCorrelationType.TEMPORAL_ORDERED:
+                membership, matched = self._ordered_context_membership(
+                    rule, matched, columns, source_id, end, key, allocate
+                )
+                prefix += membership
             if isinstance(rule.condition, SigmaExtendedCorrelationCondition):
                 presence = {}
                 aggregates = []
@@ -607,6 +606,7 @@ class KustoBackend(TextQueryBackend):
                 context_matches = eligible
             else:
                 context_matches = matched
+
             prefix += (
                 f"let {relationships} = materialize({context_matches}\n"
                 f"| summarize {relationships} = make_list(pack_array(pack_array({', '.join(values)})), 1048576), "
@@ -650,6 +650,52 @@ class KustoBackend(TextQueryBackend):
             )
             output.append(prefix + result)
         return output, relationships
+
+    def _ordered_context_membership(self, rule, matches, columns, source_id, completion, key, allocate):
+        """Union source rows from every full sequence for each qualifying completion.
+
+        Unlike detection-only prefix pruning, evidence traversal keeps every
+        alternative. Row identities preserve repeated matches and relationships
+        without putting sequence alternatives into a bounded collection.
+        """
+        timestamp, rule_column = columns["timestamp"], columns["rule"]
+        previous = allocate("_sigma_context_previous")
+        paths = []
+        row_ids = []
+        definitions = ""
+        for index, reference in enumerate(rule.referenced_rules):
+            path = allocate("_sigma_context_path")
+            row_id = allocate("_sigma_context_step")
+            step_time = allocate("_sigma_context_step_time")
+            identity = reference.rule.name or str(reference.rule.id)
+            candidates = (
+                f"{matches}\n| where {rule_column} == {json.dumps(identity, ensure_ascii=False)}\n"
+                f"| project {source_id}, {completion}, {row_id} = {key}, {step_time} = {timestamp}"
+            )
+            if index == 0:
+                expression = candidates
+            else:
+                expression = (
+                    f"{paths[-1]}\n| join kind=inner (\n{candidates}\n) on {source_id}\n"
+                    f"| where {step_time} > {previous}"
+                )
+            if index == len(rule.referenced_rules) - 1:
+                expression += f"\n| where {step_time} == {completion}"
+            row_ids.append(row_id)
+            projection = ", ".join([source_id, completion, *row_ids, f"{previous} = {step_time}"])
+            definitions += f"let {path} = {expression}\n| project {projection};\n"
+            paths.append(path)
+        participating = allocate("_sigma_context_participating")
+        selected = allocate("_sigma_context_selected")
+        alternatives = ", ".join(
+            f"({paths[-1]} | project {source_id}, {key} = {row_id})" for row_id in row_ids
+        )
+        definitions += (
+            f"let {participating} = union {alternatives}\n| distinct {source_id}, {key};\n"
+            f"let {selected} = materialize({matches}\n"
+            f"| join kind=leftsemi ({participating}) on {source_id}, {key});\n"
+        )
+        return definitions, selected
 
     @staticmethod
     def _correlation_source_tables(state):

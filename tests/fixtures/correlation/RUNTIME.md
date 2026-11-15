@@ -183,3 +183,26 @@ Consuming individual retained child values remains a separate delivery slice.
 The metric/evaluation query is unchanged by the context request; matched context
 is filtered separately using window-wide presence and the parsed Boolean tree.
 These deterministic examples establish behavior rather than throughput.
+
+## Ordered participating context (#23)
+
+Executed 2026-11-15 on Kusto emulator engine
+`2026.11.15.0741-2645-8e3387b-master`, database `NetDefaultDB`, through `/v2/rest/query`.
+All four final generated queries completed successfully with empty exact multiset
+difference tables:
+
+- `context_ordered_alternatives.kql`: all valid starts and middle alternatives,
+  duplicate source matches, strict ordering, failed whole-span and tied sequences,
+  exact inclusive endpoints, and overlapping completions.
+- `context_ordered_repeated.kql`: A → B → A, excluding nonparticipating tied matches
+  while retaining every successful start and each later completion.
+- `context_ordered_ungrouped.kql`: complete participating evidence without grouping.
+- `context_ordered_aliases.kql`: per-source aliases preserve the same membership
+  and observed User/Server relationships.
+
+`ordered_context.py` supplies literal independently worked expected members at
+completion times; comparison retains summary multiplicity. Detection-only prefix
+pruning remains valid for finding completions, while separate evidence traversal
+keeps every successful full alternative. It uses relational joins without bounded
+sequence arrays or sampling; dense alternatives can exhaust engine resources and
+no throughput claim is made.
