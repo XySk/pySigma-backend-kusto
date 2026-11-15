@@ -183,11 +183,16 @@ Use `--only <fixture.kql> ...` for a selected subset. The runner sends queries t
 through the management endpoint. It retains requests, responses, and a
 `results.json` containing engine/version, request options, fixture hashes,
 durations, outcomes and multiset differences. A normal fixture passes only with
-exactly one empty PrimaryResult and one DataSetCompletion having HasErrors=false.
+exactly one empty PrimaryResult and one DataSetCompletion having HasErrors=false
+and no cancellation.
 Extra/duplicate summaries, engine errors, missing frames, non-JSON responses,
 HTTP failures and transport/timeouts fail. Overflow exceptions require the named
 engine error; successful empty rows cannot pass an overflow fixture. Hash drift
-fails rather than executing a silently changed fixture.
+fails rather than executing a silently changed fixture. The runner stops at the
+first failed fixture. After each fixture, it flushes and atomically replaces
+`results.json`, preserving completed outcomes if a later query is interrupted.
+A partial run retains status RUNNING until completion; it does not claim the
+remaining fixtures passed.
 
 No engine was called while preparing this matrix and harness. Earlier stage
 execution records remain in [RUNTIME.md](RUNTIME.md); they do not validate the new

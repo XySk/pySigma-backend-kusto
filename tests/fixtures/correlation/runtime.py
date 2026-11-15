@@ -8,6 +8,7 @@ single successful completion. Expected overflow errors are named per fixture.
 import argparse
 import hashlib
 import json
+import os
 import subprocess
 import time
 from datetime import datetime, timezone
@@ -48,6 +49,8 @@ def read_primary_result(payload):
     ]
     if len(completion) != 1 or completion[0].get("HasErrors") is not False:
         raise ValueError("missing, duplicate, or unsuccessful completion frame")
+    if completion[0].get("Cancelled") is True:
+        raise ValueError("cancelled completion frame")
     if len(primary) != 1 or not isinstance(primary[0].get("Rows"), list):
         raise ValueError("missing, duplicate, or malformed primary result")
     return primary[0]["Rows"]
@@ -119,6 +122,15 @@ def request(endpoint, route, database, query, options, destination, timeout):
     return payload, status
 
 
+def _save_progress(directory, record):
+    temporary = directory / "results.json.tmp"
+    with temporary.open("w") as output:
+        output.write(json.dumps(record, indent=2) + "\n")
+        output.flush()
+        os.fsync(output.fileno())
+    temporary.replace(directory / "results.json")
+
+
 def run(args):
     prepared = json.loads(args.manifest.read_text())
     args.output.mkdir(parents=True, exist_ok=True)
@@ -130,6 +142,7 @@ def run(args):
         "timeout_seconds": args.timeout,
         "manifest_sha256": hashlib.sha256(args.manifest.read_bytes()).hexdigest(),
         "fixtures": [],
+        "status": "RUNNING",
     }
     try:
         version, status = request(
@@ -172,14 +185,19 @@ def run(args):
                 outcome.update(status="FAIL", detail=str(error))
             outcome["seconds"] = round(time.monotonic() - started, 3)
             record["fixtures"].append(outcome)
+            if outcome["status"] == "FAIL":
+                record["status"] = "FAIL"
+            _save_progress(args.output, record)
             print(item["name"], outcome["status"], outcome["detail"], flush=True)
+            if outcome["status"] == "FAIL":
+                break
         if not record["fixtures"]:
             raise ValueError("no fixtures selected")
         record["status"] = "PASS" if all(item["status"] == "PASS" for item in record["fixtures"]) else "FAIL"
     except (ValueError, OSError, subprocess.TimeoutExpired) as error:
         record.update(status="FAIL", error=str(error))
     finally:
-        (args.output / "results.json").write_text(json.dumps(record, indent=2) + "\n")
+        _save_progress(args.output, record)
     return 0 if record["status"] == "PASS" else 1
 
 

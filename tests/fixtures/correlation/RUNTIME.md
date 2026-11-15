@@ -449,3 +449,125 @@ were retained under `/tmp/kusto-final-26` for diagnosis.
 The positive numeric matrix is therefore **not runtime-complete** on this
 combined revision. The earlier successful focused three-level query remains
 evidence for its recorded earlier candidate, not a substitute for this gate.
+
+# Frozen typed-grouping acceptance: partial, 2026-11-15
+
+Ran the strict `runtime.py` harness against candidate `9325782` (frozen KQL
+candidate `87ad132`) starting at `2026-11-15T17:39:10.762642+00:00`. All nine
+owned fixture generators reproduced the committed bytes and frozen manifest
+hashes before execution; no expected rows or source queries were changed.
+Manifest SHA-256 was
+`e484f73ec883733d3339d7695efb15564f7e6a99414723ff87006a6c1c749cda`.
+
+The engine reported product version `2026.11.15.0741-2645-8e3387b-master`, build
+`1.0.9815.14081`, database `NetDefaultDB`. The emulator stayed at 12 GiB;
+`max_memory_consumption_per_query_per_node` was `12884901888` and the client
+limit was 360 seconds. The batch ran serially with exclusive engine access and
+stopped at the first failure.
+
+| Fixture | SHA-256 | Strict result |
+| --- | --- | --- |
+| `typed_grouping_event_count.kql` | `616ae273b91b40cc83ad2c21c26612748066d10111fc4f8067f6715f62dd82ad` | PASS, HTTP 200, 2.548 seconds; one empty primary diagnostic table. |
+| `typed_grouping_extended_chain.kql` | `7d2a7eaddf679ebff1728ccc5c8afcfabcd7f806aa72417cd29fdc2cb75ad61a` | FAIL, HTTP 200, 11.380 seconds; two difference rows. |
+
+Both responses contained exactly one completion with `HasErrors=false` and
+`Cancelled=false`. The extended-type fixture expected runtime type `real` for
+its real-valued group, while Kusto returned `double`. Its exact difference was
+`["2026-01-01T12:00:00Z","real",1,-1]` and
+`["2026-01-01T12:00:00Z","double",1,1]`. This is a fixture type-label mismatch,
+not an engine resource error or a successful empty diagnostic. The frozen
+expected rows were left unchanged, and no retry was made.
+
+The remaining seven fixtures were **not executed** in this batch:
+`typed_grouping_mixed_chain.kql`, `typed_grouping_temporal.kql`,
+`typed_grouping_temporal_ordered.kql`, `typed_grouping_value_avg.kql`,
+`typed_grouping_value_count.kql`, `typed_grouping_value_percentile.kql`, and
+`typed_grouping_value_sum.kql`. Typed grouping is therefore **not
+runtime-complete** on this candidate.
+
+The durable local runner record, version response, requests, and responses are
+under `/tmp/kusto-final-29`. Response SHA-256 values were
+`c91f12031ced95df361a752a72c37ec347ab05181c62e6a3cffc9e554464cee3`
+(event count) and
+`1faa2d4e4c7f6ec4b1860ab6b409d185e8605144bb5b9b72a32c5d2c9ca9821e`
+(extended chain).
+
+
+# Typed-grouping continuation: all nine owned fixtures passed
+
+Continued the preceding frozen typed-grouping batch at
+`2026-11-15T17:42:27.768048+00:00` after correcting exactly the expected runtime
+**type label** `real` to Kusto's `double` in the extended-chain fixture.
+Source values, types, group membership, and expected multiplicity were unchanged.
+The other **159 fixture hashes were verified unchanged**. The regenerated
+manifest SHA-256 is
+`bc938f31dbb39f6038731538067a4332cea3e8593bd7c66dd2c07f94741a00e6`.
+The initial failed response and its history remain recorded above.
+
+The strict harness ran the corrected extended chain and the seven previously
+unexecuted fixtures serially. Every continuation response had HTTP 200, exactly
+one empty primary diagnostic table, and exactly one completion with
+`HasErrors=false` and `Cancelled=false`. Together with the unchanged event-count
+fixture's initial PASS, **all nine typed-grouping acceptance fixtures passed**.
+This supersedes the preceding batch's incomplete typed-grouping status only;
+it does not establish acceptance of the other spec #17 stages.
+
+| Fixture | SHA-256 | Seconds | Result |
+| --- | --- | --- | --- |
+| `typed_grouping_extended_chain.kql` | `1ca1df81e490c52ba9812f3ad7edea856f02d26b63ba97f87534f277701c4beb` | 10.456 | PASS |
+| `typed_grouping_mixed_chain.kql` | `3477779da7956ddaec0370a6c80e91fafa725ecbbc737967748a09f593fa0359` | 119.505 | PASS |
+| `typed_grouping_temporal.kql` | `e842e58a5db9ce4ab94651cc045b6cb7fb25c1eb23245b1e1cb7a2963dee834e` | 1.052 | PASS |
+| `typed_grouping_temporal_ordered.kql` | `83dc7309081074751fbc7696b7917818e4e8460775d1ef7f2b1718b6439f3373` | 1.008 | PASS |
+| `typed_grouping_value_avg.kql` | `e9d50251dbafbc8b7faf278a0091511124ee6e25afcf1f66c83474de911ac112` | 0.985 | PASS |
+| `typed_grouping_value_count.kql` | `5bfbc6bec9e76ac446ff900447b6f321e5299779bf066545bc84e1652fb83546` | 1.397 | PASS |
+| `typed_grouping_value_percentile.kql` | `a20650cf85435ce2a3ff3694b8f8f6ea3001dca22570b1439b46df07a0dd56e6` | 1.595 | PASS |
+| `typed_grouping_value_sum.kql` | `ef2e5d7fa7a28ec4ec6ae18fd7ac8e96719ec53bf288b0f9bf175bcaacc5788c` | 1.366 | PASS |
+
+The engine and database were unchanged: product version
+`2026.11.15.0741-2645-8e3387b-master`, build `1.0.9815.14081`, `NetDefaultDB`.
+The emulator stayed at 12 GiB with
+`max_memory_consumption_per_query_per_node=12884901888` and a 360-second client
+limit. No memory increase or resource-failure retry occurred. The 119.505-second
+mixed-chain result establishes correctness for this example, not throughput.
+The continuation's durable local version response, requests, responses, and
+runner record are under `/tmp/kusto-final-29-corrected-escalated`. An initial
+sandbox connection failure before any continuation query was retained under
+`/tmp/kusto-final-29-corrected`; the authorized harness then ran with local
+emulator access. Full configured pytest after the label correction passed all
+585 tests with 96.15% coverage; Ruff and diff checks passed.
+
+### Temporal/count frozen-candidate attempt: `9325782` (2026-11-15)
+
+The seven `temporal_context_*.kql` fixtures and the changed
+`count_context_restricted.kql`, `count_context_ungrouped.kql`, and
+`count_context_values.kql` fixtures regenerated exactly and matched the frozen
+`acceptance-manifest.json` hashes. Their KQL is unchanged from source freeze
+`87ad132`. The selected batch ran in manifest order through the strict harness
+from integration candidate `9325782`, using a 360-second client timeout and
+`max_memory_consumption_per_query_per_node: 12884901888` (12 GiB). The emulator
+container remained at 12 GiB; no memory increase or retry was performed.
+
+The management response reported engine product version
+`2026.11.15.0741-2645-8e3387b-master`, build `1.0.9815.14081`, database
+`NetDefaultDB`. The frozen manifest SHA-256 was
+`e484f73ec883733d3339d7695efb15564f7e6a99414723ff87006a6c1c749cda`.
+
+The first fixture, **`count_context_restricted.kql`**, failed after **152.232
+seconds** with HTTP **520** and `Internal service error`. Its 165,115-byte query
+had SHA-256
+`f29816be0af4aa777090bda0e691ba3807a0599fa13cc7795083a5ba21d0c468`.
+The response carried activity ID `045586f9-53cf-4bbe-a1d8-3f9372b92f68` and
+client request ID `unspecified;2a2a3714-0ab8-4613-8ca0-dcd0cccba4e9`.
+The response alone does not identify the underlying engine cause.
+
+The harness rejected the non-v2 error response and stopped immediately. The
+remaining two count fixtures and all seven temporal fixtures were **not run**.
+There were no acceptance passes in this batch, and the temporal stage remains
+**runtime-incomplete** on the combined candidate. Earlier focused results do not
+substitute for this failed gate.
+
+[Structured evidence](runtime-evidence/temporal-9325782.json) records all ten
+selected hashes and their attempted/not-run states, request options, engine
+version, strict harness outcome, error payload, and saved-artifact hashes. Raw
+local requests and responses remain under
+`/tmp/kusto-ticket-27-final-acceptance-9325782-network`.
