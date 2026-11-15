@@ -95,7 +95,7 @@ let Observed = Actual()
  summarize Bags=countif(gettype(Value)=="dictionary"),
   DatesFirst=countif(gettype(Value[0])=="datetime"), StringsFirst=countif(gettype(Value[0])=="string"),
   NaNs=countif(isnan(toreal(Value[0]))), Zeroes=countif(gettype(Value[0])=="double" and toreal(Value[0])==0.0))
-| project WindowEnd, Host, EventCount, Values=array_length(User), Pairs, BadPairs, Bags, DatesFirst, StringsFirst, NaNs, Zeroes;
+| project WindowEnd, Host=tostring(Host), EventCount, Values=array_length(User), Pairs, BadPairs, Bags, DatesFirst, StringsFirst, NaNs, Zeroes;
 let Expected=datatable(WindowEnd:datetime, Host:string, EventCount:long, Values:long, Pairs:long, BadPairs:long,
  Bags:long, DatesFirst:long, StringsFirst:long, NaNs:long, Zeroes:long) [
  datetime(2026-01-01T12:01:00Z),"h",8,5,8,0,1,1,1,1,1
