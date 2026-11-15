@@ -69,12 +69,9 @@ _sigma_sums
 | extend ValueSum = iff(_sigma_real_count > 0, pack_array(toreal(_sigma_integer_sum) + _sigma_real_sum)[0], pack_array(tolong(_sigma_integer_sum))[0])
 | where (_sigma_real_count == 0 and todecimal(_sigma_integer_sum) >= decimal(1)) or (_sigma_real_count > 0 and toreal(_sigma_integer_sum) + _sigma_real_sum >= 1)
 | project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ["User"] = _sigma_group_0, ["Server"] = _sigma_group_1, ValueSum
-| join kind=inner (_sigma_group_lookup | project ["User"] = _sigma_identity_identity, _sigma_group_original) on ["User"]
-| extend ["User"] = _sigma_group_original[1]
-| project-away _sigma_group_original
-| join kind=inner (_sigma_group_lookup | project ["Server"] = _sigma_identity_identity, _sigma_group_original_1) on ["Server"]
-| extend ["Server"] = _sigma_group_original_1[1]
-| project-away _sigma_group_original_1
+| join kind=inner (_sigma_group_lookup | project ["User"] = _sigma_identity_identity, _sigma_group_original, _sigma_group_original_1) on ["User"]
+| extend ["User"] = _sigma_group_original[1], ["Server"] = _sigma_group_original_1[1]
+| project-away _sigma_group_original, _sigma_group_original_1
 | project ["WindowStart"], ["WindowEnd"], ["User"], ["Server"], ["ValueSum"]
 };
 let _sigma_validation_check = () {

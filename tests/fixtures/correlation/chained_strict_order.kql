@@ -88,12 +88,9 @@ _sigma_types
 | summarize RuleCount = count_distinctif(_sigma_rule, isnotempty(_sigma_rule)) by _sigma_window_end, _sigma_group_0, _sigma_group_1
 | where RuleCount >= 2
 | project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ["Case"] = _sigma_group_0, ["Host"] = _sigma_group_1, RuleCount
-| join kind=inner (_sigma_group_lookup | project ["Case"] = _sigma_identity_identity, _sigma_group_original) on ["Case"]
-| extend ["Case"] = _sigma_group_original[1]
-| project-away _sigma_group_original
-| join kind=inner (_sigma_group_lookup | project ["Host"] = _sigma_identity_identity, _sigma_group_original_1) on ["Host"]
-| extend ["Host"] = _sigma_group_original_1[1]
-| project-away _sigma_group_original_1
+| join kind=inner (_sigma_group_lookup | project ["Case"] = _sigma_identity_identity, _sigma_group_original, _sigma_group_original_1) on ["Case"]
+| extend ["Case"] = _sigma_group_original[1], ["Host"] = _sigma_group_original_1[1]
+| project-away _sigma_group_original, _sigma_group_original_1
 | project ["WindowStart"], ["WindowEnd"], ["Case"], ["Host"], ["RuleCount"]
 };
 let _sigma_shared_results = materialize(_sigma_shared_child());
@@ -160,12 +157,9 @@ let _sigma_sequence_1 = _sigma_sequence_0
 | summarize _sigma_sequence_start = max(_sigma_sequence_start) by _sigma_sequence_end = _sigma_timestamp, _sigma_group_0, _sigma_group_1;
 _sigma_sequence_1
 | project WindowStart = _sigma_sequence_end - 5m, WindowEnd = _sigma_sequence_end, ["Case"] = _sigma_group_0, ["Host"] = _sigma_group_1, RuleCount = tolong(2)
-| join kind=inner (_sigma_group_lookup | project ["Case"] = _sigma_identity_identity, _sigma_group_original) on ["Case"]
-| extend ["Case"] = _sigma_group_original[1]
-| project-away _sigma_group_original
-| join kind=inner (_sigma_group_lookup | project ["Host"] = _sigma_identity_identity, _sigma_group_original_1) on ["Host"]
-| extend ["Host"] = _sigma_group_original_1[1]
-| project-away _sigma_group_original_1
+| join kind=inner (_sigma_group_lookup | project ["Case"] = _sigma_identity_identity, _sigma_group_original, _sigma_group_original_1) on ["Case"]
+| extend ["Case"] = _sigma_group_original[1], ["Host"] = _sigma_group_original_1[1]
+| project-away _sigma_group_original, _sigma_group_original_1
 | project ["WindowStart"], ["WindowEnd"], ["Case"], ["Host"], ["RuleCount"]
 };
 let _sigma_validation_check_ = () {
@@ -231,12 +225,9 @@ _sigma_types
 | summarize RuleCount = count_distinctif(_sigma_rule, isnotempty(_sigma_rule)) by _sigma_window_end, _sigma_group_0, _sigma_group_1
 | where RuleCount >= 2
 | project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ["Case"] = _sigma_group_0, ["Host"] = _sigma_group_1, RuleCount
-| join kind=inner (_sigma_group_lookup | project ["Case"] = _sigma_identity_identity, _sigma_group_original) on ["Case"]
-| extend ["Case"] = _sigma_group_original[1]
-| project-away _sigma_group_original
-| join kind=inner (_sigma_group_lookup | project ["Host"] = _sigma_identity_identity, _sigma_group_original_1) on ["Host"]
-| extend ["Host"] = _sigma_group_original_1[1]
-| project-away _sigma_group_original_1
+| join kind=inner (_sigma_group_lookup | project ["Case"] = _sigma_identity_identity, _sigma_group_original, _sigma_group_original_1) on ["Case"]
+| extend ["Case"] = _sigma_group_original[1], ["Host"] = _sigma_group_original_1[1]
+| project-away _sigma_group_original, _sigma_group_original_1
 | project ["WindowStart"], ["WindowEnd"], ["Case"], ["Host"], ["RuleCount"]
 };
 let _sigma_shared_results = materialize(_sigma_shared_child());
