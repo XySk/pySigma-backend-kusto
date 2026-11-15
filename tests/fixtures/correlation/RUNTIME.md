@@ -375,3 +375,17 @@ included because inherited requests now continue into their returned summaries.
 | `temporal_context_boolean_multilevel.kql` | Failed conjunction evidence cannot leak into downstream groups. |
 | `temporal_context_shared.kql` | Two branches sharing one child remain distinct immediate sources, with only observed pairs joining. |
 | `count_context_restricted.kql`, `count_context_ungrouped.kql`, `count_context_values.kql` | Existing count metrics remain correct with inherited context now included in returned summaries. |
+
+## Integrated matrix preparation (#32): PENDING
+
+The seven-by-seven retained-context producer/consumer matrix and strict reusable
+v2 runtime harness are prepared in `integrated.py` and `runtime.py`.
+`acceptance-manifest.json` identifies the candidate fixtures by SHA-256. No
+real-engine execution of this new matrix or combined acceptance candidate was
+performed during preparation. Passing fixture-generation and harness-protocol
+pytest checks is preparation evidence only. Follow the command and recording
+contract in [README.md](README.md) after freezing the integrated candidate.
+
+Ranges still require the released upstream parser dependency tracked in #31.
+Partial ordered thresholds remain deferred and clearly rejected. Neither #32 nor
+the parent full-coverage target can be marked complete from this preparation.

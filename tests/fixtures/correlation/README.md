@@ -137,3 +137,54 @@ Empty populations include numeric strings, nulls, NaN and infinities, and use
 `neq` to check undefined averages/percentiles. The boundary fixture compares
 exact selected long text above 2^53 and includes repeated doubles outside decimal
 range. All comparisons require an empty full multiset difference.
+
+## Integrated available-feature acceptance preparation (#32)
+
+`integrated.py` adds 49 `matrix_<producer>__<consumer>.kql` fixtures: every
+ordered pair of the seven correlation types. Each source has one Amount=2.5
+observation at 2026-01-01T12:00:00Z and requests retained `Amount`. An ungrouped
+one-minute child qualifies once; an ungrouped five-minute parent consumes its
+retained value or its single match. Independently expected parent metrics are
+EventCount=1, ValueCount=1, ValueSum=2.5, ValueAvg=2.5,
+ValuePercentile=2.5, and RuleCount=1, with WindowStart=11:55 and WindowEnd=12:00.
+One referenced type satisfies the full-sequence temporal condition. The stage
+fixtures above supply additional grouped, mixed, multilevel, Boolean, alias,
+pipeline, boundary, input-exclusion and generation-control examples.
+
+`acceptance-manifest.json` freezes all prepared KQL file hashes and explicitly
+names the three overflow fixtures that must raise `Kusto value_sum integer
+overflow`. Regenerate it and the main fixture set from the repository root:
+
+```sh
+PYTHONPATH=. python tests/fixtures/correlation/generate.py
+```
+
+The manifest status is **PENDING**, recording preparation rather than runtime
+success. After freezing the candidate and reserving the engine, run the reusable
+acceptance harness explicitly:
+
+```sh
+PYTHONPATH=. python tests/fixtures/correlation/runtime.py \
+  --endpoint http://localhost:8080 --database NetDefaultDB \
+  --manifest tests/fixtures/correlation/acceptance-manifest.json \
+  --output /tmp/kusto-integrated-evidence --timeout 60
+```
+
+Use `--only <fixture.kql> ...` for a selected subset. The runner sends queries to
+`/v2/rest/query`, requests 12 GiB per query node, and captures `.show version`
+through the management endpoint. It retains requests, responses, and a
+`results.json` containing engine/version, request options, fixture hashes,
+durations, outcomes and multiset differences. A normal fixture passes only with
+exactly one empty PrimaryResult and one DataSetCompletion having HasErrors=false.
+Extra/duplicate summaries, engine errors, missing frames, non-JSON responses,
+HTTP failures and transport/timeouts fail. Overflow exceptions require the named
+engine error; successful empty rows cannot pass an overflow fixture. Hash drift
+fails rather than executing a silently changed fixture.
+
+No engine was called while preparing this matrix and harness. Earlier stage
+execution records remain in [RUNTIME.md](RUNTIME.md); they do not validate the new
+matrix or the combined candidate. #32 remains incomplete until combined runtime
+evidence exists and the released upstream range-parser prerequisite in #31 is
+met. No local range parser is introduced. Partial ordered thresholds remain a
+separate explicit gap pending agreed semantics and acceptance examples. These
+fixtures establish correctness examples; they make no throughput claim.

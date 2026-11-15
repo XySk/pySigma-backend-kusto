@@ -1930,6 +1930,7 @@ def fixtures():
     from tests.fixtures.correlation.boolean_generate import fixtures as boolean_fixtures
     from tests.fixtures.correlation.context import fixtures as context_fixtures, nested_fixture
     from tests.fixtures.correlation.count_context import fixtures as count_context_fixtures
+    from tests.fixtures.correlation.integrated import matrix_fixtures
     from tests.fixtures.correlation.numeric_context import fixtures as numeric_context_fixtures
     from tests.fixtures.correlation.ordered_context import fixtures as ordered_context_fixtures
     from tests.fixtures.correlation.standard_mappings import fixture as standard_mapping_fixture
@@ -1937,6 +1938,7 @@ def fixtures():
     from tests.fixtures.correlation.typed_grouping import fixtures as typed_grouping_fixtures
 
     return {
+        **matrix_fixtures(),
         **typed_grouping_fixtures(),
         "standard_mappings.kql": standard_mapping_fixture(),
         "standard_mappings_parent.kql": standard_mapping_fixture(parent=True),
@@ -1991,3 +1993,8 @@ def fixtures():
 if __name__ == "__main__":
     for name, content in fixtures().items():
         (DESTINATION / name).write_text(content)
+    import json
+
+    from tests.fixtures.correlation.runtime import manifest
+
+    (DESTINATION / "acceptance-manifest.json").write_text(json.dumps(manifest(DESTINATION), indent=2) + "\n")
