@@ -217,6 +217,8 @@ class KustoBackend(TextQueryBackend):
     def convert_rule(self, rule, output_format=None, callback=None):
         requested_fields = list(rule.fields or [])
         queries = super().convert_rule(rule, output_format, callback)
+        if self.collect_errors and self.errors and self.errors[-1][0] is rule:
+            return queries
         for state in rule.get_conversion_states():
             state.processing_state["kusto_requested_fields"] = requested_fields.copy()
         return queries
@@ -1113,7 +1115,11 @@ class KustoBackend(TextQueryBackend):
         children = [self._boolean_context_expression(rule, arg, presence, source_column, negated) for arg in node.args]
         conjunction = isinstance(node, CorrelationConditionAND) != negated
         truth = "(" + (" and " if conjunction else " or ").join(child[0] for child in children) + ")"
-        evidence = "(" + " or ".join(f"({child_truth} and ({child_evidence}))" for child_truth, child_evidence in children) + ")"
+        evidence = (
+            "("
+            + " or ".join(f"({child_truth} and ({child_evidence}))" for child_truth, child_evidence in children)
+            + ")"
+        )
         return truth, f"({truth} and {evidence})" if conjunction else evidence
 
     def _dynamic_value_identity(self, source, row_id, value, groups, allocate):
