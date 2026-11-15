@@ -694,7 +694,7 @@
     },
     {
       "name": "value_avg_mapped.kql",
-      "sha256": "9dcebdee6c2e8260aaa7097a7251d6e4da620f29f04fb216b01b7c73fcb879c9",
+      "sha256": "2b2ea25e35f4be2710d58c7448b3855223562dc9cf155ab0f9238c897d8d78f6",
       "expected_error": null
     },
     {
