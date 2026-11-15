@@ -449,3 +449,39 @@ were retained under `/tmp/kusto-final-26` for diagnosis.
 The positive numeric matrix is therefore **not runtime-complete** on this
 combined revision. The earlier successful focused three-level query remains
 evidence for its recorded earlier candidate, not a substitute for this gate.
+
+### Temporal/count frozen-candidate attempt: `9325782` (2026-11-15)
+
+The seven `temporal_context_*.kql` fixtures and the changed
+`count_context_restricted.kql`, `count_context_ungrouped.kql`, and
+`count_context_values.kql` fixtures regenerated exactly and matched the frozen
+`acceptance-manifest.json` hashes. Their KQL is unchanged from source freeze
+`87ad132`. The selected batch ran in manifest order through the strict harness
+from integration candidate `9325782`, using a 360-second client timeout and
+`max_memory_consumption_per_query_per_node: 12884901888` (12 GiB). The emulator
+container remained at 12 GiB; no memory increase or retry was performed.
+
+The management response reported engine product version
+`2026.11.15.0741-2645-8e3387b-master`, build `1.0.9815.14081`, database
+`NetDefaultDB`. The frozen manifest SHA-256 was
+`e484f73ec883733d3339d7695efb15564f7e6a99414723ff87006a6c1c749cda`.
+
+The first fixture, **`count_context_restricted.kql`**, failed after **152.232
+seconds** with HTTP **520** and `Internal service error`. Its 165,115-byte query
+had SHA-256
+`f29816be0af4aa777090bda0e691ba3807a0599fa13cc7795083a5ba21d0c468`.
+The response carried activity ID `045586f9-53cf-4bbe-a1d8-3f9372b92f68` and
+client request ID `unspecified;2a2a3714-0ab8-4613-8ca0-dcd0cccba4e9`.
+The response alone does not identify the underlying engine cause.
+
+The harness rejected the non-v2 error response and stopped immediately. The
+remaining two count fixtures and all seven temporal fixtures were **not run**.
+There were no acceptance passes in this batch, and the temporal stage remains
+**runtime-incomplete** on the combined candidate. Earlier focused results do not
+substitute for this failed gate.
+
+[Structured evidence](runtime-evidence/temporal-9325782.json) records all ten
+selected hashes and their attempted/not-run states, request options, engine
+version, strict harness outcome, error payload, and saved-artifact hashes. Raw
+local requests and responses remain under
+`/tmp/kusto-ticket-27-final-acceptance-9325782-network`.
