@@ -94,8 +94,8 @@ def test_sum_rejects_integer_overflow_before_exposing_public_results():
     assert '| union (_sigma_sums | where _sigma_real_count == 0 and (isnull(_sigma_integer_sum)' in query
     assert query.index('| project _sigma_correlation_error = "Kusto value_sum integer overflow"') < query.index("| where assert(")
     assert 'let _sigma_guarded_query_rows = materialize(_sigma_guarded_query());' in query
-    assert 'make_set_if(_sigma_correlation_error, isnotempty(_sigma_correlation_error), 1048576)' in query
-    assert '| where assert(not(set_has_element(_sigma_guarded_query_failure, "Kusto value_sum integer overflow")), "Kusto value_sum integer overflow")' in query
+    assert 'summarize countif(isnotempty(_sigma_correlation_error))' in query
+    assert '| where assert(_sigma_guarded_query_failure == 0,' in query
     assert query.index("| where assert(") < query.index("| where isempty(_sigma_correlation_error)")
     assert query.endswith("| project-away _sigma_correlation_error")
 
