@@ -395,9 +395,9 @@ def test_value_count_preserves_typed_dynamic_identity_before_exact_distinct_aggr
     # dynamic(1) and dynamic("1") must remain distinct, including when JSON
     # serialization collides for extended types nested in arrays or bags.
     assert '_sigma_value = pack_array(gettype(["Value"]), ["Value"])' in query
-    assert 'strcat("0:", tostring(_sigma_value[0]))' in query
-    assert "_sigma_value == _sigma_other_value" in query
-    assert "_sigma_value = minif(_sigma_other_id, isnotempty(tostring(_sigma_value[1]))" in query
+    assert "_sigma_value == _sigma_other_value" not in query
+    assert "scan declare" in query
+    assert "gettype(" in query
     assert "ValueCount = count_distinctif(_sigma_value, isnotempty(_sigma_value))" in query
 
 
@@ -409,8 +409,8 @@ def test_value_count_treats_repeated_real_nan_as_one_typed_value():
 
     (query,) = backend.convert(correlation_collection(value_count_correlation(field="Value")))
 
-    assert 'tostring(_sigma_value[0]) == "real" and tostring(_sigma_other_value[0]) == "real"' in query
-    assert "isnan(toreal(_sigma_value[1])) and isnan(toreal(_sigma_other_value[1]))" in query
+    assert '"double"' in query or "'double'" in query
+    assert "isnan(toreal(" in query
 
 
 def test_value_count_retains_values_for_exact_window_wide_counts_and_missing_value_anchors():

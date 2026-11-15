@@ -1757,6 +1757,7 @@ def typed_value_count_fixture():
 // Textual extended values are deliberately constructed without parsing JSON.
 let Extended = pack_array(datetime(2020-01-01), 1s, guid(00000000-0000-0000-0000-000000000001));
 let Text = pack_array(tostring(Extended[0]), tostring(Extended[1]), tostring(Extended[2]));
+let Deep = dynamic([[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[1]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]);
 let Events = union (datatable(Timestamp:string, Case:string, Value:dynamic, Marker:string) [
     "2026-01-01T12:00:00Z", "scalar", dynamic(1), "match",
     "2026-01-01T12:01:00Z", "scalar", dynamic("1"), "match",
@@ -1783,7 +1784,14 @@ let Events = union (datatable(Timestamp:string, Case:string, Value:dynamic, Mark
 (print Timestamp="2026-01-01T12:00:00Z", Case="array", Value=Extended, Marker="match"),
 (print Timestamp="2026-01-01T12:01:00Z", Case="array", Value=Text, Marker="match"),
 (print Timestamp="2026-01-01T12:00:00Z", Case="nested-bag", Value=bag_pack("a", Extended), Marker="match"),
-(print Timestamp="2026-01-01T12:01:00Z", Case="nested-bag", Value=bag_pack("a", Text), Marker="match");
+(print Timestamp="2026-01-01T12:01:00Z", Case="nested-bag", Value=bag_pack("a", Text), Marker="match"),
+(print Timestamp="2026-01-01T12:00:00Z", Case="mixed-positions", Value=pack_array(Extended[0], Text[0]), Marker="match"),
+(print Timestamp="2026-01-01T12:01:00Z", Case="mixed-positions", Value=pack_array(Text[0], Extended[0]), Marker="match"),
+(print Timestamp="2026-01-01T12:00:00Z", Case="array-order", Value=dynamic([1,2]), Marker="match"),
+(print Timestamp="2026-01-01T12:01:00Z", Case="array-order", Value=dynamic([2,1]), Marker="match"),
+(print Timestamp="2026-01-01T12:00:00Z", Case="deep", Value=Deep, Marker="match"),
+(print Timestamp="2026-01-01T12:01:00Z", Case="deep", Value=Deep, Marker="match"),
+(print Timestamp="2026-01-01T12:02:00Z", Case="deep", Value=pack_array(Deep), Marker="match");
 """
     expected = """let Expected = datatable(WindowStart:datetime, WindowEnd:datetime, Case:string, ValueCount:long) [
     datetime(2026-01-01T11:56:00Z), datetime(2026-01-01T12:01:00Z), "scalar", 2,
@@ -1796,6 +1804,9 @@ let Events = union (datatable(Timestamp:string, Case:string, Value:dynamic, Mark
     datetime(2026-01-01T11:56:00Z), datetime(2026-01-01T12:01:00Z), "nested-bag", 2,
     datetime(2026-01-01T11:57:00Z), datetime(2026-01-01T12:02:00Z), "nan", 2,
     datetime(2026-01-01T11:57:00Z), datetime(2026-01-01T12:02:00Z), "signed-zero", 2,
+    datetime(2026-01-01T11:56:00Z), datetime(2026-01-01T12:01:00Z), "mixed-positions", 2,
+    datetime(2026-01-01T11:56:00Z), datetime(2026-01-01T12:01:00Z), "array-order", 2,
+    datetime(2026-01-01T11:57:00Z), datetime(2026-01-01T12:02:00Z), "deep", 2,
     datetime(2026-01-01T11:57:00Z), datetime(2026-01-01T12:02:00Z), "nested-nan", 2
 ];
 """
