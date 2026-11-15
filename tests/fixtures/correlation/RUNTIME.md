@@ -156,3 +156,30 @@ engine collection limit rather than silently truncating. Typed traversal uses th
 shared exact identity helper and its explicit completion/range guards. These tiny
 fixtures establish behavior, not throughput. Ordered/Boolean context membership
 and individual-value consumption by parents are separate follow-up slices.
+
+## Boolean retained context (#24)
+
+Executed 2026-11-15 against Kusto emulator engine
+`2026.11.15.0741-2645-8e3387b-master`, database `NetDefaultDB`, via `/v2/rest/query`.
+All six complete queries were generated through standard Sigma collection parsing
+and `KustoBackend.convert`. Each returned zero exact summary multiset differences
+against literal worked expectations in `boolean_context.py`:
+
+| Fixture | Verified outcome |
+| --- | --- |
+| `context_boolean_alternatives.kql` | Failed A-and-B alternative supplies no values; simultaneous successful alternatives retain A, B, and C, including numeric/string typed distinction. |
+| `context_boolean_absence.kql` | Absence supplies no values; an absence-only successful alternative retains the original summary with empty arrays. |
+| `context_boolean_nested.kql` | Nested negation supplies B and C while excluding A. |
+| `context_boolean_shared.kql` | Shared A source contributes only its observed tuple alongside C. |
+| `context_boolean_precedence.kql` | Parser precedence excludes the failed B-and-not-C alternative. |
+| `context_boolean_child.kql` | Positive child and detection sources both supply their observed scalar field relationships. |
+
+The comparisons check summary membership, RuleCount, displayed collection sizes,
+and typed observed tuples. Tuple strings are sorted only for fixture comparison;
+production typed identity does not use serialization. The first fixture probes
+exposed unordered tuple comparison and a hard-coded child hidden-column name;
+fixtures now canonicalize tuple order and exercise scalar child grouping fields.
+Consuming individual retained child values remains a separate delivery slice.
+The metric/evaluation query is unchanged by the context request; matched context
+is filtered separately using window-wide presence and the parsed Boolean tree.
+These deterministic examples establish behavior rather than throughput.
