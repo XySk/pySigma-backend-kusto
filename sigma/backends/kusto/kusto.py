@@ -523,7 +523,17 @@ class KustoBackend(TextQueryBackend):
                 else source.fields
             )
             for field in requested_fields or []:
-                logical = next((alias.alias for alias in rule.aliases if alias.mapping.get(reference) == field), field)
+                logical = next(
+                    (
+                        alias.alias
+                        for alias in rule.aliases
+                        if any(
+                            name == field and alias_reference.reference in (source.name, str(source.id))
+                            for alias_reference, name in alias.mapping.items()
+                        )
+                    ),
+                    field,
+                )
                 requested_context.append(logical)
         context_fields = list(dict.fromkeys(requested_context))
         conflicts = {"WindowStart", "WindowEnd", *metrics}.intersection(context_fields)

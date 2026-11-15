@@ -177,3 +177,15 @@ def test_ordinary_detection_still_supports_one_to_many_and_escapes_identifier_qu
     assert '["Actor \\"Name\\""] =~ "Alice"' in query
     assert '["Target\\\\Name"] =~ "Alice"' in query
     assert " or " in query
+
+
+def test_source_context_alias_accepts_uuid_reference_to_named_source():
+    correlation = value_count_correlation(field="Actor") + (
+        "  aliases:\n    Actor:\n      11111111-1111-1111-1111-111111111111: User\n"
+    )
+    collection = correlation_collection(correlation)
+    collection.rules[0].fields = ["User"]
+    (query,) = KustoBackend(
+        processing_pipeline=mapping_pipeline({"User": "Actor Name"}), correlation_timestamp_field="Timestamp"
+    ).convert(collection)
+    assert '| project ["WindowStart"], ["WindowEnd"], ["Actor"], ["ValueCount"]' in query
