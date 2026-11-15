@@ -178,6 +178,24 @@ backend = KustoBackend(
 queries = backend.convert(collection)
 ```
 
+The only supported correlation method is `default` (also selected when the
+`correlation_method` argument is omitted). Unsupported selections fail conversion;
+they do not select fixed windows. `correlation_timestamp_field` must be a nonempty
+field-name string. Source pipelines must supply `query_table` as a nonempty table
+name string. Errors identify unavailable source searches or states, malformed
+query/table values, and child schema or timestamp metadata; preserve the state
+associated with each search when using conversion callbacks. A parent requesting
+an unavailable child field must use an available field or retain/alias that field
+explicitly in the child.
+
+Valid dependency graphs may be supplied in any document order, including shared
+children, multiple correlation levels, interleaved unrelated detections, and mixed
+name/UUID references. Conversion resolves dependencies before their consumers.
+Generation controls determine standalone output and preserve embedded child
+queries. Compare results independently of emitted query ordering, which follows
+the resolved collection order. Unresolved references fail standard collection
+resolution and identify the missing source.
+
 A correlation combines every converted source search with `union`, including multiple searches emitted for one source rule and searches from different tables. Each branch retains its source columns and adds a mapped `datetime` timestamp, `string` grouping and counted fields, and the source rule's name (or ID when unnamed). Correlation field aliases work for grouping and counted fields in single-source and multi-source correlations. Timestamp, grouping, and counted fields use each source's mappings. All searches emitted for one source rule must use the same mapped table.
 
 Event counts use **exact sliding windows by default**. For each distinct valid matching-event timestamp in each correlation group, the query counts all source matches in the inclusive interval `[timestamp - timespan, timestamp]`, then applies a single `gt`, `gte`, `lt`, `lte`, `eq`, or `neq` comparison. For example, events at 12:00:59 and 12:05:01 belong together in the five-minute window ending at 12:05:01. Events exactly five minutes apart also belong together. Simultaneous matches participate in one evaluation with their complete count. Matching several source rules or searches contributes a row for every match; physical events are not deduplicated.

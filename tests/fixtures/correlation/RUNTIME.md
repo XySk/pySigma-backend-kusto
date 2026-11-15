@@ -210,3 +210,26 @@ no throughput claim is made.
 After merging Boolean retained context, all eleven existing non-Boolean context
 fixtures (seven aggregate/temporal/nested and four ordered) were rerun together
 against the same engine and returned empty exact summary multiset difference tables.
+
+## Dependency order and diagnostics (#30)
+
+Executed 2026-11-15 against local Kusto emulator `NetDefaultDB` through
+`/v2/rest/query`. A fresh `.show version` reported engine product version
+`2026.11.15.0741-2645-8e3387b-master`, build `1.0.9815.14081`.
+Both `dependency_order_suppressed.kql` and `dependency_order_generate.kql`
+completed without engine errors and returned zero exact summary multiset
+differences against the literal independently worked rows in
+`dependency_order.py`.
+
+The deliberately reordered collection shares a child across consumers, chains
+three correlation levels, mixes child and raw network sources, and resolves both
+names and UUIDs. Each child contributes once at its WindowEnd; the exact endpoint
+at 12:06 keeps the 12:01 child available, and the 12:07 direct match retains its
+12:02 endpoint. The unrelated detection contributes nothing to the parent.
+Generation controls preserve these parent results. Public conversion tests also
+compare all 24 permutations of the four correlation documents with detections
+interleaved, for both generation settings; output query order is not a dependency
+contract. Diagnostics tests cover invalid method/configuration, unavailable or
+malformed source conversion state, invalid search/table types, child schema/time
+metadata, and unresolved references. Existing partial ordered threshold rejections
+remain enforced. The examples establish correctness, with no throughput claim.

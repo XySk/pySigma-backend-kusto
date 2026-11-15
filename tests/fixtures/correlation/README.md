@@ -94,3 +94,10 @@ overlapping completions. `context_ordered_ungrouped` and `context_ordered_aliase
 exercise the same membership without grouping and with per-source field aliases.
 The comparison deduplicates evidence within each summary while retaining summary
 multiplicity, so an extra completion cannot disappear in the expected multiset.
+
+Dependency-order fixtures are generated with
+`PYTHONPATH=. python tests/fixtures/correlation/dependency_order.py`.
+They use a shared multilevel chain, name/UUID references, interleaved unrelated
+rules, and a mixed raw/child parent, with generation enabled and disabled.
+The literal expected result multiset checks WindowEnd timestamps, inclusive
+endpoints, and source-type counts. Runtime execution evidence is in `RUNTIME.md`.

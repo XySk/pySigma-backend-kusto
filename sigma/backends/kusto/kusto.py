@@ -340,6 +340,12 @@ class KustoBackend(TextQueryBackend):
         return re.sub(r"\\\*", r"*", converted)
 
     def convert_correlation_rule(self, rule, output_format=None, method=None, callback=None):
+        if method is not None and (not isinstance(method, str) or method not in self.correlation_methods):
+            raise SigmaConversionError(
+                rule,
+                rule.source,
+                f"Unsupported Kusto correlation method {method!r}; use correlation_method='default'.",
+            )
         converters = {
             SigmaCorrelationType.EVENT_COUNT: self.convert_correlation_event_count_rule,
             SigmaCorrelationType.VALUE_COUNT: self.convert_correlation_value_count_rule,
@@ -469,11 +475,12 @@ class KustoBackend(TextQueryBackend):
             )
 
         timestamp_field = self.backend_options.get("correlation_timestamp_field")
-        if not timestamp_field:
+        if not isinstance(timestamp_field, str) or not timestamp_field.strip():
             raise SigmaConversionError(
                 rule,
                 rule.source,
-                f"The correlation_timestamp_field backend option is required for {count_type} correlations.",
+                f"The correlation_timestamp_field backend option is required as a nonempty field-name string "
+                f"for {count_type} correlations; for example correlation_timestamp_field='Timestamp'.",
             )
 
         queries = self._convert_count(rule, timestamp_field, query_operator, counted_fields, metrics)
@@ -712,16 +719,33 @@ class KustoBackend(TextQueryBackend):
         if source_rule is None:
             raise SigmaConversionError(rule, rule.source, f"Kusto {count_type} source rule reference is unresolved.")
         child = isinstance(source_rule, SigmaCorrelationRule)
-        queries = source_rule.get_conversion_result()
-        states = source_rule.get_conversion_states()
-        if not queries or not states:
+        identity = source_rule.name or source_rule.id or source_rule.title
+
+        def fail(message):
+            raise SigmaConversionError(rule, rule.source, f"Kusto source {identity!r}: {message}")
+
+        try:
+            queries = source_rule.get_conversion_result()
+            states = source_rule.get_conversion_states()
+        except SigmaConversionError as error:
             raise SigmaConversionError(
-                rule, rule.source, f"Kusto {count_type} correlations require a convertible source-rule filter."
+                rule,
+                rule.source,
+                f"Kusto source {identity!r}: conversion results or state unavailable; "
+                "convert the complete Sigma collection and preserve callback conversion metadata.",
+            ) from error
+        if not queries or not states:
+            fail(
+                "correlations require a convertible source-rule filter; preserve at least one source search and state."
             )
         if len(queries) != len(states):
-            raise SigmaConversionError(
-                rule, rule.source, f"Kusto {count_type} source query and conversion state counts do not match."
-            )
+            fail("source query and conversion state counts do not match; preserve one state per returned search.")
+        if any(not isinstance(query, str) or not query.strip() for query in queries):
+            fail("source results must be nonempty KQL search strings; check conversion callbacks.")
+        if any(
+            not isinstance(state, ConversionState) or not isinstance(state.processing_state, dict) for state in states
+        ):
+            fail("invalid conversion state; preserve each search's ConversionState and processing_state dictionary.")
         if child:
             schemas = [state.processing_state.get("kusto_result_fields") for state in states]
             timestamps = [state.processing_state.get("kusto_result_timestamp") for state in states]
@@ -734,14 +758,16 @@ class KustoBackend(TextQueryBackend):
                 and timestamp == timestamps[0]
                 for fields, timestamp in zip(schemas, timestamps)
             ):
-                raise SigmaConversionError(
-                    rule,
-                    rule.source,
-                    "Kusto chaining requires consistent child result schema and timestamp metadata for every search.",
+                fail(
+                    "chaining requires consistent child result schema and timestamp metadata for every search; "
+                    "preserve kusto_result_fields and kusto_result_timestamp from child conversion."
                 )
-        if not child and not all(state.processing_state.get("query_table") for state in states):
-            raise SigmaConversionError(
-                rule, rule.source, f"Kusto {count_type} correlations require a source rule with a mapped query table."
+        if not child and not all(
+            isinstance(table := state.processing_state.get("query_table"), str) and table.strip() for state in states
+        ):
+            fail(
+                "correlations require a source rule with a mapped query table as a nonempty string; "
+                "configure the pipeline query_table state."
             )
         return queries, states
 
