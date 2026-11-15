@@ -702,6 +702,6 @@ datetime(2026-01-01T12:06:00Z), "host", 3,
 datetime(2026-01-01T12:07:00Z), "host", 3
 ]
 | extend WindowStart = WindowEnd - 5m;
-union (Actual() | extend Delta = 1), (Expected | extend Delta = -1)
+union (Actual() | extend Host = tostring(Host), Delta = 1), (Expected | extend Delta = -1)
 | summarize Delta = sum(Delta) by WindowStart, WindowEnd, Host, RuleCount
 | where Delta != 0
