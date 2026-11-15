@@ -5,7 +5,7 @@
 ![Status](https://img.shields.io/badge/Status-pre--release-orange)
 ![PyPI version](https://badge.fury.io/py/pysigma-backend-kusto.svg)
 ![Python versions](https://img.shields.io/pypi/pyversions/pysigma-backend-kusto.svg)
-![pySigma version](https://img.shields.io/badge/pySigma-%5E1.0.0-blue)
+![pySigma version](https://img.shields.io/badge/pySigma-%5E2.1.0-blue)
 ![License](https://img.shields.io/github/license/AttackIQ/pySigma-backend-microsoft365defender.svg)
 
 ## Contents
@@ -55,7 +55,7 @@ The **pySigma Kusto Backend** transforms Sigma Rules into queries using [Kusto Q
 - **Backend**: `sigma.backends.kusto` with `KustoBackend` class
 - **Pipelines**: Provides `microsoft_xdr_pipeline`, `sentinelasim_pipeline`, and `azure_monitor_pipeline` for query tables and field renames
 - **Output**: Query strings in Kusto Query Language (KQL)
-- **pySigma v1.0.0+**: Fully compatible with pySigma v1.0.0+ using factory pattern for pipeline objects
+- **pySigma v2.1.0+**: Uses pySigma's current correlation parser and dependency ordering
 
 ### 🧑‍💻 Maintainer
 
@@ -69,7 +69,7 @@ The **pySigma Kusto Backend** transforms Sigma Rules into queries using [Kusto Q
    pip install pysigma-backend-kusto
    ```
 
-   > **Note:** This package requires `pySigma` version 1.0.0 or higher and Python 3.10+.
+   > **Note:** This package requires pySigma 2.1 or higher within the 2.x series and Python 3.11+.
 
 2. Convert a Sigma rule to MIcrosoft XDR KQL query using sigma-cli:
 
@@ -197,6 +197,21 @@ correlation:
 
 Value counts use the same exact sliding windows and six comparisons. Each window counts distinct nonempty string-normalized values across all its source matches. A value repeated at different timestamps or across searches and rules counts once. Null or empty counted values contribute no value, but their otherwise valid events still establish evaluation timestamps. Such an anchored window can have `ValueCount = 0`, and may satisfy `eq: 0`. A scalar field or a one-element list returns the established `ValueCount` metric.
 
+For `value_sum`, specify one measured field and a comparison threshold, including a fractional threshold:
+
+```yaml
+correlation:
+  type: value_sum
+  rules: [source-rule]
+  group-by: [DeviceName]
+  timespan: 5m
+  condition:
+    field: Bytes
+    gte: 12.5
+```
+
+The `ValueSum` metric adds every finite numeric source match in the inclusive sliding window. Repeated matches contribute repeatedly; zero and negative values count. Text, missing values, NaN, and infinities contribute nothing, and numeric strings are not parsed. A valid match without a numeric value still establishes a window end, so an anchored window with no numeric observations has sum zero. Integer-only windows preserve exact sums from −9,223,372,036,854,775,808 through 9,223,372,036,854,775,807. Integer observations accumulate as decimal values before a query-wide range check: an out-of-range anchored integer-only window fails explicitly with `Kusto value_sum integer overflow`, even if the rule comparison would reject that window. Opposite-sign observations can cancel before this range check; native Kusto long aggregation would silently wrap. Windows containing real values use ordinary floating-point addition, with direct comparisons and no tolerance near a threshold. The result metric is dynamic so it can retain either an integer or a real value. The numeric fixtures have passed execution against the Microsoft Kusto emulator; see [runtime evidence](tests/fixtures/correlation/RUNTIME.md). Sum queries materialize window summaries for the range check and share Kusto’s 5 GB per-node materialization cache limit; exhaustion fails the query.
+
 To require several fields, use a list such as `field: [User, Target]`. Each field's exact count must satisfy the same comparison and threshold in the same window; the comparisons are combined with **AND**. Two users accessing one target fail `gte: 2`, while two users accessing two targets can pass. Missing values are ignored separately for each field, retaining anchors even when every counted value is missing. The result returns `ValueCount_User` and `ValueCount_Target`. In general, multiple fields return `ValueCount_<field>` using the logical condition field name (including an alias name), with quoting for names containing spaces or punctuation. Counted field names must be nonempty and unique.
 
 For unordered `temporal`, omit the condition to require every referenced source-rule type:
@@ -227,9 +242,9 @@ Every step must have a **strictly later timestamp** than its predecessor. Equal 
 
 The initial ordered implementation requires the full declared sequence. Omit `condition`, or use a comparison equivalent to requiring all distinct source-rule types: with three types, `gte: 3`, `eq: 3`, and `gt: 2` are equivalent. Other thresholds raise an actionable conversion error because partial ordered subsets have no defined interpretation. With one type, `neq: 0` is also equivalent. Repeated list positions, including the same source referenced by name and ID, require separate matches at strictly increasing timestamps; for example, `[first-rule, first-rule, second-rule]` requires two successive first-rule matches followed by second-rule. `RuleCount` still reports the distinct type count (two in that example), so explicit conditions use that count. An omitted condition always requires every declared position.
 
-Every qualifying evaluation returns `WindowStart`, `WindowEnd`, the requested grouping fields, and `EventCount`, `ValueCount`, the per-field value counts, or temporal `RuleCount`. `WindowStart` is `WindowEnd - timespan`. Each joint set of grouping values is independent; omitting `group-by` defines one group. Overlapping qualifying windows remain separate summaries. No evaluation is generated solely because an event expires, and count conditions do not invent empty-window results. Invalid timestamps and null or empty grouping values are excluded before establishing evaluation timestamps. Group names `WindowStart`, `WindowEnd`, and the returned count metrics are rejected because they conflict with the result columns.
+Every qualifying evaluation returns `WindowStart`, `WindowEnd`, the requested grouping fields, and `EventCount`, `ValueCount`, `ValueSum`, the per-field value counts, or temporal `RuleCount`. `WindowStart` is `WindowEnd - timespan`. Each joint set of grouping values is independent; omitting `group-by` defines one group. Overlapping qualifying windows remain separate summaries. No evaluation is generated solely because an event expires, and count conditions do not invent empty-window results. Invalid timestamps and null or empty grouping values are excluded before establishing evaluation timestamps. Group names `WindowStart`, `WindowEnd`, and the returned count metrics are rejected because they conflict with the result columns.
 
-All four supported correlation types (`event_count`, `value_count`, `temporal`, and `temporal_ordered`) can produce child summaries and consume them, including mixed direct detection sources and multiple correlation levels. Ordered parents retain the full-sequence condition restriction described above. For example, an `event_count` parent can consume an `event_count` child alongside a direct detection:
+All five supported correlation types (`event_count`, `value_count`, `value_sum`, `temporal`, and `temporal_ordered`) can produce child summaries and consume them, including mixed direct detection sources and multiple correlation levels. Ordered parents retain the full-sequence condition restriction described above. For example, an `event_count` parent can consume an `event_count` child alongside a direct detection:
 
 ```yaml
 title: Child count
@@ -259,6 +274,7 @@ Each child's returned grouping fields, `WindowStart`, `WindowEnd`, and actual me
 | `event_count` | `EventCount` |
 | `value_count`, one counted field | `ValueCount` |
 | `value_count`, multiple counted fields | `ValueCount_<logical field>` for each field |
+| `value_sum` | `ValueSum` |
 | `temporal`, `temporal_ordered` | `RuleCount` |
 
 These fields use the child's logical result names, without reapplying detection-table mappings. Parent aliases can map to those names; for example, `ChildSize: {child-count: EventCount}` makes the child metric available as a grouping field named `ChildSize`. Window fields can likewise be aliased to avoid conflicting with the parent's result column names. Conversion rejects required fields absent from the child's result schema, including original detection fields discarded by aggregation or grouping fields removed by an intermediate correlation. Both child and direct branches follow the same normalization and invalid-input exclusions.

@@ -43,10 +43,11 @@ def test_ordered_parent_scopes_complete_temporal_child_before_strict_window_end_
     assert query.endswith('["Host"] = _sigma_group_0, RuleCount = tolong(2)')
 
 
-TYPES = ["event_count", "value_count", "temporal", "temporal_ordered"]
+TYPES = ["event_count", "value_count", "value_sum", "temporal", "temporal_ordered"]
 METRICS = {
     "event_count": "EventCount",
     "value_count": "ValueCount",
+    "value_sum": "ValueSum",
     "temporal": "RuleCount",
     "temporal_ordered": "RuleCount",
 }
@@ -70,7 +71,7 @@ def test_all_supported_types_produce_and_consume_child_summaries(producer, consu
     assert '_sigma_timestamp = todatetime(["WindowEnd"]), _sigma_group_0 = tostring(["Host"])' in parent
     assert '| extend _sigma_rule = "child"' in parent
     assert f", {METRICS[consumer]}" in parent.splitlines()[-1]
-    if consumer == "value_count":
+    if consumer in ("value_count", "value_sum"):
         assert f'_sigma_value = pack_array(gettype(["{METRICS[producer]}"]), ["{METRICS[producer]}"])' in parent
     if consumer == "event_count":
         assert "_sigma_weight = count()" in parent

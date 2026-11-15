@@ -27,7 +27,7 @@ class _CorrelationQueryExpression(str):
         if not query.startswith(prefix):
             query = prefix + query
         return super().format(
-            ruleid=json.dumps(str(ruleid), ensure_ascii=False),
+            ruleid=ruleid,
             rule_column=normalization.rule_column,
             query=query,
             normalization=normalization,
@@ -199,6 +199,9 @@ class KustoBackend(TextQueryBackend):
 
     # Override methods
 
+    def convert_correlation_ruleid(self, ruleid, template):
+        return json.dumps(str(ruleid), ensure_ascii=False)
+
     def finalize_query(self, rule, query, index, state, output_format):
         # Pipeline state is reset for the next source rule. Keep the mapping used
         # for this search with its conversion state for later normalization.
@@ -327,10 +330,11 @@ class KustoBackend(TextQueryBackend):
         # See issue #13
         return re.sub(r"\\\*", r"*", converted)
 
-    def convert_correlation_rule(self, rule, output_format=None, method=None):
+    def convert_correlation_rule(self, rule, output_format=None, method=None, callback=None):
         converters = {
             SigmaCorrelationType.EVENT_COUNT: self.convert_correlation_event_count_rule,
             SigmaCorrelationType.VALUE_COUNT: self.convert_correlation_value_count_rule,
+            SigmaCorrelationType.VALUE_SUM: self.convert_correlation_value_sum_rule,
             SigmaCorrelationType.TEMPORAL: self.convert_correlation_temporal_rule,
             SigmaCorrelationType.TEMPORAL_ORDERED: self.convert_correlation_temporal_ordered_rule,
         }
@@ -338,9 +342,17 @@ class KustoBackend(TextQueryBackend):
             raise SigmaConversionError(
                 rule,
                 rule.source,
-                "Kusto supports only event_count, value_count, temporal, and temporal_ordered correlation rules.",
+                "Kusto supports only event_count, value_count, value_sum, temporal, and temporal_ordered correlation rules.",
             )
         queries = converters[rule.type](rule, output_format, method or "default")
+        if callback is not None:
+            states = rule.get_conversion_states()
+            converted = [
+                (callback(rule, output_format, index, query, query), state)
+                for index, (query, state) in enumerate(zip(queries, states))
+            ]
+            queries = [query for query, _ in converted if query is not None]
+            rule.set_conversion_states([state for query, state in converted if query is not None])
         rule.set_conversion_result(queries)
         return queries if rule._output else []
 
@@ -363,10 +375,18 @@ class KustoBackend(TextQueryBackend):
             raise SigmaConversionError(rule, rule.source, "Kusto value_count counted field names must be unique.")
         return self._convert_count_rule(rule, fields)
 
+    def convert_correlation_value_sum_rule(self, rule, output_format=None, method="default"):
+        field = rule.condition.fieldref if rule.condition is not None else None
+        if not isinstance(field, str) or not field:
+            raise SigmaConversionError(rule, rule.source, "Kusto value_sum requires one nonempty measured field name.")
+        return self._convert_count_rule(rule, [field])
+
     def _convert_count_rule(self, rule, counted_fields=None):
         count_type = rule.type.name.lower()
         if rule.type in (SigmaCorrelationType.TEMPORAL, SigmaCorrelationType.TEMPORAL_ORDERED):
             metrics = ["RuleCount"]
+        elif rule.type == SigmaCorrelationType.VALUE_SUM:
+            metrics = ["ValueSum"]
         elif counted_fields is None:
             metrics = ["EventCount"]
         elif len(counted_fields) == 1:
@@ -505,7 +525,12 @@ class KustoBackend(TextQueryBackend):
                 else:
                     searches.append(
                         self.correlation_search_multi_rule_query_expression.format(
-                            rule=source, ruleid=source.name or source.id, query=query, normalization=normalization
+                            rule=source,
+                            ruleid=self.convert_correlation_ruleid(
+                                source.name or source.id, str(self.correlation_search_multi_rule_query_expression)
+                            ),
+                            query=query,
+                            normalization=normalization,
                         )
                     )
         return "".join(definitions), "union " + self.correlation_search_multi_rule_query_expression_joiner.join(
@@ -586,6 +611,10 @@ class KustoBackend(TextQueryBackend):
                 allocate("_sigma_value" if len(counted_fields) == 1 else f"_sigma_value_{index}")
                 for index in range(len(counted_fields))
             ]
+        if rule.type == SigmaCorrelationType.VALUE_SUM:
+            columns["integer_sum"] = allocate("_sigma_integer_sum")
+            columns["real_sum"] = allocate("_sigma_real_sum")
+            columns["real_count"] = allocate("_sigma_real_count")
         if ordered:
             columns["sequence_start"] = allocate("_sigma_sequence_start")
             columns["sequence_end"] = allocate("_sigma_sequence_end")
@@ -619,6 +648,8 @@ class KustoBackend(TextQueryBackend):
         join_fields = ", ".join([*groups, time_bin])
         summary_fields = ", ".join([window_end, *groups])
         result_fields = self._correlation_result_projection(rule, groups, window_end, span, metrics)
+        after_summary = ""
+        summary_binding = ""
         if temporal:
             # One retained rule identity per timestamp/group is sufficient for
             # exact type counts; repetitions never become additional types.
@@ -629,6 +660,44 @@ class KustoBackend(TextQueryBackend):
             preaggregate = f"| summarize {weight} = count() by {weighted_fields}"
             distinct_anchors = ""
             aggregates = [f"EventCount = sum({weight})"]
+        elif rule.type == SigmaCorrelationType.VALUE_SUM:
+            # All valid source matches remain in the stream, including repeated
+            # measured values and rows without a usable value. The latter still
+            # establish evaluation anchors.
+            preaggregate = ""
+            distinct_anchors = "| distinct *\n"
+            value = columns["values"][0]
+            value_type = f"tostring({value}[0])"
+            integer = f'{value_type} in ("int", "long")'
+            real = f'{value_type} in ("real", "double", "decimal") and isfinite(toreal({value}[1]))'
+            integer_sum = columns["integer_sum"]
+            real_sum = columns["real_sum"]
+            real_count = columns["real_count"]
+            aggregates = [
+                f"{integer_sum} = sumif(todecimal({value}[1]), {integer})",
+                f"{real_sum} = sumif(toreal({value}[1]), {real})",
+                f"{real_count} = countif({real})",
+            ]
+            # Native long sum silently wraps on overflow. Accumulate integers
+            # in decimal, check every anchored integer-only window before the
+            # rule comparison, then expose the supported signed-long result.
+            sums = allocate("_sigma_sums")
+            valid = allocate("_sigma_sum_valid")
+            summary_binding = f"let {sums} = materialize(\n"
+            after_summary = (
+                f");\n{sums}\n"
+                f"| where assert(toscalar({sums} | summarize {valid} = countif("
+                f"{real_count} == 0 and (isnull({integer_sum}) or "
+                f"{integer_sum} < decimal(-9223372036854775808) or "
+                f"{integer_sum} > decimal(9223372036854775807))) == 0 | project {valid}), "
+                f'"Kusto value_sum integer overflow")\n'
+                f"| extend ValueSum = iff({real_count} > 0, "
+                f"pack_array(toreal({integer_sum}) + {real_sum})[0], pack_array(tolong({integer_sum}))[0])\n"
+            )
+            comparisons = (
+                f"({real_count} == 0 and todecimal({integer_sum}) {query_operator} decimal({threshold})) "
+                f"or ({real_count} > 0 and toreal({integer_sum}) + {real_sum} {query_operator} {threshold})"
+            )
         else:
             definitions += self._counted_value_identities(search, columns, valid_rows, allocate)
             search = columns["identities"]
@@ -640,13 +709,15 @@ class KustoBackend(TextQueryBackend):
                 f"{metric} = count_distinctif({value}, isnotempty({value}))"
                 for metric, value in zip(metrics, columns["values"])
             ]
-        comparisons = " and ".join(f"{metric} {query_operator} {threshold}" for metric in metrics)
+        if rule.type != SigmaCorrelationType.VALUE_SUM:
+            comparisons = " and ".join(f"{metric} {query_operator} {threshold}" for metric in metrics)
         # Bins only prune candidate pairs: a contribution belongs to its own bin
         # and the following anchor bin. Actual timestamps determine membership.
         return [
             f"{definitions}let {weights} = {search}\n"
             f"| where {valid_rows}\n"
             f"{preaggregate};\n"
+            f"{summary_binding}"
             f"{weights}\n"
             f"| project {anchor_fields}\n"
             f"{distinct_anchors}"
@@ -657,6 +728,7 @@ class KustoBackend(TextQueryBackend):
             f") on {join_fields}\n"
             f"| where {timestamp} between (({window_end} - {span}) .. {window_end})\n"
             f"| summarize {', '.join(aggregates)} by {summary_fields}\n"
+            f"{after_summary}"
             f"| where {comparisons}\n"
             f"| project {result_fields}"
         ]
@@ -777,7 +849,12 @@ class KustoBackend(TextQueryBackend):
             return alias.mapping.get(
                 rule_reference,
                 next(
-                    (name for reference, name in alias.mapping.items() if reference.rule is rule_reference.rule), field
+                    (
+                        name
+                        for reference, name in alias.mapping.items()
+                        if reference.reference in (rule_reference.rule.name, str(rule_reference.rule.id))
+                    ),
+                    field,
                 ),
             )
 

@@ -1003,7 +1003,7 @@ def test_count_correlations_require_a_positive_timespan(span, correlation_rule):
     )
     correlation = correlation_rule().replace("5m", span)
 
-    with pytest.raises(SigmaError, match="positive timespan"):
+    with pytest.raises(SigmaError, match="positive timespan|greater than zero|is invalid"):
         backend.convert(correlation_collection(correlation))
 
 
@@ -1183,7 +1183,7 @@ def test_event_count_chain_applies_parent_comparisons_after_counting_child_summa
     "correlation",
     [
         """correlation:
-  type: value_sum
+  type: value_avg
   rules:
     - source-rule
   timespan: 5m
