@@ -649,3 +649,24 @@ Please make sure to update tests as appropriate.
 ## 📄 License
 
 This project is licensed under the GNU Lesser General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
+
+### Correlation field mappings
+
+Correlations resolve the configured timestamp, grouping, measured and retained
+context fields using the applied pipeline of each source search. Standard
+pySigma field mappings, including source-specific rule conditions and successive
+field renames, work alongside the built-in table and generic mappings. Fields
+need not appear in a detection predicate to be mapped. Correlation aliases select
+a source's logical field before its mappings apply. Result grouping and retained
+context keep their requested logical names; parents consume child result fields
+without applying the original detection-table mappings again.
+
+A correlation field must resolve to exactly one physical column. For example,
+`User: [ActorUsername, TargetUsername]` is ambiguous and produces an error listing
+the targets. Choose `User: ActorUsername` in a source-specific pipeline, alias the
+intended physical column explicitly (for example `Actor: {source-rule:
+ActorUsername}`), or normalize both columns to a single intended column before
+correlation. A subsequent standard mapping that collapses both targets to one
+column is also accepted. Ordinary detection predicates retain pySigma's normal
+one-to-many search semantics. Names containing spaces, quotes and punctuation
+are emitted as escaped Kusto column identifiers.

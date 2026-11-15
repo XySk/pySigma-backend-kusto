@@ -430,7 +430,7 @@ let Observed = Actual()
         (tostring(Pair[0][1]) == "one" and gettype(Pair[1][1]) == "long" and tolong(Pair[1][1]) == 1) or
         (tostring(Pair[0][1]) == "two" and gettype(Pair[1][1]) == "string" and tostring(Pair[1][1]) == "1")
     )))
-| project WindowEnd, Host, Metric = toreal(RuleCount),
+| project WindowEnd, Host=tostring(Host), Metric = toreal(RuleCount),
     UserCount = array_length(User), ServerCount = array_length(Server), BadPairs,
     UserLong = gettype(User[0]) == "long" or gettype(User[1]) == "long",
     UserString = gettype(User[0]) == "string" or gettype(User[1]) == "string",

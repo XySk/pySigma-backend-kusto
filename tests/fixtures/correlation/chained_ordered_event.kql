@@ -347,6 +347,6 @@ _sigma_guarded_query__rows
 let Expected = datatable(WindowStart:datetime, WindowEnd:datetime, Case:string, Host:string, EventCount:long) [
     datetime(2026-01-01T11:57:00Z), datetime(2026-01-01T12:02:00Z), "ordered-event", "host", 2
 ];
-union (Actual() | extend Delta = 1), (Expected | extend Delta = -1)
+union (Actual() | extend Case=tostring(Case), Host=tostring(Host) | extend Delta = 1), (Expected | extend Delta = -1)
 | summarize Delta = sum(Delta) by WindowStart, WindowEnd, Case, Host, EventCount
 | where Delta != 0

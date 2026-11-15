@@ -41,7 +41,7 @@ def fixture(expression, rows, expected, *, chain=False):
         + query
         + "\n};\n"
         + expected_data
-        + """union (Actual() | extend Delta = 1), (Expected | extend Delta = -1)
+        + """union (Actual() | extend Case=tostring(Case) | extend Delta = 1), (Expected | extend Delta = -1)
 | summarize Delta = sum(Delta) by WindowStart, WindowEnd, Case, RuleCount
 | where Delta != 0
 """

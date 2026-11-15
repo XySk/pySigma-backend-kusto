@@ -599,6 +599,6 @@ _sigma_guarded_query_rows
 let Expected = datatable(WindowStart:datetime, WindowEnd:datetime, Tenant:string, RuleCount:long) [
     datetime(2026-01-01T12:03:00Z), datetime(2026-01-01T12:07:00Z), "lookback", 2
 ];
-union (Actual() | extend Delta = 1), (Expected | extend Delta = -1)
+union (Actual() | extend Tenant=tostring(Tenant) | extend Delta = 1), (Expected | extend Delta = -1)
 | summarize Delta = sum(Delta) by WindowStart, WindowEnd, Tenant, RuleCount
 | where Delta != 0

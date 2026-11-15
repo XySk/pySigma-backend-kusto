@@ -332,6 +332,6 @@ let Expected = datatable(WindowStart:datetime, WindowEnd:datetime, Case:string, 
     datetime(2026-01-01T11:56:00Z), datetime(2026-01-01T12:01:00Z), "typed-chain", 2, 3,
     datetime(2026-01-01T11:57:00Z), datetime(2026-01-01T12:02:00Z), "typed-chain", 2, 3
 ];
-union (Actual() | extend Delta = 1), (Expected | extend Delta = -1)
+union (Actual() | extend Case=tostring(Case) | extend Delta = 1), (Expected | extend Delta = -1)
 | summarize Delta = sum(Delta) by WindowStart, WindowEnd, Case, ValueCount_Metric, ValueCount_End
 | where Delta != 0

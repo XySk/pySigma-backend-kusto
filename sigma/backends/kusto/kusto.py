@@ -24,6 +24,7 @@ from sigma.correlations import (
     SigmaRuleReference,
 )
 from sigma.exceptions import SigmaConversionError
+from sigma.processing.transformations.base import FieldMappingTransformationBase
 from sigma.types import SigmaCompareExpression, SigmaNumber, SigmaString, SpecialChars
 
 
@@ -220,6 +221,20 @@ class KustoBackend(TextQueryBackend):
 
     # Override methods
 
+    def escape_and_quote_field(self, field_name):
+        if re.fullmatch(r"[A-Za-z_][A-Za-z_0-9]*", field_name):
+            return field_name
+        return self._quote_correlation_field(field_name)
+
+    def convert_rule(self, rule, output_format=None, callback=None):
+        requested_fields = list(rule.fields or [])
+        queries = super().convert_rule(rule, output_format, callback)
+        if self.collect_errors and self.errors and self.errors[-1][0] is rule:
+            return queries
+        for state in rule.get_conversion_states():
+            state.processing_state["kusto_requested_fields"] = requested_fields.copy()
+        return queries
+
     def convert_correlation_ruleid(self, ruleid, template):
         return json.dumps(str(ruleid), ensure_ascii=False)
 
@@ -229,6 +244,22 @@ class KustoBackend(TextQueryBackend):
         state.processing_state["kusto_field_mappings"] = deepcopy(
             self.last_processing_pipeline.vars.get("kusto_field_mappings")
         )
+        # Keep an independent source snapshot: pySigma resets tracking and
+        # source-specific transformations when processing the next rule.
+        pipeline = deepcopy(
+            self.last_processing_pipeline,
+            {
+                id(
+                    self.last_processing_pipeline.resolve_regex_engine()
+                ): self.last_processing_pipeline.resolve_regex_engine()
+            },
+        )
+        state.processing_state["kusto_standard_field_mappings"] = deepcopy(pipeline.field_mappings)
+        state.processing_state["kusto_field_transformations"] = [
+            item
+            for item, applied in zip(pipeline.items, pipeline.applied)
+            if applied and isinstance(item.transformation, FieldMappingTransformationBase)
+        ]
         state.processing_state["kusto_source_fields"] = self._correlation_source_fields(rule, state)
         return super().finalize_query(rule, query, index, state, output_format)
 
@@ -251,6 +282,12 @@ class KustoBackend(TextQueryBackend):
             for mapping in (mappings.generic_mappings, mappings.table_mappings.get(table, {})):
                 fields.update(mapping)
                 for target in mapping.values():
+                    fields.update(target if isinstance(target, list) else [target])
+        for item in state.processing_state.get("kusto_field_transformations", ()):
+            mapping = getattr(item.transformation, "mapping", {})
+            fields.update(field for field in mapping if field is not None)
+            for target in mapping.values():
+                if target is not None:
                     fields.update(target if isinstance(target, list) else [target])
         schema = self.last_processing_pipeline.vars.get("kusto_schema")
         if schema is not None:
@@ -447,15 +484,22 @@ class KustoBackend(TextQueryBackend):
         while error in reserved:
             error += "_"
         reserved.add(error)
-        children = [reference.rule for reference in rule.referenced_rules if isinstance(reference.rule, SigmaCorrelationRule)]
-        enabled = bool(children) and bool(rule.fields or any(
-            source.fields or any(
-                state.processing_state.get("kusto_context_fields")
-                or state.processing_state.get("kusto_requested_fields")
-                or state.processing_state.get("kusto_error_column")
-                for state in source.get_conversion_states() or []
-            ) for source in children
-        ))
+        children = [
+            reference.rule for reference in rule.referenced_rules if isinstance(reference.rule, SigmaCorrelationRule)
+        ]
+        enabled = bool(children) and bool(
+            rule.fields
+            or any(
+                source.fields
+                or any(
+                    state.processing_state.get("kusto_context_fields")
+                    or state.processing_state.get("kusto_requested_fields")
+                    or state.processing_state.get("kusto_error_column")
+                    for state in source.get_conversion_states() or []
+                )
+                for source in children
+            )
+        )
         shared = {"reserved": reserved, "definitions": [], "bindings": {}, "enabled": enabled}
         guards = {"column": error, "relations": [], "checks": [], "inherited": set(), "messages": set()}
         self._correlation_shared_children = shared
@@ -464,10 +508,14 @@ class KustoBackend(TextQueryBackend):
             queries = self._build_count_rule(rule, counted_fields)
             prefix = "".join(shared["definitions"])
             raw_queries = [prefix + query for query in queries]
-            checks = tuple(dict.fromkeys([
-                *((prefix + check, error) for check in guards["checks"]),
-                *sorted(guards["inherited"]),
-            ]))
+            checks = tuple(
+                dict.fromkeys(
+                    [
+                        *((prefix + check, error) for check in guards["checks"]),
+                        *sorted(guards["inherited"]),
+                    ]
+                )
+            )
             output = []
             for raw, state in zip(raw_queries, rule.get_conversion_states()):
                 public = raw
@@ -495,14 +543,16 @@ class KustoBackend(TextQueryBackend):
                         f"let {failure} = toscalar(union {', '.join(calls)} | summarize countif(isnotempty({error})));\n"
                         f"{rows}\n| where assert({failure} == 0, {json.dumps(message)})"
                     )
-                state.processing_state.update({
-                    "kusto_raw_query": raw,
-                    "kusto_public_query": public,
-                    "kusto_error_column": error if checks else None,
-                    "kusto_guard_queries": tuple(check for check, _ in checks),
-                    "kusto_guard_error_columns": tuple(column for _, column in checks),
-                    "kusto_guard_messages": tuple(sorted(guards["messages"])),
-                })
+                state.processing_state.update(
+                    {
+                        "kusto_raw_query": raw,
+                        "kusto_public_query": public,
+                        "kusto_error_column": error if checks else None,
+                        "kusto_guard_queries": tuple(check for check, _ in checks),
+                        "kusto_guard_error_columns": tuple(column for _, column in checks),
+                        "kusto_guard_messages": tuple(sorted(guards["messages"])),
+                    }
+                )
                 output.append(public)
             return output
         finally:
@@ -511,9 +561,7 @@ class KustoBackend(TextQueryBackend):
     def _register_correlation_guard(self, relation, violation, message):
         column = self._correlation_guard_state["column"]
         self._correlation_guard_state["messages"].add(message)
-        self._register_correlation_errors(
-            f"{relation} | where {violation} | project {column} = {json.dumps(message)}"
-        )
+        self._register_correlation_errors(f"{relation} | where {violation} | project {column} = {json.dumps(message)}")
 
     def _register_correlation_errors(self, relation):
         self._correlation_guard_state["relations"].append(relation)
@@ -538,13 +586,20 @@ class KustoBackend(TextQueryBackend):
         messages = state.get("kusto_guard_messages")
         columns = state.get("kusto_guard_error_columns")
         valid = (
-            query == checked and isinstance(raw, str) and bool(raw)
-            and isinstance(checks, (tuple, list)) and all(isinstance(check, str) and check for check in checks)
-            and isinstance(columns, (tuple, list)) and len(columns) == len(checks)
+            query == checked
+            and isinstance(raw, str)
+            and bool(raw)
+            and isinstance(checks, (tuple, list))
+            and all(isinstance(check, str) and check for check in checks)
+            and isinstance(columns, (tuple, list))
+            and len(columns) == len(checks)
             and all(isinstance(column, str) and column for column in columns)
-            and isinstance(messages, (tuple, list)) and all(isinstance(message, str) and message for message in messages)
-            and ((checks and isinstance(error, str) and bool(error) and bool(messages))
-                 or (not checks and error is None and not messages))
+            and isinstance(messages, (tuple, list))
+            and all(isinstance(message, str) and message for message in messages)
+            and (
+                (checks and isinstance(error, str) and bool(error) and bool(messages))
+                or (not checks and error is None and not messages)
+            )
         )
         # Callback-modified or incomplete metadata keeps the checked public
         # query. Never bypass its validation or silently discard a source edit.
@@ -554,6 +609,7 @@ class KustoBackend(TextQueryBackend):
         shared = self._correlation_shared_children
         key = (reference_index, query_index)
         if key not in shared["bindings"]:
+
             def allocate(base):
                 candidate, suffix = base, 0
                 while candidate in shared["reserved"]:
@@ -563,10 +619,12 @@ class KustoBackend(TextQueryBackend):
                 return candidate
 
             function, results = allocate("_sigma_shared_child"), allocate("_sigma_shared_results")
-            shared["definitions"].extend([
-                f"let {function} = () {{\n{query}\n}};\n",
-                f"let {results} = materialize({function}());\n",
-            ])
+            shared["definitions"].extend(
+                [
+                    f"let {function} = () {{\n{query}\n}};\n",
+                    f"let {results} = materialize({function}());\n",
+                ]
+            )
             shared["bindings"][key] = (function, results)
         return shared["bindings"][key]
 
@@ -656,15 +714,24 @@ class KustoBackend(TextQueryBackend):
         requested_context = list(rule.fields or [])
         for reference in rule.referenced_rules:
             source = reference.rule
-            # Carry requests through summaries, including requests inherited
-            # from descendants and fields currently represented as scalar groups.
-            source_requests = source.fields or []
-            if isinstance(source, SigmaCorrelationRule):
-                source_requests = source.get_conversion_states()[0].processing_state.get(
-                    "kusto_requested_fields", source_requests
+            requested_fields = (
+                source.get_conversion_states()[0].processing_state.get("kusto_requested_fields", source.fields)
+                if source.get_conversion_states()
+                else source.fields
+            )
+            for field in requested_fields or []:
+                logical = next(
+                    (
+                        alias.alias
+                        for alias in rule.aliases
+                        if any(
+                            name == field and alias_reference.reference in (source.name, str(source.id))
+                            for alias_reference, name in alias.mapping.items()
+                        )
+                    ),
+                    field,
                 )
-            for field in source_requests:
-                logical = next((alias.alias for alias in rule.aliases if alias.mapping.get(reference) == field), field)
+
                 requested_context.append(logical)
         context_fields = list(dict.fromkeys(requested_context))
         conflicts = {"WindowStart", "WindowEnd", *metrics}.intersection(context_fields)
@@ -924,7 +991,8 @@ class KustoBackend(TextQueryBackend):
                 )
                 collections.append((binding, collection, amount, field))
             self._register_correlation_guard(
-                relationships, f"{count} != array_length({relationships})",
+                relationships,
+                f"{count} != array_length({relationships})",
                 "Kusto retained context collection limit exceeded",
             )
             result = (
@@ -933,7 +1001,8 @@ class KustoBackend(TextQueryBackend):
             )
             for binding, collection, amount, field in collections:
                 self._register_correlation_guard(
-                    binding, f"{amount} != array_length({collection})",
+                    binding,
+                    f"{amount} != array_length({collection})",
                     "Kusto retained context collection limit exceeded",
                 )
                 result += (
@@ -1040,19 +1109,21 @@ class KustoBackend(TextQueryBackend):
         return queries, states
 
     def _count_search(self, rule, allocate):
-        if not any(isinstance(reference.rule, SigmaCorrelationRule) for reference in rule.referenced_rules):
-            return "", self.convert_correlation_search(rule)
         definitions, searches = [], []
         for reference_index, reference in enumerate(rule.referenced_rules):
             source = reference.rule
-            self._correlation_child_row = allocate("_sigma_child_context_row")
-            try:
-                normalization = self.convert_correlation_search_field_normalization_expression(rule.aliases, reference)
-            finally:
-                del self._correlation_child_row
-            for query_index, query in enumerate(source.get_conversion_result()):
+            for query_index, (query, source_state) in enumerate(
+                zip(source.get_conversion_result(), source.get_conversion_states())
+            ):
+                self._correlation_child_row = allocate("_sigma_child_context_row")
+                try:
+                    normalization = self.convert_correlation_search_field_normalization_expression(
+                        rule.aliases, reference, source_state
+                    )
+                finally:
+                    del self._correlation_child_row
                 if isinstance(source, SigmaCorrelationRule):
-                    state = source.get_conversion_states()[query_index].processing_state
+                    state = source_state.processing_state
                     query, child_checks, child_messages = self._child_raw_query(query, state)
                     if child_checks:
                         self._correlation_guard_state["messages"].update(child_messages)
@@ -1172,7 +1243,9 @@ class KustoBackend(TextQueryBackend):
             ),
         }
         numeric_context = rule.type in (
-            SigmaCorrelationType.VALUE_SUM, SigmaCorrelationType.VALUE_AVG, SigmaCorrelationType.VALUE_PERCENTILE
+            SigmaCorrelationType.VALUE_SUM,
+            SigmaCorrelationType.VALUE_AVG,
+            SigmaCorrelationType.VALUE_PERCENTILE,
         ) and self._uses_context_groups(rule, [*(rule.group_by or []), *(counted_fields or [])])
         if counted_fields is None and not temporal or numeric_context:
             columns["child_match"] = allocate("_sigma_child_match")
@@ -1272,33 +1345,35 @@ class KustoBackend(TextQueryBackend):
             # approximate aggregate. The decimal tie-break distinguishes longs
             # that round to the same double; the real key covers double extremes
             # outside decimal's range. Preserve the selected observation's type.
-            return [_CorrelationQuery(
-                f"{definitions}let {weights} = {search}\n| where {valid_rows};\n"
-                f"let {ranked} = materialize(\n"
-                f"{weights}\n| project {anchor_fields}\n| distinct *\n"
-                f"| join kind=inner (\n{weights}\n"
-                f"| extend {time_bin} = pack_array(bin({timestamp}, {span}), bin({timestamp}, {span}) + {span})\n"
-                f"| mv-expand {time_bin} to typeof(datetime)\n) on {join_fields}\n"
-                f"| where {timestamp} between (({window_end} - {span}) .. {window_end})\n"
-                f'| where tostring({value}[0]) in ("int", "long", "real", "double", "decimal") '
-                f"and isfinite(toreal({value}[1]))\n"
-                f"| extend {partition} = tostring(pack_array({summary_fields})), "
-                f"{numeric} = toreal({value}[1]), {precise} = todecimal({value}[1])\n"
-                f"| sort by {partition} asc, {numeric} asc, {precise} asc\n"
-                f"| serialize {rank} = row_number(1, {partition} != prev({partition}))\n);\n",
-                f"{ranked}\n| join kind=inner (\n"
-                f"{ranked} | summarize {population} = max({rank}) by {partition}\n) on {partition}\n"
-                # Quotient/remainder avoids multiplying an arbitrarily large
-                # population by 100, and keeps the ceil operand below 10000.
-                f"| where {rank} == max_of(1, ({population} / 100) * {selector} + "
-                f"tolong(ceiling(toreal(({population} % 100) * {selector}) / 100.0)))\n"
-                f"| extend ValuePercentile = {value}[1]\n"
-                f'| where (gettype(ValuePercentile) in ("int", "long") and '
-                f"todecimal(ValuePercentile) {query_operator} decimal({threshold})) or "
-                f'(gettype(ValuePercentile) in ("real", "double", "decimal") and '
-                f"toreal(ValuePercentile) {query_operator} {threshold})\n"
-                f"| project {result_fields}"
-            )]
+            return [
+                _CorrelationQuery(
+                    f"{definitions}let {weights} = {search}\n| where {valid_rows};\n"
+                    f"let {ranked} = materialize(\n"
+                    f"{weights}\n| project {anchor_fields}\n| distinct *\n"
+                    f"| join kind=inner (\n{weights}\n"
+                    f"| extend {time_bin} = pack_array(bin({timestamp}, {span}), bin({timestamp}, {span}) + {span})\n"
+                    f"| mv-expand {time_bin} to typeof(datetime)\n) on {join_fields}\n"
+                    f"| where {timestamp} between (({window_end} - {span}) .. {window_end})\n"
+                    f'| where tostring({value}[0]) in ("int", "long", "real", "double", "decimal") '
+                    f"and isfinite(toreal({value}[1]))\n"
+                    f"| extend {partition} = tostring(pack_array({summary_fields})), "
+                    f"{numeric} = toreal({value}[1]), {precise} = todecimal({value}[1])\n"
+                    f"| sort by {partition} asc, {numeric} asc, {precise} asc\n"
+                    f"| serialize {rank} = row_number(1, {partition} != prev({partition}))\n);\n",
+                    f"{ranked}\n| join kind=inner (\n"
+                    f"{ranked} | summarize {population} = max({rank}) by {partition}\n) on {partition}\n"
+                    # Quotient/remainder avoids multiplying an arbitrarily large
+                    # population by 100, and keeps the ceil operand below 10000.
+                    f"| where {rank} == max_of(1, ({population} / 100) * {selector} + "
+                    f"tolong(ceiling(toreal(({population} % 100) * {selector}) / 100.0)))\n"
+                    f"| extend ValuePercentile = {value}[1]\n"
+                    f'| where (gettype(ValuePercentile) in ("int", "long") and '
+                    f"todecimal(ValuePercentile) {query_operator} decimal({threshold})) or "
+                    f'(gettype(ValuePercentile) in ("real", "double", "decimal") and '
+                    f"toreal(ValuePercentile) {query_operator} {threshold})\n"
+                    f"| project {result_fields}",
+                )
+            ]
         after_summary = ""
         summary_binding = ""
         if temporal:
@@ -1391,10 +1466,7 @@ class KustoBackend(TextQueryBackend):
             # neq. Require an observation before applying any comparison.
             comparisons = f"{columns['numeric_count']} > 0 and {comparisons}"
         # Bins only prune candidate pairs; actual timestamps decide membership.
-        scope = (
-            f"{definitions}let {weights} = {search}\n"
-            f"| where {valid_rows}\n{preaggregate};\n"
-        )
+        scope = f"{definitions}let {weights} = {search}\n" f"| where {valid_rows}\n{preaggregate};\n"
         aggregate = (
             f"{weights}\n| project {anchor_fields}\n{distinct_anchors}"
             f"| join kind=inner (\n    {weights}\n"
@@ -1623,11 +1695,70 @@ class KustoBackend(TextQueryBackend):
             ]
         )
 
+    @staticmethod
+    def _correlation_mapping_targets(value):
+        # FieldMappings.get_field_mapping historically selects the first entry;
+        # correlations need the complete target set to diagnose ambiguity.
+        return value if isinstance(value, list) else [value]
+
+    def _map_correlation_source_field(self, source, state, field):
+        """Resolve one logical column using this source's applied pipeline."""
+        tracked = state.processing_state.get("kusto_standard_field_mappings", {})
+        mappings = state.processing_state.get("kusto_field_mappings")
+        transformations = state.processing_state.get("kusto_field_transformations", ())
+        table = state.processing_state.get("query_table")
+        if field in tracked:
+            targets = set(tracked[field])
+        else:
+            targets = {field}
+            builtin_seen = False
+            # Tracking excludes fields absent from detection predicates. Replay
+            # source-applicable field-name transformations in their original order.
+            for item in transformations:
+                transformation = item.transformation
+                if type(transformation).__module__.startswith("sigma.pipelines.kusto_common") and mappings:
+                    if builtin_seen:
+                        continue
+                    builtin_seen = True
+                    targets = {
+                        mapped
+                        for target in targets
+                        for mapped in self._correlation_mapping_targets(
+                            mappings.table_mappings.get(table, {}).get(
+                                target, mappings.generic_mappings.get(target, target)
+                            )
+                        )
+                    }
+                else:
+                    targets = {mapped for target in targets for mapped in transformation._apply_field_name(target)}
+            # Pipelines may provide built-in mapping metadata directly without
+            # using the built-in transformation classes.
+            if mappings and not builtin_seen:
+                targets = {
+                    mapped
+                    for target in targets
+                    for mapped in self._correlation_mapping_targets(
+                        mappings.table_mappings.get(table, {}).get(
+                            target, mappings.generic_mappings.get(target, target)
+                        )
+                    )
+                }
+        if len(targets) != 1:
+            raise SigmaConversionError(
+                source,
+                source.source,
+                f"Kusto correlation field {field!r} in source {source.name or source.id!r} "
+                f"must resolve to one column; mapped targets: {', '.join(sorted(targets)) or '(none)'}. "
+                "For example, User -> [ActorUsername, TargetUsername] is ambiguous. "
+                "Use a source-specific one-column mapping such as User -> ActorUsername, "
+                "an explicit alias to the intended physical field, or normalize both columns "
+                "to one field in the pipeline.",
+            )
+        return next(iter(targets))
+
     def convert_correlation_search_field_normalization_expression(self, aliases, rule_reference, source_state=None):
         source_state = source_state or rule_reference.rule.get_conversion_states()[0]
         child = isinstance(rule_reference.rule, SigmaCorrelationRule)
-        table = source_state.processing_state.get("query_table")
-        mappings = source_state.processing_state.get("kusto_field_mappings")
 
         def map_field(field):
             if child:
@@ -1641,7 +1772,7 @@ class KustoBackend(TextQueryBackend):
                         f"{field!r}. Available fields: {', '.join(sorted(returned_fields))}.",
                     )
                 return field
-            return mappings.get_field_mapping(table, field) if mappings is not None else field
+            return self._map_correlation_source_field(rule_reference.rule, source_state, field)
 
         def map_alias(field):
             if field not in aliases.aliases:

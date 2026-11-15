@@ -129,6 +129,6 @@ let _sigma_guarded_query_failure = toscalar(union (_sigma_validation_check() | p
 _sigma_guarded_query_rows
 | where assert(_sigma_guarded_query_failure == 0, "Kusto correlation validation failed: Kusto dynamic identity traversal incomplete or exceeds range limit; signature leaf limit exceeded; unrecognized error sentinel")
 };
-union (Actual() | extend Delta = 1), (Expected | extend Delta = -1)
+union (Actual() | extend Host=tostring(Host) | extend Delta = 1), (Expected | extend Delta = -1)
 | summarize Delta = sum(Delta) by WindowStart, WindowEnd, Host, ValueAvg
 | where Delta != 0

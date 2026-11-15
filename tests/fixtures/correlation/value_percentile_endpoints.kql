@@ -438,6 +438,6 @@ let Expected = datatable(Selector:long, Host:string, Value:string) [
 0, "long", "9223372036854775806", 50, "long", "9223372036854775806", 100, "long", "9223372036854775807",
 0, "extreme", "-1e300", 50, "extreme", "-1e300", 100, "extreme", "1e300"
 ];
-union (Actual | extend Delta = 1), (Expected | extend Delta = -1)
+union (Actual | extend Host=tostring(Host) | extend Delta = 1), (Expected | extend Delta = -1)
 | summarize Delta = sum(Delta) by Selector, Host, Value
 | where Delta != 0

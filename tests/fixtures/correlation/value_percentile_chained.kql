@@ -629,6 +629,6 @@ let Expected = datatable(WindowStart:datetime, WindowEnd:datetime, Host:string, 
 datetime(2026-01-01T11:55:00Z), datetime(2026-01-01T12:00:00Z), "alice", 2,
 datetime(2026-01-01T11:56:00Z), datetime(2026-01-01T12:01:00Z), "alice", 102
 ];
-union (Actual() | project WindowStart, WindowEnd, Host, ValuePercentile=tolong(ValuePercentile) | extend Delta = 1), (Expected | extend Delta = -1)
+union (Actual() | project WindowStart, WindowEnd, Host, ValuePercentile=tolong(ValuePercentile) | extend Host=tostring(Host) | extend Delta = 1), (Expected | extend Delta = -1)
 | summarize Delta = sum(Delta) by WindowStart, WindowEnd, Host, ValuePercentile
 | where Delta != 0

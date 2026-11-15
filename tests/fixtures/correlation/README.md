@@ -95,6 +95,12 @@ exercise the same membership without grouping and with per-source field aliases.
 The comparison deduplicates evidence within each summary while retaining summary
 multiplicity, so an extra completion cannot disappear in the expected multiset.
 
+`standard_mappings.py` generates `standard_mappings.kql` through public Sigma
+parsing and conversion. Run it with `python -m tests.fixtures.correlation.standard_mappings`.
+The fixture compares source-specific standard mappings, escaped columns,
+multiple source searches, aliases and retained logical context against literal
+expected rows; see `RUNTIME.md` for engine execution evidence.
+
 `count_context.py` generates count-parent acceptance fixtures through standard
 Sigma parsing and `KustoBackend.convert`. Literal expected summaries verify
 observed User/Server pairs, one child contribution per group, mixed direct/child
@@ -105,6 +111,9 @@ child fields and child `WindowEnd` timestamps. See `RUNTIME.md` for execution
 results and the emulator resource configuration.
 
 `typed_grouping.py` supplies literal expected result multisets for all seven correlation types, compound nested groups, exclusions, mixed direct/scalar-child aliases, and extended-type downstream chains. Run `python -m tests.fixtures.correlation.generate` to regenerate their queries through the public collection conversion seam. Runtime evidence is recorded separately in `RUNTIME.md`.
+The same generator also writes `standard_mappings_parent.kql`, verifying that a
+parent consumes individual mapped child context values through logical fields.
+
 `temporal_context.py` generates temporal retained-context consumer fixtures through
 standard Sigma collection parsing and `KustoBackend.convert`. Literal expected
 summaries cover mixed direct/child inputs, duplicate observed pairs, repeated

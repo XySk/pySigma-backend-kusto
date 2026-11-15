@@ -161,6 +161,6 @@ let Expected = datatable(WindowStart:datetime, WindowEnd:datetime, Case:string, 
     datetime(2026-01-01T11:55:00Z), datetime(2026-01-01T12:00:00Z), "nested-extended", 2,
     datetime(2026-01-01T11:55:00Z), datetime(2026-01-01T12:00:00Z), "nested-precision", 2
 ];
-union (Actual() | extend Delta = 1), (Expected | extend Delta = -1)
+union (Actual() | extend Case=tostring(Case) | extend Delta = 1), (Expected | extend Delta = -1)
 | summarize Delta = sum(Delta) by WindowStart, WindowEnd, Case, ValueCount
 | where Delta != 0

@@ -850,6 +850,6 @@ let Expected = datatable(Scenario:string, WindowStart:datetime, WindowEnd:dateti
 "6", datetime(2026-01-01T11:55:00Z), datetime(2026-01-01T12:00:00Z), "mixed", 2.5,
 "6", datetime(2026-01-01T12:00:00Z), datetime(2026-01-01T12:05:00Z), "mixed", 2
 ];
-union (Actual | extend Delta = 1), (Expected | extend Delta = -1)
+union (Actual | extend Host=tostring(Host) | extend Delta = 1), (Expected | extend Delta = -1)
 | summarize Delta = sum(Delta) by Scenario, WindowStart, WindowEnd, Host, ValueAvg
 | where Delta != 0

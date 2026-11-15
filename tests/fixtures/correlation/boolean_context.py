@@ -27,7 +27,7 @@ let Events=datatable(Timestamp:datetime, Case:string, Marker:string, User:dynami
 let Observed=Actual()
 | mv-apply Pair=_sigma_context_rows on (summarize Pairs=make_list(tostring(Pair)))
 | extend Pairs=array_sort_asc(Pairs)
-| project WindowEnd, Case, RuleCount, Pairs, UserCount=array_length(User), ServerCount=array_length(Server);
+| project WindowEnd, Case=tostring(Case), RuleCount, Pairs, UserCount=array_length(User), ServerCount=array_length(Server);
 let Expected=datatable(WindowEnd:datetime, Case:string, RuleCount:long, Pairs:dynamic) [
 ''' + ",\n".join(expected) + '''
 ]

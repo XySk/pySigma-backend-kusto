@@ -394,6 +394,6 @@ let Expected = datatable(Scenario:string, WindowStart:datetime, WindowEnd:dateti
     "two-of-three", datetime(2026-01-01T11:56:00Z), datetime(2026-01-01T12:01:00Z), "split", "host-a", 2,
     "two-of-three", datetime(2026-01-01T11:56:00Z), datetime(2026-01-01T12:01:00Z), "invalid", "host", 2
 ];
-union (Actual | extend Delta = 1), (Expected | extend Delta = -1)
+union (Actual | extend Case=tostring(Case), Host=tostring(Host) | extend Delta = 1), (Expected | extend Delta = -1)
 | summarize Delta = sum(Delta) by Scenario, WindowStart, WindowEnd, Case, Host, RuleCount
 | where Delta != 0

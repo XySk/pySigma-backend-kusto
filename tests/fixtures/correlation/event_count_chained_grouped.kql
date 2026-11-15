@@ -388,6 +388,6 @@ let Expected = datatable(WindowStart:datetime, WindowEnd:datetime, Case:string, 
     datetime(2026-01-01T12:03:00Z), datetime(2026-01-01T12:05:00Z), "parent-span", "alice", 2,
     datetime(2026-01-01T11:59:00Z), datetime(2026-01-01T12:01:00Z), "ten", "alice", 2
 ];
-union (Actual() | extend Delta = 1), (Expected | extend Delta = -1)
+union (Actual() | extend Case=tostring(Case), Actor=tostring(Actor) | extend Delta = 1), (Expected | extend Delta = -1)
 | summarize Delta = sum(Delta) by WindowStart, WindowEnd, Case, Actor, EventCount
 | where Delta != 0

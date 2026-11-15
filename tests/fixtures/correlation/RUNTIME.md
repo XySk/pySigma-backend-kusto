@@ -207,6 +207,23 @@ keeps every successful full alternative. It uses relational joins without bounde
 sequence arrays or sampling; dense alternatives can exhaust engine resources and
 no throughput claim is made.
 
+# Standard pipeline mapping runtime evidence
+
+Executed `standard_mappings.kql` on 2026-11-15 against the Microsoft Kusto
+emulator `2026.11.15.0741-2645-8e3387b-master`, database `NetDefaultDB`.
+The result contained zero exact multiset differences and no query errors.
+`standard_mappings.py` generates its search through standard Sigma collection
+parsing and `KustoBackend.convert()`. Independent literal expectations require
+sum 40 from two process searches contributing 10 each and one network search
+contributing 20, one logical Host group, and retained logical User values Alice
+and Bob. The fixture exercises source-specific standard mappings of detection
+predicates, timestamps, groups, measured fields, and context, with aliases and
+escaped physical column names. An unmatched process row carrying 100 is excluded.
+
+The first engine check exposed incorrect detection identifier quoting for names
+containing spaces. Detection fields now use bracketed JSON string identifiers,
+matching the quoting already used for correlation fields.
+
 After merging Boolean retained context, all eleven existing non-Boolean context
 fixtures (seven aggregate/temporal/nested and four ordered) were rerun together
 against the same engine and returned empty exact summary multiset difference tables.
@@ -238,6 +255,14 @@ client timeout. These small examples demonstrate correctness under the recorded
 configuration; they establish neither a production capacity target nor a minimum
 memory guarantee. Resource exhaustion fails explicitly and does not truncate
 retained values or invent relationships.
+
+After integrating count parents consuming retained context, the additional
+`standard_mappings_parent.kql` fixture completed on the same 12 GiB emulator with
+zero exact multiset differences and `HasErrors: false`. Its value-sum child
+retains mapped Alice/Bob values under logical User; the event-count parent groups
+by logical Host and User and returns each user once, without reapplying physical
+detection mappings to the child. String projections in the fixture comparison
+align the engine's dynamic grouping columns with the literal expected strings.
 
 ### Ordered typed-leaf signature candidate (2026-11-15)
 

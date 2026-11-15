@@ -196,6 +196,6 @@ let Expected = datatable(WindowStart:datetime, WindowEnd:datetime, Case:string, 
     datetime(2026-01-01T11:56:00Z), datetime(2026-01-01T12:01:00Z), "missing-values", "host", 2, 2,
     datetime(2026-01-01T11:57:00Z), datetime(2026-01-01T12:02:00Z), "missing-values", "host", 2, 2
 ];
-union (Actual() | extend Delta = 1), (Expected | extend Delta = -1)
+union (Actual() | extend Case=tostring(Case), Host=tostring(Host) | extend Delta = 1), (Expected | extend Delta = -1)
 | summarize Delta = sum(Delta) by WindowStart, WindowEnd, Case, Host, ValueCount_Actor, ValueCount_Target
 | where Delta != 0
