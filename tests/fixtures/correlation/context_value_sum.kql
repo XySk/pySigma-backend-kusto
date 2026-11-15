@@ -40,7 +40,7 @@ union (Events
 | where Marker =~ "match"
 | extend _sigma_context_timestamp = todatetime(["Timestamp"]), _sigma_context_group = tostring(["Host"]), _sigma_context_value = pack_array(gettype(["Server"]), ["Server"]), _sigma_context_value_1 = pack_array(gettype(["User"]), ["User"])
 | extend _sigma_context_rule = "source-rule")
-| project _sigma_context_timestamp, _sigma_context_group, _sigma_context_value, _sigma_context_value_1, _sigma_context_partition = 1
+| project _sigma_context_timestamp, _sigma_context_rule, _sigma_context_group, _sigma_context_value, _sigma_context_value_1, _sigma_context_partition = 1
 ) on _sigma_context_group
 | where _sigma_context_timestamp between ((_sigma_context_end - 5m) .. _sigma_context_end)
 | serialize _sigma_context_key = row_number());
@@ -113,14 +113,15 @@ let _sigma_context_distinct_1 = _sigma_context_matches
 | summarize _sigma_context_value_1 = take_any(_sigma_context_value_1) by _sigma_context_id, _sigma_identity_identity_1
 | summarize _sigma_context_collection_1 = make_list(pack_array(_sigma_context_value_1[1]), 1048576), _sigma_context_amount_1 = count() by _sigma_context_id;
 _sigma_context_summaries
-| join kind=inner (_sigma_context_rows) on _sigma_context_id
+| join kind=leftouter (_sigma_context_rows) on _sigma_context_id
+| extend _sigma_context_rows = coalesce(_sigma_context_rows, dynamic([]))
 | where assert(toscalar(_sigma_context_rows | summarize n = countif(_sigma_context_count != array_length(_sigma_context_rows)) | project n == 0), "Kusto retained context collection limit exceeded")
-| join kind=inner (_sigma_context_distinct) on _sigma_context_id
+| join kind=leftouter (_sigma_context_distinct) on _sigma_context_id
 | where assert(toscalar(_sigma_context_distinct | summarize n = countif(_sigma_context_amount != array_length(_sigma_context_collection)) | project n == 0), "Kusto retained context collection limit exceeded")
-| extend ["Server"] = _sigma_context_collection
-| join kind=inner (_sigma_context_distinct_1) on _sigma_context_id
+| extend ["Server"] = coalesce(_sigma_context_collection, dynamic([]))
+| join kind=leftouter (_sigma_context_distinct_1) on _sigma_context_id
 | where assert(toscalar(_sigma_context_distinct_1 | summarize n = countif(_sigma_context_amount_1 != array_length(_sigma_context_collection_1)) | project n == 0), "Kusto retained context collection limit exceeded")
-| extend ["User"] = _sigma_context_collection_1
+| extend ["User"] = coalesce(_sigma_context_collection_1, dynamic([]))
 | project ["WindowStart"], ["WindowEnd"], ["Host"], ["Server"], ["User"], ["ValueSum"], ["_sigma_context_rows"]
 };
 let Observed = Actual()
