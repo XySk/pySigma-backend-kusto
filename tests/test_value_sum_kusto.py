@@ -9,6 +9,7 @@ from sigma.backends.kusto import KustoBackend
 from sigma.collection import SigmaCollection
 from sigma.processing.pipeline import ProcessingPipeline
 from tests.correlation_helpers import convert_documents, correlation_document, source_document
+from tests.test_correlation_kusto import final_summary_projection, summary_data_query, summary_projections
 
 
 @pytest.mark.parametrize(
@@ -34,7 +35,7 @@ def test_sum_compares_fractional_threshold_at_each_exact_window_end(operator, sy
     assert "| where _sigma_timestamp between ((_sigma_window_end - 5m) .. _sigma_window_end)" in query
     assert f"{symbol} decimal(2.5)" in query
     assert f"{symbol} 2.5" in query
-    assert query.endswith('["Host"] = _sigma_group_0, ValueSum')
+    assert final_summary_projection(query).endswith('["Host"] = _sigma_group_0, ValueSum')
 
 
 def test_sum_conversion_honors_public_correlation_callback():
@@ -76,7 +77,7 @@ def test_sum_accepts_kusto_double_values_without_parsing_numeric_strings():
     assert 'in ("real", "double", "decimal") and isfinite(' in query
 
 
-def test_sum_checks_integer_range_before_comparing_or_returning_metrics():
+def test_sum_rejects_integer_overflow_before_exposing_public_results():
     (query,) = convert_documents(
         [
             source_document(),
@@ -88,7 +89,23 @@ def test_sum_checks_integer_range_before_comparing_or_returning_metrics():
     assert "decimal(-9223372036854775808)" in query
     assert "decimal(9223372036854775807)" in query
     assert '"Kusto value_sum integer overflow"' in query
-    assert query.index("| where assert(") < query.index("| extend ValueSum =")
+    # Overflow is checked independently of the qualifying-summary threshold,
+    # then the public result is gated on all validation errors being absent.
+    data_query = summary_data_query(query)
+    checks = query[len(data_query):]
+    assert '_sigma_correlation_error' not in data_query
+    assert 'todecimal(_sigma_integer_sum) >= decimal(0)' in data_query
+    assert 'todecimal(_sigma_integer_sum) >= decimal(0)' not in checks
+    assert '| where assert(' not in data_query
+    assert 'union (_sigma_sums | where _sigma_real_count == 0 and (isnull(_sigma_integer_sum)' in checks
+    assert '| project _sigma_correlation_error = "Kusto value_sum integer overflow"' in checks
+    assert 'let _sigma_guarded_query_rows = materialize(_sigma_guarded_query());' in query
+    assert 'toscalar(union (_sigma_validation_check()' in checks
+    assert 'summarize countif(isnotempty(_sigma_correlation_error))' in checks
+    assert query.endswith(
+        '| where assert(_sigma_guarded_query_failure == 0, "Kusto correlation validation failed: '
+        'Kusto value_sum integer overflow; unrecognized error sentinel")'
+    )
 
 
 @pytest.mark.parametrize("order", list(permutations(range(4))))
@@ -100,10 +117,10 @@ def test_sum_chain_converts_in_every_document_order(order):
 
     documents = [parent, unrelated, child, source]
     query = next(
-        q for q in convert_documents([documents[index] for index in order]) if q.startswith("let _sigma_child_0")
+        q for q in convert_documents([documents[index] for index in order]) if 'todatetime(["WindowEnd"])' in q
     )
 
-    assert query.startswith("let _sigma_child_0 = () {\n")
+    assert len(summary_projections(query)) == 2
     assert '_sigma_timestamp = todatetime(["WindowEnd"])' in query
     assert '_sigma_value = pack_array(gettype(["ValueSum"]), ["ValueSum"])' in query
-    assert query.count("| extend ValueSum = ") == 2
+    assert summary_data_query(query).count("| extend ValueSum = ") == 2

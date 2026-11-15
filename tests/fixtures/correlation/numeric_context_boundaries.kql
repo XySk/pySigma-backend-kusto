@@ -1,0 +1,245 @@
+let Events=datatable(Amount:dynamic) [dynamic(9007199254740992),dynamic(9007199254740993),dynamic(9007199254740993),dynamic(0),dynamic(1e100),dynamic(1e100),dynamic(-1e100)]
+| extend Timestamp=datetime(2026-01-01T12:00:00Z),Host="h",Marker="match",User="Alice";
+let Actual=(){
+let _sigma_guarded_query_ = () {
+let _sigma_shared_child = () {
+let _sigma_context_summary = () {
+let _sigma_weights = union (Events
+| where Marker =~ "match"
+| extend _sigma_timestamp = todatetime(["Timestamp"]), _sigma_group_0 = tostring(["Host"])
+| extend _sigma_rule = "source-rule")
+| where isnotnull(_sigma_timestamp) and isnotempty(_sigma_group_0)
+| summarize _sigma_weight = count() by _sigma_timestamp, _sigma_group_0;
+_sigma_weights
+| project _sigma_group_0, _sigma_window_end = _sigma_timestamp, _sigma_bin = bin(_sigma_timestamp, 5m)
+| join kind=inner (
+    _sigma_weights
+    | extend _sigma_bin = pack_array(bin(_sigma_timestamp, 5m), bin(_sigma_timestamp, 5m) + 5m)
+    | mv-expand _sigma_bin to typeof(datetime)
+) on _sigma_group_0, _sigma_bin
+| where _sigma_timestamp between ((_sigma_window_end - 5m) .. _sigma_window_end)
+| summarize EventCount = sum(_sigma_weight) by _sigma_window_end, _sigma_group_0
+| where EventCount >= 1
+| project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ["Host"] = _sigma_group_0, EventCount
+};
+let _sigma_context_summaries = materialize(_sigma_context_summary()
+| serialize _sigma_context_id = row_number());
+let _sigma_context_matches = materialize(
+_sigma_context_summaries | project _sigma_context_id, _sigma_context_end = WindowEnd, _sigma_context_group = ["Host"], _sigma_context_partition = 1
+| join kind=inner (
+union (Events
+| where Marker =~ "match"
+| extend _sigma_context_timestamp = todatetime(["Timestamp"]), _sigma_context_group = tostring(["Host"]), _sigma_context_value = pack_array(gettype(["User"]), ["User"]), _sigma_context_value_1 = pack_array(gettype(["Amount"]), ["Amount"])
+| extend _sigma_context_rule = "source-rule")
+| project _sigma_context_timestamp, _sigma_context_rule, _sigma_context_group, _sigma_context_value, _sigma_context_value_1, _sigma_context_partition = 1
+) on _sigma_context_group
+| where _sigma_context_timestamp between ((_sigma_context_end - 5m) .. _sigma_context_end)
+| serialize _sigma_context_key = row_number());
+let _sigma_context_rows = materialize(_sigma_context_matches
+| summarize _sigma_context_rows = make_list(pack_array(pack_array(_sigma_context_value, _sigma_context_value_1)), 1048576), _sigma_context_count = count() by _sigma_context_id);
+let _sigma_identity_input = materialize(_sigma_context_matches
+| project _sigma_context_key, _sigma_context_id, _sigma_identity_leaf = _sigma_context_value[1]
+| extend _sigma_identity_bound = 3 * strlen(dynamic_to_json(_sigma_identity_leaf)) + 3);
+let _sigma_identity_steps = materialize(_sigma_identity_input
+| mv-expand _sigma_identity_iteration = range(0, min_of(_sigma_identity_bound, 1048575), 1) to typeof(long)
+| sort by _sigma_context_key asc, _sigma_identity_iteration asc
+| scan declare (_sigma_identity_stack:dynamic = dynamic([])) with (step s: true => _sigma_identity_stack = case(
+    _sigma_identity_iteration == 0, pack_array(bag_pack('v', _sigma_identity_leaf, 'p', '$', 'i', 0, 'k', bag_keys(_sigma_identity_leaf))),
+    array_length(s._sigma_identity_stack) == 0, s._sigma_identity_stack,
+    gettype(s._sigma_identity_stack[-1].v) == 'dictionary' and tolong(s._sigma_identity_stack[-1].i) < array_length(s._sigma_identity_stack[-1].k), array_concat(array_slice(s._sigma_identity_stack, 0, -2), pack_array(bag_pack('v', s._sigma_identity_stack[-1].v, 'p', s._sigma_identity_stack[-1].p, 'i', tolong(s._sigma_identity_stack[-1].i) + 1, 'k', s._sigma_identity_stack[-1].k)), pack_array(bag_pack('v', s._sigma_identity_stack[-1].v[tostring(s._sigma_identity_stack[-1].k[tolong(s._sigma_identity_stack[-1].i)])], 'p', strcat(tostring(s._sigma_identity_stack[-1].p), 'k', dynamic_to_json(pack_array(s._sigma_identity_stack[-1].k[tolong(s._sigma_identity_stack[-1].i)]))), 'i', 0, 'k', bag_keys(s._sigma_identity_stack[-1].v[tostring(s._sigma_identity_stack[-1].k[tolong(s._sigma_identity_stack[-1].i)])])))),
+    gettype(s._sigma_identity_stack[-1].v) == 'array' and tolong(s._sigma_identity_stack[-1].i) < array_length(s._sigma_identity_stack[-1].v), array_concat(array_slice(s._sigma_identity_stack, 0, -2), pack_array(bag_pack('v', s._sigma_identity_stack[-1].v, 'p', s._sigma_identity_stack[-1].p, 'i', tolong(s._sigma_identity_stack[-1].i) + 1, 'k', s._sigma_identity_stack[-1].k)), pack_array(bag_pack('v', s._sigma_identity_stack[-1].v[tolong(s._sigma_identity_stack[-1].i)], 'p', strcat(tostring(s._sigma_identity_stack[-1].p), 'a', tostring(s._sigma_identity_stack[-1].i), ';'), 'i', 0, 'k', bag_keys(s._sigma_identity_stack[-1].v[tolong(s._sigma_identity_stack[-1].i)])))),
+    array_slice(s._sigma_identity_stack, 0, -2));)
+| extend _sigma_identity_frame = _sigma_identity_stack[-1]
+| extend _sigma_identity_type = gettype(_sigma_identity_frame.v), _sigma_identity_terminal = _sigma_identity_iteration == min_of(_sigma_identity_bound, 1048575), _sigma_identity_finished = array_length(_sigma_identity_stack) == 0
+| where _sigma_identity_terminal or (not(_sigma_identity_finished) and (_sigma_identity_type !in ('array', 'dictionary') or (_sigma_identity_type == 'array' and array_length(_sigma_identity_frame.v) == 0) or (_sigma_identity_type == 'dictionary' and array_length(bag_keys(_sigma_identity_frame.v)) == 0)))
+| project _sigma_context_key, _sigma_context_id, _sigma_identity_path = tostring(_sigma_identity_frame.p), _sigma_identity_type, _sigma_identity_leaf = _sigma_identity_frame.v, _sigma_identity_terminal, _sigma_identity_finished, _sigma_identity_bound);
+let _sigma_identity_canonical = materialize(_sigma_identity_steps
+| extend _sigma_identity_token = dynamic_to_json(pack_array(_sigma_identity_path, _sigma_identity_type, case(_sigma_identity_type == 'double' and toreal(_sigma_identity_leaf) == 0.0, '0', _sigma_identity_type == 'double' and isnan(toreal(_sigma_identity_leaf)), 'nan', _sigma_identity_type == 'decimal', tostring(todecimal(_sigma_identity_leaf)), dynamic_to_json(_sigma_identity_leaf))))
+| sort by _sigma_context_key asc, _sigma_identity_path asc
+| summarize _sigma_identity_tokens = make_list_if(_sigma_identity_token, not(_sigma_identity_terminal), 1048576), _sigma_identity_count = countif(not(_sigma_identity_terminal)), _sigma_identity_finished = countif(_sigma_identity_terminal and (not(_sigma_identity_finished) or _sigma_identity_bound > 1048575)) by _sigma_context_key, _sigma_context_id
+| extend _sigma_identity_signature = dynamic_to_json(_sigma_identity_tokens));
+let _sigma_identity_relation = _sigma_identity_canonical
+| sort by _sigma_context_id asc, _sigma_identity_signature asc, _sigma_context_key asc
+| scan declare (_sigma_identity_identity:long = 0) with (step s: true => _sigma_identity_identity = iff(_sigma_context_id == s._sigma_context_id and _sigma_identity_signature == s._sigma_identity_signature, s._sigma_identity_identity, _sigma_context_key);)
+| project _sigma_context_key, _sigma_identity_identity;
+let _sigma_context_distinct = _sigma_context_matches
+| join kind=inner (_sigma_identity_relation) on _sigma_context_key
+| summarize _sigma_context_value = take_any(_sigma_context_value) by _sigma_context_id, _sigma_identity_identity
+| summarize _sigma_context_collection = make_list(pack_array(_sigma_context_value[1]), 1048576), _sigma_context_amount = count() by _sigma_context_id;
+let _sigma_identity_input_1 = materialize(_sigma_context_matches
+| project _sigma_context_key, _sigma_context_id, _sigma_identity_leaf_1 = _sigma_context_value_1[1]
+| extend _sigma_identity_bound_1 = 3 * strlen(dynamic_to_json(_sigma_identity_leaf_1)) + 3);
+let _sigma_identity_steps_1 = materialize(_sigma_identity_input_1
+| mv-expand _sigma_identity_iteration_1 = range(0, min_of(_sigma_identity_bound_1, 1048575), 1) to typeof(long)
+| sort by _sigma_context_key asc, _sigma_identity_iteration_1 asc
+| scan declare (_sigma_identity_stack_1:dynamic = dynamic([])) with (step s: true => _sigma_identity_stack_1 = case(
+    _sigma_identity_iteration_1 == 0, pack_array(bag_pack('v', _sigma_identity_leaf_1, 'p', '$', 'i', 0, 'k', bag_keys(_sigma_identity_leaf_1))),
+    array_length(s._sigma_identity_stack_1) == 0, s._sigma_identity_stack_1,
+    gettype(s._sigma_identity_stack_1[-1].v) == 'dictionary' and tolong(s._sigma_identity_stack_1[-1].i) < array_length(s._sigma_identity_stack_1[-1].k), array_concat(array_slice(s._sigma_identity_stack_1, 0, -2), pack_array(bag_pack('v', s._sigma_identity_stack_1[-1].v, 'p', s._sigma_identity_stack_1[-1].p, 'i', tolong(s._sigma_identity_stack_1[-1].i) + 1, 'k', s._sigma_identity_stack_1[-1].k)), pack_array(bag_pack('v', s._sigma_identity_stack_1[-1].v[tostring(s._sigma_identity_stack_1[-1].k[tolong(s._sigma_identity_stack_1[-1].i)])], 'p', strcat(tostring(s._sigma_identity_stack_1[-1].p), 'k', dynamic_to_json(pack_array(s._sigma_identity_stack_1[-1].k[tolong(s._sigma_identity_stack_1[-1].i)]))), 'i', 0, 'k', bag_keys(s._sigma_identity_stack_1[-1].v[tostring(s._sigma_identity_stack_1[-1].k[tolong(s._sigma_identity_stack_1[-1].i)])])))),
+    gettype(s._sigma_identity_stack_1[-1].v) == 'array' and tolong(s._sigma_identity_stack_1[-1].i) < array_length(s._sigma_identity_stack_1[-1].v), array_concat(array_slice(s._sigma_identity_stack_1, 0, -2), pack_array(bag_pack('v', s._sigma_identity_stack_1[-1].v, 'p', s._sigma_identity_stack_1[-1].p, 'i', tolong(s._sigma_identity_stack_1[-1].i) + 1, 'k', s._sigma_identity_stack_1[-1].k)), pack_array(bag_pack('v', s._sigma_identity_stack_1[-1].v[tolong(s._sigma_identity_stack_1[-1].i)], 'p', strcat(tostring(s._sigma_identity_stack_1[-1].p), 'a', tostring(s._sigma_identity_stack_1[-1].i), ';'), 'i', 0, 'k', bag_keys(s._sigma_identity_stack_1[-1].v[tolong(s._sigma_identity_stack_1[-1].i)])))),
+    array_slice(s._sigma_identity_stack_1, 0, -2));)
+| extend _sigma_identity_frame_1 = _sigma_identity_stack_1[-1]
+| extend _sigma_identity_type_1 = gettype(_sigma_identity_frame_1.v), _sigma_identity_terminal_1 = _sigma_identity_iteration_1 == min_of(_sigma_identity_bound_1, 1048575), _sigma_identity_finished_1 = array_length(_sigma_identity_stack_1) == 0
+| where _sigma_identity_terminal_1 or (not(_sigma_identity_finished_1) and (_sigma_identity_type_1 !in ('array', 'dictionary') or (_sigma_identity_type_1 == 'array' and array_length(_sigma_identity_frame_1.v) == 0) or (_sigma_identity_type_1 == 'dictionary' and array_length(bag_keys(_sigma_identity_frame_1.v)) == 0)))
+| project _sigma_context_key, _sigma_context_id, _sigma_identity_path_1 = tostring(_sigma_identity_frame_1.p), _sigma_identity_type_1, _sigma_identity_leaf_1 = _sigma_identity_frame_1.v, _sigma_identity_terminal_1, _sigma_identity_finished_1, _sigma_identity_bound_1);
+let _sigma_identity_canonical_1 = materialize(_sigma_identity_steps_1
+| extend _sigma_identity_token_1 = dynamic_to_json(pack_array(_sigma_identity_path_1, _sigma_identity_type_1, case(_sigma_identity_type_1 == 'double' and toreal(_sigma_identity_leaf_1) == 0.0, '0', _sigma_identity_type_1 == 'double' and isnan(toreal(_sigma_identity_leaf_1)), 'nan', _sigma_identity_type_1 == 'decimal', tostring(todecimal(_sigma_identity_leaf_1)), dynamic_to_json(_sigma_identity_leaf_1))))
+| sort by _sigma_context_key asc, _sigma_identity_path_1 asc
+| summarize _sigma_identity_tokens_1 = make_list_if(_sigma_identity_token_1, not(_sigma_identity_terminal_1), 1048576), _sigma_identity_count_1 = countif(not(_sigma_identity_terminal_1)), _sigma_identity_finished_1 = countif(_sigma_identity_terminal_1 and (not(_sigma_identity_finished_1) or _sigma_identity_bound_1 > 1048575)) by _sigma_context_key, _sigma_context_id
+| extend _sigma_identity_signature_1 = dynamic_to_json(_sigma_identity_tokens_1));
+let _sigma_identity_relation_1 = _sigma_identity_canonical_1
+| sort by _sigma_context_id asc, _sigma_identity_signature_1 asc, _sigma_context_key asc
+| scan declare (_sigma_identity_identity_1:long = 0) with (step s: true => _sigma_identity_identity_1 = iff(_sigma_context_id == s._sigma_context_id and _sigma_identity_signature_1 == s._sigma_identity_signature_1, s._sigma_identity_identity_1, _sigma_context_key);)
+| project _sigma_context_key, _sigma_identity_identity_1;
+let _sigma_context_distinct_1 = _sigma_context_matches
+| join kind=inner (_sigma_identity_relation_1) on _sigma_context_key
+| summarize _sigma_context_value_1 = take_any(_sigma_context_value_1) by _sigma_context_id, _sigma_identity_identity_1
+| summarize _sigma_context_collection_1 = make_list(pack_array(_sigma_context_value_1[1]), 1048576), _sigma_context_amount_1 = count() by _sigma_context_id;
+_sigma_context_summaries
+| join kind=leftouter (_sigma_context_rows) on _sigma_context_id
+| extend _sigma_context_rows = coalesce(_sigma_context_rows, dynamic([]))
+| join kind=leftouter (_sigma_context_distinct) on _sigma_context_id
+| extend ["User"] = coalesce(_sigma_context_collection, dynamic([]))
+| join kind=leftouter (_sigma_context_distinct_1) on _sigma_context_id
+| extend ["Amount"] = coalesce(_sigma_context_collection_1, dynamic([]))
+| project ["WindowStart"], ["WindowEnd"], ["Host"], ["User"], ["Amount"], ["EventCount"], ["_sigma_context_rows"]
+};
+let _sigma_shared_results = materialize(_sigma_shared_child());
+let _sigma_parent_matches = materialize(union (_sigma_shared_results
+| serialize _sigma_child_match = row_number()
+| extend _sigma_child_match = strcat("_sigma_shared_child", "_", tostring(_sigma_child_match))
+| mv-expand _sigma_child_context_row = ["_sigma_context_rows"]
+| extend _sigma_timestamp = todatetime(["WindowEnd"]), _sigma_value = _sigma_child_context_row[1]
+| extend _sigma_rule = "child")
+| extend _sigma_child_match = tostring(column_ifexists("_sigma_child_match", "")));
+let _sigma_values = union (_sigma_parent_matches | where isempty(_sigma_child_match)), (_sigma_parent_matches | where isnotempty(_sigma_child_match) | extend _sigma_numeric_kind = iff(tostring(_sigma_value[0]) in ("int", "long", "real", "double", "decimal") and isfinite(toreal(_sigma_value[1])), tostring(_sigma_value[0]), ""), _sigma_numeric_decimal = iff(tostring(_sigma_value[0]) in ("int", "long", "real", "double", "decimal") and isfinite(toreal(_sigma_value[1])), todecimal(_sigma_value[1]), decimal(null)), _sigma_numeric_real = iff(tostring(_sigma_value[0]) in ("int", "long", "real", "double", "decimal") and isfinite(toreal(_sigma_value[1])), toreal(_sigma_value[1]), real(null)) | summarize take_any(*) by _sigma_child_match, _sigma_numeric_kind, _sigma_numeric_decimal, _sigma_numeric_real)
+| where isnotnull(_sigma_timestamp);
+let _sigma_ranked = materialize(
+_sigma_values
+| project _sigma_window_end = _sigma_timestamp, _sigma_bin = bin(_sigma_timestamp, 5m)
+| distinct *
+| join kind=inner (
+_sigma_values
+| extend _sigma_bin = pack_array(bin(_sigma_timestamp, 5m), bin(_sigma_timestamp, 5m) + 5m)
+| mv-expand _sigma_bin to typeof(datetime)
+) on _sigma_bin
+| where _sigma_timestamp between ((_sigma_window_end - 5m) .. _sigma_window_end)
+| where tostring(_sigma_value[0]) in ("int", "long", "real", "double", "decimal") and isfinite(toreal(_sigma_value[1]))
+| extend _sigma_partition = tostring(pack_array(_sigma_window_end)), _sigma_numeric = toreal(_sigma_value[1]), _sigma_precise = todecimal(_sigma_value[1])
+| sort by _sigma_partition asc, _sigma_numeric asc, _sigma_precise asc
+| serialize _sigma_rank = row_number(1, _sigma_partition != prev(_sigma_partition))
+);
+_sigma_ranked
+| join kind=inner (
+_sigma_ranked | summarize _sigma_population = max(_sigma_rank) by _sigma_partition
+) on _sigma_partition
+| where _sigma_rank == max_of(1, (_sigma_population / 100) * 75 + tolong(ceiling(toreal((_sigma_population % 100) * 75) / 100.0)))
+| extend ValuePercentile = _sigma_value[1]
+| where (gettype(ValuePercentile) in ("int", "long") and todecimal(ValuePercentile) >= decimal(-1)) or (gettype(ValuePercentile) in ("real", "double", "decimal") and toreal(ValuePercentile) >= -1)
+| project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ValuePercentile
+};
+let _sigma_validation_check_ = () {
+let _sigma_context_summary = () {
+let _sigma_weights = union (Events
+| where Marker =~ "match"
+| extend _sigma_timestamp = todatetime(["Timestamp"]), _sigma_group_0 = tostring(["Host"])
+| extend _sigma_rule = "source-rule")
+| where isnotnull(_sigma_timestamp) and isnotempty(_sigma_group_0)
+| summarize _sigma_weight = count() by _sigma_timestamp, _sigma_group_0;
+_sigma_weights
+| project _sigma_group_0, _sigma_window_end = _sigma_timestamp, _sigma_bin = bin(_sigma_timestamp, 5m)
+| join kind=inner (
+    _sigma_weights
+    | extend _sigma_bin = pack_array(bin(_sigma_timestamp, 5m), bin(_sigma_timestamp, 5m) + 5m)
+    | mv-expand _sigma_bin to typeof(datetime)
+) on _sigma_group_0, _sigma_bin
+| where _sigma_timestamp between ((_sigma_window_end - 5m) .. _sigma_window_end)
+| summarize EventCount = sum(_sigma_weight) by _sigma_window_end, _sigma_group_0
+| where EventCount >= 1
+| project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ["Host"] = _sigma_group_0, EventCount
+};
+let _sigma_context_summaries = materialize(_sigma_context_summary()
+| serialize _sigma_context_id = row_number());
+let _sigma_context_matches = materialize(
+_sigma_context_summaries | project _sigma_context_id, _sigma_context_end = WindowEnd, _sigma_context_group = ["Host"], _sigma_context_partition = 1
+| join kind=inner (
+union (Events
+| where Marker =~ "match"
+| extend _sigma_context_timestamp = todatetime(["Timestamp"]), _sigma_context_group = tostring(["Host"]), _sigma_context_value = pack_array(gettype(["User"]), ["User"]), _sigma_context_value_1 = pack_array(gettype(["Amount"]), ["Amount"])
+| extend _sigma_context_rule = "source-rule")
+| project _sigma_context_timestamp, _sigma_context_rule, _sigma_context_group, _sigma_context_value, _sigma_context_value_1, _sigma_context_partition = 1
+) on _sigma_context_group
+| where _sigma_context_timestamp between ((_sigma_context_end - 5m) .. _sigma_context_end)
+| serialize _sigma_context_key = row_number());
+let _sigma_context_rows = materialize(_sigma_context_matches
+| summarize _sigma_context_rows = make_list(pack_array(pack_array(_sigma_context_value, _sigma_context_value_1)), 1048576), _sigma_context_count = count() by _sigma_context_id);
+let _sigma_identity_input = materialize(_sigma_context_matches
+| project _sigma_context_key, _sigma_context_id, _sigma_identity_leaf = _sigma_context_value[1]
+| extend _sigma_identity_bound = 3 * strlen(dynamic_to_json(_sigma_identity_leaf)) + 3);
+let _sigma_identity_steps = materialize(_sigma_identity_input
+| mv-expand _sigma_identity_iteration = range(0, min_of(_sigma_identity_bound, 1048575), 1) to typeof(long)
+| sort by _sigma_context_key asc, _sigma_identity_iteration asc
+| scan declare (_sigma_identity_stack:dynamic = dynamic([])) with (step s: true => _sigma_identity_stack = case(
+    _sigma_identity_iteration == 0, pack_array(bag_pack('v', _sigma_identity_leaf, 'p', '$', 'i', 0, 'k', bag_keys(_sigma_identity_leaf))),
+    array_length(s._sigma_identity_stack) == 0, s._sigma_identity_stack,
+    gettype(s._sigma_identity_stack[-1].v) == 'dictionary' and tolong(s._sigma_identity_stack[-1].i) < array_length(s._sigma_identity_stack[-1].k), array_concat(array_slice(s._sigma_identity_stack, 0, -2), pack_array(bag_pack('v', s._sigma_identity_stack[-1].v, 'p', s._sigma_identity_stack[-1].p, 'i', tolong(s._sigma_identity_stack[-1].i) + 1, 'k', s._sigma_identity_stack[-1].k)), pack_array(bag_pack('v', s._sigma_identity_stack[-1].v[tostring(s._sigma_identity_stack[-1].k[tolong(s._sigma_identity_stack[-1].i)])], 'p', strcat(tostring(s._sigma_identity_stack[-1].p), 'k', dynamic_to_json(pack_array(s._sigma_identity_stack[-1].k[tolong(s._sigma_identity_stack[-1].i)]))), 'i', 0, 'k', bag_keys(s._sigma_identity_stack[-1].v[tostring(s._sigma_identity_stack[-1].k[tolong(s._sigma_identity_stack[-1].i)])])))),
+    gettype(s._sigma_identity_stack[-1].v) == 'array' and tolong(s._sigma_identity_stack[-1].i) < array_length(s._sigma_identity_stack[-1].v), array_concat(array_slice(s._sigma_identity_stack, 0, -2), pack_array(bag_pack('v', s._sigma_identity_stack[-1].v, 'p', s._sigma_identity_stack[-1].p, 'i', tolong(s._sigma_identity_stack[-1].i) + 1, 'k', s._sigma_identity_stack[-1].k)), pack_array(bag_pack('v', s._sigma_identity_stack[-1].v[tolong(s._sigma_identity_stack[-1].i)], 'p', strcat(tostring(s._sigma_identity_stack[-1].p), 'a', tostring(s._sigma_identity_stack[-1].i), ';'), 'i', 0, 'k', bag_keys(s._sigma_identity_stack[-1].v[tolong(s._sigma_identity_stack[-1].i)])))),
+    array_slice(s._sigma_identity_stack, 0, -2));)
+| extend _sigma_identity_frame = _sigma_identity_stack[-1]
+| extend _sigma_identity_type = gettype(_sigma_identity_frame.v), _sigma_identity_terminal = _sigma_identity_iteration == min_of(_sigma_identity_bound, 1048575), _sigma_identity_finished = array_length(_sigma_identity_stack) == 0
+| where _sigma_identity_terminal or (not(_sigma_identity_finished) and (_sigma_identity_type !in ('array', 'dictionary') or (_sigma_identity_type == 'array' and array_length(_sigma_identity_frame.v) == 0) or (_sigma_identity_type == 'dictionary' and array_length(bag_keys(_sigma_identity_frame.v)) == 0)))
+| project _sigma_context_key, _sigma_context_id, _sigma_identity_path = tostring(_sigma_identity_frame.p), _sigma_identity_type, _sigma_identity_leaf = _sigma_identity_frame.v, _sigma_identity_terminal, _sigma_identity_finished, _sigma_identity_bound);
+let _sigma_identity_canonical = materialize(_sigma_identity_steps
+| extend _sigma_identity_token = dynamic_to_json(pack_array(_sigma_identity_path, _sigma_identity_type, case(_sigma_identity_type == 'double' and toreal(_sigma_identity_leaf) == 0.0, '0', _sigma_identity_type == 'double' and isnan(toreal(_sigma_identity_leaf)), 'nan', _sigma_identity_type == 'decimal', tostring(todecimal(_sigma_identity_leaf)), dynamic_to_json(_sigma_identity_leaf))))
+| sort by _sigma_context_key asc, _sigma_identity_path asc
+| summarize _sigma_identity_tokens = make_list_if(_sigma_identity_token, not(_sigma_identity_terminal), 1048576), _sigma_identity_count = countif(not(_sigma_identity_terminal)), _sigma_identity_finished = countif(_sigma_identity_terminal and (not(_sigma_identity_finished) or _sigma_identity_bound > 1048575)) by _sigma_context_key, _sigma_context_id
+| extend _sigma_identity_signature = dynamic_to_json(_sigma_identity_tokens));
+let _sigma_identity_relation = _sigma_identity_canonical
+| sort by _sigma_context_id asc, _sigma_identity_signature asc, _sigma_context_key asc
+| scan declare (_sigma_identity_identity:long = 0) with (step s: true => _sigma_identity_identity = iff(_sigma_context_id == s._sigma_context_id and _sigma_identity_signature == s._sigma_identity_signature, s._sigma_identity_identity, _sigma_context_key);)
+| project _sigma_context_key, _sigma_identity_identity;
+let _sigma_context_distinct = _sigma_context_matches
+| join kind=inner (_sigma_identity_relation) on _sigma_context_key
+| summarize _sigma_context_value = take_any(_sigma_context_value) by _sigma_context_id, _sigma_identity_identity
+| summarize _sigma_context_collection = make_list(pack_array(_sigma_context_value[1]), 1048576), _sigma_context_amount = count() by _sigma_context_id;
+let _sigma_identity_input_1 = materialize(_sigma_context_matches
+| project _sigma_context_key, _sigma_context_id, _sigma_identity_leaf_1 = _sigma_context_value_1[1]
+| extend _sigma_identity_bound_1 = 3 * strlen(dynamic_to_json(_sigma_identity_leaf_1)) + 3);
+let _sigma_identity_steps_1 = materialize(_sigma_identity_input_1
+| mv-expand _sigma_identity_iteration_1 = range(0, min_of(_sigma_identity_bound_1, 1048575), 1) to typeof(long)
+| sort by _sigma_context_key asc, _sigma_identity_iteration_1 asc
+| scan declare (_sigma_identity_stack_1:dynamic = dynamic([])) with (step s: true => _sigma_identity_stack_1 = case(
+    _sigma_identity_iteration_1 == 0, pack_array(bag_pack('v', _sigma_identity_leaf_1, 'p', '$', 'i', 0, 'k', bag_keys(_sigma_identity_leaf_1))),
+    array_length(s._sigma_identity_stack_1) == 0, s._sigma_identity_stack_1,
+    gettype(s._sigma_identity_stack_1[-1].v) == 'dictionary' and tolong(s._sigma_identity_stack_1[-1].i) < array_length(s._sigma_identity_stack_1[-1].k), array_concat(array_slice(s._sigma_identity_stack_1, 0, -2), pack_array(bag_pack('v', s._sigma_identity_stack_1[-1].v, 'p', s._sigma_identity_stack_1[-1].p, 'i', tolong(s._sigma_identity_stack_1[-1].i) + 1, 'k', s._sigma_identity_stack_1[-1].k)), pack_array(bag_pack('v', s._sigma_identity_stack_1[-1].v[tostring(s._sigma_identity_stack_1[-1].k[tolong(s._sigma_identity_stack_1[-1].i)])], 'p', strcat(tostring(s._sigma_identity_stack_1[-1].p), 'k', dynamic_to_json(pack_array(s._sigma_identity_stack_1[-1].k[tolong(s._sigma_identity_stack_1[-1].i)]))), 'i', 0, 'k', bag_keys(s._sigma_identity_stack_1[-1].v[tostring(s._sigma_identity_stack_1[-1].k[tolong(s._sigma_identity_stack_1[-1].i)])])))),
+    gettype(s._sigma_identity_stack_1[-1].v) == 'array' and tolong(s._sigma_identity_stack_1[-1].i) < array_length(s._sigma_identity_stack_1[-1].v), array_concat(array_slice(s._sigma_identity_stack_1, 0, -2), pack_array(bag_pack('v', s._sigma_identity_stack_1[-1].v, 'p', s._sigma_identity_stack_1[-1].p, 'i', tolong(s._sigma_identity_stack_1[-1].i) + 1, 'k', s._sigma_identity_stack_1[-1].k)), pack_array(bag_pack('v', s._sigma_identity_stack_1[-1].v[tolong(s._sigma_identity_stack_1[-1].i)], 'p', strcat(tostring(s._sigma_identity_stack_1[-1].p), 'a', tostring(s._sigma_identity_stack_1[-1].i), ';'), 'i', 0, 'k', bag_keys(s._sigma_identity_stack_1[-1].v[tolong(s._sigma_identity_stack_1[-1].i)])))),
+    array_slice(s._sigma_identity_stack_1, 0, -2));)
+| extend _sigma_identity_frame_1 = _sigma_identity_stack_1[-1]
+| extend _sigma_identity_type_1 = gettype(_sigma_identity_frame_1.v), _sigma_identity_terminal_1 = _sigma_identity_iteration_1 == min_of(_sigma_identity_bound_1, 1048575), _sigma_identity_finished_1 = array_length(_sigma_identity_stack_1) == 0
+| where _sigma_identity_terminal_1 or (not(_sigma_identity_finished_1) and (_sigma_identity_type_1 !in ('array', 'dictionary') or (_sigma_identity_type_1 == 'array' and array_length(_sigma_identity_frame_1.v) == 0) or (_sigma_identity_type_1 == 'dictionary' and array_length(bag_keys(_sigma_identity_frame_1.v)) == 0)))
+| project _sigma_context_key, _sigma_context_id, _sigma_identity_path_1 = tostring(_sigma_identity_frame_1.p), _sigma_identity_type_1, _sigma_identity_leaf_1 = _sigma_identity_frame_1.v, _sigma_identity_terminal_1, _sigma_identity_finished_1, _sigma_identity_bound_1);
+let _sigma_identity_canonical_1 = materialize(_sigma_identity_steps_1
+| extend _sigma_identity_token_1 = dynamic_to_json(pack_array(_sigma_identity_path_1, _sigma_identity_type_1, case(_sigma_identity_type_1 == 'double' and toreal(_sigma_identity_leaf_1) == 0.0, '0', _sigma_identity_type_1 == 'double' and isnan(toreal(_sigma_identity_leaf_1)), 'nan', _sigma_identity_type_1 == 'decimal', tostring(todecimal(_sigma_identity_leaf_1)), dynamic_to_json(_sigma_identity_leaf_1))))
+| sort by _sigma_context_key asc, _sigma_identity_path_1 asc
+| summarize _sigma_identity_tokens_1 = make_list_if(_sigma_identity_token_1, not(_sigma_identity_terminal_1), 1048576), _sigma_identity_count_1 = countif(not(_sigma_identity_terminal_1)), _sigma_identity_finished_1 = countif(_sigma_identity_terminal_1 and (not(_sigma_identity_finished_1) or _sigma_identity_bound_1 > 1048575)) by _sigma_context_key, _sigma_context_id
+| extend _sigma_identity_signature_1 = dynamic_to_json(_sigma_identity_tokens_1));
+let _sigma_identity_relation_1 = _sigma_identity_canonical_1
+| sort by _sigma_context_id asc, _sigma_identity_signature_1 asc, _sigma_context_key asc
+| scan declare (_sigma_identity_identity_1:long = 0) with (step s: true => _sigma_identity_identity_1 = iff(_sigma_context_id == s._sigma_context_id and _sigma_identity_signature_1 == s._sigma_identity_signature_1, s._sigma_identity_identity_1, _sigma_context_key);)
+| project _sigma_context_key, _sigma_identity_identity_1;
+let _sigma_context_distinct_1 = _sigma_context_matches
+| join kind=inner (_sigma_identity_relation_1) on _sigma_context_key
+| summarize _sigma_context_value_1 = take_any(_sigma_context_value_1) by _sigma_context_id, _sigma_identity_identity_1
+| summarize _sigma_context_collection_1 = make_list(pack_array(_sigma_context_value_1[1]), 1048576), _sigma_context_amount_1 = count() by _sigma_context_id;
+union (_sigma_identity_canonical | where _sigma_identity_count != array_length(_sigma_identity_tokens) or _sigma_identity_finished != 0 | project _sigma_correlation_error = "Kusto dynamic identity traversal incomplete or exceeds range limit; signature leaf limit exceeded"), (_sigma_identity_canonical_1 | where _sigma_identity_count_1 != array_length(_sigma_identity_tokens_1) or _sigma_identity_finished_1 != 0 | project _sigma_correlation_error = "Kusto dynamic identity traversal incomplete or exceeds range limit; signature leaf limit exceeded"), (_sigma_context_rows | where _sigma_context_count != array_length(_sigma_context_rows) | project _sigma_correlation_error = "Kusto retained context collection limit exceeded"), (_sigma_context_distinct | where _sigma_context_amount != array_length(_sigma_context_collection) | project _sigma_correlation_error = "Kusto retained context collection limit exceeded"), (_sigma_context_distinct_1 | where _sigma_context_amount_1 != array_length(_sigma_context_collection_1) | project _sigma_correlation_error = "Kusto retained context collection limit exceeded")
+};
+let _sigma_guarded_query__rows = materialize(_sigma_guarded_query_());
+let _sigma_guarded_query__failure = toscalar(union (_sigma_validation_check_() | project _sigma_correlation_error_ = tostring(_sigma_correlation_error)) | summarize countif(isnotempty(_sigma_correlation_error_)));
+_sigma_guarded_query__rows
+| where assert(_sigma_guarded_query__failure == 0, "Kusto correlation validation failed: Kusto dynamic identity traversal incomplete or exceeds range limit; signature leaf limit exceeded; Kusto retained context collection limit exceeded; unrecognized error sentinel")
+};
+let Observed=Actual() | project Metric=tostring(ValuePercentile);
+let Expected=datatable(Metric:string) ["9007199254740993"];
+union (Observed | extend Delta=1), (Expected | extend Delta=-1)
+| summarize Delta=sum(Delta) by Metric
+| where Delta!=0
