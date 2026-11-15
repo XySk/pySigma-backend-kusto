@@ -139,3 +139,41 @@ def test_builtin_one_to_many_mapping_is_not_silently_reduced_to_first_target():
         KustoBackend(processing_pipeline=pipeline, correlation_timestamp_field="Timestamp").convert(
             correlation_collection(value_count_correlation(field="User"))
         )
+
+
+def test_standard_mapping_preserves_logical_child_group_fields():
+    import yaml
+
+    from sigma.collection import SigmaCollection
+    from tests.correlation_helpers import correlation_document, source_document
+
+    collection = SigmaCollection.from_yaml(
+        yaml.safe_dump_all(
+            [
+                source_document(),
+                correlation_document("child", "event_count", ["source-rule"], condition={"gte": 1}),
+                correlation_document("parent", "event_count", ["child"], condition={"gte": 1}),
+            ]
+        )
+    )
+    (query,) = KustoBackend(
+        processing_pipeline=mapping_pipeline({"Host": "Machine Name"}), correlation_timestamp_field="Timestamp"
+    ).convert(collection)
+    assert 'tostring(["Machine Name"])' in query
+    assert 'todatetime(["WindowEnd"]), _sigma_group_0 = tostring(["Host"])' in query
+
+
+def test_ordinary_detection_still_supports_one_to_many_and_escapes_identifier_quotes():
+    import yaml
+
+    from sigma.collection import SigmaCollection
+    from tests.correlation_helpers import source_document
+
+    source = source_document()
+    source["detection"]["selection"] = {"User": "Alice"}
+    (query,) = KustoBackend(processing_pipeline=mapping_pipeline({"User": ['Actor "Name"', "Target\\Name"]})).convert(
+        SigmaCollection.from_yaml(yaml.safe_dump(source))
+    )
+    assert '["Actor \\"Name\\""] =~ "Alice"' in query
+    assert '["Target\\\\Name"] =~ "Alice"' in query
+    assert " or " in query
