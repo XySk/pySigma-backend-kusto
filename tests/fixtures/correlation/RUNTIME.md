@@ -571,3 +571,75 @@ selected hashes and their attempted/not-run states, request options, engine
 version, strict harness outcome, error payload, and saved-artifact hashes. Raw
 local requests and responses remain under
 `/tmp/kusto-ticket-27-final-acceptance-9325782-network`.
+
+### Typed grouped retained-context join correction (2026-11-15)
+
+The standard-mappings diagnostic on candidate `d95fa34` exposed a retained-context
+regression: ValueSum was correctly 40, while User was empty rather than Alice and
+Bob. The normalized union shared summary and source schemas. Its summary side
+retained null source timestamp/context columns, so the subsequent join suffixed
+the real source columns and the window predicate read the null summary timestamp.
+The correction projects only the summary ID, window end, normalized grouping
+identities, and partition before joining source matches.
+
+A new public-conversion fixture, `typed_grouped_context.kql`, first reproduced
+this independently: numeric Host 1/east had EventCount 2 and string Host "1"/east
+and numeric Host 1/west each had EventCount 1, but every User/Server collection was
+empty. Its literal expected collections were unchanged for the green run. The
+parent variant checks the four observed User/Server relationships and forbids
+cross-pairs through an exact result multiset comparison.
+
+The first generic diagnostic attempt exposed a dynamic/string Region union
+mismatch; its observed Region projection was corrected before the genuine red
+run. The existing `context_nested.kql` diagnostic likewise required
+`Host=tostring(Host)` to align with its expected table. Its literal expected data
+and nested context type/relationship checks remain unchanged. These semantic
+HTTP 400 responses are retained alongside the red/green evidence.
+
+All requests were serial, owned by the retained-context repair workstream, on
+`NetDefaultDB`, engine build `1.0.9815.14081`, product version
+`2026.11.15.0741-2645-8e3387b-master`. The emulator and per-query cap remained
+12 GiB (`12884901888` bytes), within the user's absolute 16 GiB total ceiling.
+The client timeout was 360 seconds. No memory configuration changed and no
+resource-failure retry occurred. Each passing response was also checked for
+exactly one empty PrimaryResult and exactly one completion with both
+`HasErrors=false` and `Cancelled=false`.
+
+[Structured evidence](runtime-evidence/typed-retained-context-fix.json) contains
+the records, fixture/request metadata, response hashes, primary diagnostics,
+completion frames, and semantic-error payloads. Raw requests and responses remain
+under the `/tmp/kusto-context-*` directories identified there. Full configured
+pytest passed **586 tests**, with **96.16% coverage**; Ruff and diff checks passed.
+This focused repair does not establish acceptance for unrelated combined-stage
+fixtures or close the outstanding range-parser and partial-ordered gaps.
+
+The focused engine outcomes were:
+
+| Fixture | Seconds | Result |
+| --- | ---: | --- |
+| `standard_mappings.kql` | 21.111 | PASS |
+| `context_event_count.kql` | 36.368 | PASS |
+| `context_nested.kql` (Host diagnostic aligned) | 46.332 | PASS |
+| `context_value_sum.kql` | 32.208 | PASS |
+| `typed_grouped_context.kql` | 44.888 | PASS |
+
+`typed_grouped_context_parent.kql` failed with curl error 52, "Empty reply from
+server", before any response could establish a primary table or completion.
+Engine requests stopped immediately; no resource-failure retry was attempted.
+`standard_mappings_parent.kql` was not run in this workstream. Thus direct grouped
+context is runtime-verified, while the new parent relationship fixture remains
+runtime-incomplete. The transport failure alone does not establish OOM, and
+read-only Docker inspection was unavailable due to socket permissions.
+
+The branch incorporated integration `54a9a0d` (the separate average-fixture
+Machine diagnostic alignment) before its final configured test run: 586 passed
+in 21.71 seconds, 96.16% coverage. That merge changes the complete manifest hash;
+the executed fixture hashes remain recorded separately in each runtime record.
+
+Root subsequently inspected the container read-only: it exited with code 137,
+and its logs explicitly reported `Crash_UnhandledException` with
+`System.OutOfMemoryException` in `TimerQueue`, followed by the Kusto process
+being `Killed`. Docker's `OOMKilled` flag was false; the runtime OOM diagnosis
+relies on the explicit exception log. Both memory and memory-swap limits remained
+`12884901888` bytes. This confirms the typed-parent attempt failed due to runtime
+memory exhaustion. It remains incomplete and was not retried.
