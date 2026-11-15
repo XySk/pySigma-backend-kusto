@@ -103,3 +103,11 @@ and numeric/textual values with equal renderings. Collection display order is
 irrelevant; full summary multisets must agree. These fixtures exercise logical
 child fields and child `WindowEnd` timestamps. See `RUNTIME.md` for execution
 results and the emulator resource configuration.
+
+`temporal_context.py` generates temporal retained-context consumer fixtures through
+standard Sigma collection parsing and `KustoBackend.convert`. Literal expected
+summaries cover mixed direct/child inputs, duplicate observed pairs, repeated
+completion times, inherited field requests, all successful ordered alternatives,
+satisfied Boolean alternatives, downstream grouping by retained relationships,
+and shared-child branches. The comparisons use only public result columns and
+check exact summary multisets. See `RUNTIME.md` for execution evidence.

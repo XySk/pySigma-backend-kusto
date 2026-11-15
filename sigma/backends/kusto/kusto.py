@@ -509,7 +509,15 @@ class KustoBackend(TextQueryBackend):
             queries = restored
         requested_context = list(rule.fields or [])
         for reference in rule.referenced_rules:
-            for field in reference.rule.fields or []:
+            source = reference.rule
+            # Carry requests through summaries, including requests inherited
+            # from descendants and fields currently represented as scalar groups.
+            source_requests = source.fields or []
+            if isinstance(source, SigmaCorrelationRule):
+                source_requests = source.get_conversion_states()[0].processing_state.get(
+                    "kusto_requested_fields", source_requests
+                )
+            for field in source_requests:
                 logical = next((alias.alias for alias in rule.aliases if alias.mapping.get(reference) == field), field)
                 requested_context.append(logical)
         context_fields = list(dict.fromkeys(requested_context))
@@ -523,6 +531,7 @@ class KustoBackend(TextQueryBackend):
                 + ". Use an explicit correlation alias, for example fields: [OriginalWindowEnd] and "
                 "aliases: {OriginalWindowEnd: {source-rule: WindowEnd}}.",
             )
+        requested_fields = tuple(context_fields)
         context_fields = [field for field in context_fields if field not in (rule.group_by or [])]
         context_column = None
         if context_fields:
@@ -546,6 +555,7 @@ class KustoBackend(TextQueryBackend):
                         "kusto_result_fields": result_fields.copy(),
                         "kusto_source_fields": result_fields.copy(),
                         "kusto_result_timestamp": "WindowEnd",
+                        "kusto_requested_fields": requested_fields,
                         "kusto_context_fields": tuple(context_fields),
                         "kusto_context_rows": context_column,
                         "kusto_source_tables": source_tables.copy(),
