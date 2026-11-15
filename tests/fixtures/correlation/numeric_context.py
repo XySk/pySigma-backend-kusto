@@ -35,6 +35,11 @@ def fixture(kind, *, grouped=False, mixed=False, metric=False, nested=False, bou
         parent["aliases"] = {"Actor": {name: "User" for name in parent["rules"]}}
     if boundary:
         docs[-1]["correlation"]["condition"]["percentile"] = 75
+    if not any((grouped, mixed, metric, nested)):
+        # These single-child Amount cases need neither User context nor a Host
+        # partition. Keep relationship/group/metric coverage in the other cases.
+        docs[0]["fields"] = ["Amount"]
+        docs[1]["correlation"]["group-by"] = []
     (query,) = convert_documents(docs)
     metric_name = {"value_sum": "ValueSum", "value_avg": "ValueAvg", "value_percentile": "ValuePercentile"}[kind]
     groups = ["Actor"] if grouped else []

@@ -571,3 +571,20 @@ selected hashes and their attempted/not-run states, request options, engine
 version, strict harness outcome, error payload, and saved-artifact hashes. Raw
 local requests and responses remain under
 `/tmp/kusto-ticket-27-final-acceptance-9325782-network`.
+
+### Focused numeric fixture preparation: seven minimal cases (offline)
+
+The three simple ungrouped numeric parents, their three empty-population cases,
+and the adjacent-long boundary case now request only `Amount` and use an
+ungrouped child. Those literal inputs have one relevant Host/User combination;
+unused User context and child Host grouping do not affect the agreed numeric
+observations. Every literal input, threshold, expected numeric value, and result
+comparison is unchanged. The cases still require 10,10,20 to contribute sum 30,
+average 15 and percentile(60) 20, preserve zero/undefined empty behavior, and
+select the exact adjacent long at the boundary.
+
+This is fixture preparation only: no engine queries were run for this reduction.
+Grouped/mixed inputs, scalar metrics, multilevel retention and multiple-child
+fixtures were left intact. Their earlier resource failures and unexecuted gates
+remain recorded; these seven focused cases do not establish full-stage runtime
+acceptance. No production code or memory configuration changed.
