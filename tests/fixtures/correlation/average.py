@@ -79,16 +79,19 @@ def average_fixtures(check, header):
     datetime(2026-01-01T12:00:00Z), "finite", dynamic(-2.0), "match",
     datetime(2026-01-01T12:00:00Z), "finite", dynamic(3.5), "match",
     datetime(2026-01-01T12:00:00Z), "finite", dynamic("100"), "match",
-    datetime(2026-01-01T12:00:00Z), "finite", dynamic(real(nan)), "match",
-    datetime(2026-01-01T12:00:00Z), "finite", dynamic(real(+inf)), "match",
-    datetime(2026-01-01T12:00:00Z), "finite", dynamic(real(-inf)), "match",
-    datetime(2026-01-01T12:00:00Z), "undefined", dynamic(real(nan)), "match",
-    datetime(2026-01-01T12:00:00Z), "undefined", dynamic(real(+inf)), "match",
+    datetime(2026-01-01T12:00:00Z), "finite", dynamic("nan_value"), "match",
+    datetime(2026-01-01T12:00:00Z), "finite", dynamic("positive_inf"), "match",
+    datetime(2026-01-01T12:00:00Z), "finite", dynamic("negative_inf"), "match",
+    datetime(2026-01-01T12:00:00Z), "undefined", dynamic("nan_value"), "match",
+    datetime(2026-01-01T12:00:00Z), "undefined", dynamic("positive_inf"), "match",
     datetime(2026-01-01T12:00:00Z), "undefined", dynamic(null), "match",
     datetime(2026-01-01T12:00:00Z), "float", dynamic(0.1), "match",
     datetime(2026-01-01T12:00:00Z), "float", dynamic(0.2), "match",
     datetime(2026-01-01T12:01:00Z), "undefined", dynamic("bad"), "match"
-];
+]
+| extend Amount = case(tostring(Amount) == "nan_value", pack_array(real(nan))[0],
+    tostring(Amount) == "positive_inf", pack_array(real(+inf))[0],
+    tostring(Amount) == "negative_inf", pack_array(real(-inf))[0], Amount);
 """
     expected = """let Expected = datatable(WindowStart:datetime, WindowEnd:datetime, Host:string, ValueAvg:real) [
     datetime(2026-01-01T11:55:00Z), datetime(2026-01-01T12:00:00Z), "finite", 0.5,

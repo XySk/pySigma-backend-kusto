@@ -58,3 +58,30 @@ corrected queries passed all six fixtures. Integer observations are converted to
 real before averaging, avoiding integer-sum wrap while accepting ordinary
 floating-point precision. These checks establish fixture correctness, not
 production throughput or capacity.
+
+## Boolean temporal runtime evidence
+
+Executed on 2026-11-15 against the same Microsoft Kusto emulator, database
+`NetDefaultDB`, engine `2026.11.15.0741-2645-8e3387b-master`, through the REST query
+API. These five files were generated through ordinary collection parsing and
+`KustoBackend.convert`; their literal expected summaries are independently worked
+examples in `boolean_generate.py`. Every execution completed successfully and
+returned zero multiset differences (including duplicate-summary detection).
+
+| Fixture | Verified behavior |
+| --- | --- |
+| `boolean_presence.kql` | AND/NOT, repeated matches, independent groups, simultaneous disqualification, inclusive endpoint and one tick outside, no expiry-only results. |
+| `boolean_alternatives.kql` | C alone satisfies `(A and B) or C`; incomplete and successful alternatives, total span, overlapping summaries. |
+| `boolean_precedence.kql` | NOT/AND before OR, evaluation on a negated source timestamp, absent and present negative evidence. |
+| `boolean_nested_not.kql` | Nested negation, B alone, inclusive boundary and one tick outside. |
+| `boolean_chained.kql` | Mixed direct and child sources, child WindowEnd anchoring, negation at the exact endpoint and one tick outside. |
+
+The fixtures establish the delivered presence behavior. Retained context from
+satisfied alternatives is deferred to its separate stage. This run makes no
+throughput claim.
+
+## Existing value-count acceptance remains incomplete
+
+The same engine rejected the existing value-count fixtures with `SEM0001: Cannot compare dynamic values without explicit cast`. The emitted identity self-join compares boxed dynamic values directly. This also prevents chains containing value-count summaries from passing runtime acceptance. A singleton set-difference experiment passed scalar cases but distinguished equivalent reordered bags and signed zero; it was discarded. Canonical JSON alone loses nested extended runtime types. No replacement with those semantic losses has been adopted.
+
+Fixture inputs were corrected to construct real NaN and datetime-like strings at runtime: `dynamic(real(nan))` becomes a string, while an ISO datetime string inside a dynamic literal becomes a datetime. Public conversion tests passing does not resolve the query error. The full regression gate for issue #18 and integrated acceptance for #17 remain open.

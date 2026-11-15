@@ -13,7 +13,16 @@ from sigma.conditions import (
 from sigma.conversion.base import TextQueryBackend
 from sigma.conversion.deferred import DeferredQueryExpression
 from sigma.conversion.state import ConversionState
-from sigma.correlations import SigmaCorrelationConditionOperator, SigmaCorrelationRule, SigmaCorrelationType
+from sigma.correlations import (
+    CorrelationConditionAND,
+    CorrelationConditionNOT,
+    CorrelationConditionOR,
+    SigmaCorrelationConditionOperator,
+    SigmaCorrelationRule,
+    SigmaCorrelationType,
+    SigmaExtendedCorrelationCondition,
+    SigmaRuleReference,
+)
 from sigma.exceptions import SigmaConversionError
 from sigma.types import SigmaCompareExpression, SigmaNumber, SigmaString, SpecialChars
 
@@ -413,7 +422,7 @@ class KustoBackend(TextQueryBackend):
                 f"Kusto {count_type} grouping fields conflict with result columns: "
                 + ", ".join(sorted(conflicting_fields)),
             )
-        if not rule.rules:
+        if not rule.referenced_rules:
             raise SigmaConversionError(
                 rule, rule.source, f"Kusto {count_type} correlations must reference at least one source rule."
             )
@@ -425,7 +434,14 @@ class KustoBackend(TextQueryBackend):
             SigmaCorrelationConditionOperator.EQ: "==",
             SigmaCorrelationConditionOperator.NEQ: "!=",
         }
-        query_operator = condition_operators.get(rule.condition.op) if rule.condition is not None else ">="
+        boolean = isinstance(rule.condition, SigmaExtendedCorrelationCondition)
+        if boolean and rule.type != SigmaCorrelationType.TEMPORAL:
+            raise SigmaConversionError(
+                rule,
+                rule.source,
+                "Kusto Boolean expressions require temporal; temporal_ordered requires a full numeric sequence condition.",
+            )
+        query_operator = ">=" if boolean or rule.condition is None else condition_operators.get(rule.condition.op)
         if query_operator is None:
             raise SigmaConversionError(
                 rule,
@@ -446,7 +462,7 @@ class KustoBackend(TextQueryBackend):
         source_tables = set().union(
             *(
                 self._correlation_source_tables(state)
-                for reference in rule.rules
+                for reference in rule.referenced_rules
                 for state in reference.rule.get_conversion_states()
             )
         )
@@ -516,10 +532,10 @@ class KustoBackend(TextQueryBackend):
         return queries, states
 
     def _count_search(self, rule, allocate):
-        if not any(isinstance(reference.rule, SigmaCorrelationRule) for reference in rule.rules):
+        if not any(isinstance(reference.rule, SigmaCorrelationRule) for reference in rule.referenced_rules):
             return "", self.convert_correlation_search(rule)
         definitions, searches = [], []
-        for reference in rule.rules:
+        for reference in rule.referenced_rules:
             source = reference.rule
             normalization = self.convert_correlation_search_field_normalization_expression(rule.aliases, reference)
             for query in source.get_conversion_result():
@@ -554,7 +570,7 @@ class KustoBackend(TextQueryBackend):
         for alias in rule.aliases:
             source_fields.add(alias.alias)
             source_fields.update(alias.mapping.values())
-        for reference in rule.rules:
+        for reference in rule.referenced_rules:
             _, states = self._validate_count_source(rule, getattr(reference, "rule", None))
             tables = [state.processing_state.get("query_table") for state in states]
             if len(set(tables)) != 1:
@@ -567,12 +583,13 @@ class KustoBackend(TextQueryBackend):
                 source_fields.update(state.processing_state.get("kusto_source_fields", ()))
                 source_fields.update(self._correlation_source_tables(state))
 
-        threshold = rule.condition.count if rule.condition is not None else len(rule.rules)
+        boolean = isinstance(rule.condition, SigmaExtendedCorrelationCondition)
+        threshold = rule.condition.count if rule.condition is not None and not boolean else len(rule.referenced_rules)
         original_correlation = rule.custom_attributes.get("correlation")
         omitted_condition = (
             rule.condition is None or original_correlation is not None and original_correlation.get("condition") is None
         )
-        source_type_count = len({id(reference.rule) for reference in rule.rules})
+        source_type_count = len({id(reference.rule) for reference in rule.referenced_rules})
         if temporal and omitted_condition:
             # pySigma supplies a default >= list length. Repeated references to
             # the same resolved source still represent only one rule type.
@@ -630,7 +647,7 @@ class KustoBackend(TextQueryBackend):
         if ordered:
             columns["sequence_start"] = allocate("_sigma_sequence_start")
             columns["sequence_end"] = allocate("_sigma_sequence_end")
-            columns["steps"] = [allocate(f"_sigma_sequence_{index}") for index in range(len(rule.rules))]
+            columns["steps"] = [allocate(f"_sigma_sequence_{index}") for index in range(len(rule.referenced_rules))]
         self._correlation_group_by = rule.group_by or []
         self._correlation_counted_fields = counted_fields or []
         self._correlation_columns = columns
@@ -735,7 +752,16 @@ class KustoBackend(TextQueryBackend):
                 f"{metric} = count_distinctif({value}, isnotempty({value}))"
                 for metric, value in zip(metrics, columns["values"])
             ]
-        if rule.type != SigmaCorrelationType.VALUE_SUM:
+        if boolean:
+            references = {reference.reference: reference.rule for reference in rule.referenced_rules}
+            presence = {}
+            for reference, source in references.items():
+                identity = json.dumps(str(source.name or source.id), ensure_ascii=False)
+                column = allocate("_sigma_present")
+                aggregates.append(f"{column} = countif({columns['rule']} == {identity}) > 0")
+                presence[reference] = column
+            comparisons = self._boolean_temporal_expression(rule, rule.condition.parsed, presence)
+        elif rule.type != SigmaCorrelationType.VALUE_SUM:
             comparisons = " and ".join(f"{metric} {query_operator} {threshold}" for metric in metrics)
         if rule.type == SigmaCorrelationType.VALUE_AVG:
             # Kusto avgif() returns NaN for no observations, which satisfies
@@ -762,6 +788,23 @@ class KustoBackend(TextQueryBackend):
             f"| where {comparisons}\n"
             f"| project {result_fields}"
         ]
+
+    def _boolean_temporal_expression(self, rule, node, presence):
+        """Translate the upstream parsed tree over window-wide presence columns."""
+        if isinstance(node, SigmaRuleReference) and node.reference in presence:
+            return presence[node.reference]
+        if isinstance(node, CorrelationConditionNOT) and len(node.args) == 1:
+            return f"not({self._boolean_temporal_expression(rule, node.args[0], presence)})"
+        if isinstance(node, (CorrelationConditionAND, CorrelationConditionOR)) and node.args:
+            operator = " and " if isinstance(node, CorrelationConditionAND) else " or "
+            return (
+                "(" + operator.join(self._boolean_temporal_expression(rule, arg, presence) for arg in node.args) + ")"
+            )
+        raise SigmaConversionError(
+            rule,
+            rule.source,
+            "Unsupported Boolean temporal expression; use resolved rule references, and, or, not, and parentheses.",
+        )
 
     def _counted_value_identities(self, search, columns, valid_rows, allocate):
         # count_distinctif() and summarize-by do not accept dynamic values.
@@ -804,7 +847,7 @@ class KustoBackend(TextQueryBackend):
             columns[name] for name in ("timestamp", "rule", "weights", "sequence_start", "sequence_end", "bin")
         )
         groups, steps = columns["groups"], columns["steps"]
-        identities = [reference.rule.name or str(reference.rule.id) for reference in rule.rules]
+        identities = [reference.rule.name or str(reference.rule.id) for reference in rule.referenced_rules]
         retained_fields = ", ".join([timestamp, *groups, rule_column])
         first_fields = ", ".join([f"{start} = {timestamp}", f"{end} = {timestamp}", *groups])
         candidate_fields = ", ".join([timestamp, *groups, f"{time_bin} = bin({timestamp}, {span})"])

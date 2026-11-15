@@ -1537,17 +1537,18 @@ let Events = union (datatable(Timestamp:string, Case:string, Value:dynamic, Mark
     "2026-01-01T12:02:00Z", "bag", dynamic({"a":2,"b":{"x":2,"y":3}}), "match",
     "2026-01-01T12:00:00Z", "containers", dynamic([]), "match",
     "2026-01-01T12:01:00Z", "containers", dynamic({}), "match",
-    "2026-01-01T12:00:00Z", "nan", dynamic(real(nan)), "match",
-    "2026-01-01T12:01:00Z", "nan", dynamic(real(nan)), "match",
     "2026-01-01T12:02:00Z", "nan", dynamic("NaN"), "match",
     "2026-01-01T12:00:00Z", "signed-zero", dynamic(real(0.0)), "match",
     "2026-01-01T12:01:00Z", "signed-zero", dynamic(real(-0.0)), "match",
     "2026-01-01T12:02:00Z", "signed-zero", dynamic("0"), "match",
-    "2026-01-01T12:00:00Z", "nested-nan", dynamic([real(nan)]), "match",
-    "2026-01-01T12:01:00Z", "nested-nan", dynamic([real(nan)]), "match",
     "2026-01-01T12:02:00Z", "nested-nan", dynamic(["NaN"]), "match",
     "invalid", "scalar", dynamic("ignored"), "match"
 ]),
+// Construct real NaNs at runtime: dynamic literals round-trip them as strings.
+(print Timestamp="2026-01-01T12:00:00Z", Case="nan", Value=pack_array(real(nan))[0], Marker="match"),
+(print Timestamp="2026-01-01T12:01:00Z", Case="nan", Value=pack_array(real(nan))[0], Marker="match"),
+(print Timestamp="2026-01-01T12:00:00Z", Case="nested-nan", Value=pack_array(real(nan)), Marker="match"),
+(print Timestamp="2026-01-01T12:01:00Z", Case="nested-nan", Value=pack_array(real(nan)), Marker="match"),
 (print Timestamp="2026-01-01T12:00:00Z", Case="array", Value=Extended, Marker="match"),
 (print Timestamp="2026-01-01T12:01:00Z", Case="array", Value=Text, Marker="match"),
 (print Timestamp="2026-01-01T12:00:00Z", Case="nested-bag", Value=bag_pack("a", Extended), Marker="match"),
@@ -1610,12 +1611,14 @@ def typed_chained_value_count_fixture():
     ]
     data = """// The child returns metric long(0), which differs from direct string "0".
 // Two child datetime ends plus one direct string end are three distinct End values.
-let Events = datatable(Timestamp:string, Case:string, User:dynamic, End:dynamic, Marker:string) [
+let Events = union (datatable(Timestamp:string, Case:string, User:dynamic, End:dynamic, Marker:string) [
     "2026-01-01T12:00:00Z", "typed-chain", dynamic(null), dynamic(null), "E",
     "2026-01-01T12:01:00Z", "typed-chain", dynamic(""), dynamic(null), "E",
-    "2026-01-01T12:01:00Z", "typed-chain", dynamic("0"), dynamic("2026-01-01T12:00:00.0000000Z"), "D",
     "2026-01-01T12:02:00Z", "typed-chain", dynamic(null), dynamic(""), "D"
-];
+]),
+// Construct the text at runtime: dynamic literals promote ISO strings to datetime.
+(print Timestamp="2026-01-01T12:01:00Z", Case="typed-chain", User=pack_array("0")[0],
+    End=pack_array(tostring(datetime(2026-01-01T12:00:00Z)))[0], Marker="D");
 """
     expected = """let Expected = datatable(WindowStart:datetime, WindowEnd:datetime, Case:string, ValueCount_Metric:long, ValueCount_End:long) [
     datetime(2026-01-01T11:56:00Z), datetime(2026-01-01T12:01:00Z), "typed-chain", 2, 3,
@@ -1629,9 +1632,11 @@ let Events = datatable(Timestamp:string, Case:string, User:dynamic, End:dynamic,
 
 def fixtures():
     from tests.fixtures.correlation.average import average_fixtures
+    from tests.fixtures.correlation.boolean_generate import fixtures as boolean_fixtures
 
     return {
         **average_fixtures(check, HEADER),
+        **boolean_fixtures(),
         "event_count_grouped.kql": grouped_fixture(),
         "event_count_duplicate_sources.kql": duplicate_fixture(),
         "event_count_comparisons.kql": comparisons_fixture(),
