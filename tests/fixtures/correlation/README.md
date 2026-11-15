@@ -113,6 +113,14 @@ results and the emulator resource configuration.
 The same generator also writes `standard_mappings_parent.kql`, verifying that a
 parent consumes individual mapped child context values through logical fields.
 
+`temporal_context.py` generates temporal retained-context consumer fixtures through
+standard Sigma collection parsing and `KustoBackend.convert`. Literal expected
+summaries cover mixed direct/child inputs, duplicate observed pairs, repeated
+completion times, inherited field requests, all successful ordered alternatives,
+satisfied Boolean alternatives, downstream grouping by retained relationships,
+and shared-child branches. The comparisons use only public result columns and
+check exact summary multisets. See `RUNTIME.md` for execution evidence.
+
 `numeric_context.py` generates sum, average, and exact nearest-rank parents over
 retained child context. Literal expected rows cover 10,10,20 becoming 10,20
 (sum30, average15, percentile60=20); per-group relationship restriction; separate

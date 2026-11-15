@@ -731,6 +731,7 @@ class KustoBackend(TextQueryBackend):
                     ),
                     field,
                 )
+
                 requested_context.append(logical)
         context_fields = list(dict.fromkeys(requested_context))
         conflicts = {"WindowStart", "WindowEnd", *metrics}.intersection(context_fields)
@@ -743,6 +744,7 @@ class KustoBackend(TextQueryBackend):
                 + ". Use an explicit correlation alias, for example fields: [OriginalWindowEnd] and "
                 "aliases: {OriginalWindowEnd: {source-rule: WindowEnd}}.",
             )
+        requested_fields = tuple(context_fields)
         context_fields = [field for field in context_fields if field not in (rule.group_by or [])]
         context_column = None
         if context_fields:
@@ -767,6 +769,7 @@ class KustoBackend(TextQueryBackend):
                         "kusto_result_fields": result_fields.copy(),
                         "kusto_source_fields": result_fields.copy(),
                         "kusto_result_timestamp": "WindowEnd",
+                        "kusto_requested_fields": requested_fields,
                         "kusto_context_fields": tuple(context_fields),
                         "kusto_context_rows": context_column,
                         "kusto_source_tables": source_tables.copy(),

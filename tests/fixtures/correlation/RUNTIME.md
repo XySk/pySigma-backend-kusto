@@ -329,3 +329,22 @@ whitelist. Successful empty result tables would fail these overflow checks.
 This is the focused planning-repair acceptance record. The remaining numeric
 fixture matrix and integrated feature gates are recorded separately after the
 final branches are combined.
+
+## Temporal retained-context consumers and multilevel requests (#27)
+
+`temporal_context.py` supplies literal worked expected summaries, independently
+of the generated query. Every fixture is generated through standard Sigma
+collection parsing and `KustoBackend.convert`, then compares public result
+columns as exact multisets. The three changed count-consumer fixtures are also
+included because inherited requests now continue into their returned summaries.
+
+| Fixture | Acceptance behavior |
+| --- | --- |
+| `temporal_context_unordered.kql` | Mixed child/direct identities at child WindowEnd; duplicate child evidence does not change RuleCount. |
+| `temporal_context_ordered.kql` | Both later completions retain every participating child pair and every successful earlier direct alternative. |
+| `temporal_context_boolean.kql` | Only C contributes Bob context when child-and-B fails; Alice retains the successful conjunction. |
+| `temporal_context_multilevel.kql` | Unordered middle passes inherited requests to downstream User/Server groups without cross-pairs. |
+| `temporal_context_ordered_multilevel.kql` | All participating ordered alternatives survive another consumer. |
+| `temporal_context_boolean_multilevel.kql` | Failed conjunction evidence cannot leak into downstream groups. |
+| `temporal_context_shared.kql` | Two branches sharing one child remain distinct immediate sources, with only observed pairs joining. |
+| `count_context_restricted.kql`, `count_context_ungrouped.kql`, `count_context_values.kql` | Existing count metrics remain correct with inherited context now included in returned summaries. |
