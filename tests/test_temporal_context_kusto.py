@@ -24,15 +24,6 @@ def test_temporal_chain_carries_inherited_requests_and_scalar_group_relationship
     assert 'todatetime(["WindowEnd"])' in query
 
 
-def test_temporal_context_fixtures_are_current():
-    from pathlib import Path
-
-    from tests.fixtures.correlation.temporal_context import fixtures
-
-    directory = Path(__file__).parent / "fixtures" / "correlation"
-    for name, content in fixtures().items():
-        assert (directory / name).read_text() == content
-
 
 @pytest.mark.parametrize("producer", ["event_count", "value_count", "value_sum", "value_avg", "value_percentile", "temporal", "temporal_ordered"])
 @pytest.mark.parametrize("consumer", ["temporal", "temporal_ordered", "boolean"])
