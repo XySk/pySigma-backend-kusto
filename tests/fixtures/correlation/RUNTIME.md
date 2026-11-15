@@ -206,3 +206,7 @@ pruning remains valid for finding completions, while separate evidence traversal
 keeps every successful full alternative. It uses relational joins without bounded
 sequence arrays or sampling; dense alternatives can exhaust engine resources and
 no throughput claim is made.
+
+After merging Boolean retained context, all eleven existing non-Boolean context
+fixtures (seven aggregate/temporal/nested and four ordered) were rerun together
+against the same engine and returned empty exact summary multiset difference tables.
