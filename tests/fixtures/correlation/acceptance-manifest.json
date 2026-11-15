@@ -174,12 +174,12 @@
     },
     {
       "name": "dependency_order_generate.kql",
-      "sha256": "343bedbae78b66c697bd7485ce260a27848db28ae62b1e5e4775ce062ead4421",
+      "sha256": "bae4ea1d9fddf87ac7feb154f39f10fb79fcc4c6e0f4d6712e777cfa1811c457",
       "expected_error": null
     },
     {
       "name": "dependency_order_suppressed.kql",
-      "sha256": "343bedbae78b66c697bd7485ce260a27848db28ae62b1e5e4775ce062ead4421",
+      "sha256": "bae4ea1d9fddf87ac7feb154f39f10fb79fcc4c6e0f4d6712e777cfa1811c457",
       "expected_error": null
     },
     {

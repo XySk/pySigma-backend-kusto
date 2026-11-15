@@ -53,7 +53,7 @@ def fixtures():
             'datetime(2026-01-01T12:06:00Z), "host", 3,\n'
             'datetime(2026-01-01T12:07:00Z), "host", 3\n]\n'
             "| extend WindowStart = WindowEnd - 5m;\n"
-            "union (Actual() | extend Delta = 1), (Expected | extend Delta = -1)\n"
+            "union (Actual() | extend Host = tostring(Host), Delta = 1), (Expected | extend Delta = -1)\n"
             "| summarize Delta = sum(Delta) by WindowStart, WindowEnd, Host, RuleCount\n"
             "| where Delta != 0\n"
         )
