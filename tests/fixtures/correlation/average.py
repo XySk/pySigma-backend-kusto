@@ -206,7 +206,13 @@ let Expected = datatable(WindowStart:datetime, WindowEnd:datetime, Machine:strin
         header
         + data
         + f"let Actual = () {{\n{query}\n}};\n"
-        + check("Actual()", "Expected", ["WindowStart", "WindowEnd", "Machine", "ValueAvg"])
+        # Grouping types are covered by typed-grouping fixtures; this legacy
+        # diagnostic compares the mapped string literals with the same schema.
+        + check(
+            "Actual() | extend Machine=tostring(Machine)",
+            "Expected",
+            ["WindowStart", "WindowEnd", "Machine", "ValueAvg"],
+        )
     )
     query = converted("gte", -1)
     data = """let Events = datatable(Timestamp:datetime, Host:string, Amount:long, Marker:string) [
