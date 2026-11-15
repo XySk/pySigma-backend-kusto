@@ -376,6 +376,36 @@ included because inherited requests now continue into their returned summaries.
 | `temporal_context_shared.kql` | Two branches sharing one child remain distinct immediate sources, with only observed pairs joining. |
 | `count_context_restricted.kql`, `count_context_ungrouped.kql`, `count_context_values.kql` | Existing count metrics remain correct with inherited context now included in returned summaries. |
 
+# Review regression runtime evidence
+
+Executed on 2026-11-15 against the same Microsoft Kusto emulator, database
+`NetDefaultDB`, with a 12 GiB container limit. The final queries come from
+`empty_child_context.py` through standard Sigma parsing and public conversion.
+Each accepted response contains exactly one `PrimaryResult` with zero multiset
+difference rows and a final `DataSetCompletion` with `HasErrors: false`.
+
+| Fixture | Observed outcome |
+| --- | --- |
+| `escaped_mixed_detection.kql` | Literal and wildcard branches both match the mapped column containing a space. |
+| `empty_child_value_sum_ungrouped_eq.kql` | One zero-sum summary at the child window end, with empty Amount and relationship collections. |
+| `empty_child_value_count_ungrouped_eq.kql` | One zero-distinct-count summary with the same empty retained context. |
+| `empty_child_value_sum_Amount_eq.kql` | No summary: the retained grouping value is absent. |
+| `empty_child_value_count_Amount_eq.kql` | No summary for the same missing retained group. |
+| `empty_child_value_sum_ChildRuleCount_eq.kql` | Zero sum grouped by scalar child RuleCount, aliased as ChildRuleCount; empty retained context. Passed in 228.81 seconds. |
+| `empty_child_value_count_ChildRuleCount_eq.kql` | Zero distinct count in the same scalar child group, with empty retained context. Passed in 154.46 seconds. |
+
+The input contains an A-only row with Amount 42. The child expression
+`not A or not B` succeeds through absence of B, so no positive match contributes
+retained values. The child's scalar RuleCount is 1. Literal expected results
+require zero measurements and zero retained values/relationships; a fabricated
+null relationship would fail these checks.
+
+A superseded alternate grouping both child and parent by Host failed after
+160.32 seconds with an internal-service-error response; engine query history
+confirmed `OutOfMemoryException` at the 12 GiB resource limit. It is not an
+acceptance pass. The final scalar-metric fixtures keep the child ungrouped and
+exercise scalar child grouping without that extra child grouping plan.
+
 ## Integrated matrix preparation (#32): PENDING
 
 The seven-by-seven retained-context producer/consumer matrix and strict reusable

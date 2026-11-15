@@ -39,3 +39,22 @@ def test_measured_alias_resolves_logical_child_field():
     (query,) = convert_documents(docs)
     assert "ValueSum" in query
     assert "| mv-expand _sigma_child_context_row" in query
+
+
+@pytest.mark.parametrize("kind", ["value_sum", "value_count", "value_avg", "value_percentile"])
+@pytest.mark.parametrize("groups", [(), ("Host",), ("Amount",)])
+def test_empty_child_context_preserves_metric_anchors_only_without_retained_grouping(kind, groups):
+    from tests.fixtures.correlation.empty_child_context import documents
+
+    (query,) = convert_documents(documents(kind, groups))
+    placeholder = 'iff(array_length(["_sigma_context_rows"]) == 0, dynamic([null]), ["_sigma_context_rows"])'
+    assert (placeholder in query) == (groups != ("Amount",))
+
+
+def test_empty_child_context_runtime_fixtures_use_public_conversion():
+    from pathlib import Path
+
+    from tests.fixtures.correlation.empty_child_context import fixtures
+
+    for name, query in fixtures().items():
+        assert Path(__file__).with_name("fixtures").joinpath("correlation", name).read_text() == query

@@ -83,7 +83,7 @@ let _sigma_context_summary = () {
 let _sigma_parent_matches = materialize(union (_sigma_shared_results
 | serialize _sigma_child_match = row_number()
 | extend _sigma_child_match = strcat("_sigma_shared_child", "_", tostring(_sigma_child_match))
-| mv-expand _sigma_child_context_row = ["_sigma_context_rows"]
+| mv-expand _sigma_child_context_row = iff(array_length(["_sigma_context_rows"]) == 0, dynamic([null]), ["_sigma_context_rows"])
 | extend _sigma_timestamp = todatetime(["WindowEnd"]), _sigma_value = _sigma_child_context_row[0]
 | extend _sigma_rule = "child")
 | extend _sigma_child_match = tostring(column_ifexists("_sigma_child_match", "")));
@@ -237,7 +237,7 @@ let _sigma_shared_results = materialize(_sigma_shared_child());
 let _sigma_parent_matches = materialize(union (_sigma_shared_results
 | serialize _sigma_child_match = row_number()
 | extend _sigma_child_match = strcat("_sigma_shared_child", "_", tostring(_sigma_child_match))
-| mv-expand _sigma_child_context_row = ["_sigma_context_rows"]
+| mv-expand _sigma_child_context_row = iff(array_length(["_sigma_context_rows"]) == 0, dynamic([null]), ["_sigma_context_rows"])
 | extend _sigma_timestamp = todatetime(["WindowEnd"]), _sigma_value = _sigma_child_context_row[0]
 | extend _sigma_rule = "child")
 | extend _sigma_child_match = tostring(column_ifexists("_sigma_child_match", "")));
@@ -338,7 +338,7 @@ let _sigma_context_summary = () {
 let _sigma_parent_matches = materialize(union (_sigma_shared_results
 | serialize _sigma_child_match = row_number()
 | extend _sigma_child_match = strcat("_sigma_shared_child", "_", tostring(_sigma_child_match))
-| mv-expand _sigma_child_context_row = ["_sigma_context_rows"]
+| mv-expand _sigma_child_context_row = iff(array_length(["_sigma_context_rows"]) == 0, dynamic([null]), ["_sigma_context_rows"])
 | extend _sigma_timestamp = todatetime(["WindowEnd"]), _sigma_value = _sigma_child_context_row[0]
 | extend _sigma_rule = "child")
 | extend _sigma_child_match = tostring(column_ifexists("_sigma_child_match", "")));
