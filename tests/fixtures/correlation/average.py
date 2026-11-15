@@ -1,7 +1,7 @@
 """Generated public-path average queries with independently worked expected rows."""
 
-from tests.correlation_helpers import convert_documents, correlation_document, source_document
 from sigma.pipelines.kusto_common.schema import FieldMappings
+from tests.correlation_helpers import convert_documents, correlation_document, source_document
 
 
 def average_fixtures(check, header):

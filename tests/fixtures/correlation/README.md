@@ -47,7 +47,7 @@ PYTHONPATH=. python tests/fixtures/correlation/generate.py
 
 The normal pytest suite verifies that checked-in files contain the current public conversion output. It does not execute KQL. Recorded numeric execution results are in [RUNTIME.md](RUNTIME.md). Fixture consistency remains separate from runtime acceptance; no throughput validation is claimed. Record the engine/version, fixture filename, and returned differences for further executions. Expected summaries are literal worked examples in `generate.py`; they are not calculated using the backend's bin/join algorithm.
 
-Counted values are boxed with their runtime type and compared by iterative traversal of typed leaves and empty containers. Exact paths preserve array positions and ignore bag insertion order; scalar comparisons preserve nested extended types, repeated NaNs, and signed zero. Stable scalar identities feed `count_distinctif`; JSON serialization never determines equality. Range and completion assertions prevent silent traversal truncation. The typed fixture includes mixed datetime/string positional swaps, ordered arrays, and forty nested array levels. Materialized streams keep row IDs and traversal consistent. Self-joins can be quadratic over supplied group history, and materialization or engine limits fail explicitly; these fixtures make no runtime or memory capacity claim. Shared builders in `tests/correlation_helpers.py` prepare Sigma inputs and invoke public conversion. Literal expected rows remain local to the generator.
+Counted values are boxed with their runtime type and traversed into typed scalar leaves and empty containers. Exact paths preserve array positions and ignore bag insertion order. Sorted full leaf signatures preserve nested extended types and numeric precision; NaNs, signed zero and decimal scales normalize equal values. Each leaf includes its runtime type, so a datetime and its textual rendering remain distinct. Signatures use complete strings without hashes. Native scalar JSON retains adjacent double/long precision; decimal formatting normalizes equivalent scales. Stable scalar identities feed `count_distinctif`. Range, traversal-completion and independent leaf-count assertions prevent silent truncation. The typed fixtures include mixed datetime/string positions, ordered arrays and 65 nested array levels. `value_count_typed_precision` also covers adjacent doubles and maximum longs, decimal scales/zeros, NaNs and infinities, reordered extended bags, and nested adjacent doubles. Materialized streams keep row IDs and traversal consistent. Engine memory/string limits fail explicitly; no throughput or memory-capacity claim is made. Shared builders in `tests/correlation_helpers.py` prepare Sigma inputs and invoke public conversion. Literal expected rows remain local to the generator.
 
 Average fixtures are generated through public Sigma collection conversion, with independently worked expected rows in `average.py`:
 
@@ -105,3 +105,20 @@ child fields and child `WindowEnd` timestamps. See `RUNTIME.md` for execution
 results and the emulator resource configuration.
 
 `typed_grouping.py` supplies literal expected result multisets for all seven correlation types, compound nested groups, exclusions, mixed direct/scalar-child aliases, and extended-type downstream chains. Run `python -m tests.fixtures.correlation.generate` to regenerate their queries through the public collection conversion seam. Runtime evidence is recorded separately in `RUNTIME.md`.
+`temporal_context.py` generates temporal retained-context consumer fixtures through
+standard Sigma collection parsing and `KustoBackend.convert`. Literal expected
+summaries cover mixed direct/child inputs, duplicate observed pairs, repeated
+completion times, inherited field requests, all successful ordered alternatives,
+satisfied Boolean alternatives, downstream grouping by retained relationships,
+and shared-child branches. The comparisons use only public result columns and
+check exact summary multisets. See `RUNTIME.md` for execution evidence.
+
+`numeric_context.py` generates sum, average, and exact nearest-rank parents over
+retained child context. Literal expected rows cover 10,10,20 becoming 10,20
+(sum30, average15, percentile60=20); per-group relationship restriction; separate
+child observations; mixed direct inputs; logical aliases; scalar metrics once
+per child/group; and multilevel retention without reconstructing descendants.
+Empty populations include numeric strings, nulls, NaN and infinities, and use
+`neq` to check undefined averages/percentiles. The boundary fixture compares
+exact selected long text above 2^53 and includes repeated doubles outside decimal
+range. All comparisons require an empty full multiset difference.

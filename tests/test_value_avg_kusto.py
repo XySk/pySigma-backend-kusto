@@ -3,6 +3,7 @@
 import pytest
 
 from tests.correlation_helpers import convert_documents, correlation_document, source_document
+from tests.test_correlation_kusto import final_summary_projection
 
 
 @pytest.mark.parametrize(
@@ -20,7 +21,7 @@ def test_average_preserves_fractional_comparisons_and_excludes_undefined_windows
     assert '_sigma_value = pack_array(gettype(["Amount"]), ["Amount"])' in query
     assert "ValueAvg = avgif(" in query
     assert f"| where _sigma_numeric_count > 0 and ValueAvg {symbol} 2.5" in query
-    assert '["Host"] = _sigma_group_0, ValueAvg' in query
+    assert final_summary_projection(query).endswith('["Host"] = _sigma_group_0, ValueAvg')
 
 
 @pytest.mark.parametrize(
@@ -41,7 +42,7 @@ def test_average_consumes_available_scalar_child_metrics_once_at_window_end(kind
 
     assert '_sigma_timestamp = todatetime(["WindowEnd"])' in query
     assert f'pack_array(gettype(["{metric}"]), ["{metric}"])' in query
-    assert '["Host"] = _sigma_group_0, ValueAvg' in query
+    assert final_summary_projection(query).endswith('["Host"] = _sigma_group_0, ValueAvg')
 
 
 @pytest.mark.parametrize("child_generate", [False, True])
@@ -56,7 +57,8 @@ def test_average_exposes_metric_to_chained_consumers_and_preserves_generate(chil
     queries = convert_documents([source_document(), child, parent])
 
     assert len(queries) == 1 + child_generate + parent_generate
-    assert any('["ValueAvg"]' in query.splitlines()[-1] for query in queries) == parent_generate
+    assert any(final_summary_projection(query).endswith('["Host"] = _sigma_group_0, ValueAvg') for query in queries) == parent_generate
+    assert final_summary_projection(queries[-1]).endswith('["Host"] = _sigma_group_0, ValueSum')
     assert any('pack_array(gettype(["ValueAvg"]), ["ValueAvg"])' in query for query in queries)
 
 
