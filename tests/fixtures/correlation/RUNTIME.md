@@ -238,3 +238,32 @@ client timeout. These small examples demonstrate correctness under the recorded
 configuration; they establish neither a production capacity target nor a minimum
 memory guarantee. Resource exhaustion fails explicitly and does not truncate
 retained values or invent relationships.
+
+### Ordered typed-leaf signature candidate (2026-11-15)
+
+The identity implementation now serializes sorted typed scalar leaves and empty
+containers into full signatures, without hashes. One summary checks traversal
+completion, range capacity and the independent leaf count; an ordered scan
+assigns representative IDs without a leaf-pair or canonical self-join.
+
+On the same emulator engine and 12 GiB configuration, all 31 prepared fixtures
+in `context_*.kql`, `count_context_*.kql` and `value_count_*.kql` returned empty
+primary results with `HasErrors=false`. This includes all 17 retained-context
+fixtures, six count-context consumer fixtures, seven existing value-count
+fixtures and the new `value_count_typed_precision.kql`. The latter verifies
+adjacent doubles and maximum longs remain distinct, equivalent decimal scales
+and signed zeros coalesce, NaNs coalesce while positive/negative infinity remain
+distinct, and nested extended values survive reordered bags and 65 array levels.
+
+A separate 20-case typed identity comparison probe also passed, covering extended
+scalar/string distinctions, adversarial/escaped key paths, array order/length,
+empty containers, nulls, NaN and precision boundaries. Its recorded query resource
+report was 0.4518878 seconds and 9,431,312 bytes peak memory.
+
+This helper change alone does **not** repair the larger three-level numeric
+retained-context planning failure: rewriting its seven identity helpers retained
+the literal expected sum 130, but the initial canonical-join candidate exhausted
+memory and the fused-summary/scan candidate exceeded the 180-second client
+limit without a result. That required chain remains unvalidated by this change;
+sharing child-source plans is a separate repair. No throughput or capacity claim
+follows from these small successful fixtures.
