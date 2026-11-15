@@ -416,6 +416,64 @@ class KustoBackend(TextQueryBackend):
         return self._convert_count_rule(rule, [field])
 
     def _convert_count_rule(self, rule, counted_fields=None):
+        # Retention and metric aggregation consume the same child summaries.
+        # Hoist their materialized results outside both consumers so retaining
+        # levels do not recursively duplicate descendant query plans.
+        children = [reference.rule for reference in rule.referenced_rules if isinstance(reference.rule, SigmaCorrelationRule)]
+        if children:
+            for reference in rule.referenced_rules:
+                self._validate_count_source(rule, getattr(reference, "rule", None))
+        sharing = children and (
+            rule.fields or any(
+                source.fields or any(
+                    state.processing_state.get("kusto_context_fields")
+                    or state.processing_state.get("kusto_requested_fields")
+                    for state in source.get_conversion_states()
+                )
+                for source in children
+            )
+        )
+        if not sharing:
+            return self._build_count_rule(rule, counted_fields)
+        reserved = set(re.findall(r"[A-Za-z_][A-Za-z_0-9]*", "\n".join(
+            query for reference in rule.referenced_rules for query in reference.rule.get_conversion_result()
+        )))
+        reserved.update(rule.fields or [])
+        reserved.update(rule.group_by or [])
+        for reference in rule.referenced_rules:
+            for state in reference.rule.get_conversion_states():
+                reserved.update(self._correlation_source_tables(state))
+                reserved.update(state.processing_state.get("kusto_source_fields", ()))
+        shared = {"reserved": reserved, "definitions": [], "bindings": {}}
+        self._correlation_shared_children = shared
+        try:
+            queries = self._build_count_rule(rule, counted_fields)
+            prefix = "".join(shared["definitions"])
+            return [prefix + query for query in queries]
+        finally:
+            del self._correlation_shared_children
+
+    def _shared_child_source(self, reference_index, query_index, query):
+        shared = self._correlation_shared_children
+        key = (reference_index, query_index)
+        if key not in shared["bindings"]:
+            def allocate(base):
+                candidate, suffix = base, 0
+                while candidate in shared["reserved"]:
+                    suffix += 1
+                    candidate = f"{base}_{suffix}"
+                shared["reserved"].add(candidate)
+                return candidate
+
+            function, results = allocate("_sigma_shared_child"), allocate("_sigma_shared_results")
+            shared["definitions"].extend([
+                f"let {function} = () {{\n{query}\n}};\n",
+                f"let {results} = materialize({function}());\n",
+            ])
+            shared["bindings"][key] = (function, results)
+        return shared["bindings"][key]
+
+    def _build_count_rule(self, rule, counted_fields=None):
         count_type = rule.type.name.lower()
         if rule.type in (SigmaCorrelationType.TEMPORAL, SigmaCorrelationType.TEMPORAL_ORDERED):
             metrics = ["RuleCount"]
@@ -874,23 +932,29 @@ class KustoBackend(TextQueryBackend):
         if not any(isinstance(reference.rule, SigmaCorrelationRule) for reference in rule.referenced_rules):
             return "", self.convert_correlation_search(rule)
         definitions, searches = [], []
-        for reference in rule.referenced_rules:
+        for reference_index, reference in enumerate(rule.referenced_rules):
             source = reference.rule
             self._correlation_child_row = allocate("_sigma_child_context_row")
             try:
                 normalization = self.convert_correlation_search_field_normalization_expression(rule.aliases, reference)
             finally:
                 del self._correlation_child_row
-            for query in source.get_conversion_result():
+            for query_index, query in enumerate(source.get_conversion_result()):
                 if isinstance(source, SigmaCorrelationRule):
-                    function = allocate(f"_sigma_child_{len(definitions)}")
-                    # Each function scopes the complete child query, including
-                    # its let bindings. Only returned summaries feed the parent.
-                    definitions.append(f"let {function} = () {{\n{query}\n}};\n")
-                    relation = f"{function}(){normalization}"
+                    shared = hasattr(self, "_correlation_shared_children")
+                    if shared:
+                        function, child_results = self._shared_child_source(reference_index, query_index, query)
+                        relation = f"{child_results}{normalization}"
+                    else:
+                        function = allocate(f"_sigma_child_{len(definitions)}")
+                        # Each function scopes the complete child query, including
+                        # its let bindings. Only returned summaries feed the parent.
+                        definitions.append(f"let {function} = () {{\n{query}\n}};\n")
+                        relation = f"{function}(){normalization}"
                     if normalization.expands_context:
-                        child_results = allocate("_sigma_child_results")
-                        definitions.append(f"let {child_results} = materialize({function}());\n")
+                        if not shared:
+                            child_results = allocate("_sigma_child_results")
+                            definitions.append(f"let {child_results} = materialize({function}());\n")
                         child_id = self._correlation_columns.get("child_match")
                         if child_id:
                             relation = (
