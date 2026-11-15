@@ -865,41 +865,123 @@ class KustoBackend(TextQueryBackend):
             "Unsupported Boolean temporal expression; use resolved rule references, and, or, not, and parentheses.",
         )
 
+    def _dynamic_value_identity(self, source, row_id, value, groups, allocate):
+        """Return an exact runtime-typed dynamic equivalence relation.
+
+        ``value`` is boxed as [runtime type, dynamic value]. ``source`` must give
+        stable globally unique long row IDs. Null/empty values are retained.
+        """
+        names = [
+            "input",
+            "steps",
+            "leaves",
+            "counts",
+            "relation",
+            "bound",
+            "iteration",
+            "stack",
+            "frame",
+            "type",
+            "path",
+            "leaf",
+            "terminal",
+            "finished",
+            "other_id",
+            "other_leaf",
+            "count",
+            "other_count",
+            "hits",
+            "identity",
+        ]
+        n = {name: allocate("_sigma_identity_" + name) for name in names}
+        stack, frame = n["stack"], n["frame"]
+        old = f"s.{stack}"
+        top = f"{old}[-1]"
+        # Path components are prefix-distinguished and self-delimiting. JSON is
+        # used only for string bag keys, never for identifying runtime values.
+        parent = f"array_slice({old}, 0, -2)"
+        updated = f"pack_array(bag_pack('v', {top}.v, 'p', {top}.p, 'i', tolong({top}.i) + 1, 'k', {top}.k))"
+        key = f"{top}.k[tolong({top}.i)]"
+        bag_child = f"pack_array(bag_pack('v', {top}.v[tostring({key})], 'p', strcat(tostring({top}.p), 'k', dynamic_to_json(pack_array({key}))), 'i', 0, 'k', bag_keys({top}.v[tostring({key})])))"
+        array_child = f"pack_array(bag_pack('v', {top}.v[tolong({top}.i)], 'p', strcat(tostring({top}.p), 'a', tostring({top}.i), ';'), 'i', 0, 'k', bag_keys({top}.v[tolong({top}.i)])))"
+        retained = ", ".join([row_id, *groups])
+        # Each tree edge is descended and unwound once. JSON length exceeds
+        # its node count, so this bound covers the whole walk without a depth
+        # cap. Check range() capacity first, then check terminal completion.
+        bound, iteration, typ = n["bound"], n["iteration"], n["type"]
+        definitions = (
+            f"let {n['input']} = materialize({source}\n"
+            f"| project {retained}, {n['leaf']} = {value}[1]\n"
+            f"| extend {bound} = 3 * strlen(dynamic_to_json({n['leaf']})) + 3);\n"
+            f"let {n['steps']} = materialize({n['input']}\n"
+            f"| where assert(toscalar({n['input']} | summarize coalesce(max({bound}), 0)) <= 1048575, 'Kusto dynamic identity traversal exceeds range limit')\n"
+            f"| mv-expand {iteration} = range(0, {bound}, 1) to typeof(long)\n"
+            f"| sort by {row_id} asc, {iteration} asc\n"
+            f"| scan declare ({stack}:dynamic = dynamic([])) with (step s: true => {stack} = case(\n"
+            f"    {iteration} == 0, pack_array(bag_pack('v', {n['leaf']}, 'p', '$', 'i', 0, 'k', bag_keys({n['leaf']}))),\n"
+            f"    array_length({old}) == 0, {old},\n"
+            f"    gettype({top}.v) == 'dictionary' and tolong({top}.i) < array_length({top}.k), array_concat({parent}, {updated}, {bag_child}),\n"
+            f"    gettype({top}.v) == 'array' and tolong({top}.i) < array_length({top}.v), array_concat({parent}, {updated}, {array_child}),\n"
+            f"    {parent});)\n"
+            f"| extend {frame} = {stack}[-1]\n"
+            f"| extend {typ} = gettype({frame}.v), {n['terminal']} = {iteration} == {bound}, {n['finished']} = array_length({stack}) == 0\n"
+            f"| where {n['terminal']} or (not({n['finished']}) and ({typ} !in ('array', 'dictionary') or ({typ} == 'array' and array_length({frame}.v) == 0) or ({typ} == 'dictionary' and array_length(bag_keys({frame}.v)) == 0)))\n"
+            f"| project {retained}, {n['path']} = tostring({frame}.p), {typ}, {n['leaf']} = {frame}.v, {n['terminal']}, {n['finished']});\n"
+            f"let {n['leaves']} = {n['steps']}\n"
+            f"| where assert(toscalar({n['steps']} | summarize countif({n['terminal']} and not({n['finished']}))) == 0, 'Kusto dynamic identity traversal incomplete')\n"
+            f"| where not({n['terminal']});\n"
+            f"let {n['counts']} = {n['leaves']} | summarize {n['count']} = count() by {row_id};\n"
+        )
+        other_fields = ", ".join(
+            [*groups, n["path"], typ, f"{n['other_id']} = {row_id}", f"{n['other_leaf']} = {n['leaf']}"]
+        )
+        keys = ", ".join([*groups, n["path"], typ])
+        leaf, other = n["leaf"], n["other_leaf"]
+        equality = (
+            f"case({typ} == 'double', (toreal({leaf}) == toreal({other}) or (isnan(toreal({leaf})) and isnan(toreal({other})))), "
+            f"{typ} == 'long', tolong({leaf}) == tolong({other}), "
+            f"{typ} == 'decimal', todecimal({leaf}) == todecimal({other}), "
+            f"tostring({leaf}) == tostring({other}))"
+        )
+        definitions += (
+            f"let {n['relation']} = {n['leaves']}\n"
+            f"| join kind=inner ({n['leaves']} | project {other_fields}) on {keys}\n"
+            f"| where {equality}\n"
+            f"| summarize {n['hits']} = count() by {row_id}, {n['other_id']}\n"
+            f"| join kind=inner ({n['counts']}) on {row_id}\n"
+            f"| join kind=inner ({n['counts']} | project {n['other_id']} = {row_id}, {n['other_count']} = {n['count']}) on {n['other_id']}\n"
+            f"| where {n['hits']} == {n['count']} and {n['hits']} == {n['other_count']}\n"
+            f"| summarize {n['identity']} = min({n['other_id']}) by {row_id};\n"
+        )
+        return definitions, n["relation"], n["identity"]
+
     def _counted_value_identities(self, search, columns, valid_rows, allocate):
-        # count_distinctif() and summarize-by do not accept dynamic values.
-        # Join on field index/runtime type only. Native equality checks the
-        # boxed value without serializing extended or nested values to JSON.
+        # Materialize once so every field uses the same source-match IDs.
         source = allocate("_sigma_value_input")
         identities = columns["identities"] = allocate("_sigma_value_identities")
-        row_id, other_id, key = (allocate(name) for name in ("_sigma_value_id", "_sigma_other_id", "_sigma_value_key"))
+        row_id = allocate("_sigma_value_id")
         values, groups = columns["values"], columns["groups"]
-        others = [
-            allocate("_sigma_other_value" if len(values) == 1 else f"_sigma_other_value_{i}")
-            for i in range(len(values))
-        ]
         retained = ", ".join([columns["timestamp"], *groups, *values])
-        keys = ", ".join(f'strcat("{index}:", tostring({value}[0]))' for index, value in enumerate(values))
-        candidates = f"| extend {key} = pack_array({keys})\n| mv-expand {key} to typeof(string)\n"
-        right_fields = ", ".join(
-            [*groups, key, f"{other_id} = {row_id}", *(f"{other} = {value}" for other, value in zip(others, values))]
-        )
-        aggregates = [f"{field} = take_any({field})" for field in [columns["timestamp"], *groups]]
-        aggregates.extend(
-            f"{value} = minif({other_id}, isnotempty(tostring({value}[1])) and "
-            f"({row_id} == {other_id} or {value} == {other} or "
-            f'(tostring({value}[0]) == "real" and tostring({other}[0]) == "real" and '
-            f"isnan(toreal({value}[1])) and isnan(toreal({other}[1])))))"
-            for value, other in zip(values, others)
-        )
-        return (
+        definitions = (
             f"let {source} = materialize({search}\n| where {valid_rows}\n"
             f"| project {retained}\n| serialize {row_id} = row_number());\n"
-            f"let {identities} = {source}\n{candidates}"
-            f"| join kind=inner (\n    {source}\n"
-            + "".join(f"    {line}\n" for line in candidates.rstrip().splitlines())
-            + f"    | project {right_fields}\n) on {', '.join([*groups, key])}\n"
-            f"| summarize {', '.join(aggregates)} by {row_id};\n"
         )
+        joins, replacements = [], []
+        for value in values:
+            present = allocate("_sigma_present_values")
+            definitions += f"let {present} = {source} | where isnotempty(tostring({value}[1]));\n"
+            fragment, relation, identity = self._dynamic_value_identity(present, row_id, value, groups, allocate)
+            definitions += fragment
+            joins.append(f"| join kind=leftouter ({relation}) on {row_id}\n")
+            replacements.append(f"{value} = {identity}")
+        definitions += (
+            f"let {identities} = {source}\n"
+            + "".join(joins)
+            + f"| project {columns['timestamp']}, "
+            + ", ".join([*groups, *replacements])
+            + ";\n"
+        )
+        return definitions
 
     def _convert_ordered_temporal(self, rule, search, columns, valid_rows, span, source_type_count):
         timestamp, rule_column, types, start, end, time_bin = (

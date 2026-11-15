@@ -80,11 +80,27 @@ The fixtures establish the delivered presence behavior. Retained context from
 satisfied alternatives is deferred to its separate stage. This run makes no
 throughput claim.
 
-## Existing value-count acceptance remains incomplete
+## Exact value-count runtime repair
 
-The same engine rejected the existing value-count fixtures with `SEM0001: Cannot compare dynamic values without explicit cast`. The emitted identity self-join compares boxed dynamic values directly. This also prevents chains containing value-count summaries from passing runtime acceptance. A singleton set-difference experiment passed scalar cases but distinguished equivalent reordered bags and signed zero; it was discarded. Canonical JSON alone loses nested extended runtime types. No replacement with those semantic losses has been adopted.
+Executed 2026-11-15 against the same Microsoft Kusto emulator and database
+`NetDefaultDB`, through `/v2/rest/query`. All seven value-count fixtures and all
+thirteen other fixtures containing chained sources completed successfully with
+zero multiset differences. This includes grouped and ungrouped comparisons,
+multiple independent counted fields, missing-value anchors, typed values, and
+mixed/multilevel chains across numeric and temporal types.
 
-Fixture inputs were corrected to construct real NaN and datetime-like strings at runtime: `dynamic(real(nan))` becomes a string, while an ISO datetime string inside a dynamic literal becomes a datetime. Public conversion tests passing does not resolve the query error. The full regression gate for issue #18 and integrated acceptance for #17 remain open.
+The typed fixture additionally checks forty nested array levels, datetime/string
+positional swaps in mixed arrays, and array order. Reordered nested bags, repeated
+real NaNs, signed zero, empty containers, and nested datetime/timespan/GUID values
+versus their text forms retain their existing independent expected summaries.
+
+The prior `dynamic == dynamic` engine error is repaired with iterative traversal
+and typed scalar leaf comparisons. Bag keys are captured once per traversal
+frame. JSON encodes bag-key path segments and bounds traversal work, but does not
+identify values. A global range assertion and terminal completion assertion abort
+on traversal limits rather than returning partial identities. Materialization and
+quadratic pair joins can still fail engine resource limits; no production
+throughput or memory-capacity claim is made.
 
 ## Exact nearest-rank percentile — ticket #20
 
