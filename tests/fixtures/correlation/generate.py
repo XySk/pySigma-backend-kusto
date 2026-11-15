@@ -1628,7 +1628,10 @@ let Events = datatable(Timestamp:string, Case:string, User:dynamic, End:dynamic,
 
 
 def fixtures():
+    from tests.fixtures.correlation.average import average_fixtures
+
     return {
+        **average_fixtures(check, HEADER),
         "event_count_grouped.kql": grouped_fixture(),
         "event_count_duplicate_sources.kql": duplicate_fixture(),
         "event_count_comparisons.kql": comparisons_fixture(),

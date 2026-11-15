@@ -1183,11 +1183,12 @@ def test_event_count_chain_applies_parent_comparisons_after_counting_child_summa
     "correlation",
     [
         """correlation:
-  type: value_avg
+  type: value_percentile
   rules:
     - source-rule
   timespan: 5m
   condition:
+    percentile: 50
     field: User
     gte: 2
 """,

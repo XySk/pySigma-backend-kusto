@@ -335,6 +335,7 @@ class KustoBackend(TextQueryBackend):
             SigmaCorrelationType.EVENT_COUNT: self.convert_correlation_event_count_rule,
             SigmaCorrelationType.VALUE_COUNT: self.convert_correlation_value_count_rule,
             SigmaCorrelationType.VALUE_SUM: self.convert_correlation_value_sum_rule,
+            SigmaCorrelationType.VALUE_AVG: self.convert_correlation_value_avg_rule,
             SigmaCorrelationType.TEMPORAL: self.convert_correlation_temporal_rule,
             SigmaCorrelationType.TEMPORAL_ORDERED: self.convert_correlation_temporal_ordered_rule,
         }
@@ -342,7 +343,8 @@ class KustoBackend(TextQueryBackend):
             raise SigmaConversionError(
                 rule,
                 rule.source,
-                "Kusto supports only event_count, value_count, value_sum, temporal, and temporal_ordered correlation rules.",
+                "Kusto supports only event_count, value_count, value_sum, value_avg, temporal, "
+                "and temporal_ordered correlation rules.",
             )
         queries = converters[rule.type](rule, output_format, method or "default")
         if callback is not None:
@@ -381,12 +383,20 @@ class KustoBackend(TextQueryBackend):
             raise SigmaConversionError(rule, rule.source, "Kusto value_sum requires one nonempty measured field name.")
         return self._convert_count_rule(rule, [field])
 
+    def convert_correlation_value_avg_rule(self, rule, output_format=None, method="default"):
+        field = rule.condition.fieldref if rule.condition is not None else None
+        if not isinstance(field, str) or not field:
+            raise SigmaConversionError(rule, rule.source, "Kusto value_avg requires one nonempty measured field name.")
+        return self._convert_count_rule(rule, [field])
+
     def _convert_count_rule(self, rule, counted_fields=None):
         count_type = rule.type.name.lower()
         if rule.type in (SigmaCorrelationType.TEMPORAL, SigmaCorrelationType.TEMPORAL_ORDERED):
             metrics = ["RuleCount"]
         elif rule.type == SigmaCorrelationType.VALUE_SUM:
             metrics = ["ValueSum"]
+        elif rule.type == SigmaCorrelationType.VALUE_AVG:
+            metrics = ["ValueAvg"]
         elif counted_fields is None:
             metrics = ["EventCount"]
         elif len(counted_fields) == 1:
@@ -615,6 +625,8 @@ class KustoBackend(TextQueryBackend):
             columns["integer_sum"] = allocate("_sigma_integer_sum")
             columns["real_sum"] = allocate("_sigma_real_sum")
             columns["real_count"] = allocate("_sigma_real_count")
+        if rule.type == SigmaCorrelationType.VALUE_AVG:
+            columns["numeric_count"] = allocate("_sigma_numeric_count")
         if ordered:
             columns["sequence_start"] = allocate("_sigma_sequence_start")
             columns["sequence_end"] = allocate("_sigma_sequence_end")
@@ -698,6 +710,20 @@ class KustoBackend(TextQueryBackend):
                 f"({real_count} == 0 and todecimal({integer_sum}) {query_operator} decimal({threshold})) "
                 f"or ({real_count} > 0 and toreal({integer_sum}) + {real_sum} {query_operator} {threshold})"
             )
+        elif rule.type == SigmaCorrelationType.VALUE_AVG:
+            # Preserve every observation and every valid anchor, including
+            # anchors whose window contains no usable numeric observation.
+            preaggregate = ""
+            distinct_anchors = "| distinct *\n"
+            value = columns["values"][0]
+            numeric = (
+                f'tostring({value}[0]) in ("int", "long", "real", "double", "decimal") '
+                f"and isfinite(toreal({value}[1]))"
+            )
+            aggregates = [
+                f"ValueAvg = avgif(toreal({value}[1]), {numeric})",
+                f"{columns['numeric_count']} = countif({numeric})",
+            ]
         else:
             definitions += self._counted_value_identities(search, columns, valid_rows, allocate)
             search = columns["identities"]
@@ -711,6 +737,10 @@ class KustoBackend(TextQueryBackend):
             ]
         if rule.type != SigmaCorrelationType.VALUE_SUM:
             comparisons = " and ".join(f"{metric} {query_operator} {threshold}" for metric in metrics)
+        if rule.type == SigmaCorrelationType.VALUE_AVG:
+            # Kusto avgif() returns NaN for no observations, which satisfies
+            # neq. Require an observation before applying any comparison.
+            comparisons = f"{columns['numeric_count']} > 0 and {comparisons}"
         # Bins only prune candidate pairs: a contribution belongs to its own bin
         # and the following anchor bin. Actual timestamps determine membership.
         return [

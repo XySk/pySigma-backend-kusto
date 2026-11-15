@@ -43,3 +43,12 @@ PYTHONPATH=. python tests/fixtures/correlation/generate.py
 The normal pytest suite verifies that checked-in files contain the current public conversion output. It does not execute KQL. Recorded numeric execution results are in [RUNTIME.md](RUNTIME.md). Fixture consistency remains separate from runtime acceptance; no throughput validation is claimed. Record the engine/version, fixture filename, and returned differences for further executions. Expected summaries are literal worked examples in `generate.py`; they are not calculated using the backend's bin/join algorithm.
 
 Counted values are boxed with their runtime type and compared using native dynamic equality, with an explicit repeated-NaN case for top-level reals. Per-field scalar identities make them acceptable to `count_distinctif`; neither JSON serialization nor a truncated set determines identity. A materialized stream keeps row IDs consistent across the identity self-join. Compound equality, including the nested extended-value, reordered-bag, and nested-NaN cases, is included in the prepared runtime checks. The identity join can be quadratic over all supplied rows in a group, and Kusto's materialization cache can fail explicitly; no runtime or memory benchmark is claimed. Shared builders in `tests/correlation_helpers.py` only prepare Sigma inputs and invoke public conversion. Literal expected rows remain local to this generator.
+
+Average fixtures are generated through public Sigma collection conversion, with independently worked expected rows in `average.py`:
+
+- `value_avg_comparisons.kql`: all six operators, fractional thresholds, zero and negatives, inclusive endpoints and one tick outside, ties, overlapping summaries, invalid timestamps/groups, numeric text, missing values and undefined averages including `neq`.
+- `value_avg_reals.kql`: mixed finite numeric types, NaN/infinity exclusion, undefined populations and direct floating-point comparisons distinguishing the mean of 0.1/0.2 from 0.15.
+- `value_avg_duplicate_sources.kql`: unequal multiplicity across five source searches, preserving repeated observations.
+- `value_avg_mapped.kql`: per-source measured/group aliases and timestamp mappings over two physical tables.
+- `value_avg_chained.kql`: scalar average child metrics combined once each with a direct measurement at child `WindowEnd`.
+- `value_avg_integer_bounds.kql`: signed-long maximum observations average as reals without an overflowing intermediate integer sum, plus opposite-sign cancellation.

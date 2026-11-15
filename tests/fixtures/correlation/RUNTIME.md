@@ -33,3 +33,28 @@ consume the same summaries. Its shared 5 GB per-node cache limit fails explicitl
 on exhaustion. These small deterministic fixtures establish result correctness,
 not throughput or production capacity. Other fixture families require their own
 recorded results; the pytest fixture-consistency check does not execute KQL.
+
+# Numeric average runtime evidence
+
+Executed on 2026-11-15 against the same Microsoft Kusto emulator engine
+`2026.11.15.0741-2645-8e3387b-master`, database `NetDefaultDB`, via the REST
+query API. Queries are generated from standard Sigma collection parsing and
+`KustoBackend.convert()`; `average.py` provides independently worked expected
+rows and the checks compare full result multisets.
+
+| Fixture | Observed outcome |
+| --- | --- |
+| `value_avg_comparisons.kql` | Zero differences for all six operators, fractional thresholds, exact windows and undefined populations. |
+| `value_avg_reals.kql` | Zero differences for finite numeric observations, nonfinite exclusion, undefined `neq`, and direct floating-point comparison. |
+| `value_avg_duplicate_sources.kql` | Zero differences with unequal source/search multiplicity. |
+| `value_avg_mapped.kql` | Zero differences for per-source aliases and mappings over two tables. |
+| `value_avg_chained.kql` | Zero differences for average children plus a direct source; each child metric contributes once. |
+| `value_avg_integer_bounds.kql` | Zero differences at signed-long maximum and for cancellation; results follow real precision. |
+
+The initial engine run exposed that `avgif()` with no qualifying observations
+returns NaN, which passes `neq`. Generated queries now count qualifying finite
+observations and require a positive count before applying every comparison. The
+corrected queries passed all six fixtures. Integer observations are converted to
+real before averaging, avoiding integer-sum wrap while accepting ordinary
+floating-point precision. These checks establish fixture correctness, not
+production throughput or capacity.
