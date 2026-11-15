@@ -449,3 +449,45 @@ were retained under `/tmp/kusto-final-26` for diagnosis.
 The positive numeric matrix is therefore **not runtime-complete** on this
 combined revision. The earlier successful focused three-level query remains
 evidence for its recorded earlier candidate, not a substitute for this gate.
+
+# Frozen typed-grouping acceptance: partial, 2026-11-15
+
+Ran the strict `runtime.py` harness against candidate `9325782` (frozen KQL
+candidate `87ad132`) starting at `2026-11-15T17:39:10.762642+00:00`. All nine
+owned fixture generators reproduced the committed bytes and frozen manifest
+hashes before execution; no expected rows or source queries were changed.
+Manifest SHA-256 was
+`e484f73ec883733d3339d7695efb15564f7e6a99414723ff87006a6c1c749cda`.
+
+The engine reported product version `2026.11.15.0741-2645-8e3387b-master`, build
+`1.0.9815.14081`, database `NetDefaultDB`. The emulator stayed at 12 GiB;
+`max_memory_consumption_per_query_per_node` was `12884901888` and the client
+limit was 360 seconds. The batch ran serially with exclusive engine access and
+stopped at the first failure.
+
+| Fixture | SHA-256 | Strict result |
+| --- | --- | --- |
+| `typed_grouping_event_count.kql` | `616ae273b91b40cc83ad2c21c26612748066d10111fc4f8067f6715f62dd82ad` | PASS, HTTP 200, 2.548 seconds; one empty primary diagnostic table. |
+| `typed_grouping_extended_chain.kql` | `7d2a7eaddf679ebff1728ccc5c8afcfabcd7f806aa72417cd29fdc2cb75ad61a` | FAIL, HTTP 200, 11.380 seconds; two difference rows. |
+
+Both responses contained exactly one completion with `HasErrors=false` and
+`Cancelled=false`. The extended-type fixture expected runtime type `real` for
+its real-valued group, while Kusto returned `double`. Its exact difference was
+`["2026-01-01T12:00:00Z","real",1,-1]` and
+`["2026-01-01T12:00:00Z","double",1,1]`. This is a fixture type-label mismatch,
+not an engine resource error or a successful empty diagnostic. The frozen
+expected rows were left unchanged, and no retry was made.
+
+The remaining seven fixtures were **not executed** in this batch:
+`typed_grouping_mixed_chain.kql`, `typed_grouping_temporal.kql`,
+`typed_grouping_temporal_ordered.kql`, `typed_grouping_value_avg.kql`,
+`typed_grouping_value_count.kql`, `typed_grouping_value_percentile.kql`, and
+`typed_grouping_value_sum.kql`. Typed grouping is therefore **not
+runtime-complete** on this candidate.
+
+The durable local runner record, version response, requests, and responses are
+under `/tmp/kusto-final-29`. Response SHA-256 values were
+`c91f12031ced95df361a752a72c37ec347ab05181c62e6a3cffc9e554464cee3`
+(event count) and
+`1faa2d4e4c7f6ec4b1860ab6b409d185e8605144bb5b9b72a32c5d2c9ca9821e`
+(extended chain).
