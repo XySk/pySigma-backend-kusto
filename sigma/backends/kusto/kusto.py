@@ -335,6 +335,7 @@ class KustoBackend(TextQueryBackend):
             SigmaCorrelationType.EVENT_COUNT: self.convert_correlation_event_count_rule,
             SigmaCorrelationType.VALUE_COUNT: self.convert_correlation_value_count_rule,
             SigmaCorrelationType.VALUE_SUM: self.convert_correlation_value_sum_rule,
+            SigmaCorrelationType.VALUE_PERCENTILE: self.convert_correlation_value_percentile_rule,
             SigmaCorrelationType.TEMPORAL: self.convert_correlation_temporal_rule,
             SigmaCorrelationType.TEMPORAL_ORDERED: self.convert_correlation_temporal_ordered_rule,
         }
@@ -342,7 +343,7 @@ class KustoBackend(TextQueryBackend):
             raise SigmaConversionError(
                 rule,
                 rule.source,
-                "Kusto supports only event_count, value_count, value_sum, temporal, and temporal_ordered correlation rules.",
+                "Kusto supports only event_count, value_count, value_sum, value_percentile, temporal, and temporal_ordered correlation rules.",
             )
         queries = converters[rule.type](rule, output_format, method or "default")
         if callback is not None:
@@ -381,10 +382,28 @@ class KustoBackend(TextQueryBackend):
             raise SigmaConversionError(rule, rule.source, "Kusto value_sum requires one nonempty measured field name.")
         return self._convert_count_rule(rule, [field])
 
+    def convert_correlation_value_percentile_rule(self, rule, output_format=None, method="default"):
+        field = rule.condition.fieldref if rule.condition is not None else None
+        if not isinstance(field, str) or not field:
+            raise SigmaConversionError(
+                rule, rule.source, "Kusto value_percentile requires one nonempty measured field name."
+            )
+        # pySigma coerces selectors with int(), which can discard fractions.
+        # Validate the original standard-parser document as well as its result.
+        original = rule.custom_attributes.get("correlation", {}).get("condition", {})
+        selector = original.get("percentile", rule.condition.percentile)
+        if isinstance(selector, bool) or not isinstance(selector, int) or not 0 <= selector <= 100:
+            raise SigmaConversionError(
+                rule, rule.source, "Kusto value_percentile percentile selector must be an integer from 0 through 100."
+            )
+        return self._convert_count_rule(rule, [field])
+
     def _convert_count_rule(self, rule, counted_fields=None):
         count_type = rule.type.name.lower()
         if rule.type in (SigmaCorrelationType.TEMPORAL, SigmaCorrelationType.TEMPORAL_ORDERED):
             metrics = ["RuleCount"]
+        elif rule.type == SigmaCorrelationType.VALUE_PERCENTILE:
+            metrics = ["ValuePercentile"]
         elif rule.type == SigmaCorrelationType.VALUE_SUM:
             metrics = ["ValueSum"]
         elif counted_fields is None:
@@ -648,6 +667,46 @@ class KustoBackend(TextQueryBackend):
         join_fields = ", ".join([*groups, time_bin])
         summary_fields = ", ".join([window_end, *groups])
         result_fields = self._correlation_result_projection(rule, groups, window_end, span, metrics)
+        if rule.type == SigmaCorrelationType.VALUE_PERCENTILE:
+            value = columns["values"][0]
+            partition = allocate("_sigma_partition")
+            rank = allocate("_sigma_rank")
+            population = allocate("_sigma_population")
+            numeric = allocate("_sigma_numeric")
+            precise = allocate("_sigma_precise")
+            ranked = allocate("_sigma_ranked")
+            selector = rule.condition.percentile
+            # Sort the complete observation stream, without capped arrays or an
+            # approximate aggregate. The decimal tie-break distinguishes longs
+            # that round to the same double; the real key covers double extremes
+            # outside decimal's range. Preserve the selected observation's type.
+            return [
+                f"{definitions}let {weights} = {search}\n| where {valid_rows};\n"
+                f"let {ranked} = materialize(\n"
+                f"{weights}\n| project {anchor_fields}\n| distinct *\n"
+                f"| join kind=inner (\n{weights}\n"
+                f"| extend {time_bin} = pack_array(bin({timestamp}, {span}), bin({timestamp}, {span}) + {span})\n"
+                f"| mv-expand {time_bin} to typeof(datetime)\n) on {join_fields}\n"
+                f"| where {timestamp} between (({window_end} - {span}) .. {window_end})\n"
+                f'| where tostring({value}[0]) in ("int", "long", "real", "double", "decimal") '
+                f"and isfinite(toreal({value}[1]))\n"
+                f"| extend {partition} = tostring(pack_array({summary_fields})), "
+                f"{numeric} = toreal({value}[1]), {precise} = todecimal({value}[1])\n"
+                f"| sort by {partition} asc, {numeric} asc, {precise} asc\n"
+                f"| serialize {rank} = row_number(1, {partition} != prev({partition}))\n);\n"
+                f"{ranked}\n| join kind=inner (\n"
+                f"{ranked} | summarize {population} = max({rank}) by {partition}\n) on {partition}\n"
+                # Quotient/remainder avoids multiplying an arbitrarily large
+                # population by 100, and keeps the ceil operand below 10000.
+                f"| where {rank} == max_of(1, ({population} / 100) * {selector} + "
+                f"tolong(ceiling(toreal(({population} % 100) * {selector}) / 100.0)))\n"
+                f"| extend ValuePercentile = {value}[1]\n"
+                f'| where (gettype(ValuePercentile) in ("int", "long") and '
+                f"todecimal(ValuePercentile) {query_operator} decimal({threshold})) or "
+                f'(gettype(ValuePercentile) in ("real", "double", "decimal") and '
+                f"toreal(ValuePercentile) {query_operator} {threshold})\n"
+                f"| project {result_fields}"
+            ]
         after_summary = ""
         summary_binding = ""
         if temporal:
