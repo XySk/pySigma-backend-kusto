@@ -588,3 +588,10 @@ Grouped/mixed inputs, scalar metrics, multilevel retention and multiple-child
 fixtures were left intact. Their earlier resource failures and unexecuted gates
 remain recorded; these seven focused cases do not establish full-stage runtime
 acceptance. No production code or memory configuration changed.
+
+Preparation verification against diagnostic-fix baseline `d95fa34` confirmed
+exactly seven changed KQL hashes and **153 unchanged hashes**; the complete
+literal data prefixes and observed/expected comparison tails of the seven cases
+were byte-identical. The regenerated 160-entry manifest matched every fixture.
+Configured pytest passed **585 tests with 96.15% coverage**, above the 80% gate;
+Ruff and diff checks passed. No engine calls were made during preparation.
