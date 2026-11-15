@@ -419,3 +419,33 @@ contract in [README.md](README.md) after freezing the integrated candidate.
 Ranges still require the released upstream parser dependency tracked in #31.
 Partial ordered thresholds remain deferred and clearly rejected. Neither #32 nor
 the parent full-coverage target can be marked complete from this preparation.
+
+### Frozen combined candidate attempt: `87ad132` (2026-11-15)
+
+The numeric acceptance batch was regenerated from frozen commit
+`87ad13250296cb7f41baaeda55f9fed3c8845714`. Generated numeric queries exactly
+matched the committed fixtures. The engine reported product version
+`2026.11.15.0741-2645-8e3387b-master`, build `1.0.9815.14081`, database
+`NetDefaultDB`, with the emulator container held at 12 GiB.
+
+Positive/negative overflow, `numeric_context_noqual_overflow.kql`, and an unknown
+nonempty diagnostic probe all passed their expected-failure checks: each returned
+`SEM0080` with the explicit correlation-validation assertion. These are failures
+of the supplied invalid inputs, not successful empty result tables.
+
+The **first positive fixture**, `numeric_context_value_sum.kql`, failed after
+147.721 seconds with HTTP 520 and `Internal service error`. Its regenerated
+query was 147,482 bytes, SHA-256
+`67306f853cce7cdb4abed1221fe01e5f124c37e492f0feb1a602fbabb93bfa05`.
+The engine activity ID was `a3bf93a2-9fad-4a5d-a4f1-00018f2fade9` and client
+request ID `unspecified;f9683b5d-8e6c-4cab-b8af-14551bcbd681`.
+
+The batch stopped immediately; the other twelve positive fixtures were not
+executed on this candidate. Requests used default server properties and a
+360-second client limit. This was not a reported configured timeout, so no
+server-timeout retry was attempted. Local request/response hashes and outcomes
+were retained under `/tmp/kusto-final-26` for diagnosis.
+
+The positive numeric matrix is therefore **not runtime-complete** on this
+combined revision. The earlier successful focused three-level query remains
+evidence for its recorded earlier candidate, not a substitute for this gate.
