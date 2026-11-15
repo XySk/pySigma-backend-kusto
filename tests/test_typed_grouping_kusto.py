@@ -21,3 +21,11 @@ def test_typed_grouping_fixtures_are_current():
     directory = Path(__file__).parent / "fixtures" / "correlation"
     for name, query in fixtures().items():
         assert (directory / name).read_text() == query
+
+
+def test_grouped_retained_context_fixtures_are_current():
+    from tests.fixtures.correlation.typed_grouped_context import fixtures as context_fixtures
+
+    directory = Path(__file__).parent / "fixtures" / "correlation"
+    for name, query in context_fixtures().items():
+        assert (directory / name).read_text() == query

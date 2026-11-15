@@ -119,7 +119,7 @@ let _sigma_context_normalized = materialize(_sigma_group_input_1
 | join kind=inner (_sigma_group_identity_cache_1 | where _sigma_group_component_1 == 0 | project _sigma_group_row_1, _sigma_group_key_1 = _sigma_identity_identity_1) on _sigma_group_row_1
 | extend _sigma_context_group = _sigma_group_key_1);
 let _sigma_context_matches = materialize(
-_sigma_context_normalized | where isnotnull(_sigma_context_id)
+_sigma_context_normalized | where isnotnull(_sigma_context_id) | project _sigma_context_id, _sigma_context_end, _sigma_context_group, _sigma_context_partition
 | join kind=inner (
 _sigma_context_normalized | where isnull(_sigma_context_id) | project _sigma_context_timestamp, _sigma_context_rule, _sigma_context_group, _sigma_context_value, _sigma_context_value_1, _sigma_context_partition = 1
 ) on _sigma_context_group
@@ -380,7 +380,7 @@ let _sigma_context_normalized = materialize(_sigma_group_input_1
 | join kind=inner (_sigma_group_identity_cache_1 | where _sigma_group_component_1 == 0 | project _sigma_group_row_1, _sigma_group_key_1 = _sigma_identity_identity_1) on _sigma_group_row_1
 | extend _sigma_context_group = _sigma_group_key_1);
 let _sigma_context_matches = materialize(
-_sigma_context_normalized | where isnotnull(_sigma_context_id)
+_sigma_context_normalized | where isnotnull(_sigma_context_id) | project _sigma_context_id, _sigma_context_end, _sigma_context_group, _sigma_context_partition
 | join kind=inner (
 _sigma_context_normalized | where isnull(_sigma_context_id) | project _sigma_context_timestamp, _sigma_context_rule, _sigma_context_group, _sigma_context_value, _sigma_context_value_1, _sigma_context_partition = 1
 ) on _sigma_context_group
@@ -623,7 +623,7 @@ let _sigma_context_normalized = materialize(_sigma_group_input_1
 | join kind=inner (_sigma_group_identity_cache_1 | where _sigma_group_component_1 == 0 | project _sigma_group_row_1, _sigma_group_key_1 = _sigma_identity_identity_1) on _sigma_group_row_1
 | extend _sigma_context_group = _sigma_group_key_1);
 let _sigma_context_matches = materialize(
-_sigma_context_normalized | where isnotnull(_sigma_context_id)
+_sigma_context_normalized | where isnotnull(_sigma_context_id) | project _sigma_context_id, _sigma_context_end, _sigma_context_group, _sigma_context_partition
 | join kind=inner (
 _sigma_context_normalized | where isnull(_sigma_context_id) | project _sigma_context_timestamp, _sigma_context_rule, _sigma_context_group, _sigma_context_value, _sigma_context_value_1, _sigma_context_partition = 1
 ) on _sigma_context_group

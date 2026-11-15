@@ -201,3 +201,10 @@ evidence exists and the released upstream range-parser prerequisite in #31 is
 met. No local range parser is introduced. Partial ordered thresholds remain a
 separate explicit gap pending agreed semantics and acceptance examples. These
 fixtures establish correctness examples; they make no throughput claim.
+
+`typed_grouped_context.kql` exercises retained User and Server collections with
+two grouping fields, distinguishing numeric `1` from string `"1"` while also
+separating east and west. `typed_grouped_context_parent.kql` consumes those
+collections through a public parent conversion and expects only the four
+observed User/Server relationships, with each child counted once per group.
+Their literal expected rows are defined in `typed_grouped_context.py`.

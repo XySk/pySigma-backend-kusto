@@ -1,0 +1,889 @@
+{
+  "base_candidate": "d95fa34",
+  "scope": "Typed grouped retained-context projection fix; public conversion and literal real-engine multiset checks.",
+  "container_memory_bytes": 12884901888,
+  "user_total_memory_ceiling_bytes": 17179869184,
+  "memory_configuration_changed": false,
+  "engine_requests_serial": true,
+  "resource_failure_retries": 0,
+  "current_manifest_sha256": "d471a6425f49918d78a31eac899c0f594e69fc78a4856cb5c180db10fe93f584",
+  "runs": [
+    {
+      "artifacts_directory": "/tmp/kusto-context-red",
+      "record": {
+        "started_utc": "2026-11-15T18:00:25.537656+00:00",
+        "endpoint": "http://localhost:8080",
+        "database": "NetDefaultDB",
+        "request_options": {
+          "max_memory_consumption_per_query_per_node": 12884901888
+        },
+        "timeout_seconds": 360,
+        "manifest_sha256": "16d04b406a8ba33c0db2e52eef9a1bc71109333b9add57eb327f94e300dbf871",
+        "fixtures": [
+          {
+            "name": "typed_grouped_context.kql",
+            "sha256": "a1b1701cf6456298377fe9aac0171b126d2cf6ad53fe7bad09c66423d4a59ad4",
+            "expected_error": null,
+            "status": "FAIL",
+            "detail": "HTTP 400: response is not a v2 frame array",
+            "http_status": 400,
+            "seconds": 3.788
+          }
+        ],
+        "status": "FAIL",
+        "engine_version": {
+          "Tables": [
+            {
+              "TableName": "Table_0",
+              "Columns": [
+                {
+                  "ColumnName": "BuildVersion",
+                  "DataType": "String"
+                },
+                {
+                  "ColumnName": "BuildTime",
+                  "DataType": "DateTime"
+                },
+                {
+                  "ColumnName": "ServiceType",
+                  "DataType": "String"
+                },
+                {
+                  "ColumnName": "ProductVersion",
+                  "DataType": "String"
+                },
+                {
+                  "ColumnName": "ServiceOffering",
+                  "DataType": "String"
+                }
+              ],
+              "Rows": [
+                [
+                  "1.0.9815.14081",
+                  "2026-11-15T07:49:22Z",
+                  "Engine",
+                  "2026.11.15.0741-2645-8e3387b-master",
+                  ""
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "responses": [
+        {
+          "name": "typed_grouped_context.response.json",
+          "sha256": "c4a13fd39d85976486c469cbab7f61868d4108e52c24ab774f5afd888b08221f",
+          "error_payload": {
+            "error": {
+              "code": "General_BadRequest",
+              "message": "Request is invalid and cannot be executed.",
+              "@type": "Kusto.Data.Exceptions.KustoBadRequestException",
+              "@message": "Request is invalid and cannot be processed: Semantic error: SEM0100: 'summarize' operator: Failed to resolve scalar expression named 'Region'",
+              "@failureCode": 400,
+              "@context": {
+                "timestamp": "2026-11-15T18:00:29.3839065Z",
+                "serviceAlias": null,
+                "clientRequestId": "unspecified;7893912b-5e93-465a-afa8-9907bc1429c7",
+                "activityId": "bfd97555-ff14-407f-b667-d7f5b91dfbfb",
+                "subActivityId": "ee0351b1-2f60-4ce2-a8d8-95e51faba557",
+                "activityType": "DN.FE.ExecuteQuery",
+                "parentActivityId": "a3fa870f-45b0-4a04-8a9f-cdba9d0596ea",
+                "activityStack": "(Activity stack: CRID=unspecified;7893912b-5e93-465a-afa8-9907bc1429c7 ARID=bfd97555-ff14-407f-b667-d7f5b91dfbfb > GW.Http.CallContext/bfd97555-ff14-407f-b667-d7f5b91dfbfb > GW.ExecuteQuery/a3fa870f-45b0-4a04-8a9f-cdba9d0596ea > DN.FE.ExecuteQuery/ee0351b1-2f60-4ce2-a8d8-95e51faba557)",
+                "serviceFarm": null
+              },
+              "@permanent": true,
+              "@database": "NetDefaultDB",
+              "innererror": {
+                "code": "SEM0100",
+                "message": "'summarize' operator: Failed to resolve scalar expression named 'Region'",
+                "@type": "Kusto.Data.Exceptions.SemanticException",
+                "@message": "Semantic error: SEM0100: 'summarize' operator: Failed to resolve scalar expression named 'Region'",
+                "@failureCode": 400,
+                "@context": {
+                  "timestamp": "2026-11-15T18:00:29.3835467Z",
+                  "serviceAlias": null,
+                  "clientRequestId": "unspecified;7893912b-5e93-465a-afa8-9907bc1429c7",
+                  "activityId": "bfd97555-ff14-407f-b667-d7f5b91dfbfb",
+                  "subActivityId": "ee0351b1-2f60-4ce2-a8d8-95e51faba557",
+                  "activityType": "DN.FE.ExecuteQuery",
+                  "parentActivityId": "a3fa870f-45b0-4a04-8a9f-cdba9d0596ea",
+                  "activityStack": "(Activity stack: CRID=unspecified;7893912b-5e93-465a-afa8-9907bc1429c7 ARID=bfd97555-ff14-407f-b667-d7f5b91dfbfb > GW.Http.CallContext/bfd97555-ff14-407f-b667-d7f5b91dfbfb > GW.ExecuteQuery/a3fa870f-45b0-4a04-8a9f-cdba9d0596ea > DN.FE.ExecuteQuery/ee0351b1-2f60-4ce2-a8d8-95e51faba557)",
+                  "serviceFarm": null
+                },
+                "@permanent": true,
+                "@errorCode": "SEM0100",
+                "@errorMessage": "'summarize' operator: Failed to resolve scalar expression named 'Region'"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "artifacts_directory": "/tmp/kusto-context-red-valid",
+      "record": {
+        "started_utc": "2026-11-15T18:00:53.510662+00:00",
+        "endpoint": "http://localhost:8080",
+        "database": "NetDefaultDB",
+        "request_options": {
+          "max_memory_consumption_per_query_per_node": 12884901888
+        },
+        "timeout_seconds": 360,
+        "manifest_sha256": "bdd3c31dfa50dc0cbe42808f90410c302e58619e9d02ca55718c70850d32732f",
+        "fixtures": [
+          {
+            "name": "typed_grouped_context.kql",
+            "sha256": "9edd5d1b84b6d6af7b5ecd1ad277f932a038a6cdf721dc9b21ddd9efd7e2bb10",
+            "expected_error": null,
+            "status": "FAIL",
+            "detail": "multiset differences: [[\"2026-01-01T12:00:00Z\", \"long\", \"1\", \"east\", 2, \"[\\\"Alice\\\",\\\"Bob\\\"]\", \"[\\\"server1\\\",\\\"server2\\\"]\", -1], [\"2026-01-01T12:00:00Z\", \"string\", \"1\", \"east\", 1, \"[\\\"Carol\\\"]\", \"[\\\"server3\\\"]\", -1], [\"2026-01-01T12:00:00Z\", \"long\", \"1\", \"west\", 1, \"[\\\"Dave\\\"]\", \"[\\\"server4\\\"]\", -1], [\"2026-01-01T12:00:00Z\", \"long\", \"1\", \"west\", 1, \"[]\", \"[]\", 1], [\"2026-01-01T12:00:00Z\", \"string\", \"1\", \"east\", 1, \"[]\", \"[]\", 1], [\"2026-01-01T12:00:00Z\", \"long\", \"1\", \"east\", 2, \"[]\", \"[]\", 1]]",
+            "http_status": 200,
+            "seconds": 44.151
+          }
+        ],
+        "status": "FAIL",
+        "engine_version": {
+          "Tables": [
+            {
+              "TableName": "Table_0",
+              "Columns": [
+                {
+                  "ColumnName": "BuildVersion",
+                  "DataType": "String"
+                },
+                {
+                  "ColumnName": "BuildTime",
+                  "DataType": "DateTime"
+                },
+                {
+                  "ColumnName": "ServiceType",
+                  "DataType": "String"
+                },
+                {
+                  "ColumnName": "ProductVersion",
+                  "DataType": "String"
+                },
+                {
+                  "ColumnName": "ServiceOffering",
+                  "DataType": "String"
+                }
+              ],
+              "Rows": [
+                [
+                  "1.0.9815.14081",
+                  "2026-11-15T07:49:22Z",
+                  "Engine",
+                  "2026.11.15.0741-2645-8e3387b-master",
+                  ""
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "responses": [
+        {
+          "name": "typed_grouped_context.response.json",
+          "sha256": "2d6c3500c113d61106758c9dd3bfadc13a8a4b181c6ad40466bfea58a3e3b572",
+          "primary_results": [
+            {
+              "FrameType": "DataTable",
+              "TableId": 1,
+              "TableKind": "PrimaryResult",
+              "TableName": "PrimaryResult",
+              "Columns": [
+                {
+                  "ColumnName": "WindowEnd",
+                  "ColumnType": "datetime"
+                },
+                {
+                  "ColumnName": "Kind",
+                  "ColumnType": "string"
+                },
+                {
+                  "ColumnName": "Host",
+                  "ColumnType": "string"
+                },
+                {
+                  "ColumnName": "Region",
+                  "ColumnType": "string"
+                },
+                {
+                  "ColumnName": "EventCount",
+                  "ColumnType": "long"
+                },
+                {
+                  "ColumnName": "Users",
+                  "ColumnType": "string"
+                },
+                {
+                  "ColumnName": "Servers",
+                  "ColumnType": "string"
+                },
+                {
+                  "ColumnName": "Delta",
+                  "ColumnType": "long"
+                }
+              ],
+              "Rows": [
+                [
+                  "2026-01-01T12:00:00Z",
+                  "long",
+                  "1",
+                  "east",
+                  2,
+                  "[\"Alice\",\"Bob\"]",
+                  "[\"server1\",\"server2\"]",
+                  -1
+                ],
+                [
+                  "2026-01-01T12:00:00Z",
+                  "string",
+                  "1",
+                  "east",
+                  1,
+                  "[\"Carol\"]",
+                  "[\"server3\"]",
+                  -1
+                ],
+                [
+                  "2026-01-01T12:00:00Z",
+                  "long",
+                  "1",
+                  "west",
+                  1,
+                  "[\"Dave\"]",
+                  "[\"server4\"]",
+                  -1
+                ],
+                [
+                  "2026-01-01T12:00:00Z",
+                  "long",
+                  "1",
+                  "west",
+                  1,
+                  "[]",
+                  "[]",
+                  1
+                ],
+                [
+                  "2026-01-01T12:00:00Z",
+                  "string",
+                  "1",
+                  "east",
+                  1,
+                  "[]",
+                  "[]",
+                  1
+                ],
+                [
+                  "2026-01-01T12:00:00Z",
+                  "long",
+                  "1",
+                  "east",
+                  2,
+                  "[]",
+                  "[]",
+                  1
+                ]
+              ]
+            }
+          ],
+          "completion": [
+            {
+              "FrameType": "DataSetCompletion",
+              "HasErrors": false,
+              "Cancelled": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "artifacts_directory": "/tmp/kusto-context-green-mapping",
+      "record": {
+        "started_utc": "2026-11-15T18:01:44.398192+00:00",
+        "endpoint": "http://localhost:8080",
+        "database": "NetDefaultDB",
+        "request_options": {
+          "max_memory_consumption_per_query_per_node": 12884901888
+        },
+        "timeout_seconds": 360,
+        "manifest_sha256": "9fd72e658ae325884c6e0ba35417544472fcf61268e31a95ee123ff7e1f52deb",
+        "fixtures": [
+          {
+            "name": "standard_mappings.kql",
+            "sha256": "d081fff069090a0b0f3b22434a8bb8d3c475a7b25756eb323249abfdd02e9532",
+            "expected_error": null,
+            "status": "PASS",
+            "detail": "empty multiset diagnostic",
+            "http_status": 200,
+            "seconds": 21.111
+          }
+        ],
+        "status": "PASS",
+        "engine_version": {
+          "Tables": [
+            {
+              "TableName": "Table_0",
+              "Columns": [
+                {
+                  "ColumnName": "BuildVersion",
+                  "DataType": "String"
+                },
+                {
+                  "ColumnName": "BuildTime",
+                  "DataType": "DateTime"
+                },
+                {
+                  "ColumnName": "ServiceType",
+                  "DataType": "String"
+                },
+                {
+                  "ColumnName": "ProductVersion",
+                  "DataType": "String"
+                },
+                {
+                  "ColumnName": "ServiceOffering",
+                  "DataType": "String"
+                }
+              ],
+              "Rows": [
+                [
+                  "1.0.9815.14081",
+                  "2026-11-15T07:49:22Z",
+                  "Engine",
+                  "2026.11.15.0741-2645-8e3387b-master",
+                  ""
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "responses": [
+        {
+          "name": "standard_mappings.response.json",
+          "sha256": "781e70d252bf1979735033509188fadb2e9965b8efb2915111d51ce419c9b12d",
+          "primary_results": [
+            {
+              "FrameType": "DataTable",
+              "TableId": 1,
+              "TableKind": "PrimaryResult",
+              "TableName": "PrimaryResult",
+              "Columns": [
+                {
+                  "ColumnName": "WindowStart",
+                  "ColumnType": "datetime"
+                },
+                {
+                  "ColumnName": "WindowEnd",
+                  "ColumnType": "datetime"
+                },
+                {
+                  "ColumnName": "Host",
+                  "ColumnType": "string"
+                },
+                {
+                  "ColumnName": "Metric",
+                  "ColumnType": "string"
+                },
+                {
+                  "ColumnName": "Users",
+                  "ColumnType": "long"
+                },
+                {
+                  "ColumnName": "Alice",
+                  "ColumnType": "bool"
+                },
+                {
+                  "ColumnName": "Bob",
+                  "ColumnType": "bool"
+                },
+                {
+                  "ColumnName": "Delta",
+                  "ColumnType": "long"
+                }
+              ],
+              "Rows": []
+            }
+          ],
+          "completion": [
+            {
+              "FrameType": "DataSetCompletion",
+              "HasErrors": false,
+              "Cancelled": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "artifacts_directory": "/tmp/kusto-context-green-regressions",
+      "record": {
+        "started_utc": "2026-11-15T18:02:18.920240+00:00",
+        "endpoint": "http://localhost:8080",
+        "database": "NetDefaultDB",
+        "request_options": {
+          "max_memory_consumption_per_query_per_node": 12884901888
+        },
+        "timeout_seconds": 360,
+        "manifest_sha256": "9fd72e658ae325884c6e0ba35417544472fcf61268e31a95ee123ff7e1f52deb",
+        "fixtures": [
+          {
+            "name": "context_event_count.kql",
+            "sha256": "50ef69cb2523a0ecd7b437d958b3dc5980d50761f77491f01a8e2c92c920c1ac",
+            "expected_error": null,
+            "status": "PASS",
+            "detail": "empty multiset diagnostic",
+            "http_status": 200,
+            "seconds": 36.368
+          },
+          {
+            "name": "context_nested.kql",
+            "sha256": "4c8d67a15ced416c9ebd9e5944049e4779c970a4f20908f76564603d9c60ebe9",
+            "expected_error": null,
+            "status": "FAIL",
+            "detail": "HTTP 400: response is not a v2 frame array",
+            "http_status": 400,
+            "seconds": 9.723
+          }
+        ],
+        "status": "FAIL",
+        "engine_version": {
+          "Tables": [
+            {
+              "TableName": "Table_0",
+              "Columns": [
+                {
+                  "ColumnName": "BuildVersion",
+                  "DataType": "String"
+                },
+                {
+                  "ColumnName": "BuildTime",
+                  "DataType": "DateTime"
+                },
+                {
+                  "ColumnName": "ServiceType",
+                  "DataType": "String"
+                },
+                {
+                  "ColumnName": "ProductVersion",
+                  "DataType": "String"
+                },
+                {
+                  "ColumnName": "ServiceOffering",
+                  "DataType": "String"
+                }
+              ],
+              "Rows": [
+                [
+                  "1.0.9815.14081",
+                  "2026-11-15T07:49:22Z",
+                  "Engine",
+                  "2026.11.15.0741-2645-8e3387b-master",
+                  ""
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "responses": [
+        {
+          "name": "context_event_count.response.json",
+          "sha256": "4d6d4d76438e526adaf00df0d1b10f9eb43f9030e981bf38594df0f658ab71cb",
+          "primary_results": [
+            {
+              "FrameType": "DataTable",
+              "TableId": 1,
+              "TableKind": "PrimaryResult",
+              "TableName": "PrimaryResult",
+              "Columns": [
+                {
+                  "ColumnName": "WindowEnd",
+                  "ColumnType": "datetime"
+                },
+                {
+                  "ColumnName": "Host",
+                  "ColumnType": "string"
+                },
+                {
+                  "ColumnName": "Metric",
+                  "ColumnType": "real"
+                },
+                {
+                  "ColumnName": "UserCount",
+                  "ColumnType": "long"
+                },
+                {
+                  "ColumnName": "ServerCount",
+                  "ColumnType": "long"
+                },
+                {
+                  "ColumnName": "BadPairs",
+                  "ColumnType": "long"
+                },
+                {
+                  "ColumnName": "UserLong",
+                  "ColumnType": "bool"
+                },
+                {
+                  "ColumnName": "UserString",
+                  "ColumnType": "bool"
+                },
+                {
+                  "ColumnName": "HasServers",
+                  "ColumnType": "bool"
+                },
+                {
+                  "ColumnName": "Delta",
+                  "ColumnType": "long"
+                }
+              ],
+              "Rows": []
+            }
+          ],
+          "completion": [
+            {
+              "FrameType": "DataSetCompletion",
+              "HasErrors": false,
+              "Cancelled": false
+            }
+          ]
+        },
+        {
+          "name": "context_nested.response.json",
+          "sha256": "bd51a6d8e3fe998fe370ea0e69d1ff6e983be53bec0f16cf63f64afc8f2620c6",
+          "error_payload": {
+            "error": {
+              "code": "General_BadRequest",
+              "message": "Request is invalid and cannot be executed.",
+              "@type": "Kusto.Data.Exceptions.KustoBadRequestException",
+              "@message": "Request is invalid and cannot be processed: Semantic error: SEM0100: 'summarize' operator: Failed to resolve scalar expression named 'Host'",
+              "@failureCode": 400,
+              "@context": {
+                "timestamp": "2026-11-15T18:03:05.0048312Z",
+                "serviceAlias": null,
+                "clientRequestId": "unspecified;03259a88-5589-4ada-947f-c0d4be3efbdf",
+                "activityId": "381ff90e-1331-4391-8d7c-6fe8dd14cb5e",
+                "subActivityId": "88b8dc07-796b-4edf-bb53-1c8ca638e7e4",
+                "activityType": "DN.FE.ExecuteQuery",
+                "parentActivityId": "740121d6-96f5-47f6-bf3b-9d17273473eb",
+                "activityStack": "(Activity stack: CRID=unspecified;03259a88-5589-4ada-947f-c0d4be3efbdf ARID=381ff90e-1331-4391-8d7c-6fe8dd14cb5e > GW.Http.CallContext/381ff90e-1331-4391-8d7c-6fe8dd14cb5e > GW.ExecuteQuery/740121d6-96f5-47f6-bf3b-9d17273473eb > DN.FE.ExecuteQuery/88b8dc07-796b-4edf-bb53-1c8ca638e7e4)",
+                "serviceFarm": null
+              },
+              "@permanent": true,
+              "@database": "NetDefaultDB",
+              "innererror": {
+                "code": "SEM0100",
+                "message": "'summarize' operator: Failed to resolve scalar expression named 'Host'",
+                "@type": "Kusto.Data.Exceptions.SemanticException",
+                "@message": "Semantic error: SEM0100: 'summarize' operator: Failed to resolve scalar expression named 'Host'",
+                "@failureCode": 400,
+                "@context": {
+                  "timestamp": "2026-11-15T18:03:05.0040556Z",
+                  "serviceAlias": null,
+                  "clientRequestId": "unspecified;03259a88-5589-4ada-947f-c0d4be3efbdf",
+                  "activityId": "381ff90e-1331-4391-8d7c-6fe8dd14cb5e",
+                  "subActivityId": "88b8dc07-796b-4edf-bb53-1c8ca638e7e4",
+                  "activityType": "DN.FE.ExecuteQuery",
+                  "parentActivityId": "740121d6-96f5-47f6-bf3b-9d17273473eb",
+                  "activityStack": "(Activity stack: CRID=unspecified;03259a88-5589-4ada-947f-c0d4be3efbdf ARID=381ff90e-1331-4391-8d7c-6fe8dd14cb5e > GW.Http.CallContext/381ff90e-1331-4391-8d7c-6fe8dd14cb5e > GW.ExecuteQuery/740121d6-96f5-47f6-bf3b-9d17273473eb > DN.FE.ExecuteQuery/88b8dc07-796b-4edf-bb53-1c8ca638e7e4)",
+                  "serviceFarm": null
+                },
+                "@permanent": true,
+                "@errorCode": "SEM0100",
+                "@errorMessage": "'summarize' operator: Failed to resolve scalar expression named 'Host'"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "artifacts_directory": "/tmp/kusto-context-green-continuation",
+      "record": {
+        "started_utc": "2026-11-15T18:03:21.693260+00:00",
+        "endpoint": "http://localhost:8080",
+        "database": "NetDefaultDB",
+        "request_options": {
+          "max_memory_consumption_per_query_per_node": 12884901888
+        },
+        "timeout_seconds": 360,
+        "manifest_sha256": "a311172ad3288771aab2c528d6d08a0f680912e3c89d4aa20097bc734e939a85",
+        "fixtures": [
+          {
+            "name": "context_nested.kql",
+            "sha256": "d7b375fd7cb69e0fd9af66b881c181cdc1d068e825ea73300f8bca0654c430dc",
+            "expected_error": null,
+            "status": "PASS",
+            "detail": "empty multiset diagnostic",
+            "http_status": 200,
+            "seconds": 46.332
+          },
+          {
+            "name": "context_value_sum.kql",
+            "sha256": "2acbdc90b4b80b1ae27952e35c2ed0c5c42f2621aabc3e1a5fd6db24a96bd3cd",
+            "expected_error": null,
+            "status": "PASS",
+            "detail": "empty multiset diagnostic",
+            "http_status": 200,
+            "seconds": 32.208
+          },
+          {
+            "name": "typed_grouped_context.kql",
+            "sha256": "1dc9ca227630d678006bc058a8e07047268742c28922f6542cc38e167a043b07",
+            "expected_error": null,
+            "status": "PASS",
+            "detail": "empty multiset diagnostic",
+            "http_status": 200,
+            "seconds": 44.888
+          },
+          {
+            "name": "typed_grouped_context_parent.kql",
+            "sha256": "3c290fb814283c3dba8e483331abc224442bb71ec8474bd4757a287bcdbdc9ef",
+            "expected_error": null,
+            "status": "FAIL",
+            "detail": "curl failed (52): curl: (52) Empty reply from server",
+            "seconds": 102.051
+          }
+        ],
+        "status": "FAIL",
+        "engine_version": {
+          "Tables": [
+            {
+              "TableName": "Table_0",
+              "Columns": [
+                {
+                  "ColumnName": "BuildVersion",
+                  "DataType": "String"
+                },
+                {
+                  "ColumnName": "BuildTime",
+                  "DataType": "DateTime"
+                },
+                {
+                  "ColumnName": "ServiceType",
+                  "DataType": "String"
+                },
+                {
+                  "ColumnName": "ProductVersion",
+                  "DataType": "String"
+                },
+                {
+                  "ColumnName": "ServiceOffering",
+                  "DataType": "String"
+                }
+              ],
+              "Rows": [
+                [
+                  "1.0.9815.14081",
+                  "2026-11-15T07:49:22Z",
+                  "Engine",
+                  "2026.11.15.0741-2645-8e3387b-master",
+                  ""
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "responses": [
+        {
+          "name": "context_nested.response.json",
+          "sha256": "cc4739e4d7a7487488450479d311d9b69822c63964a1f1b6d8dd419b385fc227",
+          "primary_results": [
+            {
+              "FrameType": "DataTable",
+              "TableId": 1,
+              "TableKind": "PrimaryResult",
+              "TableName": "PrimaryResult",
+              "Columns": [
+                {
+                  "ColumnName": "WindowEnd",
+                  "ColumnType": "datetime"
+                },
+                {
+                  "ColumnName": "Host",
+                  "ColumnType": "string"
+                },
+                {
+                  "ColumnName": "EventCount",
+                  "ColumnType": "long"
+                },
+                {
+                  "ColumnName": "Values",
+                  "ColumnType": "long"
+                },
+                {
+                  "ColumnName": "Pairs",
+                  "ColumnType": "long"
+                },
+                {
+                  "ColumnName": "BadPairs",
+                  "ColumnType": "long"
+                },
+                {
+                  "ColumnName": "Bags",
+                  "ColumnType": "long"
+                },
+                {
+                  "ColumnName": "DatesFirst",
+                  "ColumnType": "long"
+                },
+                {
+                  "ColumnName": "StringsFirst",
+                  "ColumnType": "long"
+                },
+                {
+                  "ColumnName": "NaNs",
+                  "ColumnType": "long"
+                },
+                {
+                  "ColumnName": "Zeroes",
+                  "ColumnType": "long"
+                },
+                {
+                  "ColumnName": "Delta",
+                  "ColumnType": "long"
+                }
+              ],
+              "Rows": []
+            }
+          ],
+          "completion": [
+            {
+              "FrameType": "DataSetCompletion",
+              "HasErrors": false,
+              "Cancelled": false
+            }
+          ]
+        },
+        {
+          "name": "context_value_sum.response.json",
+          "sha256": "87eefe550168859441d0cc4b30e9ec04def9ab035559b15ae76b4df21c58bebf",
+          "primary_results": [
+            {
+              "FrameType": "DataTable",
+              "TableId": 1,
+              "TableKind": "PrimaryResult",
+              "TableName": "PrimaryResult",
+              "Columns": [
+                {
+                  "ColumnName": "WindowEnd",
+                  "ColumnType": "datetime"
+                },
+                {
+                  "ColumnName": "Host",
+                  "ColumnType": "string"
+                },
+                {
+                  "ColumnName": "Metric",
+                  "ColumnType": "real"
+                },
+                {
+                  "ColumnName": "UserCount",
+                  "ColumnType": "long"
+                },
+                {
+                  "ColumnName": "ServerCount",
+                  "ColumnType": "long"
+                },
+                {
+                  "ColumnName": "BadPairs",
+                  "ColumnType": "long"
+                },
+                {
+                  "ColumnName": "UserLong",
+                  "ColumnType": "bool"
+                },
+                {
+                  "ColumnName": "UserString",
+                  "ColumnType": "bool"
+                },
+                {
+                  "ColumnName": "HasServers",
+                  "ColumnType": "bool"
+                },
+                {
+                  "ColumnName": "Delta",
+                  "ColumnType": "long"
+                }
+              ],
+              "Rows": []
+            }
+          ],
+          "completion": [
+            {
+              "FrameType": "DataSetCompletion",
+              "HasErrors": false,
+              "Cancelled": false
+            }
+          ]
+        },
+        {
+          "name": "typed_grouped_context.response.json",
+          "sha256": "00886c9c28c1acfbb3d8bbfbb595810e1c0016844ce7a243704e3c05d9eab268",
+          "primary_results": [
+            {
+              "FrameType": "DataTable",
+              "TableId": 1,
+              "TableKind": "PrimaryResult",
+              "TableName": "PrimaryResult",
+              "Columns": [
+                {
+                  "ColumnName": "WindowEnd",
+                  "ColumnType": "datetime"
+                },
+                {
+                  "ColumnName": "Kind",
+                  "ColumnType": "string"
+                },
+                {
+                  "ColumnName": "Host",
+                  "ColumnType": "string"
+                },
+                {
+                  "ColumnName": "Region",
+                  "ColumnType": "string"
+                },
+                {
+                  "ColumnName": "EventCount",
+                  "ColumnType": "long"
+                },
+                {
+                  "ColumnName": "Users",
+                  "ColumnType": "string"
+                },
+                {
+                  "ColumnName": "Servers",
+                  "ColumnType": "string"
+                },
+                {
+                  "ColumnName": "Delta",
+                  "ColumnType": "long"
+                }
+              ],
+              "Rows": []
+            }
+          ],
+          "completion": [
+            {
+              "FrameType": "DataSetCompletion",
+              "HasErrors": false,
+              "Cancelled": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "runtime_status": "PARTIAL: typed parent transport failure; mapped parent not run; no retry",
+  "parent_failure_diagnosis": "curl52 empty reply; no valid response; container inspection unavailable (Docker socket permission denied); OOM not yet established",
+  "not_run": [
+    "standard_mappings_parent.kql"
+  ],
+  "successful_responses_strictly_verified": true
+}

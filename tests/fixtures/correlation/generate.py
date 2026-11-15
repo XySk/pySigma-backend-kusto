@@ -1936,11 +1936,13 @@ def fixtures():
     from tests.fixtures.correlation.ordered_context import fixtures as ordered_context_fixtures
     from tests.fixtures.correlation.standard_mappings import fixture as standard_mapping_fixture
     from tests.fixtures.correlation.temporal_context import fixtures as temporal_context_fixtures
+    from tests.fixtures.correlation.typed_grouped_context import fixtures as typed_grouped_context_fixtures
     from tests.fixtures.correlation.typed_grouping import fixtures as typed_grouping_fixtures
 
     return {
         **matrix_fixtures(),
         **typed_grouping_fixtures(),
+        **typed_grouped_context_fixtures(),
         "standard_mappings.kql": standard_mapping_fixture(),
         "standard_mappings_parent.kql": standard_mapping_fixture(parent=True),
         **average_fixtures(check, HEADER),

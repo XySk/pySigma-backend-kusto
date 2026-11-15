@@ -971,7 +971,9 @@ class KustoBackend(TextQueryBackend):
                 finally:
                     del self._correlation_group_by
                 prefix += fragment + f"let {normalized} = materialize({shared_search});\n"
-                left = f"{normalized} | where isnotnull({source_id})"
+                # Drop sparse source columns so the join exposes the right-hand timestamp and context.
+                normalized_left_projection = ", ".join([source_id, end, *groups, join_key])
+                left = f"{normalized} | where isnotnull({source_id}) | project {normalized_left_projection}"
                 right = f"{normalized} | where isnull({source_id}) | project {right_projection}"
             else:
                 left = f"{summaries} | project {left_projection}"
