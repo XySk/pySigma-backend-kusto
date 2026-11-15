@@ -230,6 +230,11 @@ against the same engine and returned empty exact summary multiset difference tab
 
 ## Dependency order and diagnostics (#30)
 
+The execution below records initial revision `79bdc75`. These fixtures were
+regenerated after integration with typed grouping and shared-child validation.
+Execution of that regenerated revision is pending the frozen integration runtime
+pass; the earlier result is not evidence for the updated KQL.
+
 Executed 2026-11-15 against local Kusto emulator `NetDefaultDB` through
 `/v2/rest/query`. A fresh `.show version` reported engine product version
 `2026.11.15.0741-2645-8e3387b-master`, build `1.0.9815.14081`.

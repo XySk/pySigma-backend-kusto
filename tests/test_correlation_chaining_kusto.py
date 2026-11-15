@@ -34,10 +34,10 @@ def test_ordered_parent_scopes_complete_temporal_child_before_strict_window_end_
 
     (query,) = convert_documents(documents)
 
-    assert query.startswith("let _sigma_child_0 = () {\nlet _sigma_types = union (Events\n")
-    assert "RuleCount\n};\nlet _sigma_types = union (_sigma_child_0()\n" in query
-    assert '_sigma_timestamp = todatetime(["WindowEnd"]), _sigma_group_0 = tostring(["Host"])' in query
-    assert '_sigma_timestamp = todatetime(["Timestamp"]), _sigma_group_0 = tostring(["Host"])' in query
+    assert "union (Events\n" in summary_data_query(query)
+    assert "union (_sigma_shared_results\n" in summary_data_query(query)
+    assert '_sigma_timestamp = todatetime(["WindowEnd"]), _sigma_group_0 = pack_array(gettype(["Host"]), ["Host"])' in query
+    assert '_sigma_timestamp = todatetime(["Timestamp"]), _sigma_group_0 = pack_array(gettype(["Host"]), ["Host"])' in query
     assert '| where _sigma_rule == "child"' in query
     assert '| where _sigma_rule == "direct-rule"' in query
     assert "| where _sigma_timestamp > _sigma_sequence_end and _sigma_timestamp <= _sigma_sequence_start + 5m" in query
@@ -71,7 +71,7 @@ def test_all_supported_types_produce_and_consume_child_summaries(producer, consu
     producer_metric = "RuleCount = tolong(2)" if producer == "temporal_ordered" else METRICS[producer]
     assert summary_projections(query)[0].endswith(f", {producer_metric}")
     parent = summary_data_query(query).split("\n};\n", 1)[1]
-    assert '_sigma_timestamp = todatetime(["WindowEnd"]), _sigma_group_0 = tostring(["Host"])' in parent
+    assert '_sigma_timestamp = todatetime(["WindowEnd"]), _sigma_group_0 = pack_array(gettype(["Host"]), ["Host"])' in parent
     assert '| extend _sigma_rule = "child"' in parent
     consumer_metric = "RuleCount = tolong(1)" if consumer == "temporal_ordered" else METRICS[consumer]
     assert final_summary_projection(query).endswith(f", {consumer_metric}")
@@ -115,7 +115,7 @@ def test_child_window_fields_group_and_actual_metric_can_all_be_aliased_without_
         assert f'_sigma_value_{column} = pack_array(gettype(["{field}"]), ["{field}"])' in parent_query
     assert "Wrong" not in query
     assert 'todatetime(["PhysicalTime"])' in query
-    assert 'tostring(["PhysicalHost"])' in query
+    assert 'pack_array(gettype(["PhysicalHost"]), ["PhysicalHost"])' in query
 
 
 @pytest.mark.parametrize(
@@ -186,7 +186,7 @@ def test_ordered_parent_repeated_child_name_and_id_require_separate_times_but_on
 
     (query,) = convert_documents([source_document(), child, parent])
 
-    assert query.count('| where _sigma_rule == "child"') == 2
+    assert summary_data_query(query).count('| where _sigma_rule == "child"') == 2
     assert "| where _sigma_timestamp > _sigma_sequence_end and _sigma_timestamp <= _sigma_sequence_start + 5m" in query
     assert final_summary_projection(query).endswith("RuleCount = tolong(1)")
 
@@ -280,7 +280,7 @@ def test_multilevel_mixed_sources_keep_result_names_and_scope_bindings_separate_
     assert len(summary_projections(query)) == 3
     assert summary_projections(query)[0].endswith(', ["Case"] = _sigma_group_0, ["Host"] = _sigma_group_1, EventCount')
     assert summary_projections(query)[1].endswith(', ["Tenant"] = _sigma_group_0, ValueCount')
-    assert 'union (_sigma_child_0()' in query
+    assert 'union (_sigma_shared_results' in query
     assert 'let _sigma_shared_results = materialize(_sigma_shared_child());' in query
     assert 'union (_sigma_shared_results\n' in query
     assert '_sigma_correlation_error' not in summary_data_query(query)
@@ -291,10 +291,10 @@ def test_multilevel_mixed_sources_keep_result_names_and_scope_bindings_separate_
     assert '(NetworkEvents\n| where Marker =~ "direct"' in query
     assert 'todatetime(["ProcessTime"])' in query
     assert 'todatetime(["NetworkTime"])' in query
-    assert 'tostring(["ProcessCase"])' in query
-    assert 'tostring(["NetworkScope"])' in query
-    assert 'tostring(["Case"])' in query
-    assert 'tostring(["Tenant"])' in query
+    assert 'pack_array(gettype(["ProcessCase"]), ["ProcessCase"])' in query
+    assert 'pack_array(gettype(["NetworkScope"]), ["NetworkScope"])' in query
+    assert 'pack_array(gettype(["Case"]), ["Case"])' in query
+    assert 'pack_array(gettype(["Tenant"]), ["Tenant"])' in query
     assert 'pack_array(gettype(["EventCount"]), ["EventCount"])' in query
     assert summary_data_query(query).count('todatetime(["WindowEnd"])') == 2
     assert "Wrong" not in query
@@ -308,13 +308,13 @@ def test_chain_bindings_do_not_shadow_known_tables_in_direct_or_descendant_sourc
 
     # The outer function must avoid the raw table two correlation levels below,
     # and the ordered parent's retained stream must avoid its direct table.
-    assert "let _sigma_child_0_1 = () {\n" in query
-    assert "union (_sigma_child_0_1()" in query
+    assert "let _sigma_shared_child = () {\n" in query
+    assert "union (_sigma_shared_results" in query
     assert '(_sigma_child_0\n| where Marker =~ "match"' in query
     assert '(_sigma_types\n| where Marker =~ "direct"' in query
     assert "let _sigma_child_0 =" not in query
     assert "let _sigma_types =" not in query
-    assert "let _sigma_types_1 = union (_sigma_shared_results\n" in query
+    assert "let _sigma_types_1 = _sigma_group_input\n" in query
 
 
 @pytest.mark.parametrize(
@@ -366,5 +366,5 @@ def test_shared_child_remains_available_to_each_parent_and_any_consumer_can_supp
     assert final_summary_projection(queries[-2]).endswith("EventCount")
     assert final_summary_projection(queries[-1]).endswith("ValueCount")
     for parent in queries[-2:]:
-        assert summary_data_query(parent).count("let _sigma_child_0 = () {") == 1
+        assert summary_data_query(parent).count("let _sigma_shared_child = () {") == 1
         assert '_sigma_timestamp = todatetime(["WindowEnd"])' in parent

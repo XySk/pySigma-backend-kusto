@@ -37,7 +37,7 @@ def test_standard_mapping_resolves_fields_outside_detection_and_preserves_logica
     assert '["Process Command"] =~ "suspicious.exe"' in query
     assert '["Process Image"] =~ "suspicious.exe"' in query
     assert query.count('todatetime(["Event Time"])') >= 2
-    assert query.count('tostring(["Machine Name"])') >= 2
+    assert query.count('pack_array(gettype(["Machine Name"]), ["Machine Name"])') >= 2
     assert query.count('pack_array(gettype(["Actor Name"]), ["Actor Name"])') >= 2
     assert '["Host"] = _sigma_group_0, ValueCount' in query
 
@@ -81,8 +81,8 @@ def test_source_specific_standard_mapping_and_aliases_use_each_sources_pipeline(
     (query,) = KustoBackend(processing_pipeline=pipeline, correlation_timestamp_field="Timestamp").convert(collection)
     assert 'todatetime(["Process Time"])' in query
     assert 'todatetime(["Network Time"])' in query
-    assert 'tostring(["Process Actor"])' in query
-    assert 'tostring(["Network Actor"])' in query
+    assert 'pack_array(gettype(["Process Actor"]), ["Process Actor"])' in query
+    assert 'pack_array(gettype(["Network Actor"]), ["Network Actor"])' in query
     assert "Port == 443" in query
 
 
@@ -159,8 +159,8 @@ def test_standard_mapping_preserves_logical_child_group_fields():
     (query,) = KustoBackend(
         processing_pipeline=mapping_pipeline({"Host": "Machine Name"}), correlation_timestamp_field="Timestamp"
     ).convert(collection)
-    assert 'tostring(["Machine Name"])' in query
-    assert 'todatetime(["WindowEnd"]), _sigma_group_0 = tostring(["Host"])' in query
+    assert 'pack_array(gettype(["Machine Name"]), ["Machine Name"])' in query
+    assert 'todatetime(["WindowEnd"]), _sigma_group_0 = pack_array(gettype(["Host"]), ["Host"])' in query
 
 
 def test_ordinary_detection_still_supports_one_to_many_and_escapes_identifier_quotes():

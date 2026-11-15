@@ -116,6 +116,7 @@ irrelevant; full summary multisets must agree. These fixtures exercise logical
 child fields and child `WindowEnd` timestamps. See `RUNTIME.md` for execution
 results and the emulator resource configuration.
 
+`typed_grouping.py` supplies literal expected result multisets for all seven correlation types, compound nested groups, exclusions, mixed direct/scalar-child aliases, and extended-type downstream chains. Run `python -m tests.fixtures.correlation.generate` to regenerate their queries through the public collection conversion seam. Runtime evidence is recorded separately in `RUNTIME.md`.
 The same generator also writes `standard_mappings_parent.kql`, verifying that a
 parent consumes individual mapped child context values through logical fields.
 

@@ -102,6 +102,12 @@ def query(*, operator="gte", threshold=2, groups=(), duplicate_sources=False, co
 
 def check(actual, expected, fields):
     """An empty result means exact multiset equality, including result multiplicity."""
+    # Historical fixture groups are strings. Normalize only these diagnostic
+    # columns; typed grouping acceptance checks inspect runtime types separately.
+    string_groups = {"Case", "User", "Host", "Actor", "ChildCount", "Tenant"}
+    normalize = ", ".join(f"{field}=tostring({field})" for field in fields if field in string_groups)
+    if normalize:
+        actual += " | extend " + normalize
     return (
         f"union ({actual} | extend Delta = 1), ({expected} | extend Delta = -1)\n"
         f"| summarize Delta = sum(Delta) by {', '.join(fields)}\n"
@@ -1926,9 +1932,14 @@ def fixtures():
     from tests.fixtures.correlation.count_context import fixtures as count_context_fixtures
     from tests.fixtures.correlation.numeric_context import fixtures as numeric_context_fixtures
     from tests.fixtures.correlation.ordered_context import fixtures as ordered_context_fixtures
+    from tests.fixtures.correlation.standard_mappings import fixture as standard_mapping_fixture
     from tests.fixtures.correlation.temporal_context import fixtures as temporal_context_fixtures
+    from tests.fixtures.correlation.typed_grouping import fixtures as typed_grouping_fixtures
 
     return {
+        **typed_grouping_fixtures(),
+        "standard_mappings.kql": standard_mapping_fixture(),
+        "standard_mappings_parent.kql": standard_mapping_fixture(parent=True),
         **average_fixtures(check, HEADER),
         **boolean_fixtures(),
         **boolean_context_fixtures(),

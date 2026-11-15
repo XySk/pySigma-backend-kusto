@@ -22,7 +22,7 @@ def test_boolean_presence_uses_upstream_references_and_inclusive_windows():
     assert 'countif(_sigma_rule == "C") > 0' in query
     assert "not(" in query
     assert "between ((_sigma_window_end - 5m) .. _sigma_window_end)" in query
-    assert query.endswith('["Host"] = _sigma_group_0, RuleCount')
+    assert '["Host"] = _sigma_group_0, RuleCount' in query
 
 
 @pytest.mark.parametrize(
@@ -74,10 +74,10 @@ def test_boolean_child_and_detection_sources_preserve_aliases_and_generation():
     }
     (query,) = convert_documents([parent, source_document("B", "B"), child, source_document("A", "A")])
     assert 'todatetime(["WindowEnd"])' in query
-    assert 'tostring(["Host"])' in query
-    assert 'tostring(["Device"])' in query
+    assert 'pack_array(gettype(["Host"]), ["Host"])' in query
+    assert 'pack_array(gettype(["Device"]), ["Device"])' in query
     assert 'countif(_sigma_rule == "child") > 0' in query
-    assert query.endswith('["Actor"] = _sigma_group_0, RuleCount')
+    assert '["Actor"] = _sigma_group_0, RuleCount' in query
 
 
 def test_boolean_uuid_reference_has_public_parser_error():

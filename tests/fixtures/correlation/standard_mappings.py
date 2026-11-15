@@ -84,7 +84,7 @@ let Actual=() {
         + query
         + """
 };
-let Observed=Actual() | project WindowStart, WindowEnd, Host, Metric=tostring(ValueSum),
+let Observed=Actual() | project WindowStart, WindowEnd, Host=tostring(Host), Metric=tostring(ValueSum),
  Users=array_length(User), Alice=set_has_element(User,"Alice"), Bob=set_has_element(User,"Bob");
 let Expected=datatable(WindowStart:datetime, WindowEnd:datetime, Host:string, Metric:string,
  Users:long, Alice:bool, Bob:bool) [

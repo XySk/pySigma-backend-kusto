@@ -725,7 +725,7 @@ class KustoBackend(TextQueryBackend):
                 f"for {count_type} correlations; for example correlation_timestamp_field='Timestamp'.",
             )
 
-        typed_groups = self._uses_context_groups(rule)
+        typed_groups = bool(rule.group_by)
         self._correlation_typed_groups = typed_groups
         try:
             queries = self._convert_count(rule, timestamp_field, query_operator, counted_fields, metrics)
@@ -922,7 +922,7 @@ class KustoBackend(TextQueryBackend):
         self._correlation_counted_fields = []
         self._correlation_context_fields = context_fields
         self._correlation_columns = columns
-        self._correlation_typed_groups = self._uses_context_groups(rule)
+        self._correlation_typed_groups = bool(rule.group_by)
         try:
             definitions, search = self._count_search(rule, allocate)
         finally:
@@ -946,7 +946,7 @@ class KustoBackend(TextQueryBackend):
         right_projection = ", ".join([timestamp, columns["rule"], *groups, *values, f"{join_key} = 1"])
         span = rule.timespan.spec if rule.timespan.unit in "smhd" else f"{rule.timespan.seconds}s"
         join_fields = ", ".join(groups or [join_key])
-        typed_groups = self._uses_context_groups(rule)
+        typed_groups = bool(rule.group_by)
         if typed_groups:
             group_projection = [
                 f"{column} = pack_array(gettype({self._quote_correlation_field(field)}), {self._quote_correlation_field(field)})"
