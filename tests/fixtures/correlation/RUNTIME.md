@@ -207,6 +207,23 @@ keeps every successful full alternative. It uses relational joins without bounde
 sequence arrays or sampling; dense alternatives can exhaust engine resources and
 no throughput claim is made.
 
+# Standard pipeline mapping runtime evidence
+
+Executed `standard_mappings.kql` on 2026-11-15 against the Microsoft Kusto
+emulator `2026.11.15.0741-2645-8e3387b-master`, database `NetDefaultDB`.
+The result contained zero exact multiset differences and no query errors.
+`standard_mappings.py` generates its search through standard Sigma collection
+parsing and `KustoBackend.convert()`. Independent literal expectations require
+sum 40 from two process searches contributing 10 each and one network search
+contributing 20, one logical Host group, and retained logical User values Alice
+and Bob. The fixture exercises source-specific standard mappings of detection
+predicates, timestamps, groups, measured fields, and context, with aliases and
+escaped physical column names. An unmatched process row carrying 100 is excluded.
+
+The first engine check exposed incorrect detection identifier quoting for names
+containing spaces. Detection fields now use bracketed JSON string identifiers,
+matching the quoting already used for correlation fields.
+
 After merging Boolean retained context, all eleven existing non-Boolean context
 fixtures (seven aggregate/temporal/nested and four ordered) were rerun together
 against the same engine and returned empty exact summary multiset difference tables.
@@ -233,3 +250,123 @@ contract. Diagnostics tests cover invalid method/configuration, unavailable or
 malformed source conversion state, invalid search/table types, child schema/time
 metadata, and unresolved references. Existing partial ordered threshold rejections
 remain enforced. The examples establish correctness, with no throughput claim.
+# Count parents consuming retained context
+
+Executed on 2026-11-15 against Microsoft Kusto emulator engine
+`2026.11.15.0741-2645-8e3387b-master`, database `NetDefaultDB`, via REST.
+`count_context.py` generates these queries through standard Sigma collection
+parsing and `KustoBackend.convert`; its expected rows are independent literal
+examples. Each check compares full result multisets and requires zero differences.
+
+| Fixture | Observed outcome |
+| --- | --- |
+| `count_context_pairs.kql` | Zero differences: only Alice/server1 and Bob/server2; duplicate retained pairs count each child once per group. |
+| `count_context_mixed.kql` | Zero differences: direct and child sources combine with their established contribution counts. |
+| `count_context_ungrouped.kql` | Zero differences: two child summaries contribute two events despite repeated/multiple context values. |
+| `count_context_values.kql` | Zero differences: ungrouped distinct retained users are Alice and Bob. |
+| `count_context_restricted.kql` | Zero differences: users are restricted to their observed Server group. |
+| `count_context_typed.kql` | Zero differences: numeric 1 and textual "1" return separate typed groups, each counting the child once. |
+
+The initial 4 GiB emulator exhausted memory while processing grouped consumers;
+Kusto query history reported `System.OutOfMemoryException`, surfaced by REST as
+an internal service error. The final fixtures ran with the emulator memory limit
+increased to 12 GiB. Group and counted-value identities share one exact typed
+identity traversal, preventing an unnecessary nested identity stage. An earlier
+grouped value-count query with separate identity stages exceeded a 120-second
+client timeout. These small examples demonstrate correctness under the recorded
+configuration; they establish neither a production capacity target nor a minimum
+memory guarantee. Resource exhaustion fails explicitly and does not truncate
+retained values or invent relationships.
+
+After integrating count parents consuming retained context, the additional
+`standard_mappings_parent.kql` fixture completed on the same 12 GiB emulator with
+zero exact multiset differences and `HasErrors: false`. Its value-sum child
+retains mapped Alice/Bob values under logical User; the event-count parent groups
+by logical Host and User and returns each user once, without reapplying physical
+detection mappings to the child. String projections in the fixture comparison
+align the engine's dynamic grouping columns with the literal expected strings.
+
+### Ordered typed-leaf signature candidate (2026-11-15)
+
+The identity implementation now serializes sorted typed scalar leaves and empty
+containers into full signatures, without hashes. One summary checks traversal
+completion, range capacity and the independent leaf count; an ordered scan
+assigns representative IDs without a leaf-pair or canonical self-join.
+
+On the same emulator engine and 12 GiB configuration, all 31 prepared fixtures
+in `context_*.kql`, `count_context_*.kql` and `value_count_*.kql` returned empty
+primary results with `HasErrors=false`. This includes all 17 retained-context
+fixtures, six count-context consumer fixtures, seven existing value-count
+fixtures and the new `value_count_typed_precision.kql`. The latter verifies
+adjacent doubles and maximum longs remain distinct, equivalent decimal scales
+and signed zeros coalesce, NaNs coalesce while positive/negative infinity remain
+distinct, and nested extended values survive reordered bags and 65 array levels.
+
+A separate 20-case typed identity comparison probe also passed, covering extended
+scalar/string distinctions, adversarial/escaped key paths, array order/length,
+empty containers, nulls, NaN and precision boundaries. Its recorded query resource
+report was 0.4518878 seconds and 9,431,312 bytes peak memory.
+
+This helper change alone does **not** repair the larger three-level numeric
+retained-context planning failure: rewriting its seven identity helpers retained
+the literal expected sum 130, but the initial canonical-join candidate exhausted
+memory and the fused-summary/scan candidate exceeded the 180-second client
+limit without a result. At that revision the required chain was unvalidated;
+the additional repair and successful execution are recorded below. No throughput
+or capacity claim follows from these small successful fixtures.
+
+### Flat validation and numeric retained-context chain (2026-11-15)
+
+The required three-level numeric retained-context fixture now passes on the same
+engine `2026.11.15.0741-2645-8e3387b-master`, database `NetDefaultDB`, with a
+12 GiB emulator container. `numeric_context_nested.kql` returns an empty exact
+multiset difference and `HasErrors=false`: an intermediate sum 140 retains
+amounts 10, 20 and 100, which contribute sum 130 to its parent. This confirms
+retained values do not reconstruct descendant multiplicity.
+
+The structured final query reported execution time 182.4468116 seconds,
+91.886019 seconds of planning CPU and 21,462,032 bytes peak query memory.
+No server timeout override was used. These reported query resources are not a
+production capacity claim. A preceding flat-check prototype also passed the same
+literal expected result, in 211.8873027 seconds.
+
+Sharing materialized child summaries alone, and combining that sharing with the
+typed-signature helper, still failed during planning. The remaining cause was
+recursive validation: Kusto evaluates `assert` during analysis. The final query
+embeds data-only child searches and carries independently scoped validation
+bodies as flat metadata. One outer assertion checks every nonempty diagnostic;
+its literal message lists the possible failure categories. Descendant checks
+remain independent of ancestor qualification and requested context fields.
+See Microsoft's [assert contract](https://learn.microsoft.com/en-us/kusto/query/assert-function).
+
+The final flat candidate also passed four explicit-failure probes. Positive and
+negative signed-long overflow raised an assertion containing
+`Kusto value_sum integer overflow`. The prepared
+`numeric_context_noqual_overflow.kql` raised the same category even though the
+child requires sum zero and its event-count parent requires 999 summaries.
+A diagnostic variant replacing the overflow diagnostic with an unknown nonempty
+sentinel also failed, confirming validation does not depend on a known-message
+whitelist. Successful empty result tables would fail these overflow checks.
+
+This is the focused planning-repair acceptance record. The remaining numeric
+fixture matrix and integrated feature gates are recorded separately after the
+final branches are combined.
+
+## Temporal retained-context consumers and multilevel requests (#27)
+
+`temporal_context.py` supplies literal worked expected summaries, independently
+of the generated query. Every fixture is generated through standard Sigma
+collection parsing and `KustoBackend.convert`, then compares public result
+columns as exact multisets. The three changed count-consumer fixtures are also
+included because inherited requests now continue into their returned summaries.
+
+| Fixture | Acceptance behavior |
+| --- | --- |
+| `temporal_context_unordered.kql` | Mixed child/direct identities at child WindowEnd; duplicate child evidence does not change RuleCount. |
+| `temporal_context_ordered.kql` | Both later completions retain every participating child pair and every successful earlier direct alternative. |
+| `temporal_context_boolean.kql` | Only C contributes Bob context when child-and-B fails; Alice retains the successful conjunction. |
+| `temporal_context_multilevel.kql` | Unordered middle passes inherited requests to downstream User/Server groups without cross-pairs. |
+| `temporal_context_ordered_multilevel.kql` | All participating ordered alternatives survive another consumer. |
+| `temporal_context_boolean_multilevel.kql` | Failed conjunction evidence cannot leak into downstream groups. |
+| `temporal_context_shared.kql` | Two branches sharing one child remain distinct immediate sources, with only observed pairs joining. |
+| `count_context_restricted.kql`, `count_context_ungrouped.kql`, `count_context_values.kql` | Existing count metrics remain correct with inherited context now included in returned summaries. |

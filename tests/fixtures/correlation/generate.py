@@ -1813,6 +1813,52 @@ let Events = union (datatable(Timestamp:string, Case:string, Value:dynamic, Mark
     return full_chain_fixture(documents, data, expected, ["WindowStart", "WindowEnd", "Case", "ValueCount"])
 
 
+def typed_precision_value_count_fixture():
+    documents = [
+        chain_source("E", "match"),
+        chain_correlation("C", "value_count", ["E"], groups=("Case",), field="Value", condition={"gte": 0}),
+    ]
+    data = """// Equal-looking scalars must keep their full precision and runtime type.
+// Reordered bags remain equal even with nested extended scalars and empty containers.
+let Deep = dynamic(""" + "[" * 65 + "0" + "]" * 65 + """);
+let Extended = pack_array(datetime(2020-01-01), 1s, guid(00000000-0000-0000-0000-000000000001));
+let Events = union
+(print Case="adjacent-double", Value=pack_array(real(1.0))[0]),
+(print Case="adjacent-double", Value=pack_array(real(1.0000000000000002))[0]),
+(print Case="adjacent-long", Value=pack_array(long(9223372036854775806))[0]),
+(print Case="adjacent-long", Value=pack_array(long(9223372036854775807))[0]),
+(print Case="decimal-scale", Value=pack_array(decimal(1.00))[0]),
+(print Case="decimal-scale", Value=pack_array(decimal(1.0))[0]),
+(print Case="decimal-zero", Value=pack_array(decimal(0.00))[0]),
+(print Case="decimal-zero", Value=pack_array(decimal(-0.0))[0]),
+(print Case="double-zero", Value=pack_array(real(0.0))[0]),
+(print Case="double-zero", Value=pack_array(real(-0.0))[0]),
+(print Case="exceptional-real", Value=pack_array(real(nan))[0]),
+(print Case="exceptional-real", Value=pack_array(real(nan))[0]),
+(print Case="exceptional-real", Value=pack_array(real(+inf))[0]),
+(print Case="exceptional-real", Value=pack_array(real(-inf))[0]),
+(print Case="nested-extended", Value=bag_pack("a", pack_array(Deep, Extended), "z", dynamic({}))),
+(print Case="nested-extended", Value=bag_pack("z", dynamic({}), "a", pack_array(Deep, Extended))),
+(print Case="nested-extended", Value=bag_pack("a", pack_array(Deep, pack_array(tostring(Extended[0]), Extended[1], Extended[2])), "z", dynamic({}))),
+(print Case="nested-precision", Value=bag_pack("a", pack_array(real(1.0), decimal(1.00)))),
+(print Case="nested-precision", Value=bag_pack("a", pack_array(real(1.0000000000000002), decimal(1.0)))),
+(print Case="nested-precision", Value=bag_pack("a", pack_array(real(1.0), decimal(1.0))))
+| extend Timestamp="2026-01-01T12:00:00Z", Marker="match";
+"""
+    expected = """let Expected = datatable(WindowStart:datetime, WindowEnd:datetime, Case:string, ValueCount:long) [
+    datetime(2026-01-01T11:55:00Z), datetime(2026-01-01T12:00:00Z), "adjacent-double", 2,
+    datetime(2026-01-01T11:55:00Z), datetime(2026-01-01T12:00:00Z), "adjacent-long", 2,
+    datetime(2026-01-01T11:55:00Z), datetime(2026-01-01T12:00:00Z), "decimal-scale", 1,
+    datetime(2026-01-01T11:55:00Z), datetime(2026-01-01T12:00:00Z), "decimal-zero", 1,
+    datetime(2026-01-01T11:55:00Z), datetime(2026-01-01T12:00:00Z), "double-zero", 1,
+    datetime(2026-01-01T11:55:00Z), datetime(2026-01-01T12:00:00Z), "exceptional-real", 3,
+    datetime(2026-01-01T11:55:00Z), datetime(2026-01-01T12:00:00Z), "nested-extended", 2,
+    datetime(2026-01-01T11:55:00Z), datetime(2026-01-01T12:00:00Z), "nested-precision", 2
+];
+"""
+    return full_chain_fixture(documents, data, expected, ["WindowStart", "WindowEnd", "Case", "ValueCount"])
+
+
 def typed_multi_field_value_count_fixture():
     documents = [
         chain_source("E", "match"),
@@ -1877,14 +1923,20 @@ def fixtures():
     from tests.fixtures.correlation.boolean_context import fixtures as boolean_context_fixtures
     from tests.fixtures.correlation.boolean_generate import fixtures as boolean_fixtures
     from tests.fixtures.correlation.context import fixtures as context_fixtures, nested_fixture
+    from tests.fixtures.correlation.count_context import fixtures as count_context_fixtures
+    from tests.fixtures.correlation.numeric_context import fixtures as numeric_context_fixtures
     from tests.fixtures.correlation.ordered_context import fixtures as ordered_context_fixtures
+    from tests.fixtures.correlation.temporal_context import fixtures as temporal_context_fixtures
 
     return {
         **average_fixtures(check, HEADER),
         **boolean_fixtures(),
         **boolean_context_fixtures(),
         **context_fixtures(),
+        **count_context_fixtures(),
         **ordered_context_fixtures(),
+        **numeric_context_fixtures(),
+        **temporal_context_fixtures(),
         "context_nested.kql": nested_fixture(),
         "event_count_grouped.kql": grouped_fixture(),
         "event_count_duplicate_sources.kql": duplicate_fixture(),
@@ -1919,6 +1971,7 @@ def fixtures():
         "chained_multilevel.kql": chained_multilevel_fixture(),
         "chained_zero_metric.kql": chained_zero_metric_fixture(),
         "value_count_typed.kql": typed_value_count_fixture(),
+        "value_count_typed_precision.kql": typed_precision_value_count_fixture(),
         "value_count_typed_multi_field.kql": typed_multi_field_value_count_fixture(),
         "value_count_typed_chained.kql": typed_chained_value_count_fixture(),
     }

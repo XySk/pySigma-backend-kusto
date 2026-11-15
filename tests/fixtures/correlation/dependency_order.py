@@ -31,7 +31,7 @@ def fixtures():
     result = {}
     for generate in (False, True):
         queries = convert_documents(documents(generate))
-        parent = next(query for query in queries if query.endswith(", RuleCount"))
+        parent = next(query for query in queries if ", RuleCount" in query)
         # Child summaries at 12:01 (count 2) and 12:06 (count 2), both
         # included at the exact five-minute endpoint. The direct match at
         # 12:02 establishes the first all-three-type result. 12:07 includes
