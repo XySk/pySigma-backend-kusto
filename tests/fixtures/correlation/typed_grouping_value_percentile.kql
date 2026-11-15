@@ -75,12 +75,9 @@ _sigma_ranked | summarize _sigma_population = max(_sigma_rank) by _sigma_partiti
 | extend ValuePercentile = _sigma_value[1]
 | where (gettype(ValuePercentile) in ("int", "long") and todecimal(ValuePercentile) >= decimal(1)) or (gettype(ValuePercentile) in ("real", "double", "decimal") and toreal(ValuePercentile) >= 1)
 | project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ["User"] = _sigma_group_0, ["Server"] = _sigma_group_1, ValuePercentile
-| join kind=inner (_sigma_group_lookup | project ["User"] = _sigma_identity_identity, _sigma_group_original) on ["User"]
-| extend ["User"] = _sigma_group_original[1]
-| project-away _sigma_group_original
-| join kind=inner (_sigma_group_lookup | project ["Server"] = _sigma_identity_identity, _sigma_group_original_1) on ["Server"]
-| extend ["Server"] = _sigma_group_original_1[1]
-| project-away _sigma_group_original_1
+| join kind=inner (_sigma_group_lookup | project ["User"] = _sigma_identity_identity, _sigma_group_original, _sigma_group_original_1) on ["User"]
+| extend ["User"] = _sigma_group_original[1], ["Server"] = _sigma_group_original_1[1]
+| project-away _sigma_group_original, _sigma_group_original_1
 | project ["WindowStart"], ["WindowEnd"], ["User"], ["Server"], ["ValuePercentile"]
 };
 let _sigma_validation_check = () {

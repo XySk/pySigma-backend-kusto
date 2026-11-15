@@ -66,12 +66,9 @@ _sigma_weights
 | summarize EventCount = sum(_sigma_weight) by _sigma_window_end, _sigma_group_0, _sigma_group_1
 | where EventCount >= 1
 | project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ["Host"] = _sigma_group_0, ["Region"] = _sigma_group_1, EventCount
-| join kind=inner (_sigma_group_lookup | project ["Host"] = _sigma_identity_identity, _sigma_group_original) on ["Host"]
-| extend ["Host"] = _sigma_group_original[1]
-| project-away _sigma_group_original
-| join kind=inner (_sigma_group_lookup | project ["Region"] = _sigma_identity_identity, _sigma_group_original_1) on ["Region"]
-| extend ["Region"] = _sigma_group_original_1[1]
-| project-away _sigma_group_original_1
+| join kind=inner (_sigma_group_lookup | project ["Host"] = _sigma_identity_identity, _sigma_group_original, _sigma_group_original_1) on ["Host"]
+| extend ["Host"] = _sigma_group_original[1], ["Region"] = _sigma_group_original_1[1]
+| project-away _sigma_group_original, _sigma_group_original_1
 | project ["WindowStart"], ["WindowEnd"], ["Host"], ["Region"], ["EventCount"]
 };
 let _sigma_context_summaries = materialize(_sigma_context_summary()
@@ -257,18 +254,9 @@ _sigma_weights
 | summarize EventCount = sum(_sigma_weight) by _sigma_window_end, _sigma_group_0, _sigma_group_1, _sigma_group_2, _sigma_group_3
 | where EventCount >= 1
 | project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ["Host"] = _sigma_group_0, ["Region"] = _sigma_group_1, ["User"] = _sigma_group_2, ["Server"] = _sigma_group_3, EventCount
-| join kind=inner (_sigma_group_lookup | project ["Host"] = _sigma_identity_identity, _sigma_group_original) on ["Host"]
-| extend ["Host"] = _sigma_group_original[1]
-| project-away _sigma_group_original
-| join kind=inner (_sigma_group_lookup | project ["Region"] = _sigma_identity_identity, _sigma_group_original_1) on ["Region"]
-| extend ["Region"] = _sigma_group_original_1[1]
-| project-away _sigma_group_original_1
-| join kind=inner (_sigma_group_lookup | project ["User"] = _sigma_identity_identity, _sigma_group_original_2) on ["User"]
-| extend ["User"] = _sigma_group_original_2[1]
-| project-away _sigma_group_original_2
-| join kind=inner (_sigma_group_lookup | project ["Server"] = _sigma_identity_identity, _sigma_group_original_3) on ["Server"]
-| extend ["Server"] = _sigma_group_original_3[1]
-| project-away _sigma_group_original_3
+| join kind=inner (_sigma_group_lookup | project ["Host"] = _sigma_identity_identity, _sigma_group_original, _sigma_group_original_1, _sigma_group_original_2, _sigma_group_original_3) on ["Host"]
+| extend ["Host"] = _sigma_group_original[1], ["Region"] = _sigma_group_original_1[1], ["User"] = _sigma_group_original_2[1], ["Server"] = _sigma_group_original_3[1]
+| project-away _sigma_group_original, _sigma_group_original_1, _sigma_group_original_2, _sigma_group_original_3
 | project ["WindowStart"], ["WindowEnd"], ["Host"], ["Region"], ["User"], ["Server"], ["EventCount"]
 };
 let _sigma_validation_check__ = () {
@@ -332,12 +320,9 @@ _sigma_weights
 | summarize EventCount = sum(_sigma_weight) by _sigma_window_end, _sigma_group_0, _sigma_group_1
 | where EventCount >= 1
 | project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ["Host"] = _sigma_group_0, ["Region"] = _sigma_group_1, EventCount
-| join kind=inner (_sigma_group_lookup | project ["Host"] = _sigma_identity_identity, _sigma_group_original) on ["Host"]
-| extend ["Host"] = _sigma_group_original[1]
-| project-away _sigma_group_original
-| join kind=inner (_sigma_group_lookup | project ["Region"] = _sigma_identity_identity, _sigma_group_original_1) on ["Region"]
-| extend ["Region"] = _sigma_group_original_1[1]
-| project-away _sigma_group_original_1
+| join kind=inner (_sigma_group_lookup | project ["Host"] = _sigma_identity_identity, _sigma_group_original, _sigma_group_original_1) on ["Host"]
+| extend ["Host"] = _sigma_group_original[1], ["Region"] = _sigma_group_original_1[1]
+| project-away _sigma_group_original, _sigma_group_original_1
 | project ["WindowStart"], ["WindowEnd"], ["Host"], ["Region"], ["EventCount"]
 };
 let _sigma_context_summaries = materialize(_sigma_context_summary()
@@ -574,12 +559,9 @@ _sigma_weights
 | summarize EventCount = sum(_sigma_weight) by _sigma_window_end, _sigma_group_0, _sigma_group_1
 | where EventCount >= 1
 | project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ["Host"] = _sigma_group_0, ["Region"] = _sigma_group_1, EventCount
-| join kind=inner (_sigma_group_lookup | project ["Host"] = _sigma_identity_identity, _sigma_group_original) on ["Host"]
-| extend ["Host"] = _sigma_group_original[1]
-| project-away _sigma_group_original
-| join kind=inner (_sigma_group_lookup | project ["Region"] = _sigma_identity_identity, _sigma_group_original_1) on ["Region"]
-| extend ["Region"] = _sigma_group_original_1[1]
-| project-away _sigma_group_original_1
+| join kind=inner (_sigma_group_lookup | project ["Host"] = _sigma_identity_identity, _sigma_group_original, _sigma_group_original_1) on ["Host"]
+| extend ["Host"] = _sigma_group_original[1], ["Region"] = _sigma_group_original_1[1]
+| project-away _sigma_group_original, _sigma_group_original_1
 | project ["WindowStart"], ["WindowEnd"], ["Host"], ["Region"], ["EventCount"]
 };
 let _sigma_context_summaries = materialize(_sigma_context_summary()

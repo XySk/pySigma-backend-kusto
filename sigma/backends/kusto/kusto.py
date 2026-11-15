@@ -741,13 +741,20 @@ class KustoBackend(TextQueryBackend):
             del self._correlation_typed_groups
         if typed_groups:
             restored = []
+            # Every normalized grouping column holds the same exact tuple identity;
+            # its unique lookup row contains all original boxed grouping values.
+            field, lookup, identity, _ = self._correlation_group_lookups[0]
+            quoted = self._quote_correlation_field(field)
+            originals = ", ".join(value for _, _, _, value in self._correlation_group_lookups)
+            replacements = ", ".join(
+                f"{self._quote_correlation_field(field)} = {value}[1]"
+                for field, _, _, value in self._correlation_group_lookups
+            )
             for query in queries:
-                for field, lookup, identity, value in self._correlation_group_lookups:
-                    quoted = self._quote_correlation_field(field)
-                    query += (
-                        f"\n| join kind=inner ({lookup} | project {quoted} = {identity}, {value}) on {quoted}"
-                        f"\n| extend {quoted} = {value}[1]\n| project-away {value}"
-                    )
+                query += (
+                    f"\n| join kind=inner ({lookup} | project {quoted} = {identity}, {originals}) on {quoted}"
+                    f"\n| extend {replacements}\n| project-away {originals}"
+                )
                 query += "\n| project " + ", ".join(
                     self._quote_correlation_field(field)
                     for field in ["WindowStart", "WindowEnd", *(rule.group_by or []), *metrics]
