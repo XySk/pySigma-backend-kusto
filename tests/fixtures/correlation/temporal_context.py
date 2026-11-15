@@ -31,8 +31,7 @@ def fixture(kind, *, multilevel=False, shared=False):
     if multilevel:
         refs = ["middle"]
         if shared:
-            docs.append(correlation_document("sibling", "temporal", ["child"], groups=("User",)))
-            refs.append("sibling")
+            refs.append("child")
         docs.append(correlation_document("parent", "temporal", refs, groups=("User", "Server")))
         projection = "WindowEnd, User=tostring(User), Server=tostring(Server), RuleCount"
         schema = "WindowEnd:datetime, User:string, Server:string, RuleCount:long"
