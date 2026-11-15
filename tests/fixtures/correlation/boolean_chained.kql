@@ -1,0 +1,65 @@
+// Generated through SigmaCollection.from_yaml and KustoBackend.convert.
+// Run the complete file. PASS = zero output rows (exact summary multiset).
+// Runtime evidence and engine version: RUNTIME.md.
+let Events = datatable(Timestamp:datetime, Case:string, Marker:string) [
+
+    datetime(2026-01-01T12:00:00Z), "child", "A",
+    datetime(2026-01-01T12:01:00Z), "child", "A",
+    datetime(2026-01-01T12:02:00Z), "child", "B",
+    datetime(2026-01-01T12:07:00Z), "child", "A",
+    datetime(2026-01-01T12:07:00.0000001Z), "child", "A"
+
+];
+let Actual = () {
+let _sigma_child_0 = () {
+let _sigma_weights = union (Events
+| where Marker =~ "A"
+| extend _sigma_timestamp = todatetime(["Timestamp"]), _sigma_group_0 = tostring(["Case"])
+| extend _sigma_rule = "raw")
+| where isnotnull(_sigma_timestamp) and isnotempty(_sigma_group_0)
+| summarize _sigma_weight = count() by _sigma_timestamp, _sigma_group_0;
+_sigma_weights
+| project _sigma_group_0, _sigma_window_end = _sigma_timestamp, _sigma_bin = bin(_sigma_timestamp, 5m)
+| join kind=inner (
+    _sigma_weights
+    | extend _sigma_bin = pack_array(bin(_sigma_timestamp, 5m), bin(_sigma_timestamp, 5m) + 5m)
+    | mv-expand _sigma_bin to typeof(datetime)
+) on _sigma_group_0, _sigma_bin
+| where _sigma_timestamp between ((_sigma_window_end - 5m) .. _sigma_window_end)
+| summarize EventCount = sum(_sigma_weight) by _sigma_window_end, _sigma_group_0
+| where EventCount >= 1
+| project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ["Case"] = _sigma_group_0, EventCount
+};
+let _sigma_types = union (_sigma_child_0()
+| extend _sigma_timestamp = todatetime(["WindowEnd"]), _sigma_group_0 = tostring(["Case"])
+| extend _sigma_rule = "child"),
+(Events
+| where Marker =~ "B"
+| extend _sigma_timestamp = todatetime(["Timestamp"]), _sigma_group_0 = tostring(["Case"])
+| extend _sigma_rule = "B")
+| where isnotnull(_sigma_timestamp) and isnotempty(_sigma_group_0)
+| summarize by _sigma_timestamp, _sigma_group_0, _sigma_rule;
+_sigma_types
+| project _sigma_group_0, _sigma_window_end = _sigma_timestamp, _sigma_bin = bin(_sigma_timestamp, 5m)
+| distinct *
+| join kind=inner (
+    _sigma_types
+    | extend _sigma_bin = pack_array(bin(_sigma_timestamp, 5m), bin(_sigma_timestamp, 5m) + 5m)
+    | mv-expand _sigma_bin to typeof(datetime)
+) on _sigma_group_0, _sigma_bin
+| where _sigma_timestamp between ((_sigma_window_end - 5m) .. _sigma_window_end)
+| summarize RuleCount = count_distinctif(_sigma_rule, isnotempty(_sigma_rule)), _sigma_present = countif(_sigma_rule == "child") > 0, _sigma_present_1 = countif(_sigma_rule == "B") > 0 by _sigma_window_end, _sigma_group_0
+| where (_sigma_present and not(_sigma_present_1))
+| project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ["Case"] = _sigma_group_0, RuleCount
+};
+let Expected = datatable(WindowEnd:datetime, Case:string, RuleCount:long) [
+
+    datetime(2026-01-01T12:00:00Z), "child", 1,
+    datetime(2026-01-01T12:01:00Z), "child", 1,
+    datetime(2026-01-01T12:07:00.0000001Z), "child", 1
+
+]
+| extend WindowStart = WindowEnd - 5m;
+union (Actual() | extend Delta = 1), (Expected | extend Delta = -1)
+| summarize Delta = sum(Delta) by WindowStart, WindowEnd, Case, RuleCount
+| where Delta != 0
