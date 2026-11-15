@@ -635,3 +635,11 @@ The branch incorporated integration `54a9a0d` (the separate average-fixture
 Machine diagnostic alignment) before its final configured test run: 586 passed
 in 21.71 seconds, 96.16% coverage. That merge changes the complete manifest hash;
 the executed fixture hashes remain recorded separately in each runtime record.
+
+Root subsequently inspected the container read-only: it exited with code 137,
+and its logs explicitly reported `Crash_UnhandledException` with
+`System.OutOfMemoryException` in `TimerQueue`, followed by the Kusto process
+being `Killed`. Docker's `OOMKilled` flag was false; the runtime OOM diagnosis
+relies on the explicit exception log. Both memory and memory-swap limits remained
+`12884901888` bytes. This confirms the typed-parent attempt failed due to runtime
+memory exhaustion. It remains incomplete and was not retried.

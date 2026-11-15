@@ -880,10 +880,21 @@
       ]
     }
   ],
-  "runtime_status": "PARTIAL: typed parent transport failure; mapped parent not run; no retry",
-  "parent_failure_diagnosis": "curl52 empty reply; no valid response; container inspection unavailable (Docker socket permission denied); OOM not yet established",
+  "runtime_status": "PARTIAL: typed parent confirmed runtime OOM; mapped parent not run; no retry",
+  "parent_failure_diagnosis": "Root read-only container inspection confirmed exit137. Docker logs report Crash_UnhandledException System.OutOfMemoryException in TimerQueue followed by Kusto process Killed. Docker OOMKilled=false; diagnosis relies on explicit runtime exception log, not this flag.",
   "not_run": [
     "standard_mappings_parent.kql"
   ],
-  "successful_responses_strictly_verified": true
+  "successful_responses_strictly_verified": true,
+  "container_failure": {
+    "inspection_source": "root agent read-only Docker inspection reported through collaboration",
+    "exit_code": 137,
+    "docker_oom_killed": false,
+    "runtime_exception": "System.OutOfMemoryException",
+    "runtime_location": "TimerQueue",
+    "log_category": "Crash_UnhandledException",
+    "process_end": "Killed",
+    "memory_bytes": 12884901888,
+    "memory_swap_bytes": 12884901888
+  }
 }
