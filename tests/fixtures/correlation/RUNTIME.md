@@ -179,3 +179,20 @@ pruning remains valid for finding completions, while separate evidence traversal
 keeps every successful full alternative. It uses relational joins without bounded
 sequence arrays or sampling; dense alternatives can exhaust engine resources and
 no throughput claim is made.
+
+# Standard pipeline mapping runtime evidence
+
+Executed `standard_mappings.kql` on 2026-11-15 against the Microsoft Kusto
+emulator `2026.11.15.0741-2645-8e3387b-master`, database `NetDefaultDB`.
+The result contained zero exact multiset differences and no query errors.
+`standard_mappings.py` generates its search through standard Sigma collection
+parsing and `KustoBackend.convert()`. Independent literal expectations require
+sum 40 from two process searches contributing 10 each and one network search
+contributing 20, one logical Host group, and retained logical User values Alice
+and Bob. The fixture exercises source-specific standard mappings of detection
+predicates, timestamps, groups, measured fields, and context, with aliases and
+escaped physical column names. An unmatched process row carrying 100 is excluded.
+
+The first engine check exposed incorrect detection identifier quoting for names
+containing spaces. Detection fields now use bracketed JSON string identifiers,
+matching the quoting already used for correlation fields.

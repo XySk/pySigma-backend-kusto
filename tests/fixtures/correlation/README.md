@@ -85,3 +85,9 @@ overlapping completions. `context_ordered_ungrouped` and `context_ordered_aliase
 exercise the same membership without grouping and with per-source field aliases.
 The comparison deduplicates evidence within each summary while retaining summary
 multiplicity, so an extra completion cannot disappear in the expected multiset.
+
+`standard_mappings.py` generates `standard_mappings.kql` through public Sigma
+parsing and conversion. Run it with `python -m tests.fixtures.correlation.standard_mappings`.
+The fixture compares source-specific standard mappings, escaped columns,
+multiple source searches, aliases and retained logical context against literal
+expected rows; see `RUNTIME.md` for engine execution evidence.

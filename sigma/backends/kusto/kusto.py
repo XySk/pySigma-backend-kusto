@@ -24,6 +24,7 @@ from sigma.correlations import (
     SigmaRuleReference,
 )
 from sigma.exceptions import SigmaConversionError
+from sigma.processing.transformations.base import FieldMappingTransformationBase
 from sigma.types import SigmaCompareExpression, SigmaNumber, SigmaString, SpecialChars
 
 
@@ -208,6 +209,18 @@ class KustoBackend(TextQueryBackend):
 
     # Override methods
 
+    def escape_and_quote_field(self, field_name):
+        if re.fullmatch(r"[A-Za-z_][A-Za-z_0-9]*", field_name):
+            return field_name
+        return self._quote_correlation_field(field_name)
+
+    def convert_rule(self, rule, output_format=None, callback=None):
+        requested_fields = list(rule.fields or [])
+        queries = super().convert_rule(rule, output_format, callback)
+        for state in rule.get_conversion_states():
+            state.processing_state["kusto_requested_fields"] = requested_fields.copy()
+        return queries
+
     def convert_correlation_ruleid(self, ruleid, template):
         return json.dumps(str(ruleid), ensure_ascii=False)
 
@@ -217,6 +230,22 @@ class KustoBackend(TextQueryBackend):
         state.processing_state["kusto_field_mappings"] = deepcopy(
             self.last_processing_pipeline.vars.get("kusto_field_mappings")
         )
+        # Keep an independent source snapshot: pySigma resets tracking and
+        # source-specific transformations when processing the next rule.
+        pipeline = deepcopy(
+            self.last_processing_pipeline,
+            {
+                id(
+                    self.last_processing_pipeline.resolve_regex_engine()
+                ): self.last_processing_pipeline.resolve_regex_engine()
+            },
+        )
+        state.processing_state["kusto_standard_field_mappings"] = deepcopy(pipeline.field_mappings)
+        state.processing_state["kusto_field_transformations"] = [
+            item
+            for item, applied in zip(pipeline.items, pipeline.applied)
+            if applied and isinstance(item.transformation, FieldMappingTransformationBase)
+        ]
         state.processing_state["kusto_source_fields"] = self._correlation_source_fields(rule, state)
         return super().finalize_query(rule, query, index, state, output_format)
 
@@ -239,6 +268,12 @@ class KustoBackend(TextQueryBackend):
             for mapping in (mappings.generic_mappings, mappings.table_mappings.get(table, {})):
                 fields.update(mapping)
                 for target in mapping.values():
+                    fields.update(target if isinstance(target, list) else [target])
+        for item in state.processing_state.get("kusto_field_transformations", ()):
+            mapping = getattr(item.transformation, "mapping", {})
+            fields.update(field for field in mapping if field is not None)
+            for target in mapping.values():
+                if target is not None:
                     fields.update(target if isinstance(target, list) else [target])
         schema = self.last_processing_pipeline.vars.get("kusto_schema")
         if schema is not None:
@@ -479,7 +514,13 @@ class KustoBackend(TextQueryBackend):
         queries = self._convert_count(rule, timestamp_field, query_operator, counted_fields, metrics)
         requested_context = list(rule.fields or [])
         for reference in rule.referenced_rules:
-            for field in reference.rule.fields or []:
+            source = reference.rule
+            requested_fields = (
+                source.get_conversion_states()[0].processing_state.get("kusto_requested_fields", source.fields)
+                if source.get_conversion_states()
+                else source.fields
+            )
+            for field in requested_fields or []:
                 logical = next((alias.alias for alias in rule.aliases if alias.mapping.get(reference) == field), field)
                 requested_context.append(logical)
         context_fields = list(dict.fromkeys(requested_context))
@@ -673,9 +714,7 @@ class KustoBackend(TextQueryBackend):
             paths.append(path)
         participating = allocate("_sigma_context_participating")
         selected = allocate("_sigma_context_selected")
-        alternatives = ", ".join(
-            f"({paths[-1]} | project {source_id}, {key} = {row_id})" for row_id in row_ids
-        )
+        alternatives = ", ".join(f"({paths[-1]} | project {source_id}, {key} = {row_id})" for row_id in row_ids)
         definitions += (
             f"let {participating} = union {alternatives}\n| distinct {source_id}, {key};\n"
             f"let {selected} = materialize({matches}\n"
@@ -1215,11 +1254,70 @@ class KustoBackend(TextQueryBackend):
             ]
         )
 
+    @staticmethod
+    def _correlation_mapping_targets(value):
+        # FieldMappings.get_field_mapping historically selects the first entry;
+        # correlations need the complete target set to diagnose ambiguity.
+        return value if isinstance(value, list) else [value]
+
+    def _map_correlation_source_field(self, source, state, field):
+        """Resolve one logical column using this source's applied pipeline."""
+        tracked = state.processing_state.get("kusto_standard_field_mappings", {})
+        mappings = state.processing_state.get("kusto_field_mappings")
+        transformations = state.processing_state.get("kusto_field_transformations", ())
+        table = state.processing_state.get("query_table")
+        if field in tracked:
+            targets = set(tracked[field])
+        else:
+            targets = {field}
+            builtin_seen = False
+            # Tracking excludes fields absent from detection predicates. Replay
+            # source-applicable field-name transformations in their original order.
+            for item in transformations:
+                transformation = item.transformation
+                if type(transformation).__module__.startswith("sigma.pipelines.kusto_common") and mappings:
+                    if builtin_seen:
+                        continue
+                    builtin_seen = True
+                    targets = {
+                        mapped
+                        for target in targets
+                        for mapped in self._correlation_mapping_targets(
+                            mappings.table_mappings.get(table, {}).get(
+                                target, mappings.generic_mappings.get(target, target)
+                            )
+                        )
+                    }
+                else:
+                    targets = {mapped for target in targets for mapped in transformation._apply_field_name(target)}
+            # Pipelines may provide built-in mapping metadata directly without
+            # using the built-in transformation classes.
+            if mappings and not builtin_seen:
+                targets = {
+                    mapped
+                    for target in targets
+                    for mapped in self._correlation_mapping_targets(
+                        mappings.table_mappings.get(table, {}).get(
+                            target, mappings.generic_mappings.get(target, target)
+                        )
+                    )
+                }
+        if len(targets) != 1:
+            raise SigmaConversionError(
+                source,
+                source.source,
+                f"Kusto correlation field {field!r} in source {source.name or source.id!r} "
+                f"must resolve to one column; mapped targets: {', '.join(sorted(targets)) or '(none)'}. "
+                "For example, User -> [ActorUsername, TargetUsername] is ambiguous. "
+                "Use a source-specific one-column mapping such as User -> ActorUsername, "
+                "an explicit alias to the intended physical field, or normalize both columns "
+                "to one field in the pipeline.",
+            )
+        return next(iter(targets))
+
     def convert_correlation_search_field_normalization_expression(self, aliases, rule_reference):
         source_state = rule_reference.rule.get_conversion_states()[0]
         child = isinstance(rule_reference.rule, SigmaCorrelationRule)
-        table = source_state.processing_state.get("query_table")
-        mappings = source_state.processing_state.get("kusto_field_mappings")
 
         def map_field(field):
             if child:
@@ -1233,7 +1331,7 @@ class KustoBackend(TextQueryBackend):
                         f"{field!r}. Available fields: {', '.join(sorted(returned_fields))}.",
                     )
                 return field
-            return mappings.get_field_mapping(table, field) if mappings is not None else field
+            return self._map_correlation_source_field(rule_reference.rule, source_state, field)
 
         def map_alias(field):
             if field not in aliases.aliases:
