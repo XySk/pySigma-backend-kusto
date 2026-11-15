@@ -106,3 +106,34 @@ def test_boolean_prepared_fixtures_are_current_public_conversion_output():
     directory = Path(__file__).parent / "fixtures" / "correlation"
     for filename, content in fixtures().items():
         assert (directory / filename).read_text() == content
+
+
+def test_boolean_retains_context_without_changing_detection_membership():
+    docs = documents("(A and B) or C")
+    docs[-1]["fields"] = ["User", "Server"]
+    (query,) = convert_documents(docs)
+    assert 'countif(_sigma_rule == "A") > 0' in query
+    assert '["User"] =' in query
+    assert '["Server"] =' in query
+    assert 'RuleCount' in query
+
+
+def test_boolean_context_fixtures_use_public_conversion_and_stay_current():
+    from pathlib import Path
+
+    from tests.fixtures.correlation.boolean_context import fixtures
+
+    directory = Path(__file__).parent / "fixtures" / "correlation"
+    for filename, content in fixtures().items():
+        assert (directory / filename).read_text() == content
+
+
+@pytest.mark.parametrize("expression", ["not A or B and C", "not (A and not B)", "not not A", "(A and B) or (A and C)"])
+def test_boolean_context_nested_conditions_convert_through_public_parser(expression):
+    docs = documents(expression)
+    refs = {token for token in expression.replace("(", " ").replace(")", " ").split() if token in {"A", "B", "C"}}
+    docs = [doc for doc in docs[:-1] if doc["name"] in refs] + [docs[-1]]
+    docs[-1]["fields"] = ["User"]
+    (query,) = convert_documents(docs)
+    assert '["User"] =' in query
+    assert "dynamic([])" in query
