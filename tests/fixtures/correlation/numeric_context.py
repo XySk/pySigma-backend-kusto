@@ -93,6 +93,19 @@ def multiple_children_fixture():
             + '| summarize Delta=sum(Delta) by Metric\n| where Delta!=0\n')
 
 
+def noqualifying_overflow_fixture():
+    child = correlation_document("child", "value_sum", ["source-rule"], groups=(),
+                                 condition={"field": "Amount", "eq": 0})
+    parent = correlation_document("parent", "event_count", ["child"], groups=(), condition={"gte": 999})
+    (query,) = convert_documents([source_document(), child, parent])
+    return (
+        '// Expected failure: Kusto value_sum integer overflow, despite no qualifying child or parent.\n'
+        'let Events=datatable(Timestamp:datetime,Marker:string,Amount:long) ['
+        'datetime(2026-01-01),"match",9223372036854775807,datetime(2026-01-01),"match",1];\n'
+        + query + '\n'
+    )
+
+
 def fixtures():
     result = {}
     for kind in ('value_sum', 'value_avg', 'value_percentile'):
@@ -103,4 +116,5 @@ def fixtures():
     result['numeric_context_nested.kql'] = fixture('value_sum', nested=True)
     result['numeric_context_boundaries.kql'] = fixture('value_percentile', boundary=True)
     result['numeric_context_multiple_children.kql'] = multiple_children_fixture()
+    result['numeric_context_noqual_overflow.kql'] = noqualifying_overflow_fixture()
     return result
