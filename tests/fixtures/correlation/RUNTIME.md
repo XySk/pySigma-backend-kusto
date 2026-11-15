@@ -675,3 +675,11 @@ all **155 other fixture hashes** in the 162-entry candidate matched integration.
 The all-fixture generation check and matrix/manifest consistency check passed
 (two targeted tests); Ruff and diff checks passed. This merge performed no
 engine calls, resource changes, or new runtime-completion claims.
+
+## Integrated seven-by-seven matrix: all 49 PASS
+
+The strict runner executed all 49 `matrix_*.kql` producer/consumer fixtures serially on the recorded Kusto emulator, database `NetDefaultDB`. Every query returned HTTP 200, exactly one empty primary diagnostic table and a successful, uncancelled completion. Literal expectations require one child contribution, metric 1 for count/temporal consumers and 2.5 for numeric consumers, with the parent window 11:55–12:00.
+
+Execution started from `a75b98b`; all 49 fixture SHA-256 values were verified unchanged at integrated `876919c`. [Structured results](runtime-evidence/matrix-a75b98b.json) include each hash, duration, outcome, engine version and request options. Raw local requests/responses remain under `/tmp/kusto-final-matrix-a75b98b`. The emulator stayed at 12 GiB; no allocation change or retry occurred.
+
+This establishes the small ungrouped producer/consumer matrix. Grouped context, mixed/multilevel cases and the remaining range dependency have separate gates; this result does not mark #32 or #17 complete.
