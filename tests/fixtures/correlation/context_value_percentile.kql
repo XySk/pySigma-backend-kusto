@@ -45,7 +45,7 @@ union (Events
 | where Marker =~ "match"
 | extend _sigma_context_timestamp = todatetime(["Timestamp"]), _sigma_context_group = tostring(["Host"]), _sigma_context_value = pack_array(gettype(["Server"]), ["Server"]), _sigma_context_value_1 = pack_array(gettype(["User"]), ["User"])
 | extend _sigma_context_rule = "source-rule")
-| project _sigma_context_timestamp, _sigma_context_group, _sigma_context_value, _sigma_context_value_1, _sigma_context_partition = 1
+| project _sigma_context_timestamp, _sigma_context_rule, _sigma_context_group, _sigma_context_value, _sigma_context_value_1, _sigma_context_partition = 1
 ) on _sigma_context_group
 | where _sigma_context_timestamp between ((_sigma_context_end - 5m) .. _sigma_context_end)
 | serialize _sigma_context_key = row_number());
