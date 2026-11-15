@@ -1,3 +1,4 @@
+import re
 import runpy
 from pathlib import Path
 
@@ -12,9 +13,18 @@ from sigma.pipelines.microsoft365defender import microsoft_365_defender_pipeline
 from sigma.processing.pipeline import ProcessingPipeline
 
 
+def summary_data_query(query):
+    """Inspect summary computation separately from flat validation-only scans.
+
+    Validation can repeat descendant summary computation to check its inputs;
+    those copies do not contribute additional rows to the public result.
+    """
+    return re.split(r"\nlet _sigma_validation_check\w* = \(\) \{", query, maxsplit=1)[0]
+
+
 def summary_projections(query):
     """Public summary columns, independently of surrounding validation bindings."""
-    return [line for line in query.splitlines() if line.startswith("| project WindowStart = ")]
+    return [line for line in summary_data_query(query).splitlines() if line.startswith("| project WindowStart = ")]
 
 
 def final_summary_projection(query):
@@ -301,6 +311,8 @@ def test_temporal_preserves_colliding_source_columns_escaped_identity_and_standa
 
     *standalone, query = backend.convert(SigmaCollection.from_yaml(yaml.safe_dump_all(documents)))
 
+    query = summary_data_query(query)
+
     assert len(standalone) == 2
     assert standalone[0] == 'DeviceProcessEvents\n| where ProcessCommandLine =~ "suspicious.exe"'
     assert "let _sigma_types_1 = union " in query
@@ -517,6 +529,8 @@ def test_multi_field_value_count_maps_each_counted_alias_for_all_source_searches
 
     (query,) = KustoBackend(processing_pipeline=pipeline, correlation_timestamp_field="EventTime").convert(collection)
 
+    query = summary_data_query(query)
+
     assert query.count("(DeviceProcessEvents\n| where ") == 2
     assert query.count("(DeviceNetworkEvents\n| where ") == 2
     assert (
@@ -621,6 +635,8 @@ def test_value_count_maps_counted_and_grouping_aliases_per_source_table_and_reta
 
     (query,) = backend.convert(collection, callback=change_other_mapping)
 
+    query = summary_data_query(query)
+
     assert query.count("(DeviceProcessEvents\n| where ") == 2
     assert query.count("(DeviceNetworkEvents\n| where ") == 1
     assert query.count('_sigma_value = pack_array(gettype(["ProcessUser"]), ["ProcessUser"])') == 2
@@ -649,6 +665,8 @@ def test_single_source_value_count_aliases_quoted_counted_fields_without_overwri
     backend = KustoBackend(processing_pipeline=pipeline, correlation_timestamp_field="Timestamp")
 
     (query,) = backend.convert(collection)
+
+    query = summary_data_query(query)
 
     assert "let _sigma_values_1 = _sigma_value_identities\n" in query
     assert query.count('_sigma_value_1 = pack_array(gettype(["Actor\'s \\"Name\\""]), ["Actor\'s \\"Name\\""])') == 2
