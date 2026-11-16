@@ -16,7 +16,7 @@ def test_count_retains_requested_source_and_correlation_fields_without_regroupin
 
     assert '["User"] = ' in query
     assert '["Server"] = ' in query
-    assert '["Host"] = _sigma_group_0' in query
+    assert '["Host"] = GroupHost' in query
     assert '["ContextComplete"]' in query
     assert "assert(" not in query
 

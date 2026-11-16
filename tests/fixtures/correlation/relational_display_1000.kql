@@ -2,23 +2,21 @@ let Events = range Index from 1 to 1000 step 1
 | project Timestamp=datetime(2026-01-01), Host="h", Marker="match", User=tostring(Index), Server=strcat("s", Index), Amount=Index;
 let Actual = () {
 let _sigma_context_summary = () {
-let _sigma_weights = union (Events
+let SourceMatchArrivals = union (Events
 | where Marker =~ "match"
-| extend _sigma_timestamp = todatetime(["Timestamp"]), _sigma_group_0 = ["Host"]
-| extend _sigma_rule = "source-rule")
-| where isnotnull(_sigma_timestamp) and isnotempty(_sigma_group_0)
-| summarize _sigma_weight = count() by _sigma_timestamp, _sigma_group_0;
-_sigma_weights
-| project _sigma_group_0, _sigma_window_end = _sigma_timestamp, _sigma_bin = bin(_sigma_timestamp, 5m)
-| join kind=inner (
-    _sigma_weights
-    | extend _sigma_bin = pack_array(bin(_sigma_timestamp, 5m), bin(_sigma_timestamp, 5m) + 5m)
-    | mv-expand _sigma_bin to typeof(datetime)
-) on _sigma_group_0, _sigma_bin
-| where _sigma_timestamp between ((_sigma_window_end - 5m) .. _sigma_window_end)
-| summarize EventCount = sum(_sigma_weight) by _sigma_window_end, _sigma_group_0
+| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"])
+| where isnotnull(EventTime_1) and isnotempty(GroupHost)
+| summarize SourceMatchCount = count() by EventTime_1, GroupHost;
+union (SourceMatchArrivals
+| project GroupHost, CountBoundaryTime = EventTime_1, CountBoundaryOrder = 0, SourceMatchDelta = SourceMatchCount),
+(SourceMatchArrivals
+| project GroupHost, CountBoundaryTime = EventTime_1 + 5m, CountBoundaryOrder = 1, SourceMatchDelta = -SourceMatchCount)
+// Arrivals evaluate before equal-time expirations; expirations never create matches.
+| sort by GroupHost asc, CountBoundaryTime asc, CountBoundaryOrder asc
+| extend EventCount = row_cumsum(SourceMatchDelta, GroupHost != prev(GroupHost))
+| where CountBoundaryOrder == 0
 | where EventCount >= 1
-| project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ["Host"] = _sigma_group_0, EventCount
+| project WindowStart = CountBoundaryTime - 5m, WindowEnd = CountBoundaryTime, ["Host"] = GroupHost, EventCount
 };
 let _sigma_context_summaries = materialize(_sigma_context_summary()
 | serialize _sigma_context_id = row_number());

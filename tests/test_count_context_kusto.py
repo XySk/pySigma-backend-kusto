@@ -16,7 +16,6 @@ def documents(kind="event_count", groups=("User", "Server"), **kwargs):
 @pytest.mark.parametrize("kind", ["event_count", "value_count"])
 def test_count_parent_converts_observed_child_context_without_counting_display_lists(kind):
     (query,) = convert_documents(documents(kind))
-    assert "| mv-expand " in query
     assert "dynamic identity" not in query
     assert 'todatetime(["WindowEnd"])' in query
     assert ("EventCount" if kind == "event_count" else "ValueCount") in query

@@ -778,8 +778,44 @@ predicate evidence for the archived query. Re-run the current targeted
 
 ## Relational context display gate (#46)
 
-The focused [frozen manifest](relational-context-manifest.json) passed all 26 diagnostics on Kusto Engine `1.0.9815.14081` (`2026.11.15.0741-2645-8e3387b-master`), using the existing strict v2 completion/multiset harness and 12 GiB per-query memory option. [Results and response frames](runtime-evidence/relational-context/results.json) include hashes and elapsed times. This gate covers displays of 999, 1,000, and 1,001 distinct values; configured limits; all 1,001 observed parent groups despite a display limit of two; grouped/ungrouped child counts; distinct retained numeric values and scalar child metrics; callback filters/metric edits; empty absence-only evidence; and shared, ordered, Boolean, and multilevel context. It establishes focused correctness, not production performance or completion of #32.
+The focused [executed frozen manifest](runtime-evidence/relational-context/executed-manifest.json) passed all 26 diagnostics on Kusto Engine `1.0.9815.14081` (`2026.11.15.0741-2645-8e3387b-master`), using the existing strict v2 completion/multiset harness and 12 GiB per-query memory option. [Results and response frames](runtime-evidence/relational-context/results.json) include hashes and elapsed times. This gate covers displays of 999, 1,000, and 1,001 distinct values; configured limits; all 1,001 observed parent groups despite a display limit of two; grouped/ungrouped child counts; distinct retained numeric values and scalar child metrics; callback filters/metric edits; empty absence-only evidence; and shared, ordered, Boolean, and multilevel context. It establishes focused correctness, not production performance or completion of #32.
 
 The migration removes the public `_sigma_context_rows` array. Diagnostics now use requested public collections and `ContextComplete`; parent grouping diagnostics establish observed cross-field relationships. No internal test API is introduced. Complete native scalar evidence remains separate from bounded displays. Parent consumption of the display-only `ContextComplete` flag produces a clear conversion error.
 
 Two prior unverified diagnostic expectations required correction. A native scalar grouping field cannot be passed to `array_length`, even when the expected result is empty. The ordered multilevel example also incorrectly expected `(Alice,s3)` at 12:02: its ordered child completes with B@s4 at 12:02, while B@s3 at 12:01 participates only in the earlier child summary. A parent grouped by `(User,Server)` has an s3 source anchor at 12:01 and none at 12:02. The [original failed requests and responses](runtime-evidence/relational-context/prior-diagnostic-failures/full-results.json) are retained separately; these failures are not represented as successful execution of the earlier fixtures.
+
+## Exact weighted event counts — #38 (2026-11-16)
+
+Seventeen focused public-conversion fixtures passed the strict v2 harness on
+engine `2026.11.15.0741-2645-8e3387b-master`, database `NetDefaultDB`, with the
+12 GiB query cap. Every response was HTTP 200 with exactly one empty primary
+multiset diagnostic and successful uncancelled completion. The scope covers
+integer/fractional comparisons, duplicate rows/searches, inclusive endpoints,
+one tick outside, independent groups, ties, overlaps, empty input, scalar metric
+chains, and retained child relationship deduplication. An additional native-real
+group fixture passed for NaN, both infinities, and signed zero.
+
+The generated event-count path projects native groups and event timestamps,
+preaggregates integer source-match weights, emits arrival/expiration boundaries,
+and accumulates with `row_cumsum`. Arrivals precede equal-time expirations;
+expiration rows never create evaluation anchors. No event/window candidate join,
+bin expansion, recursive identity traversal, or generated assertion is needed
+when no retained context is requested. Fractional comparisons explicitly compare
+exact long counts as decimals because this engine coerces real literals during
+long equality comparisons. Native real group changes also handle NaN equality
+consistently with `summarize`.
+
+Exact executed queries, hashes, requests, responses, engine version, and scoped
+ledgers are under [exact-event-count](runtime-evidence/exact-event-count/).
+The `fractional-coercion-failure` and `real-group-nan-failure` directories preserve
+the preceding failures that motivated these fixes. The native-real failure also
+contains deliberately corrected diagnostic spellings (`NaN`, `inf`, and `0.0`);
+its distinct wrong count of one at the second NaN timestamp establishes the
+actual group reset defect.
+
+These small correctness runs do not establish representative throughput.
+Performance comparison and regeneration/execution of the integrated corpus remain
+integration gates. Other corpus files containing event-count children may remain
+stale until that regeneration; historical evidence applies only to archived hashes.
+
+The #46 scoped evidence above was executed before the #38 event-count integration; regenerated integrated query hashes require their own gate.
