@@ -1,0 +1,71 @@
+// Generated through public Sigma parsing and Kusto conversion.
+// PASS: zero exact multiset differences. Collections are unordered.
+let Events=datatable(Timestamp:datetime, Host:string, Marker:string, User:dynamic, Server:string, Amount:long) [
+ datetime(2026-01-01T12:01:00Z), "h", "match", dynamic("1"), "one", 10,
+ datetime(2026-01-01T12:01:00Z), "h", "match", dynamic("2"), "two", 20,
+ datetime(2026-01-01T12:01:00Z), "h", "match", dynamic("1"), "one", 10
+]
+// Normalize Events scalar fixture inputs explicitly.
+| extend User=tostring(User);
+let Actual = () {
+let ContextSummary = () {
+let AverageObservations = union (Events
+| where Marker =~ "match"
+| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"], MeasuredAmount = ["Amount"])
+| where isnotnull(EventTime_1) and isnotempty(GroupHost);
+AverageObservations
+| summarize by GroupHost, AverageWindowEnd = EventTime_1, AverageTimeBin = bin(EventTime_1, 5m)
+| join kind=inner (
+AverageObservations
+| extend AverageTimeBin = pack_array(bin(EventTime_1, 5m), bin(EventTime_1, 5m) + 5m)
+| mv-expand AverageTimeBin to typeof(datetime)
+) on GroupHost, AverageTimeBin
+| where EventTime_1 between ((AverageWindowEnd - 5m) .. AverageWindowEnd)
+| summarize ValueAvg = avgif(toreal(MeasuredAmount), isfinite(toreal(MeasuredAmount))) by AverageWindowEnd, GroupHost
+| where isfinite(ValueAvg) and ValueAvg >= 0
+| project WindowStart = AverageWindowEnd - 5m, WindowEnd = AverageWindowEnd, ["Host"] = GroupHost, ValueAvg
+};
+let CorrelationMatches = materialize(ContextSummary()
+| serialize CorrelationMatchId = row_number());
+let WindowSourceMatches = materialize(
+CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, ContextGroupHost = ["Host"], ContextPartition = 1
+| join kind=inner (
+union (Events
+| where Marker =~ "match"
+| extend ContextEventTime = todatetime(["Timestamp"]), ContextGroupHost = ["Host"], ContextServer = ["Server"], ContextUser = ["User"]
+| extend ContextSourceRule = "source-rule")
+| project ContextEventTime, ContextSourceRule, ContextGroupHost, ContextServer, ContextUser, ContextPartition = 1
+) on ContextGroupHost
+| where ContextEventTime between ((CompletionTime - 5m) .. CompletionTime));
+let CompleteContextRelationships = materialize(WindowSourceMatches
+| project CorrelationMatchId, ContextServer, ContextUser
+| distinct *);
+let ValuesForServer = CompleteContextRelationships
+| where isnotnull(ContextServer)
+| summarize by CorrelationMatchId, ContextServer
+| summarize DisplayedServer = make_list(ContextServer, 1000), DistinctServerCount = count() by CorrelationMatchId;
+let ValuesForUser = CompleteContextRelationships
+| where isnotnull(ContextUser)
+| summarize by CorrelationMatchId, ContextUser
+| summarize DisplayedUser = make_list(ContextUser, 1000), DistinctUserCount = count() by CorrelationMatchId;
+CorrelationMatches
+| join kind=leftouter (ValuesForServer) on CorrelationMatchId
+| extend ["Server"] = coalesce(DisplayedServer, dynamic([]))
+| join kind=leftouter (ValuesForUser) on CorrelationMatchId
+| extend ["User"] = coalesce(DisplayedUser, dynamic([]))
+| extend ContextComplete = coalesce(DistinctServerCount, 0) <= 1000 and coalesce(DistinctUserCount, 0) <= 1000
+| project ["WindowStart"], ["WindowEnd"], ["Host"], ["Server"], ["User"], ["ValueAvg"], ["ContextComplete"]
+};
+let Observed = Actual()
+| project WindowEnd, Host=tostring(Host), Metric = toreal(ValueAvg),
+    UserCount = array_length(User), ServerCount = array_length(Server), ContextComplete,
+    UserLong = false,
+    UserString = gettype(User[0]) == "string" or gettype(User[1]) == "string",
+    HasServers = set_has_element(Server, "one") and set_has_element(Server, "two");
+let Expected = datatable(WindowEnd:datetime, Host:string, Metric:real, UserCount:long, ServerCount:long,
+    ContextComplete:bool, UserLong:bool, UserString:bool, HasServers:bool) [
+ datetime(2026-01-01T12:01:00Z), "h", real(13.333333333333334), 2, 2, true, false, true, true
+];
+union (Observed | extend Delta=1), (Expected | extend Delta=-1)
+| summarize Delta=sum(Delta) by WindowEnd, Host, Metric, UserCount, ServerCount, ContextComplete, UserLong, UserString, HasServers
+| where Delta != 0

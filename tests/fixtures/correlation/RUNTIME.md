@@ -850,3 +850,9 @@ decimal precision, fractional integer equality/inequality, empty usable
 populations, real-group special values and large-observation expiration all
 passed. These measurements use small 96-row workloads; some many-group context
 peak-memory measurements increased despite lower elapsed time and CPU.
+
+## Native current-window averages (#43, 2026-11-16)
+
+The native-average strategy passed all 16 focused real-Kusto fixtures, including current-window results after a large real observation expires, finite-only and undefined populations, weighting, ordinary decimal-to-real rounding, aliases, child metrics, and retained context. Paired old/new strategy benchmarks passed all 48 samples across eight long/real, many-group/hot-group, plain/context workloads. All eight wall/engine medians decreased; one CPU median increased and one peak-memory median increased slightly. The query keeps exact candidate pairing and actual-time membership to avoid history-dependent floating-point residue.
+
+[Recorded evidence and per-workload results](runtime-evidence/native-averages/README.md) include frozen public queries and independent expected multisets, engine requests/responses, strict verdicts, version/settings, and raw CPU/memory statistics. These compare the old boxed average after scalar/context foundations against the native average; they are separate from the #35 pre-redesign baseline. The small emulator workloads do not establish production-scale capacity. Final integrated corpus and performance gates remain required.
