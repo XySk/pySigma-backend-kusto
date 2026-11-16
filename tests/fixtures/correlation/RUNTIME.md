@@ -683,3 +683,45 @@ The strict runner executed all 49 `matrix_*.kql` producer/consumer fixtures seri
 Execution started from `a75b98b`; all 49 fixture SHA-256 values were verified unchanged at integrated `876919c`. [Structured results](runtime-evidence/matrix-a75b98b.json) include each hash, duration, outcome, engine version and request options. Raw local requests/responses remain under `/tmp/kusto-final-matrix-a75b98b`. The emulator stayed at 12 GiB; no allocation change or retry occurred.
 
 This establishes the small ungrouped producer/consumer matrix. Grouped context, mixed/multilevel cases and the remaining range dependency have separate gates; this result does not mark #32 or #17 complete.
+
+## Merge checkpoint after null-safe retained collections (2026-11-16)
+
+Integration commit `edd672a` excludes null/missing values from displayed retained-context
+collections and from their collection-limit counts. The relationship rows remain intact,
+so other observed fields and child membership are not discarded. This repairs an engine
+failure in the empty numeric-context fixtures: Kusto flattened `pack_array(null)` and
+omitted the resulting null from `make_list`, while the old guard counted it and raised a
+false collection-limit assertion. All three empty numeric fixtures now return HTTP 200
+with empty multiset diagnostics.
+
+The regenerated 162-fixture manifest has SHA-256
+`49e197f0ad2234cf460578d9d71ea3b11f13289c9f7f4486ba220c91b608da52`.
+On the same engine `2026.11.15.0741-2645-8e3387b-master`, database
+`NetDefaultDB`, and unchanged 12 GiB container and per-query cap:
+
+- All 49 regenerated `matrix_*.kql` producer/consumer fixtures passed strict
+  serial execution with HTTP 200, one empty primary diagnostic, and a successful,
+  uncancelled completion.
+- `standard_mappings.kql` and `standard_mappings_parent.kql` passed at hashes
+  `7b0017b6...` and `5485fc26...`; the parent completed in 180.369 seconds.
+- `typed_grouped_context.kql` and `typed_grouped_context_parent.kql` passed at
+  hashes `89a19e9b...` and `63300096...`. The parent completed in 336.777 seconds
+  with request option `servertimeout=10m`; the memory cap was unchanged.
+- The seven simplified numeric fixtures passed: sum, average, percentile, their
+  empty-population variants, and the adjacent-integer boundary case.
+- The seven typed-grouping fixtures changed by the tuple-restoration patch passed
+  at their current hashes. The two unchanged typed chain fixtures retain their
+  earlier passes. Both dependency-order modes and `value_avg_mapped.kql` are also
+  byte-identical to their passing hashes recorded immediately before the null fix.
+- The configured Python suite passed 589 tests with 96.16% coverage. Repository-
+  pinned Ruff and `git diff --check` passed.
+
+Acceptance remains intentionally incomplete. `numeric_context_metrics.kql`, SHA-256
+`30b6947576c21b4cf53868dbb1f8c188c987275e86473041d84eecabe1a0e95b`,
+failed after 137.437 seconds with HTTP 520. Emulator query history records
+`System.OutOfMemoryException`; Docker remained running and both limits remained
+`12884901888` bytes. The remaining grouped/mixed/multilevel numeric and temporal
+fixtures were not completed in this stream. Issue #31 still depends on released
+upstream range parsing, and partial ordered thresholds remain deferred. These gaps
+are follow-up work; they are not converted into acceptance passes by merging the
+available implementation.
