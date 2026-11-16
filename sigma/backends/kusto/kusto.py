@@ -1,8 +1,9 @@
 import json
 import re
 from copy import deepcopy
+from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import ClassVar, Dict, Pattern, Tuple, Type, Union
+from typing import Callable, ClassVar, Dict, Pattern, Tuple, Type, Union
 
 from sigma.conditions import (
     ConditionAND,
@@ -66,6 +67,21 @@ class _CorrelationQuery(str):
         if hasattr(self, "context_artifact"):
             result.context_artifact = self.context_artifact
         return result
+
+
+@dataclass(frozen=True)
+class _PreparedCorrelationInput:
+    """Validated source relation and shared condition for a correlation strategy."""
+
+    rule: SigmaCorrelationRule
+    definitions: str
+    search: str
+    columns: dict
+    valid_rows: str
+    span: str
+    query_operator: str
+    threshold: int | float
+    allocate: Callable[[str], str]
 
 
 class KustoBackend(TextQueryBackend):
@@ -1540,116 +1556,81 @@ class KustoBackend(TextQueryBackend):
         # timespan literals do not accept those units.
         span = rule.timespan.spec if rule.timespan.unit in "smhd" else f"{rule.timespan.seconds}s"
         valid_rows = " and ".join([f"isnotnull({timestamp})", *(f"isnotempty({field})" for field in groups)])
+        prepared = _PreparedCorrelationInput(
+            rule=rule,
+            definitions=definitions,
+            search=search,
+            columns=columns,
+            valid_rows=valid_rows,
+            span=span,
+            query_operator=query_operator,
+            threshold=threshold,
+            allocate=allocate,
+        )
         if rule.type == SigmaCorrelationType.EVENT_COUNT:
             existence_threshold = self._count_existence_threshold(rule)
             if existence_threshold is not None:
-                return [
-                    self._convert_count_existence(
-                        rule, definitions, search, columns, valid_rows, span, existence_threshold, allocate
-                    )
-                ]
-            return [
-                self._convert_event_count(
-                    rule, definitions, search, columns, valid_rows, span, query_operator, threshold, allocate
-                )
-            ]
+                return [self._convert_count_existence(prepared, existence_threshold)]
+            return [self._convert_event_count(prepared)]
         if value_count:
-            return [
-                self._convert_value_count(
-                    rule,
-                    definitions,
-                    search,
-                    columns,
-                    valid_rows,
-                    span,
-                    query_operator,
-                    threshold,
-                    counted_fields,
-                    metrics,
-                    allocate,
-                )
-            ]
+            return [self._convert_value_count(prepared, counted_fields, metrics)]
         if ordered:
             return [
                 _CorrelationQuery(definitions + query.definitions, query.body)
-                for query in self._convert_ordered_temporal(
-                    rule, search, columns, valid_rows, span, source_type_count, allocate
-                )
+                for query in self._convert_ordered_temporal(prepared, source_type_count)
             ]
         if presence_temporal:
-            return [
-                self._convert_temporal_presence(
-                    rule, definitions, search, columns, valid_rows, span, query_operator, threshold, allocate
-                )
-            ]
+            return [self._convert_temporal_presence(prepared)]
         if value_sum:
-            return [
-                self._convert_value_sum(
-                    rule,
-                    definitions,
-                    search,
-                    columns,
-                    valid_rows,
-                    span,
-                    query_operator,
-                    threshold,
-                    counted_fields[0],
-                    allocate,
-                )
-            ]
+            return [self._convert_value_sum(prepared, counted_fields[0])]
         if value_avg:
-            return [
-                self._convert_value_avg(
-                    rule, definitions, search, columns, valid_rows, span, query_operator, threshold, allocate
-                )
-            ]
+            return [self._convert_value_avg(prepared)]
         if value_percentile:
-            return [
-                self._convert_value_percentile(
-                    rule,
-                    definitions,
-                    search,
-                    columns,
-                    valid_rows,
-                    span,
-                    query_operator,
-                    threshold,
-                    counted_fields[0],
-                    allocate,
-                )
-            ]
+            return [self._convert_value_percentile(prepared, counted_fields[0])]
 
-    def _convert_value_avg(
-        self, rule, definitions, search, columns, valid_rows, span, query_operator, threshold, allocate
-    ):
+    @staticmethod
+    def _scalar_neighbor_changed(field, kind, neighbor="prev"):
+        """Compare adjacent scalars with the same NaN identity as native grouping."""
+        previous = f"{neighbor}({field})"
+        expression = f"{field} != {previous}"
+        if kind == "real":
+            # Native summarize treats NaNs as one distinct scalar value.
+            expression = f"({expression} and not(isnan({field}) and isnan({previous})))"
+        return expression
+
+    def _convert_value_avg(self, prepared: _PreparedCorrelationInput):
         """Average the actual current observations; expired values leave no residue."""
+        rule, columns, allocate = prepared.rule, prepared.columns, prepared.allocate
+        definitions = prepared.definitions
         observations = allocate("AverageObservations")
         event_time, groups, value = columns["timestamp"], columns["groups"], columns["values"][0]
         window_end, time_bin = allocate("AverageWindowEnd"), allocate("AverageTimeBin")
-        anchors = ", ".join([*groups, f"{window_end} = {event_time}", f"{time_bin} = bin({event_time}, {span})"])
+        anchors = ", ".join(
+            [*groups, f"{window_end} = {event_time}", f"{time_bin} = bin({event_time}, {prepared.span})"]
+        )
         join_keys = ", ".join([*groups, time_bin])
         summary_keys = ", ".join([window_end, *groups])
-        result = self._correlation_result_projection(rule, groups, window_end, span, ["ValueAvg"])
+        result = self._correlation_result_projection(rule, groups, window_end, prepared.span, ["ValueAvg"])
         # Preserve every observation, including duplicates and unusable values.
         # The anchor's own row guarantees exact-time membership even if every
         # other candidate in its bin has already expired.
-        definitions += f"let {observations} = {search}\n| where {valid_rows};\n"
+        definitions += f"let {observations} = {prepared.search}\n| where {prepared.valid_rows};\n"
         return _CorrelationQuery(
             definitions,
             f"{observations}\n| summarize by {anchors}\n"
             f"| join kind=inner (\n{observations}\n"
-            f"| extend {time_bin} = pack_array(bin({event_time}, {span}), bin({event_time}, {span}) + {span})\n"
+            f"| extend {time_bin} = pack_array(bin({event_time}, {prepared.span}), bin({event_time}, {prepared.span}) + {prepared.span})\n"
             f"| mv-expand {time_bin} to typeof(datetime)\n) on {join_keys}\n"
-            f"| where {event_time} between (({window_end} - {span}) .. {window_end})\n"
+            f"| where {event_time} between (({window_end} - {prepared.span}) .. {window_end})\n"
             f"| summarize ValueAvg = avgif(toreal({value}), isfinite(toreal({value}))) by {summary_keys}\n"
             # Empty avgif returns NaN, which otherwise satisfies inequality.
-            f"| where isfinite(ValueAvg) and ValueAvg {query_operator} {threshold}\n| project {result}",
+            f"| where isfinite(ValueAvg) and ValueAvg {prepared.query_operator} {prepared.threshold}\n| project {result}",
         )
 
-    def _convert_value_percentile(
-        self, rule, definitions, search, columns, valid_rows, span, query_operator, threshold, measured_field, allocate
-    ):
+    def _convert_value_percentile(self, prepared: _PreparedCorrelationInput, measured_field):
         """Select an exact native observation at the inclusive nearest-rank position."""
+        rule, columns, allocate = prepared.rule, prepared.columns, prepared.allocate
+        definitions = prepared.definitions
         observations = allocate("PercentileObservations")
         candidates = allocate("PercentileWindowValues")
         event_time, groups, value = columns["timestamp"], columns["groups"], columns["values"][0]
@@ -1661,16 +1642,18 @@ class KustoBackend(TextQueryBackend):
         keys = [*groups, window_end]
         key_fields = ", ".join(keys)
         joins = ", ".join([*groups, time_bin])
-        anchors = ", ".join([*groups, f"{window_end} = {event_time}", f"{time_bin} = bin({event_time}, {span})"])
-        definitions += f"let {observations} = {search}\n| where {valid_rows};\n"
+        anchors = ", ".join(
+            [*groups, f"{window_end} = {event_time}", f"{time_bin} = bin({event_time}, {prepared.span})"]
+        )
+        definitions += f"let {observations} = {prepared.search}\n| where {prepared.valid_rows};\n"
         # Original observations provide anchors even when their measurement is
         # missing. Only usable observations participate in selection.
         pairs = (
             f"{observations}\n| project {anchors}\n| distinct *\n"
             f"| join kind=inner (\n{observations}\n| where {usable}\n"
-            f"| extend {time_bin} = pack_array(bin({event_time}, {span}), bin({event_time}, {span}) + {span})\n"
+            f"| extend {time_bin} = pack_array(bin({event_time}, {prepared.span}), bin({event_time}, {prepared.span}) + {prepared.span})\n"
             f"| mv-expand {time_bin} to typeof(datetime)\n) on {joins}\n"
-            f"| where {event_time} between (({window_end} - {span}) .. {window_end})\n"
+            f"| where {event_time} between (({window_end} - {prepared.span}) .. {window_end})\n"
             f"| project {key_fields}, {value}"
         )
         selector = rule.condition.percentile
@@ -1688,9 +1671,7 @@ class KustoBackend(TextQueryBackend):
             definitions += f"let {candidates} = materialize(\n{pairs}\n);\n"
             changes = []
             for logical, field in zip(rule.group_by or [], groups):
-                changed = f"{field} != prev({field})"
-                if self._correlation_field_types[logical] == "real":
-                    changed = f"({changed} and not(isnan({field}) and isnan(prev({field}))))"
+                changed = self._scalar_neighbor_changed(field, self._correlation_field_types[logical])
                 changes.append(changed)
             changes.append(f"{window_end} != prev({window_end})")
             reset = " or ".join(changes)
@@ -1706,27 +1687,27 @@ class KustoBackend(TextQueryBackend):
                 f"tolong(ceiling(toreal(({population} % 100) * {selector}) / 100.0)))\n"
                 f"| extend ValuePercentile = {value}\n"
             )
-        comparison = f"ValuePercentile {query_operator} {threshold}"
+        comparison = f"ValuePercentile {prepared.query_operator} {prepared.threshold}"
         if kind == "decimal":
-            comparison = f"ValuePercentile {query_operator} decimal({threshold})"
-        elif kind in ("int", "long") and threshold != int(threshold):
-            comparison = f"todecimal(ValuePercentile) {query_operator} decimal({threshold})"
-        projection = self._correlation_result_projection(rule, groups, window_end, span, ["ValuePercentile"])
+            comparison = f"ValuePercentile {prepared.query_operator} decimal({prepared.threshold})"
+        elif kind in ("int", "long") and prepared.threshold != int(prepared.threshold):
+            comparison = f"todecimal(ValuePercentile) {prepared.query_operator} decimal({prepared.threshold})"
+        projection = self._correlation_result_projection(rule, groups, window_end, prepared.span, ["ValuePercentile"])
         return _CorrelationQuery(definitions, body + f"| where {comparison}\n| project {projection}")
 
-    def _convert_value_sum(
-        self, rule, definitions, search, columns, valid_rows, span, query_operator, threshold, measured_field, allocate
-    ):
+    def _convert_value_sum(self, prepared: _PreparedCorrelationInput, measured_field):
         """Use exact integer boundaries and current-window native noninteger sums."""
+        rule, columns, allocate = prepared.rule, prepared.columns, prepared.allocate
+        definitions = prepared.definitions
         sources = allocate("SumObservations")
         event_time, groups, value = columns["timestamp"], columns["groups"], columns["values"][0]
         kind = self._correlation_field_types[measured_field]
-        comparison = f"ValueSum {query_operator} {threshold}"
+        comparison = f"ValueSum {prepared.query_operator} {prepared.threshold}"
         if kind == "decimal":
-            comparison = f"ValueSum {query_operator} decimal({threshold})"
-        elif kind in ("int", "long") and threshold != int(threshold):
-            comparison = f"todecimal(ValueSum) {query_operator} decimal({threshold})"
-        definitions += f"let {sources} = {search}\n| where {valid_rows};\n"
+            comparison = f"ValueSum {prepared.query_operator} decimal({prepared.threshold})"
+        elif kind in ("int", "long") and prepared.threshold != int(prepared.threshold):
+            comparison = f"todecimal(ValueSum) {prepared.query_operator} decimal({prepared.threshold})"
+        definitions += f"let {sources} = {prepared.search}\n| where {prepared.valid_rows};\n"
         if kind in ("int", "long"):
             arrivals = allocate("SumArrivals")
             arrival_sum, boundary_time, boundary_order, delta = [
@@ -1739,15 +1720,13 @@ class KustoBackend(TextQueryBackend):
             order = ", ".join(f"{field} asc" for field in [*groups, boundary_time, boundary_order])
             changes = []
             for logical, field in zip(rule.group_by or [], groups):
-                changed = f"{field} != prev({field})"
-                if self._correlation_field_types[logical] == "real":
-                    changed = f"({changed} and not(isnan({field}) and isnan(prev({field}))))"
+                changed = self._scalar_neighbor_changed(field, self._correlation_field_types[logical])
                 changes.append(changed)
             restart = ", " + " or ".join(changes) if changes else ""
             body = (
                 f"union ({arrivals}\n| project {retained}{boundary_time} = {event_time}, "
                 f"{boundary_order} = 0, {delta} = {arrival_sum}),\n"
-                f"({arrivals}\n| project {retained}{boundary_time} = {event_time} + {span}, "
+                f"({arrivals}\n| project {retained}{boundary_time} = {event_time} + {prepared.span}, "
                 f"{boundary_order} = 1, {delta} = -{arrival_sum})\n"
                 "// Arrivals evaluate before equal-time expirations, including zero and missing values.\n"
                 f"| sort by {order}\n| extend ValueSum = row_cumsum({delta}{restart})\n"
@@ -1756,7 +1735,7 @@ class KustoBackend(TextQueryBackend):
             end = boundary_time
         else:
             end, time_bin = allocate("SumWindowEnd"), allocate("SumTimeBin")
-            anchors = ", ".join([*groups, f"{end} = {event_time}", f"{time_bin} = bin({event_time}, {span})"])
+            anchors = ", ".join([*groups, f"{end} = {event_time}", f"{time_bin} = bin({event_time}, {prepared.span})"])
             join_keys = ", ".join([*groups, time_bin])
             summary = ", ".join([end, *groups])
             aggregate = f"sumif({value}, isfinite({value}))" if kind == "real" else f"sum({value})"
@@ -1765,42 +1744,23 @@ class KustoBackend(TextQueryBackend):
             body = (
                 f"{sources}\n| project {anchors}\n| distinct *\n"
                 f"| join kind=inner (\n{sources}\n"
-                f"| extend {time_bin} = pack_array(bin({event_time}, {span}), bin({event_time}, {span}) + {span})\n"
+                f"| extend {time_bin} = pack_array(bin({event_time}, {prepared.span}), bin({event_time}, {prepared.span}) + {prepared.span})\n"
                 f"| mv-expand {time_bin} to typeof(datetime)\n) on {join_keys}\n"
-                f"| where {event_time} between (({end} - {span}) .. {end})\n"
+                f"| where {event_time} between (({end} - {prepared.span}) .. {end})\n"
                 f"| summarize ValueSum = {aggregate} by {summary}\n"
             )
-        projection = self._correlation_result_projection(rule, groups, end, span, ["ValueSum"])
+        projection = self._correlation_result_projection(rule, groups, end, prepared.span, ["ValueSum"])
         return _CorrelationQuery(definitions, body + f"| where {comparison}\n| project {projection}")
 
-    def _convert_value_count(
-        self,
-        rule,
-        definitions,
-        search,
-        columns,
-        valid_rows,
-        span,
-        query_operator,
-        threshold,
-        counted_fields,
-        metrics,
-        allocate,
-    ):
+    def _convert_value_count(self, prepared: _PreparedCorrelationInput, counted_fields, metrics):
         """Merge each scalar's active intervals, then count at original source anchors."""
+        rule, columns, allocate = prepared.rule, prepared.columns, prepared.allocate
+        definitions = prepared.definitions
         matches = allocate("ValueCountSources")
         event_time, groups = columns["timestamp"], columns["groups"]
         boundary_time, boundary_order = [allocate(name) for name in ("ValueBoundaryTime", "ValueBoundaryOrder")]
         deltas = [allocate(value + "Delta") for value in columns["values"]]
-        definitions += f"let {matches} = materialize({search}\n| where {valid_rows});\n"
-
-        def changed(field, kind, neighbor):
-            previous = f"{neighbor}({field})"
-            expression = f"{field} != {previous}"
-            if kind == "real":
-                # Native summarize treats NaNs as one distinct scalar value.
-                expression = f"({expression} and not(isnan({field}) and isnan({previous})))"
-            return expression
+        definitions += f"let {matches} = materialize({prepared.search}\n| where {prepared.valid_rows});\n"
 
         branches = []
 
@@ -1820,15 +1780,15 @@ class KustoBackend(TextQueryBackend):
             start = " or ".join(
                 [
                     f"isnull(prev({event_time}))",
-                    *(changed(key, kind, "prev") for key, kind in zip(keys, kinds)),
-                    f"{event_time} > prev({event_time}) + {span}",
+                    *(self._scalar_neighbor_changed(key, kind) for key, kind in zip(keys, kinds)),
+                    f"{event_time} > prev({event_time}) + {prepared.span}",
                 ]
             )
             end = " or ".join(
                 [
                     f"isnull(next({event_time}))",
-                    *(changed(key, kind, "next") for key, kind in zip(keys, kinds)),
-                    f"next({event_time}) > {event_time} + {span}",
+                    *(self._scalar_neighbor_changed(key, kind, "next") for key, kind in zip(keys, kinds)),
+                    f"next({event_time}) > {event_time} + {prepared.span}",
                 ]
             )
             definitions += (
@@ -1839,21 +1799,21 @@ class KustoBackend(TextQueryBackend):
                 f"| extend {starts} = {start},\n    {ends} = {end});\n"
             )
             branches.append(boundary(f"{intervals} | where {starts}", event_time, 0, index, 1))
-            branches.append(boundary(f"{intervals} | where {ends}", f"{event_time} + {span}", 2, index, -1))
-        restart = " or ".join(changed(group, kind, "prev") for group, kind in zip(groups, group_kinds))
+            branches.append(boundary(f"{intervals} | where {ends}", f"{event_time} + {prepared.span}", 2, index, -1))
+        restart = " or ".join(self._scalar_neighbor_changed(group, kind) for group, kind in zip(groups, group_kinds))
         accumulators = [
             f"{metric} = row_cumsum({delta}" + (f", {restart})" if restart else ")")
             for metric, delta in zip(metrics, deltas)
         ]
         comparisons = " and ".join(
             (
-                f"todecimal({metric}) {query_operator} decimal({threshold})"
-                if threshold != int(threshold)
-                else f"{metric} {query_operator} {threshold}"
+                f"todecimal({metric}) {prepared.query_operator} decimal({prepared.threshold})"
+                if prepared.threshold != int(prepared.threshold)
+                else f"{metric} {prepared.query_operator} {prepared.threshold}"
             )
             for metric in metrics
         )
-        projection = self._correlation_result_projection(rule, groups, boundary_time, span, metrics)
+        projection = self._correlation_result_projection(rule, groups, boundary_time, prepared.span, metrics)
         body = (
             "union " + ",\n".join(branches) + "\n"
             "// All interval starts precede anchors; equal-time expirations follow them.\n"
@@ -1863,10 +1823,12 @@ class KustoBackend(TextQueryBackend):
         )
         return _CorrelationQuery(definitions, body)
 
-    def _convert_count_existence(self, rule, definitions, search, columns, valid_rows, span, threshold, allocate):
+    def _convert_count_existence(self, prepared: _PreparedCorrelationInput, threshold):
         """Keep a timestamp when its Nth-most-recent source match fits."""
+        rule, columns, allocate = prepared.rule, prepared.columns, prepared.allocate
+        definitions = prepared.definitions
         event_time, groups = columns["timestamp"], columns["groups"]
-        body = f"{search}\n| where {valid_rows}\n"
+        body = f"{prepared.search}\n| where {prepared.valid_rows}\n"
         if threshold > 1:
             offset = threshold - 1
             predecessor = allocate("ThresholdPredecessorTime")
@@ -1880,20 +1842,20 @@ class KustoBackend(TextQueryBackend):
                 "// Preserve individual source matches, including timestamp ties, before the threshold lookup.\n"
                 f"| sort by {', '.join(f'{field} asc' for field in [*groups, event_time])}\n"
                 f"| extend {predecessor} = prev({event_time}, {offset})\n"
-                f"| where {predecessor} >= {event_time} - {span}"
+                f"| where {predecessor} >= {event_time} - {prepared.span}"
                 + (f" and {' and '.join(same_group)}" if same_group else "")
                 + "\n"
             )
         body += (
             f"| distinct {', '.join([event_time, *groups])}\n"
-            f"| project {self._correlation_result_projection(rule, groups, event_time, span, [])}"
+            f"| project {self._correlation_result_projection(rule, groups, event_time, prepared.span, [])}"
         )
         return _CorrelationQuery(definitions, body)
 
-    def _convert_temporal_presence(
-        self, rule, definitions, search, columns, valid_rows, span, query_operator, threshold, allocate
-    ):
+    def _convert_temporal_presence(self, prepared: _PreparedCorrelationInput):
         """Evaluate inclusive source presence once at each source-match timestamp."""
+        rule, columns, allocate = prepared.rule, prepared.columns, prepared.allocate
+        definitions = prepared.definitions
         event_time, source_rule = columns["timestamp"], columns["rule"]
         groups = columns["groups"]
         sources = list({id(ref.rule): ref.rule for ref in rule.referenced_rules}.values())
@@ -1908,9 +1870,7 @@ class KustoBackend(TextQueryBackend):
         scan_step = allocate("PresenceWindow")
         changes = [f"isnull(prev({event_time}))"]
         for logical, field in zip(rule.group_by or [], groups):
-            changed = f"{field} != prev({field})"
-            if self._correlation_field_types[logical] == "real":
-                changed = f"({changed} and not(isnan({field}) and isnan(prev({field}))))"
+            changed = self._scalar_neighbor_changed(field, self._correlation_field_types[logical])
             changes.append(changed)
         memberships = ", ".join(
             f"{membership[id(source)]} = countif({source_rule} == "
@@ -1925,22 +1885,22 @@ class KustoBackend(TextQueryBackend):
         )
         present = ", ".join(
             f"{presence[id(source)]} = isnotnull({last_seen[id(source)]}) and "
-            f"{last_seen[id(source)]} >= {event_time} - {span}"
+            f"{last_seen[id(source)]} >= {event_time} - {prepared.span}"
             for source in sources
         )
         rule_count = " + ".join(f"tolong({presence[id(source)]})" for source in sources)
         if isinstance(rule.condition, SigmaExtendedCorrelationCondition):
             references = {ref.reference: presence[id(ref.rule)] for ref in rule.referenced_rules}
             comparison = self._boolean_temporal_expression(rule, rule.condition.parsed, references)
-        elif threshold != int(threshold):
-            comparison = f"todecimal(RuleCount) {query_operator} decimal({threshold})"
+        elif prepared.threshold != int(prepared.threshold):
+            comparison = f"todecimal(RuleCount) {prepared.query_operator} decimal({prepared.threshold})"
         else:
-            comparison = f"RuleCount {query_operator} {threshold}"
+            comparison = f"RuleCount {prepared.query_operator} {prepared.threshold}"
         keys = ", ".join([*groups, event_time])
         order = ", ".join(f"{field} asc" for field in [*groups, event_time])
-        projection = self._correlation_result_projection(rule, groups, event_time, span, ["RuleCount"])
+        projection = self._correlation_result_projection(rule, groups, event_time, prepared.span, ["RuleCount"])
         body = (
-            f"{search}\n| where {valid_rows}\n"
+            f"{prepared.search}\n| where {prepared.valid_rows}\n"
             "// Batch simultaneous source matches before updating inclusive trailing presence.\n"
             f"| summarize {memberships} by {keys}\n"
             f"| sort by {order}\n"
@@ -1954,10 +1914,10 @@ class KustoBackend(TextQueryBackend):
         )
         return _CorrelationQuery(definitions, body)
 
-    def _convert_event_count(
-        self, rule, definitions, search, columns, valid_rows, span, query_operator, threshold, allocate
-    ):
+    def _convert_event_count(self, prepared: _PreparedCorrelationInput):
         """Accumulate integer source-match weights at arrivals and expirations."""
+        rule, columns, allocate = prepared.rule, prepared.columns, prepared.allocate
+        definitions = prepared.definitions
         arrivals = allocate("SourceMatchArrivals")
         event_time = columns["timestamp"]
         match_count = allocate("SourceMatchCount")
@@ -1970,21 +1930,18 @@ class KustoBackend(TextQueryBackend):
         order = ", ".join(f"{field} asc" for field in [*groups, boundary_time, boundary_order])
         changes = []
         for logical, field in zip(rule.group_by or [], groups):
-            changed = f"{field} != prev({field})"
-            if self._correlation_field_types[logical] == "real":
-                # Native summarize groups NaNs together; scalar NaN != NaN.
-                changed = f"({changed} and not(isnan({field}) and isnan(prev({field}))))"
+            changed = self._scalar_neighbor_changed(field, self._correlation_field_types[logical])
             changes.append(changed)
         restart = " or ".join(changes)
         cumulative = f"row_cumsum({delta}" + (f", {restart})" if restart else ")")
-        comparison = f"EventCount {query_operator} {threshold}"
-        if threshold != int(threshold):
+        comparison = f"EventCount {prepared.query_operator} {prepared.threshold}"
+        if prepared.threshold != int(prepared.threshold):
             # Kusto equality can coerce a real literal to the long column type.
             # Decimal comparison preserves fractional thresholds and exact longs.
-            comparison = f"todecimal(EventCount) {query_operator} decimal({threshold})"
-        projection = self._correlation_result_projection(rule, groups, boundary_time, span, ["EventCount"])
+            comparison = f"todecimal(EventCount) {prepared.query_operator} decimal({prepared.threshold})"
+        projection = self._correlation_result_projection(rule, groups, boundary_time, prepared.span, ["EventCount"])
         definitions += (
-            f"let {arrivals} = {search}\n| where {valid_rows}\n"
+            f"let {arrivals} = {prepared.search}\n| where {prepared.valid_rows}\n"
             f"| summarize {match_count} = count() by {event_time}"
             + (f", {', '.join(groups)}" if groups else "")
             + ";\n"
@@ -1995,7 +1952,7 @@ class KustoBackend(TextQueryBackend):
         body = (
             f"union ({arrivals}\n| project {retained}{boundary_time} = {event_time}, "
             f"{boundary_order} = 0, {delta} = {match_count}),\n"
-            f"({arrivals}\n| project {retained}{boundary_time} = {event_time} + {span}, "
+            f"({arrivals}\n| project {retained}{boundary_time} = {event_time} + {prepared.span}, "
             f"{boundary_order} = 1, {delta} = -{match_count})\n"
             "// Arrivals evaluate before equal-time expirations; expirations never create matches.\n"
             f"| sort by {order}\n"
@@ -2044,7 +2001,8 @@ class KustoBackend(TextQueryBackend):
         )
         return truth, f"({truth} and {evidence})" if conjunction else evidence
 
-    def _convert_ordered_temporal(self, rule, search, columns, valid_rows, span, source_type_count, allocate):
+    def _convert_ordered_temporal(self, prepared: _PreparedCorrelationInput, source_type_count):
+        rule, columns, allocate = prepared.rule, prepared.columns, prepared.allocate
         groups = columns["groups"]
         identities = [reference.rule.name or str(reference.rule.id) for reference in rule.referenced_rules]
         labels = [
@@ -2067,8 +2025,8 @@ class KustoBackend(TextQueryBackend):
         batch_summary = f"{aggregates} by {batch_fields}" if len(identities) > 1 else f"by {batch_fields}"
         sequence = " -> ".join(json.dumps(identity, ensure_ascii=False) for identity in identities)
         query = (
-            f"// Strict sequence: {sequence}. Total inclusive span: {span}.\n"
-            f"{search}\n| where {valid_rows}\n"
+            f"// Strict sequence: {sequence}. Total inclusive span: {prepared.span}.\n"
+            f"{prepared.search}\n| where {prepared.valid_rows}\n"
             "// Batch equal timestamps: simultaneous source matches cannot advance strict sequence positions.\n"
             f"| summarize {batch_summary}\n"
         )
@@ -2079,11 +2037,7 @@ class KustoBackend(TextQueryBackend):
                 prefixes[0] = allocate(f"Last{labels[0].removesuffix('s')}Time")
             group_changes = []
             for field, group in zip(rule.group_by or [], groups):
-                changed = f"{group} != prev({group})"
-                if self._correlation_field_types[field] == "real":
-                    # Native summarize groups NaNs together, while scalar NaN
-                    # inequality is true even for another NaN.
-                    changed = f"({changed} and not(isnan({group}) and isnan(prev({group}))))"
+                changed = self._scalar_neighbor_changed(group, self._correlation_field_types[field])
                 group_changes.append(changed)
             reset = " or ".join([f"isnull(prev({timestamp}))", *group_changes])
             query += (
@@ -2094,7 +2048,7 @@ class KustoBackend(TextQueryBackend):
                 f"{complete}:bool = false) with (\n"
                 f"    step {state}: true =>\n"
                 f"        {complete} = not({new_group}) and {memberships[identities[-1]]} "
-                f"and isnotnull({state}.{prefixes[-1]}) and {state}.{prefixes[-1]} >= {timestamp} - {span},\n"
+                f"and isnotnull({state}.{prefixes[-1]}) and {state}.{prefixes[-1]} >= {timestamp} - {prepared.span},\n"
             )
             assignments = []
             for index, prefix in enumerate(prefixes):
@@ -2110,14 +2064,14 @@ class KustoBackend(TextQueryBackend):
                     predecessor = f"{state}.{prefixes[index - 1]}"
                     advance = (
                         f"{memberships[identities[index]]} and isnotnull({predecessor}) "
-                        f"and {predecessor} >= {timestamp} - {span} "
+                        f"and {predecessor} >= {timestamp} - {prepared.span} "
                         f"and (isnull({previous}) or {predecessor} > {previous})"
                     )
                     value = f"iff({new_group}, datetime(null), iff({advance}, {predecessor}, {previous}))"
                 assignments.append(f"        {prefix} = {value}")
             query += ",\n".join(assignments) + ";\n)\n" + f"| where {complete}\n"
         result_fields = self._correlation_result_projection(
-            rule, groups, timestamp, span, [f"RuleCount = tolong({source_type_count})"]
+            rule, groups, timestamp, prepared.span, [f"RuleCount = tolong({source_type_count})"]
         )
         return [_CorrelationQuery("", query + f"| project {result_fields}")]
 
