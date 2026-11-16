@@ -1929,6 +1929,7 @@ def fixtures():
     from tests.fixtures.correlation.integrated import matrix_fixtures
     from tests.fixtures.correlation.numeric_context import fixtures as numeric_context_fixtures
     from tests.fixtures.correlation.ordered_context import fixtures as ordered_context_fixtures
+    from tests.fixtures.correlation.ordered_state import fixtures as ordered_state_fixtures
     from tests.fixtures.correlation.standard_mappings import fixture as standard_mapping_fixture
     from tests.fixtures.correlation.temporal_context import fixtures as temporal_context_fixtures
     from tests.fixtures.correlation.typed_grouped_context import fixtures as typed_grouped_context_fixtures
@@ -1946,6 +1947,7 @@ def fixtures():
         **context_fixtures(),
         **count_context_fixtures(),
         **ordered_context_fixtures(),
+        **ordered_state_fixtures(),
         **numeric_context_fixtures(),
         **empty_child_fixtures(),
         **temporal_context_fixtures(),

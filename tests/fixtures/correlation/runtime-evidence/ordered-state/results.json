@@ -1,0 +1,96 @@
+{
+  "started_utc": "2026-11-16T17:22:06.175597+00:00",
+  "endpoint": "http://localhost:8080",
+  "database": "NetDefaultDB",
+  "request_options": {
+    "max_memory_consumption_per_query_per_node": 12884901888
+  },
+  "timeout_seconds": 45,
+  "manifest_sha256": "2ac1719e2d58f3ea850a13c115a4131c754cc7dffefa30c6a14b24e939b51039",
+  "fixtures": [
+    {
+      "name": "ordered_state_grouped.kql",
+      "sha256": "6664d4a9020145969bcc6c18e0ed6dc68236774418317b498641210f3e2cd71a",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.069
+    },
+    {
+      "name": "ordered_state_repeated.kql",
+      "sha256": "cdff8de897cbbc16eec8c2341690a8133a02b76d84a72efa063fd6d606b8ea96",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.076
+    },
+    {
+      "name": "ordered_state_ungrouped.kql",
+      "sha256": "dcdca8b5e32937d3b5e2bb8e33da80371eaeb4e3469ba06c578a6a0838f0f8f2",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.061
+    },
+    {
+      "name": "temporal_ordered_grouped.kql",
+      "sha256": "7901847c9ee9755ea5a01ef4af6a669bee14e3ac7f78fabea40eab53bc137b24",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.099
+    },
+    {
+      "name": "temporal_ordered_ungrouped.kql",
+      "sha256": "25942a2354311c244f13aaca0e5ba7618b76702026bca0acf9efe82b9de2251f",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.278
+    }
+  ],
+  "status": "PASS",
+  "engine_version": {
+    "Tables": [
+      {
+        "TableName": "Table_0",
+        "Columns": [
+          {
+            "ColumnName": "BuildVersion",
+            "DataType": "String"
+          },
+          {
+            "ColumnName": "BuildTime",
+            "DataType": "DateTime"
+          },
+          {
+            "ColumnName": "ServiceType",
+            "DataType": "String"
+          },
+          {
+            "ColumnName": "ProductVersion",
+            "DataType": "String"
+          },
+          {
+            "ColumnName": "ServiceOffering",
+            "DataType": "String"
+          }
+        ],
+        "Rows": [
+          [
+            "1.0.9815.14081",
+            "2026-11-15T07:49:22Z",
+            "Engine",
+            "2026.11.15.0741-2645-8e3387b-master",
+            ""
+          ]
+        ]
+      }
+    ]
+  }
+}
