@@ -14,12 +14,12 @@
     },
     {
       "name": "participants_ordered_empty_child.kql",
-      "sha256": "a74e767ecec144b7d03bc299a22410e5acc86047e38ef783486ce5a419d42e64",
+      "sha256": "e171154de23bcb2e6a4dd31f85db8ebf3a6ca9fd6b2cec78989de6249189a5ff",
       "expected_error": null
     },
     {
       "name": "participants_boolean_empty_child.kql",
-      "sha256": "296bc9f58dd289810e0d13020d8006b673f61d40cdef720490eb71004ea92c2c",
+      "sha256": "bb9e2e4dcb25183ed48206c6844134913e4ba3dcd67af5d5a58db57c7d9bc7a6",
       "expected_error": null
     },
     {

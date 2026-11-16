@@ -1,106 +1,111 @@
-// Prepared acceptance fixture; runtime PENDING.
+// Public-conversion comparison; execution status is hash-scoped in RUNTIME.md.
 let Events=datatable(Timestamp:datetime,Marker:string,Amount:real) [
  datetime(2026-01-01T12:00:00Z),"match",2.5
 ];
 let Actual=(){
-let _sigma_shared_child = () {
-let _sigma_context_summary = () {
-let _sigma_values = union (Events
+let Child = () {
+let ContextSummary = () {
+let ValueCountSources = materialize(union (Events
 | where Marker =~ "match"
-| extend _sigma_timestamp = todatetime(["Timestamp"]), _sigma_value = ["Amount"]
-| extend _sigma_rule = "source-rule")
-| where isnotnull(_sigma_timestamp)
-| summarize by _sigma_timestamp, _sigma_value;
-_sigma_values
-| project _sigma_window_end = _sigma_timestamp, _sigma_bin = bin(_sigma_timestamp, 1m)
-| distinct *
-| join kind=inner (
-    _sigma_values
-    | extend _sigma_bin = pack_array(bin(_sigma_timestamp, 1m), bin(_sigma_timestamp, 1m) + 1m)
-    | mv-expand _sigma_bin to typeof(datetime)
-) on _sigma_bin
-| where _sigma_timestamp between ((_sigma_window_end - 1m) .. _sigma_window_end)
-| summarize ValueCount = count_distinctif(_sigma_value, isnotempty(_sigma_value)) by _sigma_window_end
+| project EventTime_1 = todatetime(["Timestamp"]), CountedAmount = ["Amount"])
+| where isnotnull(EventTime_1));
+let CountedAmountActivity = materialize(ValueCountSources
+| where isnotempty(CountedAmount)
+| summarize by CountedAmount, EventTime_1
+| sort by CountedAmount asc, EventTime_1 asc
+// Repeated values whose inclusive active intervals overlap contribute only once.
+| extend CountedAmountStarts = isnull(prev(EventTime_1)) or (CountedAmount != prev(CountedAmount) and not(isnan(CountedAmount) and isnan(prev(CountedAmount)))) or EventTime_1 > prev(EventTime_1) + 1m,
+    CountedAmountEnds = isnull(next(EventTime_1)) or (CountedAmount != next(CountedAmount) and not(isnan(CountedAmount) and isnan(next(CountedAmount)))) or next(EventTime_1) > EventTime_1 + 1m);
+union (ValueCountSources | summarize by EventTime_1
+| project ValueBoundaryTime = EventTime_1, ValueBoundaryOrder = 1, CountedAmountDelta = 0),
+(CountedAmountActivity | where CountedAmountStarts
+| project ValueBoundaryTime = EventTime_1, ValueBoundaryOrder = 0, CountedAmountDelta = 1),
+(CountedAmountActivity | where CountedAmountEnds
+| project ValueBoundaryTime = EventTime_1 + 1m, ValueBoundaryOrder = 2, CountedAmountDelta = -1)
+// All interval starts precede anchors; equal-time expirations follow them.
+| sort by ValueBoundaryTime asc, ValueBoundaryOrder asc
+| extend ValueCount = row_cumsum(CountedAmountDelta)
+| where ValueBoundaryOrder == 1
 | where ValueCount >= 1
-| project WindowStart = _sigma_window_end - 1m, WindowEnd = _sigma_window_end, ValueCount
+| project WindowStart = ValueBoundaryTime - 1m, WindowEnd = ValueBoundaryTime, ValueCount
 };
-let _sigma_context_summaries = materialize(_sigma_context_summary()
-| serialize _sigma_context_id = row_number());
-let _sigma_context_matches = materialize(
-_sigma_context_summaries | project _sigma_context_id, _sigma_context_end = WindowEnd, _sigma_context_partition = 1
+let CorrelationMatches = materialize(ContextSummary()
+| serialize CorrelationMatchId = row_number());
+let WindowSourceMatches = materialize(
+CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, ContextPartition = 1
 | join kind=inner (
 union (Events
 | where Marker =~ "match"
-| extend _sigma_context_timestamp = todatetime(["Timestamp"]), _sigma_context_value = ["Amount"]
-| extend _sigma_context_rule = "source-rule")
-| project _sigma_context_timestamp, _sigma_context_rule, _sigma_context_value, _sigma_context_partition = 1
-) on _sigma_context_partition
-| where _sigma_context_timestamp between ((_sigma_context_end - 1m) .. _sigma_context_end)
-| serialize _sigma_context_key = row_number());
-let _sigma_context_rows = materialize(_sigma_context_matches
-| project _sigma_context_id, _sigma_context_value
+| extend ContextEventTime = todatetime(["Timestamp"]), ContextAmount = ["Amount"]
+| extend ContextSourceRule = "source-rule")
+| project ContextEventTime, ContextSourceRule, ContextAmount, ContextPartition = 1
+) on ContextPartition
+| where ContextEventTime between ((CompletionTime - 1m) .. CompletionTime));
+let CompleteContextRelationships = materialize(WindowSourceMatches
+| project CorrelationMatchId, ContextAmount
 | distinct *);
-union (_sigma_context_summaries | extend ContextRowKind = "Summary"), (_sigma_context_summaries | join kind=inner (_sigma_context_rows) on _sigma_context_id | extend ContextRowKind = "ContextEvidence")
+union (CorrelationMatches | extend ContextRowKind = "Summary"), (CorrelationMatches | join kind=inner (CompleteContextRelationships) on CorrelationMatchId | extend ContextRowKind = "ContextEvidence")
 };
-let _sigma_shared_results = materialize(_sigma_shared_child());
-let _sigma_context_summary = () {
-let _sigma_parent_matches = materialize(union (_sigma_shared_results | where ["ContextRowKind"] == "Summary"
-| project-away ["_sigma_context_value"]
-| join kind=leftouter (_sigma_shared_results | where ["ContextRowKind"] == "ContextEvidence" | project ["_sigma_context_id"], ["_sigma_context_value"]) on ["_sigma_context_id"]
-| extend _sigma_child_match = strcat("_sigma_shared_child", "_", tostring(["_sigma_context_id"]))
-| extend _sigma_timestamp = todatetime(["WindowEnd"]), _sigma_value = pack_array(gettype(["_sigma_context_value"]), ["_sigma_context_value"])
-| extend _sigma_rule = "child")
-| extend _sigma_child_match = tostring(column_ifexists("_sigma_child_match", "")));
-let _sigma_values = union (_sigma_parent_matches | where isempty(_sigma_child_match)), (_sigma_parent_matches | where isnotempty(_sigma_child_match) | extend RetainedNumericValue = toreal(_sigma_value[1]) | summarize take_any(*) by _sigma_child_match, RetainedNumericValue)
-| where isnotnull(_sigma_timestamp);
-let _sigma_ranked = materialize(
-_sigma_values
-| project _sigma_window_end = _sigma_timestamp, _sigma_bin = bin(_sigma_timestamp, 5m)
+let ChildResults = materialize(Child());
+let ContextSummary = () {
+let ParentSourceMatches = materialize(union (ChildResults | where ["ContextRowKind"] == "Summary"
+| project-away ["ContextAmount"]
+| join kind=leftouter (ChildResults | where ["ContextRowKind"] == "ContextEvidence" | project ["CorrelationMatchId"], ["ContextAmount"]) on ["CorrelationMatchId"]
+| extend ChildCorrelationMatch = strcat("Child", "_", tostring(["CorrelationMatchId"]))
+| project EventTime = todatetime(["WindowEnd"]), MeasuredAmount = ["ContextAmount"], ChildCorrelationMatch)
+| extend ChildCorrelationMatch = tostring(column_ifexists("ChildCorrelationMatch", "")));
+let PercentileObservations = union (ParentSourceMatches | where isempty(ChildCorrelationMatch)), (ParentSourceMatches | where isnotempty(ChildCorrelationMatch) | extend RetainedNumericValue = MeasuredAmount | summarize take_any(*) by ChildCorrelationMatch, RetainedNumericValue)
+| where isnotnull(EventTime);
+let PercentileWindowValues = materialize(
+PercentileObservations
+| project PercentileWindowEnd = EventTime, PercentileTimeBin = bin(EventTime, 5m)
 | distinct *
 | join kind=inner (
-_sigma_values
-| extend _sigma_bin = pack_array(bin(_sigma_timestamp, 5m), bin(_sigma_timestamp, 5m) + 5m)
-| mv-expand _sigma_bin to typeof(datetime)
-) on _sigma_bin
-| where _sigma_timestamp between ((_sigma_window_end - 5m) .. _sigma_window_end)
-| where tostring(_sigma_value[0]) in ("int", "long", "real", "double", "decimal") and isfinite(toreal(_sigma_value[1]))
-| extend _sigma_partition = tostring(pack_array(_sigma_window_end)), _sigma_numeric = toreal(_sigma_value[1]), _sigma_precise = todecimal(_sigma_value[1])
-| sort by _sigma_partition asc, _sigma_numeric asc, _sigma_precise asc
-| serialize _sigma_rank = row_number(1, _sigma_partition != prev(_sigma_partition))
+PercentileObservations
+| where isnotnull(MeasuredAmount) and isfinite(MeasuredAmount)
+| extend PercentileTimeBin = pack_array(bin(EventTime, 5m), bin(EventTime, 5m) + 5m)
+| mv-expand PercentileTimeBin to typeof(datetime)
+) on PercentileTimeBin
+| where EventTime between ((PercentileWindowEnd - 5m) .. PercentileWindowEnd)
+| project PercentileWindowEnd, MeasuredAmount
 );
-_sigma_ranked
+PercentileWindowValues
 | join kind=inner (
-_sigma_ranked | summarize _sigma_population = max(_sigma_rank) by _sigma_partition
-) on _sigma_partition
-| where _sigma_rank == max_of(1, (_sigma_population / 100) * 50 + tolong(ceiling(toreal((_sigma_population % 100) * 50) / 100.0)))
-| extend ValuePercentile = toreal(_sigma_value[1])
-| where (gettype(ValuePercentile) in ("int", "long") and todecimal(ValuePercentile) >= decimal(1)) or (gettype(ValuePercentile) in ("real", "double", "decimal") and toreal(ValuePercentile) >= 1)
-| project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ValuePercentile
+PercentileWindowValues | summarize PercentilePopulation = count() by PercentileWindowEnd
+) on PercentileWindowEnd
+| project PercentileWindowEnd, MeasuredAmount, PercentilePopulation
+| sort by PercentileWindowEnd asc, MeasuredAmount asc
+| serialize PercentileRank = row_number(1, PercentileWindowEnd != prev(PercentileWindowEnd))
+| where PercentileRank == max_of(1, (PercentilePopulation / 100) * 50 + tolong(ceiling(toreal((PercentilePopulation % 100) * 50) / 100.0)))
+| extend ValuePercentile = MeasuredAmount
+| where ValuePercentile >= 1
+| project WindowStart = PercentileWindowEnd - 5m, WindowEnd = PercentileWindowEnd, ValuePercentile
 };
-let _sigma_context_summaries = materialize(_sigma_context_summary()
-| serialize _sigma_context_id_1 = row_number());
-let _sigma_context_matches = materialize(
-_sigma_context_summaries | project _sigma_context_id_1, _sigma_context_end = WindowEnd, _sigma_context_partition = 1
+let CorrelationMatches = materialize(ContextSummary()
+| serialize CorrelationMatchId_1 = row_number());
+let WindowSourceMatches = materialize(
+CorrelationMatches | project CorrelationMatchId_1, CompletionTime = WindowEnd, ContextPartition = 1
 | join kind=inner (
-union (_sigma_shared_results
-| where ["ContextRowKind"] == "ContextEvidence"
-| extend _sigma_context_timestamp = todatetime(["WindowEnd"]), _sigma_context_value_1 = toreal(pack_array(gettype(["_sigma_context_value"]), ["_sigma_context_value"])[1])
-| extend _sigma_context_rule = "child")
-| project _sigma_context_timestamp, _sigma_context_rule, _sigma_context_value_1, _sigma_context_partition = 1
-) on _sigma_context_partition
-| where _sigma_context_timestamp between ((_sigma_context_end - 5m) .. _sigma_context_end)
-| serialize _sigma_context_key = row_number());
-let _sigma_context_rows = materialize(_sigma_context_matches
-| project _sigma_context_id_1, _sigma_context_value_1
+union (ChildResults | where ["ContextRowKind"] == "Summary"
+| project-away ["ContextAmount"]
+| join kind=leftouter (ChildResults | where ["ContextRowKind"] == "ContextEvidence" | project ["CorrelationMatchId"], ["ContextAmount"], HasContextEvidence = true) on ["CorrelationMatchId"]
+| extend ContextEventTime = todatetime(["WindowEnd"]), ContextAmount_1 = ["ContextAmount"]
+| extend ContextSourceRule = "child")
+| project ContextEventTime, ContextSourceRule, ContextAmount_1, HasContextEvidence, ContextPartition = 1
+) on ContextPartition
+| where ContextEventTime between ((CompletionTime - 5m) .. CompletionTime));
+let CompleteContextRelationships = materialize(WindowSourceMatches
+| where HasContextEvidence
+| project CorrelationMatchId_1, ContextAmount_1
 | distinct *);
-let ContextValues = _sigma_context_rows
-| where isnotnull(_sigma_context_value_1)
-| summarize by _sigma_context_id_1, _sigma_context_value_1
-| summarize DisplayedValues = make_list(_sigma_context_value_1, 1000), DistinctValueCount = count() by _sigma_context_id_1;
-_sigma_context_summaries
-| join kind=leftouter (ContextValues) on _sigma_context_id_1
-| extend ["Amount"] = coalesce(DisplayedValues, dynamic([]))
-| extend ContextComplete = coalesce(DistinctValueCount, 0) <= 1000
+let ValuesForAmount = CompleteContextRelationships
+| where isnotnull(ContextAmount_1)
+| summarize by CorrelationMatchId_1, ContextAmount_1
+| summarize DisplayedAmount = make_list(ContextAmount_1, 1000), DistinctAmountCount = count() by CorrelationMatchId_1;
+CorrelationMatches
+| join kind=leftouter (ValuesForAmount) on CorrelationMatchId_1
+| extend ["Amount"] = coalesce(DisplayedAmount, dynamic([]))
+| extend ContextComplete = coalesce(DistinctAmountCount, 0) <= 1000
 | project ["WindowStart"], ["WindowEnd"], ["Amount"], ["ValuePercentile"], ["ContextComplete"]
 };
 let Observed=Actual() | project WindowStart,WindowEnd,Metric=toreal(ValuePercentile);

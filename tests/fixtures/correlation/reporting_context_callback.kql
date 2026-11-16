@@ -58,7 +58,7 @@ CorrelationMatches
 let Actual1 = () {
 let ReportStart_ = datetime(2026-01-01T10:08:00.0000000Z);
 let ReportEnd_ = datetime(2026-01-01T10:09:00.0000000Z);
-let _sigma_shared_child = () {
+let Child = () {
 let EligibleChildMatches = () {
 let ReportStart = datetime(2026-01-01T10:08:00.0000000Z);
 let ReportEnd = datetime(2026-01-01T10:09:00.0000000Z);
@@ -150,10 +150,10 @@ union (CorrelationMatches | extend ContextRowKind = "Summary"), (CorrelationMatc
 EligibleChildMatches() | project ["ContextComplete"], ["EventCount"], ["Host"], ["WindowEnd"], ["WindowStart"]
 | join kind=inner (CompleteChildContext() | project ["WindowEnd"], ["Host"], CorrelationMatchId, ContextRowKind, ContextUser) on ["WindowEnd"], ["Host"]
 };
-let _sigma_shared_results = materialize(_sigma_shared_child());
+let ChildResults = materialize(Child());
 let ContextSummary = () {
 // Strict sequence: "child" -> "success". Total inclusive span: 7m.
-union (_sigma_shared_results
+union (ChildResults
 | where ["ContextRowKind"] == "Summary"
 | extend EventTime_1 = todatetime(["WindowEnd"]), GroupHost = ["Host"]
 | extend SourceRule = "child"),
@@ -181,10 +181,10 @@ let CorrelationMatches = materialize(ContextSummary()
 let WindowSourceMatches = materialize(
 CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, ContextGroupHost = ["Host"], ContextPartition = 1
 | join kind=inner (
-union (_sigma_shared_results | where ["ContextRowKind"] == "Summary"
+union (ChildResults | where ["ContextRowKind"] == "Summary"
 | project-away ["ContextUser"]
-| join kind=leftouter (_sigma_shared_results | where ["ContextRowKind"] == "ContextEvidence" | project ["CorrelationMatchId"], ["ContextUser"], HasContextEvidence = true) on ["CorrelationMatchId"]
-| extend ContextEventTime = todatetime(["WindowEnd"]), ContextGroupHost = ["Host"], ContextUser = tostring(pack_array(gettype(["ContextUser"]), ["ContextUser"])[1])
+| join kind=leftouter (ChildResults | where ["ContextRowKind"] == "ContextEvidence" | project ["CorrelationMatchId"], ["ContextUser"], HasContextEvidence = true) on ["CorrelationMatchId"]
+| extend ContextEventTime = todatetime(["WindowEnd"]), ContextGroupHost = ["Host"], ContextUser = ["ContextUser"]
 | extend ContextSourceRule = "child"),
 ((Events
 | where Marker =~ "success"
@@ -216,10 +216,10 @@ CorrelationMatches
 let Actual2 = () {
 let ReportStart__ = datetime(2026-01-01T10:08:00.0000000Z);
 let ReportEnd__ = datetime(2026-01-01T10:09:00.0000000Z);
-let _sigma_shared_child_1 = () {
+let Middle = () {
 let ReportStart_ = datetime(2026-01-01T10:08:00.0000000Z);
 let ReportEnd_ = datetime(2026-01-01T10:09:00.0000000Z);
-let _sigma_shared_child = () {
+let Child = () {
 let EligibleChildMatches = () {
 let ReportStart = datetime(2026-01-01T10:08:00.0000000Z);
 let ReportEnd = datetime(2026-01-01T10:09:00.0000000Z);
@@ -311,10 +311,10 @@ union (CorrelationMatches | extend ContextRowKind = "Summary"), (CorrelationMatc
 EligibleChildMatches() | project ["ContextComplete"], ["EventCount"], ["Host"], ["WindowEnd"], ["WindowStart"]
 | join kind=inner (CompleteChildContext() | project ["WindowEnd"], ["Host"], CorrelationMatchId, ContextRowKind, ContextUser) on ["WindowEnd"], ["Host"]
 };
-let _sigma_shared_results = materialize(_sigma_shared_child());
+let ChildResults = materialize(Child());
 let ContextSummary = () {
 // Strict sequence: "child" -> "success". Total inclusive span: 7m.
-union (_sigma_shared_results
+union (ChildResults
 | where ["ContextRowKind"] == "Summary"
 | extend EventTime_1 = todatetime(["WindowEnd"]), GroupHost = ["Host"]
 | extend SourceRule = "child"),
@@ -342,10 +342,10 @@ let CorrelationMatches = materialize(ContextSummary()
 let WindowSourceMatches = materialize(
 CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, ContextGroupHost = ["Host"], ContextPartition = 1
 | join kind=inner (
-union (_sigma_shared_results | where ["ContextRowKind"] == "Summary"
+union (ChildResults | where ["ContextRowKind"] == "Summary"
 | project-away ["ContextUser"]
-| join kind=leftouter (_sigma_shared_results | where ["ContextRowKind"] == "ContextEvidence" | project ["CorrelationMatchId"], ["ContextUser"], HasContextEvidence = true) on ["CorrelationMatchId"]
-| extend ContextEventTime = todatetime(["WindowEnd"]), ContextGroupHost = ["Host"], ContextUser = tostring(pack_array(gettype(["ContextUser"]), ["ContextUser"])[1])
+| join kind=leftouter (ChildResults | where ["ContextRowKind"] == "ContextEvidence" | project ["CorrelationMatchId"], ["ContextUser"], HasContextEvidence = true) on ["CorrelationMatchId"]
+| extend ContextEventTime = todatetime(["WindowEnd"]), ContextGroupHost = ["Host"], ContextUser = ["ContextUser"]
 | extend ContextSourceRule = "child"),
 ((Events
 | where Marker =~ "success"
@@ -365,12 +365,12 @@ let CompleteContextRelationships = materialize(OrderedSourceRelationships
 | distinct *);
 union (CorrelationMatches | extend ContextRowKind_1 = "Summary"), (CorrelationMatches | join kind=inner (CompleteContextRelationships) on CorrelationMatchId | extend ContextRowKind_1 = "ContextEvidence")
 };
-let _sigma_shared_results_1 = materialize(_sigma_shared_child_1());
+let MiddleResults = materialize(Middle());
 let ContextSummary = () {
-let ValueCountSources = materialize(union (_sigma_shared_results_1 | where ["ContextRowKind_1"] == "Summary"
+let ValueCountSources = materialize(union (MiddleResults | where ["ContextRowKind_1"] == "Summary"
 | project-away ["ContextUser"]
-| join kind=leftouter (_sigma_shared_results_1 | where ["ContextRowKind_1"] == "ContextEvidence" | project ["CorrelationMatchId"], ["ContextUser"]) on ["CorrelationMatchId"]
-| project EventTime = todatetime(["WindowEnd"]), GroupHost = ["Host"], CountedUser = tostring(pack_array(gettype(["ContextUser"]), ["ContextUser"])[1]))
+| join kind=leftouter (MiddleResults | where ["ContextRowKind_1"] == "ContextEvidence" | project ["CorrelationMatchId"], ["ContextUser"]) on ["CorrelationMatchId"]
+| project EventTime = todatetime(["WindowEnd"]), GroupHost = ["Host"], CountedUser = ["ContextUser"])
 | where isnotnull(EventTime) and isnotempty(GroupHost));
 let CountedUserActivity = materialize(ValueCountSources
 | where isnotempty(CountedUser)
@@ -397,10 +397,10 @@ let CorrelationMatches = materialize(ContextSummary()
 let WindowSourceMatches = materialize(
 CorrelationMatches | project CorrelationMatchId_1, CompletionTime = WindowEnd, ContextGroupHost = ["Host"], ContextPartition = 1
 | join kind=inner (
-union (_sigma_shared_results_1 | where ["ContextRowKind_1"] == "Summary"
+union (MiddleResults | where ["ContextRowKind_1"] == "Summary"
 | project-away ["ContextUser"]
-| join kind=leftouter (_sigma_shared_results_1 | where ["ContextRowKind_1"] == "ContextEvidence" | project ["CorrelationMatchId"], ["ContextUser"], HasContextEvidence = true) on ["CorrelationMatchId"]
-| extend ContextEventTime = todatetime(["WindowEnd"]), ContextGroupHost = ["Host"], ContextUser_1 = tostring(pack_array(gettype(["ContextUser"]), ["ContextUser"])[1])
+| join kind=leftouter (MiddleResults | where ["ContextRowKind_1"] == "ContextEvidence" | project ["CorrelationMatchId"], ["ContextUser"], HasContextEvidence = true) on ["CorrelationMatchId"]
+| extend ContextEventTime = todatetime(["WindowEnd"]), ContextGroupHost = ["Host"], ContextUser_1 = ["ContextUser"]
 | extend ContextSourceRule = "middle")
 | project ContextEventTime, ContextSourceRule, ContextGroupHost, ContextUser_1, HasContextEvidence, ContextPartition = 1
 ) on ContextGroupHost

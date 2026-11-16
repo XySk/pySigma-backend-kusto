@@ -11,7 +11,7 @@ let Events=datatable(Timestamp:datetime, Host:string, Amount:dynamic, Marker:str
 // Normalize Events scalar fixture inputs explicitly.
 | extend Amount=iff(gettype(Amount) in ("int","long","real","double","decimal"), toreal(Amount), real(null));
 let Actual = () {
-let _sigma_child_0 = () {
+let Child = () {
 let AverageObservations = union (Events
 | where Marker =~ "child"
 | project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"], MeasuredAmount = ["Amount"])
@@ -28,7 +28,7 @@ AverageObservations
 | where isfinite(ValueAvg) and ValueAvg >= 0
 | project WindowStart = AverageWindowEnd - 5m, WindowEnd = AverageWindowEnd, ["Host"] = GroupHost, ValueAvg
 };
-let AverageObservations = union (_sigma_child_0()
+let AverageObservations = union (Child()
 | project EventTime_1 = todatetime(["WindowEnd"]), GroupHost = ["Host"], MeasuredMeasured = ["ValueAvg"]),
 (Events
 | where Marker =~ "direct"

@@ -9,24 +9,40 @@ let Events=datatable(Timestamp:datetime,Case:string,Value:long,Payload:dynamic,M
  datetime(2026-01-01T12:03:00Z),"both",long(null),dynamic(null),"match"
 ] | extend Other=tolong(Payload.a);
 let Actual = () {
-let _sigma_values = union (Events
+let ValueCountSources = materialize(union (Events
 | where Marker =~ "match"
-| extend _sigma_timestamp = todatetime(["Timestamp"]), _sigma_group_0 = ["Case"], _sigma_value_0 = ["Value"], _sigma_value_1 = ["Other"]
-| extend _sigma_rule = "E")
-| where isnotnull(_sigma_timestamp) and isnotempty(_sigma_group_0)
-| summarize by _sigma_timestamp, _sigma_group_0, _sigma_value_0, _sigma_value_1;
-_sigma_values
-| project _sigma_group_0, _sigma_window_end = _sigma_timestamp, _sigma_bin = bin(_sigma_timestamp, 5m)
-| distinct *
-| join kind=inner (
-    _sigma_values
-    | extend _sigma_bin = pack_array(bin(_sigma_timestamp, 5m), bin(_sigma_timestamp, 5m) + 5m)
-    | mv-expand _sigma_bin to typeof(datetime)
-) on _sigma_group_0, _sigma_bin
-| where _sigma_timestamp between ((_sigma_window_end - 5m) .. _sigma_window_end)
-| summarize ["ValueCount_Value"] = count_distinctif(_sigma_value_0, isnotempty(_sigma_value_0)), ["ValueCount_Other"] = count_distinctif(_sigma_value_1, isnotempty(_sigma_value_1)) by _sigma_window_end, _sigma_group_0
+| project EventTime_1 = todatetime(["Timestamp"]), GroupCase = ["Case"], CountedValue = ["Value"], CountedOther = ["Other"])
+| where isnotnull(EventTime_1) and isnotempty(GroupCase));
+let CountedValueActivity = materialize(ValueCountSources
+| where isnotempty(CountedValue)
+| summarize by GroupCase, CountedValue, EventTime_1
+| sort by GroupCase asc, CountedValue asc, EventTime_1 asc
+// Repeated values whose inclusive active intervals overlap contribute only once.
+| extend CountedValueStarts = isnull(prev(EventTime_1)) or GroupCase != prev(GroupCase) or CountedValue != prev(CountedValue) or EventTime_1 > prev(EventTime_1) + 5m,
+    CountedValueEnds = isnull(next(EventTime_1)) or GroupCase != next(GroupCase) or CountedValue != next(CountedValue) or next(EventTime_1) > EventTime_1 + 5m);
+let CountedOtherActivity = materialize(ValueCountSources
+| where isnotempty(CountedOther)
+| summarize by GroupCase, CountedOther, EventTime_1
+| sort by GroupCase asc, CountedOther asc, EventTime_1 asc
+// Repeated values whose inclusive active intervals overlap contribute only once.
+| extend CountedOtherStarts = isnull(prev(EventTime_1)) or GroupCase != prev(GroupCase) or CountedOther != prev(CountedOther) or EventTime_1 > prev(EventTime_1) + 5m,
+    CountedOtherEnds = isnull(next(EventTime_1)) or GroupCase != next(GroupCase) or CountedOther != next(CountedOther) or next(EventTime_1) > EventTime_1 + 5m);
+union (ValueCountSources | summarize by GroupCase, EventTime_1
+| project GroupCase, ValueBoundaryTime = EventTime_1, ValueBoundaryOrder = 1, CountedValueDelta = 0, CountedOtherDelta = 0),
+(CountedValueActivity | where CountedValueStarts
+| project GroupCase, ValueBoundaryTime = EventTime_1, ValueBoundaryOrder = 0, CountedValueDelta = 1, CountedOtherDelta = 0),
+(CountedValueActivity | where CountedValueEnds
+| project GroupCase, ValueBoundaryTime = EventTime_1 + 5m, ValueBoundaryOrder = 2, CountedValueDelta = -1, CountedOtherDelta = 0),
+(CountedOtherActivity | where CountedOtherStarts
+| project GroupCase, ValueBoundaryTime = EventTime_1, ValueBoundaryOrder = 0, CountedValueDelta = 0, CountedOtherDelta = 1),
+(CountedOtherActivity | where CountedOtherEnds
+| project GroupCase, ValueBoundaryTime = EventTime_1 + 5m, ValueBoundaryOrder = 2, CountedValueDelta = 0, CountedOtherDelta = -1)
+// All interval starts precede anchors; equal-time expirations follow them.
+| sort by GroupCase asc, ValueBoundaryTime asc, ValueBoundaryOrder asc
+| extend ["ValueCount_Value"] = row_cumsum(CountedValueDelta, GroupCase != prev(GroupCase)), ["ValueCount_Other"] = row_cumsum(CountedOtherDelta, GroupCase != prev(GroupCase))
+| where ValueBoundaryOrder == 1
 | where ["ValueCount_Value"] >= 2 and ["ValueCount_Other"] >= 2
-| project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ["Case"] = _sigma_group_0, ["ValueCount_Value"], ["ValueCount_Other"]
+| project WindowStart = ValueBoundaryTime - 5m, WindowEnd = ValueBoundaryTime, ["Case"] = GroupCase, ["ValueCount_Value"], ["ValueCount_Other"]
 };
 let Expected=datatable(WindowStart:datetime,WindowEnd:datetime,Case:string,ValueCount_Value:long,ValueCount_Other:long) [
  datetime(2026-01-01T11:57:00Z),datetime(2026-01-01T12:02:00Z),"both",2,2,

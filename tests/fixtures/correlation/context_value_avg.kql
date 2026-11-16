@@ -8,56 +8,52 @@ let Events=datatable(Timestamp:datetime, Host:string, Marker:string, User:dynami
 // Normalize Events scalar fixture inputs explicitly.
 | extend User=tostring(User);
 let Actual = () {
-let _sigma_context_summary = () {
-let _sigma_values = union (Events
+let ContextSummary = () {
+let AverageObservations = union (Events
 | where Marker =~ "match"
-| extend _sigma_timestamp = todatetime(["Timestamp"]), _sigma_group_0 = ["Host"], _sigma_value = pack_array(gettype(["Amount"]), ["Amount"])
-| extend _sigma_rule = "source-rule")
-| where isnotnull(_sigma_timestamp) and isnotempty(_sigma_group_0)
-;
-_sigma_values
-| project _sigma_group_0, _sigma_window_end = _sigma_timestamp, _sigma_bin = bin(_sigma_timestamp, 5m)
-| distinct *
+| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"], MeasuredAmount = ["Amount"])
+| where isnotnull(EventTime_1) and isnotempty(GroupHost);
+AverageObservations
+| summarize by GroupHost, AverageWindowEnd = EventTime_1, AverageTimeBin = bin(EventTime_1, 5m)
 | join kind=inner (
-    _sigma_values
-    | extend _sigma_bin = pack_array(bin(_sigma_timestamp, 5m), bin(_sigma_timestamp, 5m) + 5m)
-    | mv-expand _sigma_bin to typeof(datetime)
-) on _sigma_group_0, _sigma_bin
-| where _sigma_timestamp between ((_sigma_window_end - 5m) .. _sigma_window_end)
-| summarize ValueAvg = avgif(toreal(_sigma_value[1]), tostring(_sigma_value[0]) in ("int", "long", "real", "double", "decimal") and isfinite(toreal(_sigma_value[1]))), _sigma_numeric_count = countif(tostring(_sigma_value[0]) in ("int", "long", "real", "double", "decimal") and isfinite(toreal(_sigma_value[1]))) by _sigma_window_end, _sigma_group_0
-| where _sigma_numeric_count > 0 and ValueAvg >= 0
-| project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ["Host"] = _sigma_group_0, ValueAvg
+AverageObservations
+| extend AverageTimeBin = pack_array(bin(EventTime_1, 5m), bin(EventTime_1, 5m) + 5m)
+| mv-expand AverageTimeBin to typeof(datetime)
+) on GroupHost, AverageTimeBin
+| where EventTime_1 between ((AverageWindowEnd - 5m) .. AverageWindowEnd)
+| summarize ValueAvg = avgif(toreal(MeasuredAmount), isfinite(toreal(MeasuredAmount))) by AverageWindowEnd, GroupHost
+| where isfinite(ValueAvg) and ValueAvg >= 0
+| project WindowStart = AverageWindowEnd - 5m, WindowEnd = AverageWindowEnd, ["Host"] = GroupHost, ValueAvg
 };
-let _sigma_context_summaries = materialize(_sigma_context_summary()
-| serialize _sigma_context_id = row_number());
-let _sigma_context_matches = materialize(
-_sigma_context_summaries | project _sigma_context_id, _sigma_context_end = WindowEnd, _sigma_context_group = ["Host"], _sigma_context_partition = 1
+let CorrelationMatches = materialize(ContextSummary()
+| serialize CorrelationMatchId = row_number());
+let WindowSourceMatches = materialize(
+CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, ContextGroupHost = ["Host"], ContextPartition = 1
 | join kind=inner (
 union (Events
 | where Marker =~ "match"
-| extend _sigma_context_timestamp = todatetime(["Timestamp"]), _sigma_context_group = ["Host"], _sigma_context_value = ["Server"], _sigma_context_value_1 = ["User"]
-| extend _sigma_context_rule = "source-rule")
-| project _sigma_context_timestamp, _sigma_context_rule, _sigma_context_group, _sigma_context_value, _sigma_context_value_1, _sigma_context_partition = 1
-) on _sigma_context_group
-| where _sigma_context_timestamp between ((_sigma_context_end - 5m) .. _sigma_context_end)
-| serialize _sigma_context_key = row_number());
-let _sigma_context_rows = materialize(_sigma_context_matches
-| project _sigma_context_id, _sigma_context_value, _sigma_context_value_1
+| extend ContextEventTime = todatetime(["Timestamp"]), ContextGroupHost = ["Host"], ContextServer = ["Server"], ContextUser = ["User"]
+| extend ContextSourceRule = "source-rule")
+| project ContextEventTime, ContextSourceRule, ContextGroupHost, ContextServer, ContextUser, ContextPartition = 1
+) on ContextGroupHost
+| where ContextEventTime between ((CompletionTime - 5m) .. CompletionTime));
+let CompleteContextRelationships = materialize(WindowSourceMatches
+| project CorrelationMatchId, ContextServer, ContextUser
 | distinct *);
-let ContextValues = _sigma_context_rows
-| where isnotnull(_sigma_context_value)
-| summarize by _sigma_context_id, _sigma_context_value
-| summarize DisplayedValues = make_list(_sigma_context_value, 1000), DistinctValueCount = count() by _sigma_context_id;
-let ContextValues_1 = _sigma_context_rows
-| where isnotnull(_sigma_context_value_1)
-| summarize by _sigma_context_id, _sigma_context_value_1
-| summarize DisplayedValues_1 = make_list(_sigma_context_value_1, 1000), DistinctValueCount_1 = count() by _sigma_context_id;
-_sigma_context_summaries
-| join kind=leftouter (ContextValues) on _sigma_context_id
-| extend ["Server"] = coalesce(DisplayedValues, dynamic([]))
-| join kind=leftouter (ContextValues_1) on _sigma_context_id
-| extend ["User"] = coalesce(DisplayedValues_1, dynamic([]))
-| extend ContextComplete = coalesce(DistinctValueCount, 0) <= 1000 and coalesce(DistinctValueCount_1, 0) <= 1000
+let ValuesForServer = CompleteContextRelationships
+| where isnotnull(ContextServer)
+| summarize by CorrelationMatchId, ContextServer
+| summarize DisplayedServer = make_list(ContextServer, 1000), DistinctServerCount = count() by CorrelationMatchId;
+let ValuesForUser = CompleteContextRelationships
+| where isnotnull(ContextUser)
+| summarize by CorrelationMatchId, ContextUser
+| summarize DisplayedUser = make_list(ContextUser, 1000), DistinctUserCount = count() by CorrelationMatchId;
+CorrelationMatches
+| join kind=leftouter (ValuesForServer) on CorrelationMatchId
+| extend ["Server"] = coalesce(DisplayedServer, dynamic([]))
+| join kind=leftouter (ValuesForUser) on CorrelationMatchId
+| extend ["User"] = coalesce(DisplayedUser, dynamic([]))
+| extend ContextComplete = coalesce(DistinctServerCount, 0) <= 1000 and coalesce(DistinctUserCount, 0) <= 1000
 | project ["WindowStart"], ["WindowEnd"], ["Host"], ["Server"], ["User"], ["ValueAvg"], ["ContextComplete"]
 };
 let Observed = Actual()

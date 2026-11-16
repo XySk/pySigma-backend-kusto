@@ -10,7 +10,7 @@ datetime(2026-01-01T12:00:00Z), "both", "C", dynamic("C"), "c"
 // Normalize Events scalar fixture inputs explicitly.
 | extend User=tostring(User);
 let Actual=(){
-let _sigma_context_summary = () {
+let ContextSummary = () {
 union (Events
 | where Marker =~ "A"
 | project EventTime_1 = todatetime(["Timestamp"]), GroupCase = ["Case"], SourceRule = "A"),
@@ -37,47 +37,46 @@ union (Events
 | where ((HasA and HasB) or HasC)
 | project WindowStart = EventTime_1 - 5m, WindowEnd = EventTime_1, ["Case"] = GroupCase, RuleCount
 };
-let _sigma_context_summaries = materialize(_sigma_context_summary()
-| serialize _sigma_context_id = row_number());
-let _sigma_context_matches = materialize(
-_sigma_context_summaries | project _sigma_context_id, _sigma_context_end = WindowEnd, _sigma_context_group = ["Case"], _sigma_context_partition = 1
+let CorrelationMatches = materialize(ContextSummary()
+| serialize CorrelationMatchId = row_number());
+let WindowSourceMatches = materialize(
+CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, ContextGroupCase = ["Case"], ContextPartition = 1
 | join kind=inner (
 union (Events
 | where Marker =~ "A"
-| extend _sigma_context_timestamp = todatetime(["Timestamp"]), _sigma_context_group = ["Case"], _sigma_context_value = ["User"], _sigma_context_value_1 = ["Server"]
-| extend _sigma_context_rule = "A"),
+| extend ContextEventTime = todatetime(["Timestamp"]), ContextGroupCase = ["Case"], ContextUser = ["User"], ContextServer = ["Server"]
+| extend ContextSourceRule = "A"),
 (Events
 | where Marker =~ "B"
-| extend _sigma_context_timestamp = todatetime(["Timestamp"]), _sigma_context_group = ["Case"], _sigma_context_value = ["User"], _sigma_context_value_1 = ["Server"]
-| extend _sigma_context_rule = "B"),
+| extend ContextEventTime = todatetime(["Timestamp"]), ContextGroupCase = ["Case"], ContextUser = ["User"], ContextServer = ["Server"]
+| extend ContextSourceRule = "B"),
 (Events
 | where Marker =~ "C"
-| extend _sigma_context_timestamp = todatetime(["Timestamp"]), _sigma_context_group = ["Case"], _sigma_context_value = ["User"], _sigma_context_value_1 = ["Server"]
-| extend _sigma_context_rule = "C")
-| project _sigma_context_timestamp, _sigma_context_rule, _sigma_context_group, _sigma_context_value, _sigma_context_value_1, _sigma_context_partition = 1
-) on _sigma_context_group
-| where _sigma_context_timestamp between ((_sigma_context_end - 5m) .. _sigma_context_end)
-| serialize _sigma_context_key = row_number());
-let _sigma_context_eligible = materialize(_sigma_context_matches
-| join kind=inner (_sigma_context_matches | summarize _sigma_context_present = countif(_sigma_context_rule == "A") > 0, _sigma_context_present_1 = countif(_sigma_context_rule == "B") > 0, _sigma_context_present_2 = countif(_sigma_context_rule == "C") > 0 by _sigma_context_id) on _sigma_context_id
-| where (((_sigma_context_present and _sigma_context_present_1) and (((_sigma_context_present and _sigma_context_present_1) and ((_sigma_context_present and (_sigma_context_rule == "A")) or (_sigma_context_present_1 and (_sigma_context_rule == "B")))))) or (_sigma_context_present_2 and (_sigma_context_rule == "C"))));
-let _sigma_context_rows = materialize(_sigma_context_eligible
-| project _sigma_context_id, _sigma_context_value, _sigma_context_value_1
+| extend ContextEventTime = todatetime(["Timestamp"]), ContextGroupCase = ["Case"], ContextUser = ["User"], ContextServer = ["Server"]
+| extend ContextSourceRule = "C")
+| project ContextEventTime, ContextSourceRule, ContextGroupCase, ContextUser, ContextServer, ContextPartition = 1
+) on ContextGroupCase
+| where ContextEventTime between ((CompletionTime - 5m) .. CompletionTime));
+let BooleanParticipants = materialize(WindowSourceMatches
+| join kind=inner (WindowSourceMatches | summarize HasA_1 = countif(ContextSourceRule == "A") > 0, HasB_1 = countif(ContextSourceRule == "B") > 0, HasC_1 = countif(ContextSourceRule == "C") > 0 by CorrelationMatchId) on CorrelationMatchId
+| where (((HasA_1 and HasB_1) and (((HasA_1 and HasB_1) and ((HasA_1 and (ContextSourceRule == "A")) or (HasB_1 and (ContextSourceRule == "B")))))) or (HasC_1 and (ContextSourceRule == "C"))));
+let CompleteContextRelationships = materialize(BooleanParticipants
+| project CorrelationMatchId, ContextUser, ContextServer
 | distinct *);
-let ContextValues = _sigma_context_rows
-| where isnotnull(_sigma_context_value)
-| summarize by _sigma_context_id, _sigma_context_value
-| summarize DisplayedValues = make_list(_sigma_context_value, 1000), DistinctValueCount = count() by _sigma_context_id;
-let ContextValues_1 = _sigma_context_rows
-| where isnotnull(_sigma_context_value_1)
-| summarize by _sigma_context_id, _sigma_context_value_1
-| summarize DisplayedValues_1 = make_list(_sigma_context_value_1, 1000), DistinctValueCount_1 = count() by _sigma_context_id;
-_sigma_context_summaries
-| join kind=leftouter (ContextValues) on _sigma_context_id
-| extend ["User"] = coalesce(DisplayedValues, dynamic([]))
-| join kind=leftouter (ContextValues_1) on _sigma_context_id
-| extend ["Server"] = coalesce(DisplayedValues_1, dynamic([]))
-| extend ContextComplete = coalesce(DistinctValueCount, 0) <= 1000 and coalesce(DistinctValueCount_1, 0) <= 1000
+let ValuesForUser = CompleteContextRelationships
+| where isnotnull(ContextUser)
+| summarize by CorrelationMatchId, ContextUser
+| summarize DisplayedUser = make_list(ContextUser, 1000), DistinctUserCount = count() by CorrelationMatchId;
+let ValuesForServer = CompleteContextRelationships
+| where isnotnull(ContextServer)
+| summarize by CorrelationMatchId, ContextServer
+| summarize DisplayedServer = make_list(ContextServer, 1000), DistinctServerCount = count() by CorrelationMatchId;
+CorrelationMatches
+| join kind=leftouter (ValuesForUser) on CorrelationMatchId
+| extend ["User"] = coalesce(DisplayedUser, dynamic([]))
+| join kind=leftouter (ValuesForServer) on CorrelationMatchId
+| extend ["Server"] = coalesce(DisplayedServer, dynamic([]))
+| extend ContextComplete = coalesce(DistinctUserCount, 0) <= 1000 and coalesce(DistinctServerCount, 0) <= 1000
 | project ["WindowStart"], ["WindowEnd"], ["Case"], ["User"], ["Server"], ["RuleCount"], ["ContextComplete"]
 };
 let Observed=Actual()

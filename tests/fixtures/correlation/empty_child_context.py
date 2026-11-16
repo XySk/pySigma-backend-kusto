@@ -84,4 +84,12 @@ def fixtures():
             for kind in ("value_sum", "value_count")
             for group in ("", "ChildRuleCount", "Amount")
         },
+        **{
+            f'empty_child_{kind}_{group or "ungrouped"}_{operator}.kql': fixture(
+                kind, (group,) if group else (), operator
+            )
+            for kind in ("value_avg", "value_percentile")
+            for group in ("", "ChildRuleCount", "Amount")
+            for operator in ("eq", "neq")
+        },
     }

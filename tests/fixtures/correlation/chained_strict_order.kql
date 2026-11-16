@@ -27,7 +27,7 @@ let Events=datatable(Timestamp:string, Case:string, Host:string, Marker:string) 
 // Normalize Events scalar fixture inputs explicitly.
 | extend Timestamp=todatetime(Timestamp);
 let Actual = () {
-let _sigma_child_0 = () {
+let C = () {
 union (Events
 | where Marker =~ "TA"
 | project EventTime_1 = todatetime(["Timestamp"]), GroupCase = ["Case"], GroupHost = ["Host"], SourceRule = "TA"),
@@ -51,7 +51,7 @@ union (Events
 | project WindowStart = EventTime_1 - 5m, WindowEnd = EventTime_1, ["Case"] = GroupCase, ["Host"] = GroupHost, RuleCount
 };
 // Strict sequence: "C" -> "D". Total inclusive span: 5m.
-union (_sigma_child_0()
+union (C()
 | extend EventTime_1 = todatetime(["WindowEnd"]), GroupCase = ["Case"], GroupHost = ["Host"]
 | extend SourceRule = "C"),
 (Events

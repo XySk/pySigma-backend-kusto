@@ -12,7 +12,7 @@ let Events=datatable(Timestamp:string, Host:string, Amount:dynamic, Marker:strin
 // Normalize Events scalar fixture inputs explicitly.
 | extend Amount=iff(gettype(Amount) in ("int","long","real","double","decimal"), tolong(Amount), long(null)), Timestamp=todatetime(Timestamp);
 let Actual = () {
-let _sigma_child_0 = () {
+let Child = () {
 let SumObservations = union (Events
 | where Marker =~ "child"
 | project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"], MeasuredAmount = ["Amount"])
@@ -30,7 +30,7 @@ union (SumArrivals
 | where ValueSum >= 0
 | project WindowStart = SumBoundaryTime - 5m, WindowEnd = SumBoundaryTime, ["Host"] = GroupHost, ValueSum
 };
-let SumObservations = union (_sigma_child_0()
+let SumObservations = union (Child()
 | project EventTime_1 = todatetime(["WindowEnd"]), GroupHost = ["Host"], MeasuredMeasured = ["ValueSum"]),
 (Events
 | where Marker =~ "direct"

@@ -59,7 +59,7 @@ union (FailedLogonBursts()
 | project WindowStart = EventTime_1 - 10m, WindowEnd = EventTime_1, ["User"] = GroupUser, RuleCount = tolong(2)
 };
 let General = () {
-let _sigma_child_0 = () {
+let FailedLogonBursts = () {
 let SourceMatchArrivals = union (SecurityEvent
 | where EventID == 4625
 | project EventTime_1 = todatetime(["TimeGenerated"]), GroupUser = ["TargetUserName"])
@@ -77,7 +77,7 @@ union (SourceMatchArrivals
 | project WindowStart = CountBoundaryTime - 10m, WindowEnd = CountBoundaryTime, ["User"] = GroupUser, EventCount
 };
 // Strict sequence: "failed-logon-bursts" -> "successful-logon". Total inclusive span: 10m.
-union (_sigma_child_0()
+union (FailedLogonBursts()
 | extend EventTime_1 = todatetime(["WindowEnd"]), GroupUser = ["User"]
 | extend SourceRule = "failed-logon-bursts"),
 (SecurityEvent

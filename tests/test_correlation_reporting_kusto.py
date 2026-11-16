@@ -165,7 +165,9 @@ def test_reporting_engine_fixtures_match_current_public_conversion():
         assert Path(__file__).with_name("fixtures").joinpath("correlation", name).read_text() == query
 
 
-def test_incoherent_child_reporting_provenance_fails_instead_of_truncating_parent_history():
+@pytest.mark.parametrize("metadata", ["kusto_raw_query", "kusto_public_query", "kusto_report_suffix"])
+@pytest.mark.parametrize("bounded", [False, True])
+def test_incoherent_child_reporting_provenance_fails_instead_of_truncating_parent_history(metadata, bounded):
     docs = [
         source_document(),
         correlation_document("child", "event_count", ["source-rule"]),
@@ -174,11 +176,15 @@ def test_incoherent_child_reporting_provenance_fails_instead_of_truncating_paren
 
     def callback(rule, output, index, condition, query):
         if rule.name == "child":
-            rule.get_conversion_states()[0].processing_state.pop("kusto_guard_queries")
+            rule.get_conversion_states()[0].processing_state.pop(metadata)
         return query
 
     with pytest.raises(SigmaConversionError, match="metadata.*inconsistent"):
-        convert_documents(docs, callback=callback, backend_options={"correlation_report_start": "2026-01-01T10:00:00Z"})
+        convert_documents(
+            docs,
+            callback=callback,
+            backend_options={"correlation_report_start": "2026-01-01T10:00:00Z"} if bounded else {},
+        )
 
 
 def test_report_pushdown_preserves_string_timestamp_conversion():

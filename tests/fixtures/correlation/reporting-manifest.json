@@ -8,7 +8,7 @@
     },
     {
       "name": "reporting_early_general.kql",
-      "sha256": "c88d54070a9678ff661dd20a620f939afbcea50758f923e4e177627ae7a4653f",
+      "sha256": "585cbfb72c551f3afb4eb0bbf3c387f1cec6f4382d4baad7d14d00eb946d5b5e",
       "expected_error": null
     },
     {
@@ -28,7 +28,7 @@
     },
     {
       "name": "reporting_context_callback.kql",
-      "sha256": "b7fb256e662bf9ee2aa2401b5200caa8a6a1f57ffd50ad318d8d978debc21299",
+      "sha256": "b95335ddd5cdfdf5e9e50c2e58895c0d51ec1abf3bd3902cc8d1c92613c240a7",
       "expected_error": null
     },
     {

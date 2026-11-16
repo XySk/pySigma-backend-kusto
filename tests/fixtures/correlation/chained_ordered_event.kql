@@ -13,7 +13,7 @@ let Events=datatable(Timestamp:string, Case:string, Host:string, Marker:string) 
 // Normalize Events scalar fixture inputs explicitly.
 | extend Timestamp=todatetime(Timestamp);
 let Actual = () {
-let _sigma_child_0 = () {
+let C = () {
 // Strict sequence: "OA" -> "OB". Total inclusive span: 5m.
 union (Events
 | where Marker =~ "OA"
@@ -37,7 +37,7 @@ union (Events
 | where CompleteNow
 | project WindowStart = EventTime_1 - 5m, WindowEnd = EventTime_1, ["Case"] = GroupCase, ["Host"] = GroupHost, RuleCount = tolong(2)
 };
-let SourceMatchArrivals = union (_sigma_child_0()
+let SourceMatchArrivals = union (C()
 | project EventTime = todatetime(["WindowEnd"]), GroupCase = ["Case"], GroupHost = ["Host"])
 | where isnotnull(EventTime) and isnotempty(GroupCase) and isnotempty(GroupHost)
 | summarize SourceMatchCount = count() by EventTime, GroupCase, GroupHost;

@@ -46,7 +46,7 @@ def documents(producer, consumer):
 def matrix_fixture(producer, consumer):
     (query,) = convert_documents(documents(producer, consumer), schema=fixture_schema(Amount="real"))
     return (
-        "// Prepared acceptance fixture; runtime PENDING.\n"
+        "// Public-conversion comparison; execution status is hash-scoped in RUNTIME.md.\n"
         "let Events=datatable(Timestamp:datetime,Marker:string,Amount:real) [\n"
         ' datetime(2026-01-01T12:00:00Z),"match",2.5\n];\nlet Actual=(){\n'
         + query

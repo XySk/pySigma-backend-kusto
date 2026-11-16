@@ -1,234 +1,59 @@
 # Native scalar correlation fixtures
 
-The #34 redesign uses declared native scalar fields. Custom test pipelines use partial `BaseSchema` declarations from `tests.correlation_helpers.fixture_schema`; a fixture overrides relevant types where needed. Invalid timestamps and missing measured/counted values still establish the exclusions and anchors specified by the window contract.
+These self-contained KQL comparisons are generated through ordinary Sigma YAML collection parsing, real processing pipelines/options, and `KustoBackend.convert()`. Expected result multisets are independently worked literal examples or direct window enumeration. Every valid comparison returns exactly one empty primary diagnostic table; an extra, missing, or duplicated summary produces a difference row. Run the entire file, including its expected-result comparison.
 
-Legacy malformed-input datatables retain their raw values but visibly normalize them before they enter generated correlation queries. `scalar_inputs.py` emits these explicit fixture-source conversions; the backend never guesses types or silently stringifies dynamic fields. Numeric normalization excludes nonnumeric strings, preserving missing-value anchors. Property bag extraction is explicit in `context_nested.kql` and `value_count_typed_multi_field.kql`.
+The current contract uses declared native scalar timestamp, grouping, counted/measured, and retained fields. Built-in schemas or custom partial `BaseSchema` declarations resolve relevant types after transformations. Dynamic arrays, bags, and mixed types require explicit extraction or normalization in the pipeline. `scalar_inputs.py` visibly normalizes legacy malformed-input fixture populations; the backend never guesses their types. Files retaining historical names such as `context_nested` and `value_count_typed` now exercise normalized native scalars. Their former arbitrary nested-identity behavior is superseded.
 
-Obsolete arbitrary nested-identity fixtures now exercise native scalar behavior: `value_count_typed.kql` covers long values and null anchors; `value_count_typed_precision.kql` uses separate native real/long/decimal schemas for adjacent values, scale, signed zero, and nonfinite reals; `value_count_typed_chained.kql` combines compatible native child/direct long and datetime values. `typed_grouping_*.kql` cover native long/string tuples and a guid child alias. Mixed source types and unnormalized arrays/property bags are conversion-error cases in `test_scalar_contract_kusto.py`.
+Numeric inputs and intermediate arithmetic must stay within sensible native ranges. Integer sums are not widened merely to expand range; custom overflow assertions are retired. All supported current fixtures require successful execution. Historical overflow failures remain in [RUNTIME.md](RUNTIME.md), outside the current contract.
 
-Eleven representative native scalar/source-predicate checks passed on 2026-11-16; their exact hashes and responses are recorded in `RUNTIME.md`. Other regenerated fixtures require integrated runtime acceptance. Earlier evidence remains historical and does not certify these new hashes. Representative #37 checks: `event_count_duplicate_sources.kql`, `typed_grouping_event_count.kql`, `typed_grouping_mixed_chain.kql`, `typed_grouping_extended_chain.kql`, `value_count_typed_precision.kql`, and `standard_mappings.kql`.
+## Coverage and independent oracles
 
-## Deterministic correlation checks
+| Fixture family / generator | Behavior covered |
+| --- | --- |
+| `event_count_sliding.py`, count fixtures in `generate.py` | All comparisons, fractional long comparisons, duplicates/source-search multiplicity, ties, grouped/ungrouped windows, inclusive endpoints and one tick outside, invalid timestamps/groups, original anchors and no expiry-only evaluation |
+| `value_count_sliding.py`, `value_count_*` | Independent counted fields, active intervals, null/empty anchors, native real NaN/infinity/signed zero and extended scalar types/precision; grouped counted-context values |
+| `temporal_presence.py`, `boolean_generate.py` | Distinct immediate source presence, Boolean alternatives/precedence/negation, aliases and missing sources |
+| `ordered_state.py`, ordered fixtures in `generate.py` | Earlier viable prefixes, strict ties and full-span endpoints, repeated references, grouped/ungrouped order, completion-only output, native real groups |
+| `native_sum.py`, `native_average.py`, `native_percentile.py`, `average.py` | Native schemas and precision, finite-only measurements, zeros/negatives/multiplicity, null anchors, large expired observations, fractional comparisons, undefined avg/percentile including `neq`, exact nearest rank and extrema |
+| `context.py`, `count_context.py`, `numeric_context.py` | Distinct scalar displays and observed cross-field relationships, once-per-child/group contributions, direct multiplicity, logical aliases and required scalar child metrics |
+| `relational_context.py` | Displays at 999/1000/1001, configurable limit, `ContextComplete`, complete hidden 1001-pair parent inputs, callback-modified metric eligibility, no invented cross-pairs |
+| `ordered_context.py`, `temporal_participants.py`, `boolean_context.py` | Every successful ordered and satisfied positive Boolean alternative; unrelated/absent evidence excluded; structural child presence without fabricated retained values |
+| `empty_child_context.py` | Absence-only children anchor zero sum/count without values; average/percentile stay undefined under `eq` and `neq`; scalar child metric grouping and exclusion of absent retained groups |
+| `temporal_context.py`, `dependency_order.py`, chained fixtures | Mixed/direct/shared/multilevel sources, name/UUID references, aliases, generation controls, reversed document order, accumulated spans and child `WindowEnd` timestamps |
+| `reporting.py` | Optional half-open report bounds, 100 ns boundary ownership, inclusive lookback, maximum shared accumulated history, standalone child cutoff, complete prereport context, append-only callbacks and collisions |
+| `standard_mappings.py`, `typed_grouping.py`, `typed_grouped_context.py` | Source-specific field/table mappings, logical scalar types and context, escaped columns and compatible child/direct aliases |
+| `source_predicates.py` | SecurityEvent EventID 4799, CallerProcessId 0x0 and all four privileged-group names survive XDR processing; exact enumeration output and schema |
+| `count_existence.py` | General versus Nth-match specialization; duplicate searches, randomized streams/ties, actual metric requirements, target-account failed-logons-then-success example |
+| `integrated.py` | All 49 producer/consumer edges as singleton retained-value smoke comparisons |
 
-These self-contained KQL files bind small input tables, run queries generated by parsing Sigma collections and calling `KustoBackend.convert()`, and compare the result multiset with independently worked expected rows. Row order is irrelevant, but duplicate summaries fail the comparison.
+The 49-edge matrix uses one child match and projects its metric as real for a common comparison. It proves edge availability and result values for that case. Rich stage fixtures separately establish multiplicity, native public schemas, shared children, overlapping windows, multi-step order, mappings, and generation controls; the matrix alone does not establish those properties for every pair.
 
-- `event_count_grouped.kql`: two grouping fields, independent groups, former fixed-bin boundaries (including 12:00:59/12:05:01), exact endpoints, one tick outside, simultaneous events, overlapping windows, invalid timestamps, and null/empty grouping values.
-- `event_count_duplicate_sources.kql`: every physical row matches two searches in each of two source rules; ties retain the complete weight.
-- `event_count_comparisons.kql`: ungrouped input, all six comparisons, exact and just-outside endpoints, zero-count absence, and no evaluations triggered by expiry.
-- `value_percentile_comparisons.kql`: nearest-rank median `[1,2,100,200] = 2`, all six comparisons with fractional thresholds, finite zero and duplicates, nonnumeric/nonfinite exclusions, missing-value anchors, independent groups, overlapping windows, inclusive endpoints and one tick outside. Undefined windows never satisfy `neq`.
-- `value_percentile_endpoints.kql`: selectors 0, 50 and 100, adjacent signed-long maxima that share a double representation, and finite doubles at ±1e300 outside decimal's range.
-- `value_percentile_population.kql`: ungrouped population 101 with selectors 0, 1, 50, 99 and 100 verifies rank ceiling and quotient/remainder arithmetic beyond one hundred observations.
-- `value_percentile_aliases.kql`: measured/group aliases across two tables, multiple emitted searches, duplicate observations, simultaneous matches and overlapping results.
-- `value_percentile_chained.kql`: percentile → sum → percentile exposes each scalar child metric once per child summary at its `WindowEnd`.
-- `value_sum_comparisons.kql`: finite integer sums including zero and negative values, missing and text values that still anchor, independent groups, simultaneous values, all six comparisons and a fractional threshold, exact and one-tick-outside endpoints, and overlapping summaries. The threshold checks use exact integer comparisons even for fractional thresholds.
-- `value_sum_chained.kql`: a scalar child `ValueSum` contributes once per child summary to a parent alongside direct measurements; the child keeps overlapping `WindowEnd` anchors and the parent reports independently worked sums.
-- `value_sum_reals.kql`: real and integer observations mix through floating-point addition; small exact binary fractions make the worked result deterministic. NaN, both infinities, numeric strings, booleans, and nulls contribute nothing.
-- `value_sum_integer_bounds.kql`: in-range signed 64-bit sums at the upper boundary retain exact values and compare against a large integer threshold, including simultaneous max + 1 − 1 cancellation.
-- `value_sum_duplicate_sources.kql`: two source rules each emit two searches; repeated observations contribute through all four searches, without deduplicating measured values.
-- `value_sum_overflow.kql` and `value_sum_negative_overflow.kql`: expect the query to fail with an integer overflow diagnostic. A returned row is failure, not success; record the actual engine error separately.
-- `value_count_grouped.kql`: counted-field and grouping aliases, timestamp and field mappings across two tables, two searches per rule, repeated values across timestamps and sources, ties, independent groups, exact/just-outside endpoints, overlapping summaries, invalid timestamps/groups, and missing counted values that preserve anchors.
-- `value_count_comparisons.kql`: ungrouped exact distinct counts, all six comparisons, ties and duplicate values, inclusive endpoints, null/empty values, anchored zero-distinct results, and no evaluations triggered by expiry.
-- `value_count_multi_field_grouped.kql`: independent per-field counts combined with AND, two users/one target and one user/two targets failing `gte: 2`, per-source aliases and mappings across two tables with two searches per rule, duplicates, independent groups, exact/just-outside endpoints, ties, overlapping windows, and asymmetric missing values with an all-missing anchor.
-- `value_count_multi_field_comparisons.kql`: ungrouped AND comparisons for all six operators with unequal per-field counts, asymmetric null/empty values, all-zero anchors, duplicate values, inclusive/just-outside endpoints, and no evaluations triggered by expiry. Per-field metrics use `ValueCount_<logical field>`; single-field fixtures retain `ValueCount`.
-- `temporal_grouped.kql`: default-all and explicit two-of-three type counts, absent and repeated types, arbitrary input/rule order, tied and repeated matches, two searches per rule, per-table timestamp mappings and grouping aliases across two tables, independent groups, exact/just-outside endpoints, overlapping summaries, invalid timestamps/groups, and total-span rejection for A at zero, B at four minutes, and C at eight minutes over five minutes.
-- `temporal_comparisons.kql`: ungrouped exact distinct rule-type counts, all six comparisons, repeated types across rows/searches, tied matches, exact/just-outside endpoints, zero-count absence, and no evaluations triggered by expiry or nonmatching events.
-- `temporal_ordered_grouped.kql`: full declared order with strict timestamps; reversed order, tied steps, repeated and intervening alternatives, later viable starts, total-span rejection, exact/just-outside endpoints, collapsed combinations and overlapping completions, two searches per source, mapped timestamps and grouping aliases across two tables, independent joint groups, invalid timestamps/groups, absent types, and no extra completion triggered by a later earlier-step match.
-- `temporal_ordered_ungrouped.kql`: ungrouped full sequences under omitted and equivalent `gte`, `eq`, and `gt` conditions, repeated rows/searches, strict ties, inclusive/just-outside total spans, overlapping completions, and repeated declared positions (`A, A, B`) requiring separate increasing timestamps while reporting two distinct types. The two ordered fixtures contain 29 literal expected summaries.
-- `ordered_state_grouped.kql`, `ordered_state_ungrouped.kql`, and `ordered_state_repeated.kql`: compact prefix-state detection with earlier viable prefixes, simultaneous source memberships, completion-only output, total-span boundaries, group resets, repeated references, and duplicate source rows. Literal completions are independent of the generated scan.
-- `ordered_state_real_groups.kql`: native real grouping for NaN, infinities, signed zero, and finite values, using an independent native `summarize` grouping oracle. Scan reset comparisons must preserve the same group identity.
-- `event_count_chained_grouped.kql`: five-minute child counts feeding a two-minute parent, child `WindowEnd` timestamps, overlapping child summaries, coarser parent grouping, aliases and table mappings, mixed direct detections, simultaneous child groups, exact/just-outside parent endpoints, invalid timestamps/groups, and a child `EventCount = 10` contributing once. The child alone cannot satisfy the parent's threshold of two.
-- `event_count_chained_comparisons.kql`: ungrouped child summaries with counts 2, 3, 4, 2, 2 each contributing once, all six parent comparisons, inclusive endpoints, overlapping windows, zero-count absence, and no evaluations triggered solely by expiry.
-- `event_count_chained_metrics.kql`: a ten-minute parent groups by the child's aliased `EventCount` metric; two separate child summaries with the same metric value contribute two source matches. These three chaining fixtures contain 21 literal expected summaries. They also exercise nested function scopes for complete child queries; missing child fields and standalone generation behavior are checked by public conversion tests.
-- `chained_metrics.kql`: an event-count child feeds a value-count parent that counts `EventCount` and `Host` independently with AND. Two metric values from one host fail; repeated metric values from different child groups count once. Invalid timestamps and null/empty groups cannot produce child summaries.
-- `chained_value_temporal.kql`: a value-count child with two descendant sources feeds an unordered temporal parent alongside a direct detection. The parent counts the two immediate identities, permits a tie, and retains overlapping summaries.
-- `chained_strict_order.kql`: temporal child summaries feed an ordered parent alongside a direct detection. Child `WindowEnd` determines strict order; earlier or tied direct matches, reversed order, and total-span overflow fail. Alternative child summaries collapse into one result per completion timestamp.
-- `chained_ordered_event.kql`: an ordered child feeds an event-count parent; each child `RuleCount = 2` summary contributes once, preserving overlapping child completions.
-- `chained_multilevel.kql`: mapped raw tables feed event-count → value-count → ordered temporal with coarser aliased grouping and a mixed direct branch. The exact endpoints depend on **2m + 3m + 4m = 9m** of raw history: removing the 11:58 row removes the 12:07 result. A tie and one tick beyond the final span fail. Detection-side mappings for metrics and `WindowEnd` cannot remap returned child fields.
-- `chained_zero_metric.kql`: missing raw values produce anchored child `ValueCount = 0`; the value-count parent correctly treats metric zero as one distinct value. Nonmatching events and expiry produce no extra results. These six fixtures contain nine literal expected summaries and together exercise every supported producer and consumer type. Public conversion tests additionally cover all sixteen type pairs, unavailable child fields, multi-field child metrics, source-table name collisions, and multilevel/shared-child generation.
-- `value_count_typed.kql`: numeric/string and long/real identity, repeated null/empty anchors, recursively reordered equivalent bags, distinct empty containers, nested arrays/bags containing datetime/timespan/GUID values versus their string forms, repeated real NaNs (also nested), and signed zero. Equivalent values do not create a second identity; strings with the same rendering remain separate.
-- `value_count_typed_multi_field.kql`: each field has independent identities; two typed values in one field cannot compensate for a single equivalent reordered bag in another. Missing values retain the final anchor.
-- `value_count_typed_chained.kql`: a zero-valued child metric and direct string `"0"` are distinct counted values. Child datetime window ends and a direct string end are counted independently in the other field. These three fixtures contain fifteen literal expected summaries.
+The authentication example maps logical User to `SecurityEvent.TargetUserName`, preserving EventID 4625/4624 and grouping across computers. Ten failures in ten minutes followed strictly later by success within another ten minutes use child `WindowEnd` semantics. See [COUNT-EXISTENCE.md](COUNT-EXISTENCE.md). The enumeration example retains wrong-ID/process/group negative controls and two overlapping qualifying windows across computers.
 
-Open any file in a Kusto query editor connected to a database and execute the **entire file**. The fixtures need no preexisting tables. **Zero result rows means pass for comparison fixtures.** The two overflow fixtures must instead fail with the documented assertion error; successful execution fails their acceptance check. Any returned row identifies a missing, additional, or duplicated summary; `Delta` is actual multiplicity minus expected multiplicity. To inspect the generated summaries, replace the final multiset comparison with `Actual()` (or `Actual` in the comparison and temporal fixtures).
+## Freeze and execute
 
-Regenerate from the repository root after changing conversion:
-
-```bash
-PYTHONPATH=. python tests/fixtures/correlation/generate.py
-```
-
-The normal pytest suite verifies that checked-in files contain the current public conversion output. It does not execute KQL. Recorded numeric execution results are in [RUNTIME.md](RUNTIME.md). Fixture consistency remains separate from runtime acceptance; no throughput validation is claimed. Record the engine/version, fixture filename, and returned differences for further executions. Expected summaries are literal worked examples in `generate.py`; they are not calculated using the backend's bin/join algorithm.
-
-Counted values are boxed with their runtime type and traversed into typed scalar leaves and empty containers. Exact paths preserve array positions and ignore bag insertion order. Sorted full leaf signatures preserve nested extended types and numeric precision; NaNs, signed zero and decimal scales normalize equal values. Each leaf includes its runtime type, so a datetime and its textual rendering remain distinct. Signatures use complete strings without hashes. Native scalar JSON retains adjacent double/long precision; decimal formatting normalizes equivalent scales. Stable scalar identities feed `count_distinctif`. Range, traversal-completion and independent leaf-count assertions prevent silent truncation. The typed fixtures include mixed datetime/string positions, ordered arrays and 65 nested array levels. `value_count_typed_precision` also covers adjacent doubles and maximum longs, decimal scales/zeros, NaNs and infinities, reordered extended bags, and nested adjacent doubles. Materialized streams keep row IDs and traversal consistent. Engine memory/string limits fail explicitly; no throughput or memory-capacity claim is made. Shared builders in `tests/correlation_helpers.py` prepare Sigma inputs and invoke public conversion. Literal expected rows remain local to the generator.
-
-Average fixtures are generated through public Sigma collection conversion, with independently worked expected rows in `average.py`:
-
-- `value_avg_comparisons.kql`: all six operators, fractional thresholds, zero and negatives, inclusive endpoints and one tick outside, ties, overlapping summaries, invalid timestamps/groups, numeric text, missing values and undefined averages including `neq`.
-- `value_avg_reals.kql`: mixed finite numeric types, NaN/infinity exclusion, undefined populations and direct floating-point comparisons distinguishing the mean of 0.1/0.2 from 0.15.
-- `value_avg_duplicate_sources.kql`: unequal multiplicity across five source searches, preserving repeated observations.
-- `value_avg_mapped.kql`: per-source measured/group aliases and timestamp mappings over two physical tables.
-- `value_avg_chained.kql`: scalar average child metrics combined once each with a direct measurement at child `WindowEnd`.
-- `value_avg_integer_bounds.kql`: signed-long maximum observations average as reals without an overflowing intermediate integer sum, plus opposite-sign cancellation.
-
-Boolean fixtures are generated by `boolean_generate.py` and included by the main
-`generate.py` command. They cover presence, alternatives, precedence, nested
-negation, and mixed child sources, using independent literal expected rows and
-exact multiset comparisons. See [RUNTIME.md](RUNTIME.md) for their successful
-real-engine execution; fixture-consistency pytest checks only generated text.
-
-Retained-context fixtures `context_event_count`, `context_value_count`, `context_value_sum`,
-`context_value_avg`, `context_value_percentile`, and `context_temporal` exercise the same
-three simultaneous matches. Independent expected metrics are 3, 2, 40, 40/3, 10, and 1.
-Each fixture checks typed numeric/string `User` values, distinct displayed collections,
-scalar grouping, and only observed `User`/`Server` relationships. `context_nested` expects
-five distinct values from eight source matches: reordered bags deduplicate, nested
-runtime datetime/string positions remain distinct, and repeated NaNs and signed zero
-coalesce. All fixtures return zero rows only when the full expected summary multiset
-and the context checks agree. Their generator is `context.py`; runtime evidence is
-recorded separately in `RUNTIME.md`.
-
-Boolean retained-context fixtures are generated by `boolean_context.py` through the
-same public collection conversion and included by `generate.py`. Six literal cases
-cover failed alternatives, every successful alternative, typed values and observed
-relationships, precedence, nested negation, shared sources, empty absence evidence,
-and mixed child/detection matches. Displayed field lengths and canonicalized observed
-tuples are compared as exact summary multisets. Child fields in the mixed-source
-fixture are scalar child grouping fields; consuming retained child collections is a
-separate follow-up.
-
-Ordered context fixtures are generated by `ordered_context.py` through standard
-Sigma collection conversion. `context_ordered_alternatives` independently expects
-all successful starts and middle matches at each completion, excluding an early B,
-a late A, and an expired start. Duplicate matches preserve their observed field
-relationships. Additional groups reject timestamp ties and an excessive total span.
-`context_ordered_repeated` exercises A → B → A with alternative starts, ties and
-overlapping completions. `context_ordered_ungrouped` and `context_ordered_aliases`
-exercise the same membership without grouping and with per-source field aliases.
-The comparison deduplicates evidence within each summary while retaining summary
-multiplicity, so an extra completion cannot disappear in the expected multiset.
-
-Dependency-order fixtures are generated with
-`PYTHONPATH=. python tests/fixtures/correlation/dependency_order.py`.
-They use a shared multilevel chain, name/UUID references, interleaved unrelated
-rules, and a mixed raw/child parent, with generation enabled and disabled.
-The literal expected result multiset checks WindowEnd timestamps, inclusive
-endpoints, and source-type counts. Runtime execution evidence is in `RUNTIME.md`.
-`standard_mappings.py` generates `standard_mappings.kql` through public Sigma
-parsing and conversion. Run it with `python -m tests.fixtures.correlation.standard_mappings`.
-The fixture compares source-specific standard mappings, escaped columns,
-multiple source searches, aliases and retained logical context against literal
-expected rows; see `RUNTIME.md` for engine execution evidence.
-
-`count_context.py` generates count-parent acceptance fixtures through standard
-Sigma parsing and `KustoBackend.convert`. Literal expected summaries verify
-observed User/Server pairs, one child contribution per group, mixed direct/child
-sources, ungrouped child counts, distinct retained users, group-restricted values,
-and numeric/textual values with equal renderings. Collection display order is
-irrelevant; full summary multisets must agree. These fixtures exercise logical
-child fields and child `WindowEnd` timestamps. See `RUNTIME.md` for execution
-results and the emulator resource configuration.
-
-`typed_grouping.py` supplies literal expected result multisets for all seven correlation types, compound nested groups, exclusions, mixed direct/scalar-child aliases, and extended-type downstream chains. Run `python -m tests.fixtures.correlation.generate` to regenerate their queries through the public collection conversion seam. Runtime evidence is recorded separately in `RUNTIME.md`.
-The same generator also writes `standard_mappings_parent.kql`, verifying that a
-parent consumes individual mapped child context values through logical fields.
-
-`temporal_context.py` generates temporal retained-context consumer fixtures through
-standard Sigma collection parsing and `KustoBackend.convert`. Literal expected
-summaries cover mixed direct/child inputs, duplicate observed pairs, repeated
-completion times, inherited field requests, all successful ordered alternatives,
-satisfied Boolean alternatives, downstream grouping by retained relationships,
-and shared-child branches. The comparisons use only public result columns and
-check exact summary multisets. See `RUNTIME.md` for execution evidence.
-
-`numeric_context.py` generates sum, average, and exact nearest-rank parents over
-retained child context. Literal expected rows cover 10,10,20 becoming 10,20
-(sum30, average15, percentile60=20); per-group relationship restriction; separate
-child observations; mixed direct inputs; logical aliases; scalar metrics once
-per child/group; and multilevel retention without reconstructing descendants.
-Empty populations include numeric strings, nulls, NaN and infinities, and use
-`neq` to check undefined averages/percentiles. The boundary fixture compares
-exact selected long text above 2^53 and includes repeated doubles outside decimal
-range. All comparisons require an empty full multiset difference.
-
-`empty_child_context.py` covers absence-only Boolean child matches consumed by
-sum and distinct-count parents. A source row supplies an evaluation timestamp
-but no positive retained values. Ungrouped parents and parents grouped by the scalar child RuleCount metric return zero
-with empty retained collections and relationships; grouping by the missing
-retained Amount excludes the child. `escaped_mixed_detection.kql` verifies a
-mapped field containing a space with both literal and wildcard selection values.
-Expected results are independent literal rows, compared as full multisets.
-
-## Integrated available-feature acceptance preparation (#32)
-
-`integrated.py` adds 49 `matrix_<producer>__<consumer>.kql` fixtures: every
-ordered pair of the seven correlation types. Each source has one Amount=2.5
-observation at 2026-01-01T12:00:00Z and requests retained `Amount`. An ungrouped
-one-minute child qualifies once; an ungrouped five-minute parent consumes its
-retained value or its single match. Independently expected parent metrics are
-EventCount=1, ValueCount=1, ValueSum=2.5, ValueAvg=2.5,
-ValuePercentile=2.5, and RuleCount=1, with WindowStart=11:55 and WindowEnd=12:00.
-One referenced type satisfies the full-sequence temporal condition. The stage
-fixtures above supply additional grouped, mixed, multilevel, Boolean, alias,
-pipeline, boundary, input-exclusion and generation-control examples.
-
-`acceptance-manifest.json` freezes all prepared KQL file hashes and explicitly
-names the three overflow fixtures that must raise `Kusto value_sum integer
-overflow`. Regenerate it and the main fixture set from the repository root:
+From the repository root, regenerate the dependency fixtures first, then the main corpus and every existing scoped manifest:
 
 ```sh
-PYTHONPATH=. python tests/fixtures/correlation/generate.py
+python -m tests.fixtures.correlation.dependency_order
+python -m tests.fixtures.correlation.generate
 ```
 
-The manifest status is **PENDING**, recording preparation rather than runtime
-success. After freezing the candidate and reserving the engine, run the reusable
-acceptance harness explicitly:
+`acceptance-manifest.json` freezes every top-level `.kql` file, including separately prepared fixtures. Scoped manifests retain explicit memberships and refresh their hashes from that same corpus. The manifest's `PENDING` is a preparation marker, not an execution verdict; actual results are hash-scoped in the execution ledger. Pytest checks deterministic public conversion and diagnostics but does not execute KQL.
+
+Reserve the shared engine lane and execute the frozen corpus:
 
 ```sh
-PYTHONPATH=. python tests/fixtures/correlation/runtime.py \
+python tests/fixtures/correlation/runtime.py \
   --endpoint http://localhost:8080 --database NetDefaultDB \
   --manifest tests/fixtures/correlation/acceptance-manifest.json \
   --output /tmp/kusto-integrated-evidence --timeout 60
 ```
 
-Use `--only <fixture.kql> ...` for a selected subset. The runner sends queries to
-`/v2/rest/query`, requests 12 GiB per query node, and captures `.show version`
-through the management endpoint. It retains requests, responses, and a
-`results.json` containing engine/version, request options, fixture hashes,
-durations, outcomes and multiset differences. A normal fixture passes only with
-exactly one empty PrimaryResult and one DataSetCompletion having HasErrors=false
-and no cancellation.
-Extra/duplicate summaries, engine errors, missing frames, non-JSON responses,
-HTTP failures and transport/timeouts fail. Overflow exceptions require the named
-engine error; successful empty rows cannot pass an overflow fixture. Hash drift
-fails rather than executing a silently changed fixture. The runner stops at the
-first failed fixture. After each fixture, it flushes and atomically replaces
-`results.json`, preserving completed outcomes if a later query is interrupted.
-A partial run retains status RUNNING until completion; it does not claim the
-remaining fixtures passed.
+Use `--only <fixture.kql> ...` for a selected subset. The runner captures engine version, query/manifest hashes, request options, raw requests/responses, durations and strict results. Each pass requires one empty PrimaryResult, exactly one successful uncancelled completion, and no engine error frames. Partial output, differences, missing/multiple/cancelled completion frames, HTTP/transport errors, timeout, and memory failure all fail. A missing reply is never an empty successful result. Hash drift fails before execution. The runner stops on the first failure and atomically preserves each completed result; an interrupted partial run remains RUNNING rather than passing unexecuted cases. Keep failed runs before fixing and replaying.
 
-No engine was called while preparing this matrix and harness. Earlier stage
-execution records remain in [RUNTIME.md](RUNTIME.md); they do not validate the new
-matrix or the combined candidate. #32 remains incomplete until combined runtime
-evidence exists and the released upstream range-parser prerequisite in #31 is
-met. No local range parser is introduced. Partial ordered thresholds remain a
-separate explicit gap pending agreed semantics and acceptance examples. These
-fixtures establish correctness examples; they make no throughput claim.
+Displayed collections default to at most 1,000 distinct values per field and report `ContextComplete=false` when incomplete. Parents use complete uncapped relationship rows, preserving observed tuples; they never consume display arrays. Rules requesting no context omit collection/completeness work. Engine limits still apply to complete internal relations and materialization.
 
-`typed_grouped_context.kql` exercises retained User and Server collections with
-two grouping fields, distinguishing numeric `1` from string `"1"` while also
-separating east and west. `typed_grouped_context_parent.kql` consumes those
-collections through a public parent conversion and expects only the four
-observed User/Server relationships, with each child counted once per group.
-Their literal expected rows are defined in `typed_grouped_context.py`.
+[Runtime evidence](RUNTIME.md) separates current hash-scoped results from historical contracts and failures. [BENCHMARK-BASELINE.md](BENCHMARK-BASELINE.md) freezes the original pre-redesign 64 workloads and all failures; separate strategy reports retain their own revisions, deadlines and populations. Synthetic emulator measurements do not establish production throughput/capacity. No numerical SLA is claimed.
 
-`source_predicates_securityevent.kql` reproduces privileged-group enumeration with
-an ordinary Sigma collection, a custom SecurityEvent table selection, standard
-field mappings, a source-specific correlation alias, explicit detection-value
-normalization, and Microsoft XDR processing. All four privileged-group names,
-EventID 4799, and CallerProcessId 0x0 remain required. Literal expected rows count
-four distinct groups in two overlapping Alice windows across two computers;
-wrong EventID/process/group rows and Bob's incomplete group set do not qualify.
-Generate with `PYTHONPATH=. python tests/fixtures/correlation/source_predicates.py`.
-The targeted manifest is `source-predicates-manifest.json`.
-
-The [consumer-aware child-count fixtures](COUNT-EXISTENCE.md) cover the predecessor specialization, the targeted-account failed-logons-then-success example, and paired general-plan performance inputs.
+The upstream range-parser dependency remains tracked in #31. #32's outstanding acceptance and partial ordered-threshold semantics remain separate; this corpus introduces neither a local parser nor new partial ordered behavior and does not close those issues.

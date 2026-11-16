@@ -14,24 +14,29 @@ let SecurityEvent=datatable(TimeGenerated:datetime, EventID:long, CallerProcessI
  datetime(2026-01-01T12:02:00Z),4799,"0x0","bob","Remote Management Users","A"
 ];
 let Actual=() {
-let _sigma_values = union (SecurityEvent
+let ValueCountSources = materialize(union (SecurityEvent
 | where EventID == 4799 and CallerProcessId =~ "0x0" and (TargetUserName in~ ("Administrators", "Remote Desktop Users", "Remote Management Users", "Distributed COM Users"))
-| extend _sigma_timestamp = todatetime(["TimeGenerated"]), _sigma_group_0 = ["SubjectUserName"], _sigma_value = ["TargetUserName"]
-| extend _sigma_rule = "privileged-groups")
-| where isnotnull(_sigma_timestamp) and isnotempty(_sigma_group_0)
-| summarize by _sigma_timestamp, _sigma_group_0, _sigma_value;
-_sigma_values
-| project _sigma_group_0, _sigma_window_end = _sigma_timestamp, _sigma_bin = bin(_sigma_timestamp, 5m)
-| distinct *
-| join kind=inner (
-    _sigma_values
-    | extend _sigma_bin = pack_array(bin(_sigma_timestamp, 5m), bin(_sigma_timestamp, 5m) + 5m)
-    | mv-expand _sigma_bin to typeof(datetime)
-) on _sigma_group_0, _sigma_bin
-| where _sigma_timestamp between ((_sigma_window_end - 5m) .. _sigma_window_end)
-| summarize ValueCount = count_distinctif(_sigma_value, isnotempty(_sigma_value)) by _sigma_window_end, _sigma_group_0
+| project EventTime = todatetime(["TimeGenerated"]), GroupActor = ["SubjectUserName"], CountedGroup = ["TargetUserName"])
+| where isnotnull(EventTime) and isnotempty(GroupActor));
+let CountedGroupActivity = materialize(ValueCountSources
+| where isnotempty(CountedGroup)
+| summarize by GroupActor, CountedGroup, EventTime
+| sort by GroupActor asc, CountedGroup asc, EventTime asc
+// Repeated values whose inclusive active intervals overlap contribute only once.
+| extend CountedGroupStarts = isnull(prev(EventTime)) or GroupActor != prev(GroupActor) or CountedGroup != prev(CountedGroup) or EventTime > prev(EventTime) + 5m,
+    CountedGroupEnds = isnull(next(EventTime)) or GroupActor != next(GroupActor) or CountedGroup != next(CountedGroup) or next(EventTime) > EventTime + 5m);
+union (ValueCountSources | summarize by GroupActor, EventTime
+| project GroupActor, ValueBoundaryTime = EventTime, ValueBoundaryOrder = 1, CountedGroupDelta = 0),
+(CountedGroupActivity | where CountedGroupStarts
+| project GroupActor, ValueBoundaryTime = EventTime, ValueBoundaryOrder = 0, CountedGroupDelta = 1),
+(CountedGroupActivity | where CountedGroupEnds
+| project GroupActor, ValueBoundaryTime = EventTime + 5m, ValueBoundaryOrder = 2, CountedGroupDelta = -1)
+// All interval starts precede anchors; equal-time expirations follow them.
+| sort by GroupActor asc, ValueBoundaryTime asc, ValueBoundaryOrder asc
+| extend ValueCount = row_cumsum(CountedGroupDelta, GroupActor != prev(GroupActor))
+| where ValueBoundaryOrder == 1
 | where ValueCount >= 4
-| project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ["Actor"] = _sigma_group_0, ValueCount
+| project WindowStart = ValueBoundaryTime - 5m, WindowEnd = ValueBoundaryTime, ["Actor"] = GroupActor, ValueCount
 };
 let ActualRows=materialize(Actual());
 let Observed=ActualRows | project WindowStart, WindowEnd, Actor, ValueCount;

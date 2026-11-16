@@ -144,9 +144,6 @@ def fixtures():
         "participants_real_groups.kql": real_groups_fixture(),
         "participants_ordered_empty_child.kql": empty_child_fixture(),
         "participants_boolean_empty_child.kql": empty_child_fixture(boolean=True),
-        "participants_real_groups.kql": real_groups_fixture(),
-        "participants_ordered_empty_child.kql": empty_child_fixture(),
-        "participants_boolean_empty_child.kql": empty_child_fixture(boolean=True),
         "participants_repeated_long.kql": correctness_fixture(["a", "b", "a", "c", "a"]),
         "participants_repeated_seven.kql": correctness_fixture(["a", "b", "a", "c", "a", "b", "a"]),
     }

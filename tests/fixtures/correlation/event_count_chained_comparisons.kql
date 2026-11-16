@@ -17,24 +17,19 @@ let Events=datatable(ProcessTime:string, Marker:string) [
 // Normalize Events scalar fixture inputs explicitly.
 | extend ProcessTime=todatetime(ProcessTime);
 let gt_2 = () {
-let _sigma_child_0 = () {
-let SourceMatchArrivals = union (Events
+let ChildRule = () {
+union (Events
 | where Marker =~ "match"
 | project EventTime_1 = todatetime(["ProcessTime"]))
 | where isnotnull(EventTime_1)
-| summarize SourceMatchCount = count() by EventTime_1;
-union (SourceMatchArrivals
-| project CountBoundaryTime = EventTime_1, CountBoundaryOrder = 0, SourceMatchDelta = SourceMatchCount),
-(SourceMatchArrivals
-| project CountBoundaryTime = EventTime_1 + 5m, CountBoundaryOrder = 1, SourceMatchDelta = -SourceMatchCount)
-// Arrivals evaluate before equal-time expirations; expirations never create matches.
-| sort by CountBoundaryTime asc, CountBoundaryOrder asc
-| extend EventCount = row_cumsum(SourceMatchDelta)
-| where CountBoundaryOrder == 0
-| where EventCount >= 2
-| project WindowStart = CountBoundaryTime - 5m, WindowEnd = CountBoundaryTime, EventCount
+// Preserve individual source matches, including timestamp ties, before the threshold lookup.
+| sort by EventTime_1 asc
+| extend ThresholdPredecessorTime = prev(EventTime_1, 1)
+| where ThresholdPredecessorTime >= EventTime_1 - 5m
+| distinct EventTime_1
+| project WindowStart = EventTime_1 - 5m, WindowEnd = EventTime_1
 };
-let SourceMatchArrivals = union (_sigma_child_0()
+let SourceMatchArrivals = union (ChildRule()
 | project EventTime = todatetime(["WindowEnd"]))
 | where isnotnull(EventTime)
 | summarize SourceMatchCount = count() by EventTime;
@@ -50,24 +45,19 @@ union (SourceMatchArrivals
 | project WindowStart = CountBoundaryTime - 2m, WindowEnd = CountBoundaryTime, EventCount
 };
 let gte_2 = () {
-let _sigma_child_0 = () {
-let SourceMatchArrivals = union (Events
+let ChildRule = () {
+union (Events
 | where Marker =~ "match"
 | project EventTime_1 = todatetime(["ProcessTime"]))
 | where isnotnull(EventTime_1)
-| summarize SourceMatchCount = count() by EventTime_1;
-union (SourceMatchArrivals
-| project CountBoundaryTime = EventTime_1, CountBoundaryOrder = 0, SourceMatchDelta = SourceMatchCount),
-(SourceMatchArrivals
-| project CountBoundaryTime = EventTime_1 + 5m, CountBoundaryOrder = 1, SourceMatchDelta = -SourceMatchCount)
-// Arrivals evaluate before equal-time expirations; expirations never create matches.
-| sort by CountBoundaryTime asc, CountBoundaryOrder asc
-| extend EventCount = row_cumsum(SourceMatchDelta)
-| where CountBoundaryOrder == 0
-| where EventCount >= 2
-| project WindowStart = CountBoundaryTime - 5m, WindowEnd = CountBoundaryTime, EventCount
+// Preserve individual source matches, including timestamp ties, before the threshold lookup.
+| sort by EventTime_1 asc
+| extend ThresholdPredecessorTime = prev(EventTime_1, 1)
+| where ThresholdPredecessorTime >= EventTime_1 - 5m
+| distinct EventTime_1
+| project WindowStart = EventTime_1 - 5m, WindowEnd = EventTime_1
 };
-let SourceMatchArrivals = union (_sigma_child_0()
+let SourceMatchArrivals = union (ChildRule()
 | project EventTime = todatetime(["WindowEnd"]))
 | where isnotnull(EventTime)
 | summarize SourceMatchCount = count() by EventTime;
@@ -83,24 +73,19 @@ union (SourceMatchArrivals
 | project WindowStart = CountBoundaryTime - 2m, WindowEnd = CountBoundaryTime, EventCount
 };
 let lt_2 = () {
-let _sigma_child_0 = () {
-let SourceMatchArrivals = union (Events
+let ChildRule = () {
+union (Events
 | where Marker =~ "match"
 | project EventTime_1 = todatetime(["ProcessTime"]))
 | where isnotnull(EventTime_1)
-| summarize SourceMatchCount = count() by EventTime_1;
-union (SourceMatchArrivals
-| project CountBoundaryTime = EventTime_1, CountBoundaryOrder = 0, SourceMatchDelta = SourceMatchCount),
-(SourceMatchArrivals
-| project CountBoundaryTime = EventTime_1 + 5m, CountBoundaryOrder = 1, SourceMatchDelta = -SourceMatchCount)
-// Arrivals evaluate before equal-time expirations; expirations never create matches.
-| sort by CountBoundaryTime asc, CountBoundaryOrder asc
-| extend EventCount = row_cumsum(SourceMatchDelta)
-| where CountBoundaryOrder == 0
-| where EventCount >= 2
-| project WindowStart = CountBoundaryTime - 5m, WindowEnd = CountBoundaryTime, EventCount
+// Preserve individual source matches, including timestamp ties, before the threshold lookup.
+| sort by EventTime_1 asc
+| extend ThresholdPredecessorTime = prev(EventTime_1, 1)
+| where ThresholdPredecessorTime >= EventTime_1 - 5m
+| distinct EventTime_1
+| project WindowStart = EventTime_1 - 5m, WindowEnd = EventTime_1
 };
-let SourceMatchArrivals = union (_sigma_child_0()
+let SourceMatchArrivals = union (ChildRule()
 | project EventTime = todatetime(["WindowEnd"]))
 | where isnotnull(EventTime)
 | summarize SourceMatchCount = count() by EventTime;
@@ -116,24 +101,19 @@ union (SourceMatchArrivals
 | project WindowStart = CountBoundaryTime - 2m, WindowEnd = CountBoundaryTime, EventCount
 };
 let lte_2 = () {
-let _sigma_child_0 = () {
-let SourceMatchArrivals = union (Events
+let ChildRule = () {
+union (Events
 | where Marker =~ "match"
 | project EventTime_1 = todatetime(["ProcessTime"]))
 | where isnotnull(EventTime_1)
-| summarize SourceMatchCount = count() by EventTime_1;
-union (SourceMatchArrivals
-| project CountBoundaryTime = EventTime_1, CountBoundaryOrder = 0, SourceMatchDelta = SourceMatchCount),
-(SourceMatchArrivals
-| project CountBoundaryTime = EventTime_1 + 5m, CountBoundaryOrder = 1, SourceMatchDelta = -SourceMatchCount)
-// Arrivals evaluate before equal-time expirations; expirations never create matches.
-| sort by CountBoundaryTime asc, CountBoundaryOrder asc
-| extend EventCount = row_cumsum(SourceMatchDelta)
-| where CountBoundaryOrder == 0
-| where EventCount >= 2
-| project WindowStart = CountBoundaryTime - 5m, WindowEnd = CountBoundaryTime, EventCount
+// Preserve individual source matches, including timestamp ties, before the threshold lookup.
+| sort by EventTime_1 asc
+| extend ThresholdPredecessorTime = prev(EventTime_1, 1)
+| where ThresholdPredecessorTime >= EventTime_1 - 5m
+| distinct EventTime_1
+| project WindowStart = EventTime_1 - 5m, WindowEnd = EventTime_1
 };
-let SourceMatchArrivals = union (_sigma_child_0()
+let SourceMatchArrivals = union (ChildRule()
 | project EventTime = todatetime(["WindowEnd"]))
 | where isnotnull(EventTime)
 | summarize SourceMatchCount = count() by EventTime;
@@ -149,24 +129,19 @@ union (SourceMatchArrivals
 | project WindowStart = CountBoundaryTime - 2m, WindowEnd = CountBoundaryTime, EventCount
 };
 let eq_2 = () {
-let _sigma_child_0 = () {
-let SourceMatchArrivals = union (Events
+let ChildRule = () {
+union (Events
 | where Marker =~ "match"
 | project EventTime_1 = todatetime(["ProcessTime"]))
 | where isnotnull(EventTime_1)
-| summarize SourceMatchCount = count() by EventTime_1;
-union (SourceMatchArrivals
-| project CountBoundaryTime = EventTime_1, CountBoundaryOrder = 0, SourceMatchDelta = SourceMatchCount),
-(SourceMatchArrivals
-| project CountBoundaryTime = EventTime_1 + 5m, CountBoundaryOrder = 1, SourceMatchDelta = -SourceMatchCount)
-// Arrivals evaluate before equal-time expirations; expirations never create matches.
-| sort by CountBoundaryTime asc, CountBoundaryOrder asc
-| extend EventCount = row_cumsum(SourceMatchDelta)
-| where CountBoundaryOrder == 0
-| where EventCount >= 2
-| project WindowStart = CountBoundaryTime - 5m, WindowEnd = CountBoundaryTime, EventCount
+// Preserve individual source matches, including timestamp ties, before the threshold lookup.
+| sort by EventTime_1 asc
+| extend ThresholdPredecessorTime = prev(EventTime_1, 1)
+| where ThresholdPredecessorTime >= EventTime_1 - 5m
+| distinct EventTime_1
+| project WindowStart = EventTime_1 - 5m, WindowEnd = EventTime_1
 };
-let SourceMatchArrivals = union (_sigma_child_0()
+let SourceMatchArrivals = union (ChildRule()
 | project EventTime = todatetime(["WindowEnd"]))
 | where isnotnull(EventTime)
 | summarize SourceMatchCount = count() by EventTime;
@@ -182,24 +157,19 @@ union (SourceMatchArrivals
 | project WindowStart = CountBoundaryTime - 2m, WindowEnd = CountBoundaryTime, EventCount
 };
 let neq_2 = () {
-let _sigma_child_0 = () {
-let SourceMatchArrivals = union (Events
+let ChildRule = () {
+union (Events
 | where Marker =~ "match"
 | project EventTime_1 = todatetime(["ProcessTime"]))
 | where isnotnull(EventTime_1)
-| summarize SourceMatchCount = count() by EventTime_1;
-union (SourceMatchArrivals
-| project CountBoundaryTime = EventTime_1, CountBoundaryOrder = 0, SourceMatchDelta = SourceMatchCount),
-(SourceMatchArrivals
-| project CountBoundaryTime = EventTime_1 + 5m, CountBoundaryOrder = 1, SourceMatchDelta = -SourceMatchCount)
-// Arrivals evaluate before equal-time expirations; expirations never create matches.
-| sort by CountBoundaryTime asc, CountBoundaryOrder asc
-| extend EventCount = row_cumsum(SourceMatchDelta)
-| where CountBoundaryOrder == 0
-| where EventCount >= 2
-| project WindowStart = CountBoundaryTime - 5m, WindowEnd = CountBoundaryTime, EventCount
+// Preserve individual source matches, including timestamp ties, before the threshold lookup.
+| sort by EventTime_1 asc
+| extend ThresholdPredecessorTime = prev(EventTime_1, 1)
+| where ThresholdPredecessorTime >= EventTime_1 - 5m
+| distinct EventTime_1
+| project WindowStart = EventTime_1 - 5m, WindowEnd = EventTime_1
 };
-let SourceMatchArrivals = union (_sigma_child_0()
+let SourceMatchArrivals = union (ChildRule()
 | project EventTime = todatetime(["WindowEnd"]))
 | where isnotnull(EventTime)
 | summarize SourceMatchCount = count() by EventTime;
@@ -215,24 +185,19 @@ union (SourceMatchArrivals
 | project WindowStart = CountBoundaryTime - 2m, WindowEnd = CountBoundaryTime, EventCount
 };
 let eq_0 = () {
-let _sigma_child_0 = () {
-let SourceMatchArrivals = union (Events
+let ChildRule = () {
+union (Events
 | where Marker =~ "match"
 | project EventTime_1 = todatetime(["ProcessTime"]))
 | where isnotnull(EventTime_1)
-| summarize SourceMatchCount = count() by EventTime_1;
-union (SourceMatchArrivals
-| project CountBoundaryTime = EventTime_1, CountBoundaryOrder = 0, SourceMatchDelta = SourceMatchCount),
-(SourceMatchArrivals
-| project CountBoundaryTime = EventTime_1 + 5m, CountBoundaryOrder = 1, SourceMatchDelta = -SourceMatchCount)
-// Arrivals evaluate before equal-time expirations; expirations never create matches.
-| sort by CountBoundaryTime asc, CountBoundaryOrder asc
-| extend EventCount = row_cumsum(SourceMatchDelta)
-| where CountBoundaryOrder == 0
-| where EventCount >= 2
-| project WindowStart = CountBoundaryTime - 5m, WindowEnd = CountBoundaryTime, EventCount
+// Preserve individual source matches, including timestamp ties, before the threshold lookup.
+| sort by EventTime_1 asc
+| extend ThresholdPredecessorTime = prev(EventTime_1, 1)
+| where ThresholdPredecessorTime >= EventTime_1 - 5m
+| distinct EventTime_1
+| project WindowStart = EventTime_1 - 5m, WindowEnd = EventTime_1
 };
-let SourceMatchArrivals = union (_sigma_child_0()
+let SourceMatchArrivals = union (ChildRule()
 | project EventTime = todatetime(["WindowEnd"]))
 | where isnotnull(EventTime)
 | summarize SourceMatchCount = count() by EventTime;

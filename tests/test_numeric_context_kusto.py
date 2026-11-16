@@ -60,3 +60,29 @@ def test_empty_child_context_runtime_fixtures_use_public_conversion():
 
     for name, query in fixtures().items():
         assert Path(__file__).with_name("fixtures").joinpath("correlation", name).read_text() == query
+
+
+@pytest.mark.parametrize("kind", ["value_sum", "value_avg", "value_percentile"])
+def test_composed_numeric_query_uses_readable_bindings_and_native_scalar_fields(kind):
+    (query,) = convert_documents(numeric_documents(kind))
+    assert "_sigma_" not in query
+    assert "pack_array(gettype(" not in query
+    assert "ParentSourceMatches" in query
+    assert "ChildCorrelationMatch" in query
+
+
+@pytest.mark.parametrize("damage", ["missing", "fields", "public_query", "query", "id", "kind"])
+def test_damaged_child_context_provenance_has_actionable_public_error(damage):
+    from sigma.exceptions import SigmaConversionError
+
+    def callback(rule, output, index, condition, query):
+        if rule.name == "child":
+            state = rule.get_conversion_states()[0].processing_state
+            if damage == "missing":
+                state.pop("kusto_context_artifact")
+            else:
+                state["kusto_context_artifact"][damage] = None
+        return query
+
+    with pytest.raises(SigmaConversionError, match="context metadata.*preserve"):
+        convert_documents(numeric_documents(), callback=callback)

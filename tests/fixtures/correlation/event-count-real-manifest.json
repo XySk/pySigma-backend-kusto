@@ -1,1 +1,9 @@
-{"fixtures": [{"name": "event_count_real_groups.kql", "sha256": "85896fc82e8711c2e6a2ae17bb02779fc4103cf02160921c2a4d8e6a235f5dc6", "expected_error": null}]}
+{
+  "fixtures": [
+    {
+      "name": "event_count_real_groups.kql",
+      "sha256": "85896fc82e8711c2e6a2ae17bb02779fc4103cf02160921c2a4d8e6a235f5dc6",
+      "expected_error": null
+    }
+  ]
+}

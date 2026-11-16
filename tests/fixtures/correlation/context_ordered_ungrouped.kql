@@ -12,7 +12,7 @@ let Events=datatable(Timestamp:datetime, Host:string, Marker:string, User:string
  datetime(2026-01-01T12:07:00Z), "h", "c", "expired", "expired", "expired-server"
 ];
 let Actual=() {
-let _sigma_context_summary = () {
+let ContextSummary = () {
 // Strict sequence: "a" -> "b" -> "c". Total inclusive span: 5m.
 union (Events
 | where Marker =~ "a"
@@ -41,69 +41,73 @@ union (Events
 | where CompleteNow
 | project WindowStart = EventTime_1 - 5m, WindowEnd = EventTime_1, RuleCount = tolong(3)
 };
-let _sigma_context_summaries = materialize(_sigma_context_summary()
-| serialize _sigma_context_id = row_number());
-let _sigma_context_matches = materialize(
-_sigma_context_summaries | project _sigma_context_id, _sigma_context_end = WindowEnd, _sigma_context_partition = 1
+let CorrelationMatches = materialize(ContextSummary()
+| serialize CorrelationMatchId = row_number());
+let WindowSourceMatches = materialize(
+CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, ContextPartition = 1
 | join kind=inner (
 union (Events
 | where Marker =~ "a"
-| extend _sigma_context_timestamp = todatetime(["Timestamp"]), _sigma_context_value = ["User"], _sigma_context_value_1 = ["Server"]
-| extend _sigma_context_rule = "a"),
+| extend ContextEventTime = todatetime(["Timestamp"]), ContextUser = ["User"], ContextServer = ["Server"]
+| extend ContextSourceRule = "a"),
 (Events
 | where Marker =~ "b"
-| extend _sigma_context_timestamp = todatetime(["Timestamp"]), _sigma_context_value = ["User"], _sigma_context_value_1 = ["Server"]
-| extend _sigma_context_rule = "b"),
+| extend ContextEventTime = todatetime(["Timestamp"]), ContextUser = ["User"], ContextServer = ["Server"]
+| extend ContextSourceRule = "b"),
 (Events
 | where Marker =~ "c"
-| extend _sigma_context_timestamp = todatetime(["Timestamp"]), _sigma_context_value = ["User"], _sigma_context_value_1 = ["Server"]
-| extend _sigma_context_rule = "c")
-| project _sigma_context_timestamp, _sigma_context_rule, _sigma_context_value, _sigma_context_value_1, _sigma_context_partition = 1
-) on _sigma_context_partition
-| where _sigma_context_timestamp between ((_sigma_context_end - 5m) .. _sigma_context_end)
-| serialize _sigma_context_key = row_number());
-let _sigma_context_path = _sigma_context_matches
-| where _sigma_context_rule == "a"
-| project _sigma_context_id, _sigma_context_end, _sigma_context_step = _sigma_context_key, _sigma_context_step_time = _sigma_context_timestamp
-| project _sigma_context_id, _sigma_context_end, _sigma_context_step, _sigma_context_previous = _sigma_context_step_time;
-let _sigma_context_path_1 = _sigma_context_path
-| join kind=inner (
-_sigma_context_matches
-| where _sigma_context_rule == "b"
-| project _sigma_context_id, _sigma_context_end, _sigma_context_step_1 = _sigma_context_key, _sigma_context_step_time_1 = _sigma_context_timestamp
-) on _sigma_context_id
-| where _sigma_context_step_time_1 > _sigma_context_previous
-| project _sigma_context_id, _sigma_context_end, _sigma_context_step, _sigma_context_step_1, _sigma_context_previous = _sigma_context_step_time_1;
-let _sigma_context_path_2 = _sigma_context_path_1
-| join kind=inner (
-_sigma_context_matches
-| where _sigma_context_rule == "c"
-| project _sigma_context_id, _sigma_context_end, _sigma_context_step_2 = _sigma_context_key, _sigma_context_step_time_2 = _sigma_context_timestamp
-) on _sigma_context_id
-| where _sigma_context_step_time_2 > _sigma_context_previous
-| where _sigma_context_step_time_2 == _sigma_context_end
-| project _sigma_context_id, _sigma_context_end, _sigma_context_step, _sigma_context_step_1, _sigma_context_step_2, _sigma_context_previous = _sigma_context_step_time_2;
-let _sigma_context_participating = union (_sigma_context_path_2 | project _sigma_context_id, _sigma_context_key = _sigma_context_step), (_sigma_context_path_2 | project _sigma_context_id, _sigma_context_key = _sigma_context_step_1), (_sigma_context_path_2 | project _sigma_context_id, _sigma_context_key = _sigma_context_step_2)
-| distinct _sigma_context_id, _sigma_context_key;
-let _sigma_context_selected = materialize(_sigma_context_matches
-| join kind=leftsemi (_sigma_context_participating) on _sigma_context_id, _sigma_context_key);
-let _sigma_context_rows = materialize(_sigma_context_selected
-| project _sigma_context_id, _sigma_context_value, _sigma_context_value_1
+| extend ContextEventTime = todatetime(["Timestamp"]), ContextUser = ["User"], ContextServer = ["Server"]
+| extend ContextSourceRule = "c")
+| project ContextEventTime, ContextSourceRule, ContextUser, ContextServer, ContextPartition = 1
+) on ContextPartition
+| where ContextEventTime between ((CompletionTime - 5m) .. CompletionTime)
+| serialize SourceRelationshipId = row_number());
+// All candidates share one successful completion's inclusive window.
+// Strict prefix/suffix witnesses retain every participating alternative.
+let CandidatesFora = WindowSourceMatches
+| where ContextSourceRule == "a"
+| project CorrelationMatchId, CompletionTime, SourceRelationshipId, ContextEventTime;
+let CandidatesForb = WindowSourceMatches
+| where ContextSourceRule == "b"
+| project CorrelationMatchId, CompletionTime, SourceRelationshipId, ContextEventTime;
+let CandidatesForc = WindowSourceMatches
+| where ContextSourceRule == "c"
+| project CorrelationMatchId, CompletionTime, SourceRelationshipId, ContextEventTime;
+let EarliestaPrefix = materialize(CandidatesFora
+| summarize PrefixEndTime = min(ContextEventTime) by CorrelationMatchId);
+let LatestbSuffix = materialize(CandidatesForb
+| where ContextEventTime < CompletionTime
+| summarize SuffixStartTime = max(ContextEventTime) by CorrelationMatchId);
+let OrderedParticipants = union (CandidatesFora
+| join kind=inner (LatestbSuffix) on CorrelationMatchId
+| where ContextEventTime < SuffixStartTime
+| project CorrelationMatchId, SourceRelationshipId), (CandidatesForb
+| join kind=inner (EarliestaPrefix) on CorrelationMatchId
+| where ContextEventTime > PrefixEndTime
+| where ContextEventTime < CompletionTime
+| project CorrelationMatchId, SourceRelationshipId), (CandidatesForc
+| where ContextEventTime == CompletionTime
+| project CorrelationMatchId, SourceRelationshipId)
+| distinct CorrelationMatchId, SourceRelationshipId;
+let OrderedSourceRelationships = materialize(WindowSourceMatches
+| join kind=leftsemi (OrderedParticipants) on CorrelationMatchId, SourceRelationshipId);
+let CompleteContextRelationships = materialize(OrderedSourceRelationships
+| project CorrelationMatchId, ContextUser, ContextServer
 | distinct *);
-let ContextValues = _sigma_context_rows
-| where isnotnull(_sigma_context_value)
-| summarize by _sigma_context_id, _sigma_context_value
-| summarize DisplayedValues = make_list(_sigma_context_value, 1000), DistinctValueCount = count() by _sigma_context_id;
-let ContextValues_1 = _sigma_context_rows
-| where isnotnull(_sigma_context_value_1)
-| summarize by _sigma_context_id, _sigma_context_value_1
-| summarize DisplayedValues_1 = make_list(_sigma_context_value_1, 1000), DistinctValueCount_1 = count() by _sigma_context_id;
-_sigma_context_summaries
-| join kind=leftouter (ContextValues) on _sigma_context_id
-| extend ["User"] = coalesce(DisplayedValues, dynamic([]))
-| join kind=leftouter (ContextValues_1) on _sigma_context_id
-| extend ["Server"] = coalesce(DisplayedValues_1, dynamic([]))
-| extend ContextComplete = coalesce(DistinctValueCount, 0) <= 1000 and coalesce(DistinctValueCount_1, 0) <= 1000
+let ValuesForUser = CompleteContextRelationships
+| where isnotnull(ContextUser)
+| summarize by CorrelationMatchId, ContextUser
+| summarize DisplayedUser = make_list(ContextUser, 1000), DistinctUserCount = count() by CorrelationMatchId;
+let ValuesForServer = CompleteContextRelationships
+| where isnotnull(ContextServer)
+| summarize by CorrelationMatchId, ContextServer
+| summarize DisplayedServer = make_list(ContextServer, 1000), DistinctServerCount = count() by CorrelationMatchId;
+CorrelationMatches
+| join kind=leftouter (ValuesForUser) on CorrelationMatchId
+| extend ["User"] = coalesce(DisplayedUser, dynamic([]))
+| join kind=leftouter (ValuesForServer) on CorrelationMatchId
+| extend ["Server"] = coalesce(DisplayedServer, dynamic([]))
+| extend ContextComplete = coalesce(DistinctUserCount, 0) <= 1000 and coalesce(DistinctServerCount, 0) <= 1000
 | project ["WindowStart"], ["WindowEnd"], ["User"], ["Server"], ["RuleCount"], ["ContextComplete"]
 };
 let Observed=Actual()

@@ -9,7 +9,7 @@
     },
     {
       "name": "boolean_chained.kql",
-      "sha256": "e048c56ce8e0db0dfcd86d49dfd971a7ebb7bbd9363a282937a46cfdc1c03fe2",
+      "sha256": "2c2a6375114862b9358996c54845e26b7a72146bfeac7403c62c628edd7f7cd3",
       "expected_error": null
     },
     {
@@ -29,187 +29,277 @@
     },
     {
       "name": "chained_metrics.kql",
-      "sha256": "8d7c2ee31af93e62f4bd2112301514719d06aa55702f8de1b458de3e309ad320",
+      "sha256": "cff6b154df6639e8b4bac7e87783b7fc1efd2ece655f5a54600e1533571c5c26",
       "expected_error": null
     },
     {
       "name": "chained_multilevel.kql",
-      "sha256": "ad24e32e187a0194f77549e40d957928c9710215588f55e12b6b9b49523526e0",
+      "sha256": "d3d5932be5437933102223dcc7a8ab7bafb79f4525330ca0b29269a5c838d8da",
       "expected_error": null
     },
     {
       "name": "chained_ordered_event.kql",
-      "sha256": "a77a3beb57a55b28dd060eec7b3207b7bc183662aca738cd69c1752ad0c4b27f",
+      "sha256": "373f6b94fae9c0c2a495feff191dbf4935ea093bbfa31707bbf6ba2e9460b85b",
       "expected_error": null
     },
     {
       "name": "chained_strict_order.kql",
-      "sha256": "c2379d1e58a818306f0d153f9127717002935590ff9d52f1ee1c96fd4f00bd0b",
+      "sha256": "749a3e85f1006cefcf8ffbb909ed2a15893e00928c4a500bab5385949ea2bdfe",
       "expected_error": null
     },
     {
       "name": "chained_value_temporal.kql",
-      "sha256": "52c91d3bdcb3f1aaec25291a5ee81ecb6cde3514152515407ba3c0750badbad3",
+      "sha256": "87658d3fea46f565c69fcccb92a6009fd8e4f92610e2e7d64e7555a0d90ec585",
       "expected_error": null
     },
     {
       "name": "chained_zero_metric.kql",
-      "sha256": "063bcd77fbb017c6bd4dcb161b7aaa2f80220423d52c8881ab19fae8935ea0ed",
+      "sha256": "5ed615dc8589d0cfdb36b49f6567570e5c723970ed2c6154acb7947930663357",
       "expected_error": null
     },
     {
       "name": "context_boolean_absence.kql",
-      "sha256": "73c68804956ad2183bab92218f233462df28dfe3e28327527bc04e7aa322b226",
+      "sha256": "cc3d61c9b37f80d565663f47a1a0c6e241b67dad0d2141335c8ea275f2922f89",
       "expected_error": null
     },
     {
       "name": "context_boolean_alternatives.kql",
-      "sha256": "1ce172c7e27b208c6f6fba430910eb4a74b477727708d0efd39235495da1a120",
+      "sha256": "abac18c845dd05d1d2c7f80e294177491698a79fceaefdd2ebd0f8019d7cc706",
       "expected_error": null
     },
     {
       "name": "context_boolean_child.kql",
-      "sha256": "10616bcc3043fb3a005900499717bcf765ee443c374afbf37b772912b1e2cb15",
+      "sha256": "7151e48c6ad651a33238ab361d905cd3299440b4dc4cd05924ea3a36163f19d2",
       "expected_error": null
     },
     {
       "name": "context_boolean_nested.kql",
-      "sha256": "f54ce4415a27ae5dc318bd1fe547133cfb5cb2ba88b679cfe80d7bf5121ef343",
+      "sha256": "cebdb18c0d945d40c7ec53a2401a39d348f2a3d11433025c5441d579f6c4c69f",
       "expected_error": null
     },
     {
       "name": "context_boolean_precedence.kql",
-      "sha256": "8e8a78cbf43ce75d28394274235533ceccfc403cbf66b3d35445682c1236cbeb",
+      "sha256": "819374110a6e8607ecdf3a841754f93f15ff32f3ef51b0cc38514d9f5be5521a",
       "expected_error": null
     },
     {
       "name": "context_boolean_shared.kql",
-      "sha256": "b1963a9957deb198a7efaf3a6182b8c60cefaa3ed371de033bc60a9911685db4",
+      "sha256": "8a6de8dbfa0eae8697d835ac810539b6cf22b678497e70268306ed25d9aaac4e",
       "expected_error": null
     },
     {
       "name": "context_event_count.kql",
-      "sha256": "0ee09b8f22089a2f16453af43c30d4ca3c12fe6eaf5c940979776294e172c3ff",
+      "sha256": "810c57e93b7509239440cf5b4c8eac96d45e4f39b67a344f40aab6dafc3bb676",
       "expected_error": null
     },
     {
       "name": "context_nested.kql",
-      "sha256": "bc92eeb21d4833c0e069707e80489b115dad2c81875246aae18a53732ae09cb2",
+      "sha256": "7c4345c518981d51be063549d8895ca5f051cbb810e130e0344d435caac2c5e0",
       "expected_error": null
     },
     {
       "name": "context_ordered_aliases.kql",
-      "sha256": "58fa06cee7538e813337de48373088007fa5dcbdc462fcd9edeb3d1c815e9910",
+      "sha256": "6245c3a545a53cccac7bb61478d6e1a5fb5034a195405409a755597f541ce022",
       "expected_error": null
     },
     {
       "name": "context_ordered_alternatives.kql",
-      "sha256": "966a25e2e2ab98a2d4c26fb91d36f1c0ca685650615ea59ae3e2b05ab76d1db9",
+      "sha256": "dfdad9e40a67e3b05b89fb0d012a3c4b091b2d92f9e373f4061d36aa8d8d75d1",
       "expected_error": null
     },
     {
       "name": "context_ordered_repeated.kql",
-      "sha256": "8078c22b2b6c886d3991db67f3f4f47b7a3407d964ec7480eace5cd74a61d317",
+      "sha256": "06e31c54b05dea6abcbf2fe6ebff4db0c3b9b6d82ddc188a1e517e3b766d60ff",
       "expected_error": null
     },
     {
       "name": "context_ordered_ungrouped.kql",
-      "sha256": "d1167081af384770f421a401a151ce818182df6c68139a5a2f8f62d2dd8ab1bd",
+      "sha256": "9d73bc263d3da85e897f883970bed523f3179b0886fe0cedb6890ae2aa0fece8",
       "expected_error": null
     },
     {
       "name": "context_temporal.kql",
-      "sha256": "fe7e8d919d35d31c0c4f985c43f8fb63de9d741a62661ec6afd9b0d78a80679a",
+      "sha256": "cfbfa6f3801408f8b7f27f63c448746c6985894ba0d15fec589abd2cf0fe6bfb",
       "expected_error": null
     },
     {
       "name": "context_value_avg.kql",
-      "sha256": "a8a2b66ad7ed9e381ca128d08ab4bf91ada800e0c75b887f1fa9da843e9e55a3",
+      "sha256": "3cea1b0bf715e6f719610b2d6bedbf4bcedd69eef0d4fcc4e7dad2ca0907bb3f",
       "expected_error": null
     },
     {
       "name": "context_value_count.kql",
-      "sha256": "4d0d373eadda55a83414a937a60716b38dcbafec3b128968a101aed863f07b22",
+      "sha256": "a53a4862523d422ed4a63f81a6d2422cc653b403a4891178cf405dd7b59c6981",
       "expected_error": null
     },
     {
       "name": "context_value_percentile.kql",
-      "sha256": "502c629f97fcfff35f6d717dd4c84be7de44a0f5e85f798162d9307b0d091737",
+      "sha256": "251fac8cd709cf0bd01c21c39c89294a29b7eb753d20d21fa1e9389c6a5643ad",
       "expected_error": null
     },
     {
       "name": "context_value_sum.kql",
-      "sha256": "9189c3a15980f25604770d01b5a27867ef72bcc4ed67d86a4a48eec2c7d8f96a",
+      "sha256": "d236248061abf0eef7f5e813c5f8e7fa62652bd10f034df3d381deff6dc6b4f2",
       "expected_error": null
     },
     {
       "name": "count_context_mixed.kql",
-      "sha256": "62ccb7db21bfe3245de86394df47c7386f3fc353f2b9d34a1aa93cb45ec83304",
+      "sha256": "d4d34edb259c9185e2176dcaa364a295bf09e5c9acbcd100a440c7207ba9686b",
       "expected_error": null
     },
     {
       "name": "count_context_pairs.kql",
-      "sha256": "9eb886aef0d6510d4fadc0e408e748bb60f8facf3ed231cb0803f8295b041823",
+      "sha256": "d0babc8d0588bd528894211cb3def89486744cfcb079636c74ab714e2fda7107",
       "expected_error": null
     },
     {
       "name": "count_context_restricted.kql",
-      "sha256": "c21ec08e1402a47302d65ca70c72217144c3089b5d57e80383c4edabc45a8e8d",
+      "sha256": "78a8239efd140feaa1232e89ea775b5c937fc39b2c643b644a4eebc7174b0506",
       "expected_error": null
     },
     {
       "name": "count_context_typed.kql",
-      "sha256": "50c563ca4af7efac8eefdc25480414418af37ee555391b35de4c3f28066f5b28",
+      "sha256": "1aa8b07529bbe9a47f4fb4f1e5c167dd84bba39b702544b0eb86ad117a9ee538",
       "expected_error": null
     },
     {
       "name": "count_context_ungrouped.kql",
-      "sha256": "cd4604ff49c87666fe39182367d381c64548b7cf39227d33366561fd02b8c3e3",
+      "sha256": "60c1b6f434e54b37fb0fbbc2cc17e76cdf3dcd4f452b69165f594f1c98e709c7",
       "expected_error": null
     },
     {
       "name": "count_context_values.kql",
-      "sha256": "0944a1c3a2df176e9557cf8f22fbb020da1d44581da92ea9c2d4d33d6d177117",
+      "sha256": "8c85b5a1b7fab84dc9aded33f58616387715bcd55247de45d621ac4f883ccd9f",
+      "expected_error": null
+    },
+    {
+      "name": "count_existence_duplicates.kql",
+      "sha256": "56a3cd6d84de36ec901bba81de75b34104aa85aa509f594fd4fdbb3181e7fdda",
+      "expected_error": null
+    },
+    {
+      "name": "count_existence_inherited_metric.kql",
+      "sha256": "af041bdb4fe6a03b833529860ec40d6762e7dbbbc28dba9337bd5406da6b231c",
+      "expected_error": null
+    },
+    {
+      "name": "count_existence_one.kql",
+      "sha256": "fe33066f3e30175405699c63b0c7b4527651432e19c3fb9793de2c15894ff70a",
+      "expected_error": null
+    },
+    {
+      "name": "count_existence_real_groups.kql",
+      "sha256": "5b6be7c261451a85d7ce0df9b5aaad4647c0f12efe43322b38a61d9b70d1cfd0",
+      "expected_error": null
+    },
+    {
+      "name": "count_existence_targeted_logon.kql",
+      "sha256": "c40579a4109ae25a324752531b8ff4096eaf953fb79e2e993f7a2adfe5fc1e38",
+      "expected_error": null
+    },
+    {
+      "name": "count_existence_ten.kql",
+      "sha256": "03e5b71bb1eb37258267be4b29fb90f8a989652a709e9de8b107dc2451cad3d3",
       "expected_error": null
     },
     {
       "name": "dependency_order_generate.kql",
-      "sha256": "1f1b4f3dbf5224b8ca0cb7abf6d03c0f5870851f457f238aef829f968d705adb",
+      "sha256": "8191c2d835fc0587ff7b1befd6714302068834809f67d39093d49515fe739251",
       "expected_error": null
     },
     {
       "name": "dependency_order_suppressed.kql",
-      "sha256": "1f1b4f3dbf5224b8ca0cb7abf6d03c0f5870851f457f238aef829f968d705adb",
+      "sha256": "8191c2d835fc0587ff7b1befd6714302068834809f67d39093d49515fe739251",
+      "expected_error": null
+    },
+    {
+      "name": "empty_child_value_avg_Amount_eq.kql",
+      "sha256": "a6e29432bf14941815cb85b5cd142255cbf1799cd645003c1b367888fc4e37b5",
+      "expected_error": null
+    },
+    {
+      "name": "empty_child_value_avg_Amount_neq.kql",
+      "sha256": "bcd20307735f40093930020fa188197ab283bd029977704529d26372c1823473",
+      "expected_error": null
+    },
+    {
+      "name": "empty_child_value_avg_ChildRuleCount_eq.kql",
+      "sha256": "d1aa10dada93dbc7cc89a2f7c9d24fb76ad97e90d63d456e8db21a98c68c5287",
+      "expected_error": null
+    },
+    {
+      "name": "empty_child_value_avg_ChildRuleCount_neq.kql",
+      "sha256": "967943fdc8052156f3d3184e539c333d90ddb256a595670aab25d4baf9b31116",
+      "expected_error": null
+    },
+    {
+      "name": "empty_child_value_avg_ungrouped_eq.kql",
+      "sha256": "b65bffa1a7a2e55cc19cafbe3e60cd57f4ee07b367f9e76204d77dc5f7d5b878",
+      "expected_error": null
+    },
+    {
+      "name": "empty_child_value_avg_ungrouped_neq.kql",
+      "sha256": "728c350f983808644a73e362dfbd48ad0aa77af874a6121edb5dc776461291c4",
       "expected_error": null
     },
     {
       "name": "empty_child_value_count_Amount_eq.kql",
-      "sha256": "89ac6a9d7fa5ccb7bbfea21ce7d3ebfd82896059ddeecad5f6c0bd48ea0875f8",
+      "sha256": "61825dda4dbf48aed107fc6e858a50d291d7f053de3cdd9fc0e79e5b91ea1fdc",
       "expected_error": null
     },
     {
       "name": "empty_child_value_count_ChildRuleCount_eq.kql",
-      "sha256": "35b8535b0f9ba96b2add9c86f860a51afb367543903a03012917951dd8232e3d",
+      "sha256": "4bbdfa0625a76b56838717e5f7f56c21275e39dabdec8b93327586ee1ed942c4",
       "expected_error": null
     },
     {
       "name": "empty_child_value_count_ungrouped_eq.kql",
-      "sha256": "3a8b9f120dd16f664895ae0c7ad5d96730922e8c7e2774ac45377927386a80ea",
+      "sha256": "ed912a1a1c09192032ccc2e82fde63d5ddabb58accd2a6337971adba8b481118",
+      "expected_error": null
+    },
+    {
+      "name": "empty_child_value_percentile_Amount_eq.kql",
+      "sha256": "88a90dd3616e990b5fcbdec18387bfae2ac2fb4c7aa720b364ee57e61f4f0057",
+      "expected_error": null
+    },
+    {
+      "name": "empty_child_value_percentile_Amount_neq.kql",
+      "sha256": "f1af197300d5091dac5a3f538403d13f33ca21bc6a0fc1927d637a7f5de9e539",
+      "expected_error": null
+    },
+    {
+      "name": "empty_child_value_percentile_ChildRuleCount_eq.kql",
+      "sha256": "30ee3de0150f465ffdde22383fdfaae0846ffc51ebc28a82c2d6c8cef6cab441",
+      "expected_error": null
+    },
+    {
+      "name": "empty_child_value_percentile_ChildRuleCount_neq.kql",
+      "sha256": "6b9b055b95a503a1990cf2e3be2b591a29b249307a97d9c827807db500d26dac",
+      "expected_error": null
+    },
+    {
+      "name": "empty_child_value_percentile_ungrouped_eq.kql",
+      "sha256": "a792043203c6b8df0e33ab0b5cc7d87598b68f12922f43c25ea6d76d24d98d6f",
+      "expected_error": null
+    },
+    {
+      "name": "empty_child_value_percentile_ungrouped_neq.kql",
+      "sha256": "89b47f0c07e3a78e14b6ab1817b7d05535b9327c34ba72283876a63f09ba0171",
       "expected_error": null
     },
     {
       "name": "empty_child_value_sum_Amount_eq.kql",
-      "sha256": "a09620174887f7f6e3559999b639dbd8dc0108b81f8ab90f6c1127d9dd7f2d18",
+      "sha256": "cd6ac160adbbc569ee9e015326d8792b7490ee189ed344e4544ae23528d189a8",
       "expected_error": null
     },
     {
       "name": "empty_child_value_sum_ChildRuleCount_eq.kql",
-      "sha256": "2842c8498bb06de68411a641fcd4a7213e484a3c23d18559e786474401d14dcf",
+      "sha256": "e1d83d2730f74facf89b478d450ae490a04e86904958b5a0b2c782ec97b45bcb",
       "expected_error": null
     },
     {
       "name": "empty_child_value_sum_ungrouped_eq.kql",
-      "sha256": "3bd13638e857119ca0c041dfa9e4e7c8ba168d90fab93cbadfa2e39783c9d5ec",
+      "sha256": "607a6d0428b3d976f7bc8981255351f9117c626493266df6a1f619f4374aa519",
       "expected_error": null
     },
     {
@@ -219,17 +309,17 @@
     },
     {
       "name": "event_count_chained_comparisons.kql",
-      "sha256": "ef3fe9d5c2f24766b49d6baf4c26baa5902bdd73fadb6c24c750a78a3d9e8fdd",
+      "sha256": "1b96fe15135eeb75b04ff124f106c6d5c926c1e58acef361b0b1a5e8fa85853c",
       "expected_error": null
     },
     {
       "name": "event_count_chained_grouped.kql",
-      "sha256": "06cc012f0d96a0fb4be059c9a1a11305edd5b99c170071a6204399e760c54c84",
+      "sha256": "c460192d5ac280699d06c6150ff28e0c494517cb2885c12990fafa6c9cf476dd",
       "expected_error": null
     },
     {
       "name": "event_count_chained_metrics.kql",
-      "sha256": "29e3935d376b7f53ef168a5c9360cca84bd8d5208835c0bac64fd097a3d589c1",
+      "sha256": "d03036424d8b58e21c3af7d7f4c1c2f9a406e2b0de7bfb7936204bae2297de11",
       "expected_error": null
     },
     {
@@ -264,322 +354,322 @@
     },
     {
       "name": "matrix_event_count__event_count.kql",
-      "sha256": "3a7319ff461dc5099dd4b346572ec5ad72d06553cdd8d3d4bd5c34ef3230f304",
+      "sha256": "aa5792b8de70e470ac6cefac50a8ff7d837f3b5831765a5328d44ddd690baac9",
       "expected_error": null
     },
     {
       "name": "matrix_event_count__temporal.kql",
-      "sha256": "fa37607bbf2de9f8a6204739a1ce1ba88c8a6d072ecb9da9ddff7ea89c30e75e",
+      "sha256": "d27f7a9515260d86ae8a392e125636c1f2027319a08a7c15e64e571c06fb1e4b",
       "expected_error": null
     },
     {
       "name": "matrix_event_count__temporal_ordered.kql",
-      "sha256": "3c102cda01651fd10dfd0a523965450ef318b319e6aa8df4467c79ccd73ce815",
+      "sha256": "3a697f9d33704f12d89e72698c7cc96d01721816b078c184201791e2ad0ab902",
       "expected_error": null
     },
     {
       "name": "matrix_event_count__value_avg.kql",
-      "sha256": "0c3fd7e3f5fdae8516af0dd352d8a47a44322d5fb3198b89bf2752234d2f57b7",
+      "sha256": "cbeca0c07016dfdd2dd5d6d66e4d6b3db7769d1e2ab92465354f98517623ea39",
       "expected_error": null
     },
     {
       "name": "matrix_event_count__value_count.kql",
-      "sha256": "0cc4af3c619f7af6ccf0aadfca7ce4bcf59fde2d8597c34dc465a7e8c66ece96",
+      "sha256": "22819e26eff0cb788d1ba229e10b81e32ab05ba1226b1cf1dc56ec30e32d4705",
       "expected_error": null
     },
     {
       "name": "matrix_event_count__value_percentile.kql",
-      "sha256": "6f27c4d7403090dc0e76a9109d3d43accdcf7b543cd6ea6a404e452703db3733",
+      "sha256": "ca0289a53cdc7b1d37e769666bb675ad36ed5a12d7c7ea49bf3db55c2e67db2e",
       "expected_error": null
     },
     {
       "name": "matrix_event_count__value_sum.kql",
-      "sha256": "8e6a95b680f82498750857b157ae6605d589d8d41d54f6d576a7882ea831b0a7",
+      "sha256": "bb89045555a90dc14be4ccf22cb378a10f897aa489e30cd514b3ad0f3063cbc4",
       "expected_error": null
     },
     {
       "name": "matrix_temporal__event_count.kql",
-      "sha256": "1f7aa665e96261c21f7dac73e6e86ec735a977bace73bd72fa8d9f41fcc68195",
+      "sha256": "595b8478d263e727b0107e2dceb946de9081305f2b0252aa4f8186c84bcc5c99",
       "expected_error": null
     },
     {
       "name": "matrix_temporal__temporal.kql",
-      "sha256": "a6bc35c7a2ebf44bf88167dabd178145900648d21f1c34371329de6577c1f2d6",
+      "sha256": "aa48a9d4738596cec822aaaab136c19b9d13d0e3bbdab0736f385accfd338366",
       "expected_error": null
     },
     {
       "name": "matrix_temporal__temporal_ordered.kql",
-      "sha256": "ef28ecd317a9d6bb136177366455fe2e968695757185aeeab986dcdd69b15e27",
+      "sha256": "8616c734e09a4a212055ff8fb2c52121cf30668c896057b461f79b6945d30e38",
       "expected_error": null
     },
     {
       "name": "matrix_temporal__value_avg.kql",
-      "sha256": "292abbe982ca7fe842e28a7892acf05e63e86d20bfbafe469d481638b7e0a252",
+      "sha256": "040d37c8e056156b59e51a3ca759ee62258b5b1b0d9e2834d434638bf21d2558",
       "expected_error": null
     },
     {
       "name": "matrix_temporal__value_count.kql",
-      "sha256": "d3e4af6b49e6f30bf7e78b7d69b6950df8e66e27dabb5aaae7af2b790440e3a7",
+      "sha256": "b7bdcef691f495569bf3a6ef3975000e813441f39b1691b8aca103a0ac7cdc86",
       "expected_error": null
     },
     {
       "name": "matrix_temporal__value_percentile.kql",
-      "sha256": "31a7d97624a2212b210b94d03179f4d809fa7582a20de3078621c07877b415ce",
+      "sha256": "fa0eeb4aaac994e425308eb757f941916829f9ca3cde1e4c35fde72bade2a676",
       "expected_error": null
     },
     {
       "name": "matrix_temporal__value_sum.kql",
-      "sha256": "f31f9cd0cb8c6afb1b7567090c952910d9c5e11a27917bfcd18fd6310e4ed2ee",
+      "sha256": "11f259798d7e9d093acf4b6a7fc6a98f5bb0f6ad5bebed2d69b2706c7fa779c1",
       "expected_error": null
     },
     {
       "name": "matrix_temporal_ordered__event_count.kql",
-      "sha256": "913d76bd15d2d0dd859c3ef44304a1dc714ba0c012c105fe5bf64b150231e498",
+      "sha256": "02ea2eb07c64602e9a84d53a27f4aef6dd3311c0163d772b20f99432c9703bc2",
       "expected_error": null
     },
     {
       "name": "matrix_temporal_ordered__temporal.kql",
-      "sha256": "e518997b82ff676efa444732949ce72195b68d0b86ed68ed7e9b08079ea673bc",
+      "sha256": "c1577b0b0ae95219e41a660d0fb0eea405211fe1e0f3c150e4b4956227e2965e",
       "expected_error": null
     },
     {
       "name": "matrix_temporal_ordered__temporal_ordered.kql",
-      "sha256": "ff44e9de8d60b6f7e073dd0fa9ecfa8af3d2d7fba53d5a73d33fc462ca5f4651",
+      "sha256": "688153692519310d9351f36d7cdd6312aa397ffffb26f37cffa4445c2ee52b87",
       "expected_error": null
     },
     {
       "name": "matrix_temporal_ordered__value_avg.kql",
-      "sha256": "929f1f42c595f3efbe820bc20b4cbea6b06ea9245258a94b27c387a408b69d5f",
+      "sha256": "6bdb1abbef09174573887b1f20ac4a3c3eab589589b898a22017125756150802",
       "expected_error": null
     },
     {
       "name": "matrix_temporal_ordered__value_count.kql",
-      "sha256": "5561d08186d1dbe0a393b68616b2d2ff0ee28042085bc1c4c54e442f16df0b97",
+      "sha256": "2fed7d935138eb5087d60da8d8d9cebc4805640d077db3c3c19d6492681214ce",
       "expected_error": null
     },
     {
       "name": "matrix_temporal_ordered__value_percentile.kql",
-      "sha256": "2a823b471679050c513b65ab429a30c905d4faa89f7cc919ae1b2c8ed802e4a3",
+      "sha256": "109c90594f84d295930c95e6ff24ebf660dc9c55bc3fcdeb93afdc40eb8d4dcd",
       "expected_error": null
     },
     {
       "name": "matrix_temporal_ordered__value_sum.kql",
-      "sha256": "6b38838d2fbb8cabbc67da1dd940300099035deb03040c200e9ba152930df8bf",
+      "sha256": "3e52e6a629b553c437333b9ad073c7ca13990eac0a867a2715910b395a6d489f",
       "expected_error": null
     },
     {
       "name": "matrix_value_avg__event_count.kql",
-      "sha256": "ad4711be2b361b52574e2248bf638244c9f9ebb1820890dd3284c1452ad09aa1",
+      "sha256": "d9a0b3fe00b19edb9727d20568abb736dffc25eddb3684c6e12be169a68c14f1",
       "expected_error": null
     },
     {
       "name": "matrix_value_avg__temporal.kql",
-      "sha256": "70af9c47dc8216c502e76f57b2246de0691e7a405e6be7e2d85e67f756ce7edc",
+      "sha256": "f4ff31cf1e25690f03df51426725f30cc16b483e6c31ffcdbfe788d2bc41d7e2",
       "expected_error": null
     },
     {
       "name": "matrix_value_avg__temporal_ordered.kql",
-      "sha256": "a23e8392bfc1760097157b33564511b74b836051dd8098609fc9651f308e3d89",
+      "sha256": "d35e9122fc23f9504e832f49ef3f5468a307b01ee63aaafb755a214abdba265b",
       "expected_error": null
     },
     {
       "name": "matrix_value_avg__value_avg.kql",
-      "sha256": "97bdefd3b27023e9274af8a5ed24705e28644d83bef9736f093d1d8ac07a0f1e",
+      "sha256": "59d4ba613fb911c63927909128c72afe0ecffb90c02f2536bda896b871b7f065",
       "expected_error": null
     },
     {
       "name": "matrix_value_avg__value_count.kql",
-      "sha256": "95c3c4807e2c7eab908ef917c46dd9cacd66f44729482ffc1b1bac21f4bdbd6e",
+      "sha256": "90a9c538b69a488b1fadc698a0af30b8f849e721d3e895e2f9ece21ee0edfb01",
       "expected_error": null
     },
     {
       "name": "matrix_value_avg__value_percentile.kql",
-      "sha256": "30405e59e1e0b298c22018049ad81c89b2e245a046651bc49ec313ec61ec6f4d",
+      "sha256": "481bd1f590f94a2ff9a6454e6064160777d5598a4e7bf44122477250ab96df21",
       "expected_error": null
     },
     {
       "name": "matrix_value_avg__value_sum.kql",
-      "sha256": "bd8480e52910c0ea8aca7daa628c1b6cdd854603d275eecf1fa14244b79a2dcd",
+      "sha256": "3bc618c7811007948fc98f6290f88ba24a343618d5ff98857cc8f819e54f1f91",
       "expected_error": null
     },
     {
       "name": "matrix_value_count__event_count.kql",
-      "sha256": "bcd72acb857eb28dbed195b5165d341980373ab5c44e792e1c30bb5d19f2787a",
+      "sha256": "f4818bb2abe4c838da53d2c98c578cbe3da26759a2b3ec240cf290dcff6490d2",
       "expected_error": null
     },
     {
       "name": "matrix_value_count__temporal.kql",
-      "sha256": "99ded92cc551acd5a208b667127a4aa3b0e1c15781f492bc7c83ea00bc368b37",
+      "sha256": "e637167124265aab69548a8d8a6485734e0c3a09ce86c65d58da187a8b927268",
       "expected_error": null
     },
     {
       "name": "matrix_value_count__temporal_ordered.kql",
-      "sha256": "2e01bf1db0549025db3394dfaab5556d83f90b8625d8b67b10887ff25ef96d76",
+      "sha256": "24209e36143fc6ff8452454d2b646ce173ddf5cfd89d2da59dd42d2d51c363a4",
       "expected_error": null
     },
     {
       "name": "matrix_value_count__value_avg.kql",
-      "sha256": "bd16d9967f104a895854b1003da5b494b7d648fa6ceaee9a43550c05c16df597",
+      "sha256": "b610b0a8c8dedc9714ffa4b1706348b8771f92e838d7af087ee79515b0921a42",
       "expected_error": null
     },
     {
       "name": "matrix_value_count__value_count.kql",
-      "sha256": "56310a50426d05d24e111d2615886fbfdc2eb727984793ebf5dd1d4af21e492c",
+      "sha256": "ed7c8cfb900f072d044182e1ae9cbd29283d81579a4933f33de903573a41b7a4",
       "expected_error": null
     },
     {
       "name": "matrix_value_count__value_percentile.kql",
-      "sha256": "4f3ecccbc97de5ecff643c2ff1dc6c0bd8c9e9c6b5db98b3e8b362c93aa30699",
+      "sha256": "9b46e8df5cfb4ee9b1df1a9bf0eb518dd474424c12c63418d23fe55ed10fdfb3",
       "expected_error": null
     },
     {
       "name": "matrix_value_count__value_sum.kql",
-      "sha256": "801cedeec8b8ba77ea861f04f4c058afde89a3359125d03661571675ac4471dc",
+      "sha256": "7e03eaf685687a51a9dd8caca18ee04ca366205c9e82129b58e47de69122b584",
       "expected_error": null
     },
     {
       "name": "matrix_value_percentile__event_count.kql",
-      "sha256": "28c38597158ae41c377aade853bd30f28f06d329d3bb8ddbb7ab27049241784b",
+      "sha256": "2e45c6652cf1f2d0ff507b4182058513be0b2dc80cfaca09adb6de3b6d2aa74a",
       "expected_error": null
     },
     {
       "name": "matrix_value_percentile__temporal.kql",
-      "sha256": "d0afeef4da457cd02462118b7a7427c654fc4612ba4c9fca71eccc7fed146da9",
+      "sha256": "ebe43b541ef4579de4b6b618df01f39ea40afbfc648666707fd9d949f70312af",
       "expected_error": null
     },
     {
       "name": "matrix_value_percentile__temporal_ordered.kql",
-      "sha256": "222f5eb836d727d929cb113cb24b39c13edc1c3d1a5f32c16535c1a868e6ffe4",
+      "sha256": "f19568b9cf7a987254d4d9cad10f419fbfab43aecb3356cc9b3d391324e9a32f",
       "expected_error": null
     },
     {
       "name": "matrix_value_percentile__value_avg.kql",
-      "sha256": "858eaf915596b54cd80405ebbcbee8793e9b109b81eb54e7994028f800ad77ed",
+      "sha256": "0c7077eb5e4d6abe20aca007b97ded48f5d86e05547eec0927cf2133707aaaeb",
       "expected_error": null
     },
     {
       "name": "matrix_value_percentile__value_count.kql",
-      "sha256": "2c472ea9c6db9be67a24366d14e0c071d4cc260d581f4f75986d972a100b1b2a",
+      "sha256": "c2fe329f1c74c2d90976f29a9cfcea2c7f236d41a6cca72c242bd1dcc100f83f",
       "expected_error": null
     },
     {
       "name": "matrix_value_percentile__value_percentile.kql",
-      "sha256": "b5ff406dc6060e88c8a9650833b39ed671464aea540407c11b96ff1df46ad75b",
+      "sha256": "7c302325c55535552a0edda73de8ee14774d303b34a74c2b33c90200642ec0ee",
       "expected_error": null
     },
     {
       "name": "matrix_value_percentile__value_sum.kql",
-      "sha256": "a3e924af1efbdc3062ddcfe138c60acb5db6fe985364be2b4453d508eb691917",
+      "sha256": "fbfecaf7a9863a0db922e71de1ce45db577b86453e835bd7ebabb96023d24e21",
       "expected_error": null
     },
     {
       "name": "matrix_value_sum__event_count.kql",
-      "sha256": "68ed11e2abbda0dadbec633e417b9850fe2e4b602e5d78589c2f63683f05c49f",
+      "sha256": "aa35ed03c256da7cb660f7a48eeddf1e68c09438381719c0bc87ffb6d5be2501",
       "expected_error": null
     },
     {
       "name": "matrix_value_sum__temporal.kql",
-      "sha256": "854cff258d364a92498c5e7ed3632303587d3527403800e50467b385edacfc60",
+      "sha256": "ed82e0d22e5c5d0311082a61edeb996bae25e4d090334a846319bfd7225a2656",
       "expected_error": null
     },
     {
       "name": "matrix_value_sum__temporal_ordered.kql",
-      "sha256": "4994953e49580ee05564436955e05731006f2ac1b92794b42e11556aa268265e",
+      "sha256": "8503c4815331cb174285e88251703440f1ba6045fa71cc8e874d9202341bd364",
       "expected_error": null
     },
     {
       "name": "matrix_value_sum__value_avg.kql",
-      "sha256": "8457606389ff2a81d24b3f12cfd9365d2b731774a06a9af7ee960aea39c3b917",
+      "sha256": "296f590a8ed51c711664e1c5ed110ee1ba2c8b6a7932eef313778f22d811ce3b",
       "expected_error": null
     },
     {
       "name": "matrix_value_sum__value_count.kql",
-      "sha256": "3bc190f32a8119e6e32f9efe79cf71eb3857f69c4a376e850d49cc5739bdb77b",
+      "sha256": "fa4bcb92e10e4074bde93dca1e879afd7dc674c7d90025cd87e0908327b4caed",
       "expected_error": null
     },
     {
       "name": "matrix_value_sum__value_percentile.kql",
-      "sha256": "0c55271306a6eefdbb89a7cf3ebafc8b7993286d4edb5c29fdce43c53ad0bbb4",
+      "sha256": "19163487b67d0fdf3be9aaccef9492b0ce27c360d4b5ddb341b4187582db3000",
       "expected_error": null
     },
     {
       "name": "matrix_value_sum__value_sum.kql",
-      "sha256": "8d1003623cdb5c60b249f4b43e260e382253d52b89613933c5a45bdac49f2054",
+      "sha256": "386a883badc3e47bb1199660a645759ca12c09ba26776d52590cb62ff2e4e26a",
       "expected_error": null
     },
     {
       "name": "numeric_context_boundaries.kql",
-      "sha256": "6a3d61a07fb35a56f719686843f7b187bddc058a9ce768d00928dbcb5abe8ef0",
+      "sha256": "06428527a00175d3947ef4ba8e5f362dae075ae92d599af68b9bfdd7d50b18e4",
       "expected_error": null
     },
     {
       "name": "numeric_context_metrics.kql",
-      "sha256": "7eda2785f06c19e902d9427793287ba6e460ed8cca55faf676115f6db4633f68",
+      "sha256": "5b13ae541ac49de5642df6da007c5bc2fb29a3ad4312c2ff9bae8ad2cf71bb3e",
       "expected_error": null
     },
     {
       "name": "numeric_context_multiple_children.kql",
-      "sha256": "175c896991cd38517defe0a841e9a01fe1c4e7565161f6fd8fadc4140bec5cd6",
+      "sha256": "2ca6fa2072505692bdd61727b87aedd4781ed30d9364ddf20c8916f086fe86b3",
       "expected_error": null
     },
     {
       "name": "numeric_context_nested.kql",
-      "sha256": "4792e9745e951f566e9c1021a08876dcce055f9ddca40d76eb5ed3edad83df94",
+      "sha256": "98b1ea15dc85d2be07af077dc1fcddd52875ac78df803de97aa370c8b1448ea1",
       "expected_error": null
     },
     {
       "name": "numeric_context_noqual_supported.kql",
-      "sha256": "0bf43f721a8fcea98daa5fcd510733a2f71a10c3f3b0cabffe9760f23b3cc22b",
+      "sha256": "b609e69868d41288bec06ea3089345059aee70b2927743f41a800fbb7a2b59f8",
       "expected_error": null
     },
     {
       "name": "numeric_context_real_boundaries.kql",
-      "sha256": "610abb99e6005b2889f5cdf2c463547df2932297a484fc2c7c5ba3e4473a8476",
+      "sha256": "b764a2d6693b7c773ec855373b6b08a15cc0ab74e6d0d02186f4ad20c462f6fc",
       "expected_error": null
     },
     {
       "name": "numeric_context_value_avg.kql",
-      "sha256": "129376412b2a135ae977dc866a1996042256f21d8e3f8e8d8738a94ab0526544",
+      "sha256": "bdef719d995e8da6859bcc9599adb1f5e339256f004631660314b1dc69dacb94",
       "expected_error": null
     },
     {
       "name": "numeric_context_value_avg_empty.kql",
-      "sha256": "7dc17af239aff1ffe32499495a2420f53bc013964988111edc31b976bb267369",
+      "sha256": "15506ed78740c2908808994b3fd465e1192c16d0bd34afc51db8e71c982ce213",
       "expected_error": null
     },
     {
       "name": "numeric_context_value_avg_groups.kql",
-      "sha256": "b035d86e6cdd20a1699ae7474f84c6fd05a3d56a2520458e3784d56bd8af18e3",
+      "sha256": "9316f43301c06748de14ebdb4fe0030ff1bf58369fca08fddb5411061954709d",
       "expected_error": null
     },
     {
       "name": "numeric_context_value_percentile.kql",
-      "sha256": "fd675c35cd9f95d22b3de7fca469e32e7286896213402726c602f672ff095505",
+      "sha256": "76f98ed70856b10c9af69be8a1fb130acfd79f8c2f267b1dfaba21be1c63631d",
       "expected_error": null
     },
     {
       "name": "numeric_context_value_percentile_empty.kql",
-      "sha256": "4a28224dff2e9f5b3aa26733b8feef06f5f7f80f25ae8709b512832978293a73",
+      "sha256": "b29ab366aa47b71abff7b3d585f55e16af46ab53a1facb6dc1a2a31cd72b47fe",
       "expected_error": null
     },
     {
       "name": "numeric_context_value_percentile_groups.kql",
-      "sha256": "3a2dd0cfd8410d83b7e182470e05f1b9ec712b3f7c4874c086486bb50979fdd2",
+      "sha256": "7c38398868b77160cb23379c79b510eadf28e1d26a454544337eb6190b121644",
       "expected_error": null
     },
     {
       "name": "numeric_context_value_sum.kql",
-      "sha256": "4ea45f54e531e8cc09e9efe5b091a09da78aac4793162995f06118ca4ca90e8f",
+      "sha256": "3f132e84b6e6ee12e30164f9bb437333d4fb9edd620b550666ca67b78a362e36",
       "expected_error": null
     },
     {
       "name": "numeric_context_value_sum_empty.kql",
-      "sha256": "24af7e3fb04b4fcae96a3b92978690ac5c46089f3c3cd41688c886ed0dc4f319",
+      "sha256": "e8348361c110bdd3e371f1336df2f59372962431b26f33ff012ef201e064e85f",
       "expected_error": null
     },
     {
       "name": "numeric_context_value_sum_groups.kql",
-      "sha256": "e699306505f24d9e59f747bde07e254ead732d1e374148f170f1bb1fff39dc83",
+      "sha256": "3a9ee445fbebfa651c3b760843e125099b80da262785338cd0185a5dcb1dc4b8",
       "expected_error": null
     },
     {
@@ -600,6 +690,36 @@
     {
       "name": "ordered_state_ungrouped.kql",
       "sha256": "dcdca8b5e32937d3b5e2bb8e33da80371eaeb4e3469ba06c578a6a0838f0f8f2",
+      "expected_error": null
+    },
+    {
+      "name": "participants_boolean_empty_child.kql",
+      "sha256": "bb9e2e4dcb25183ed48206c6844134913e4ba3dcd67af5d5a58db57c7d9bc7a6",
+      "expected_error": null
+    },
+    {
+      "name": "participants_ordered_empty_child.kql",
+      "sha256": "e171154de23bcb2e6a4dd31f85db8ebf3a6ca9fd6b2cec78989de6249189a5ff",
+      "expected_error": null
+    },
+    {
+      "name": "participants_real_groups.kql",
+      "sha256": "cdc62b18cf02b647bd886fe27e6e5434dd4d841b9c20ed9c57caa81fa08c528d",
+      "expected_error": null
+    },
+    {
+      "name": "participants_repeated_long.kql",
+      "sha256": "39b2b6f9839c7fe1fe0b71336beaf62263701ae5adb59bbe95dd0e69436f56b0",
+      "expected_error": null
+    },
+    {
+      "name": "participants_repeated_seven.kql",
+      "sha256": "5c4fd0657f5f38b51b7978d80481abc52a10b045a923f76e6cbf4e8fe710095a",
+      "expected_error": null
+    },
+    {
+      "name": "participants_single.kql",
+      "sha256": "0c8759f215b727066086450794add19910e89dddc71f630fc8e2eb475e9cd3cc",
       "expected_error": null
     },
     {
@@ -639,7 +759,7 @@
     },
     {
       "name": "presence_mixed_alias.kql",
-      "sha256": "f95348db984ad9804f77c5361af0e85341f67d9ed7bc85886a20249f016f396a",
+      "sha256": "c40baa00853f2c4dd6e9fc7573fbe1d4d10d82238e6b6969ace09b6645ee99b4",
       "expected_error": null
     },
     {
@@ -659,7 +779,7 @@
     },
     {
       "name": "presence_scalar_child_context.kql",
-      "sha256": "59a4ea4c6de7b974fdc2eb6bbb22a56ab18c8ff477783fdeced99a9edfd4be9f",
+      "sha256": "8ea41579bf1d1633eec347a109f08e7c9bbc8a12eaa629960a038b0a835b01c0",
       "expected_error": null
     },
     {
@@ -669,112 +789,152 @@
     },
     {
       "name": "relational_boolean_alternatives.kql",
-      "sha256": "1ce172c7e27b208c6f6fba430910eb4a74b477727708d0efd39235495da1a120",
+      "sha256": "abac18c845dd05d1d2c7f80e294177491698a79fceaefdd2ebd0f8019d7cc706",
       "expected_error": null
     },
     {
       "name": "relational_boolean_multilevel.kql",
-      "sha256": "6c7f148b815951e6f4e139b35f33579629c0fc772dc0ed50ace678019018dabf",
+      "sha256": "732261d520f4055b3302868d833ac2c6a5ec57bf9ae8dd0bb5fa9858d23b59c2",
       "expected_error": null
     },
     {
       "name": "relational_callback_metric.kql",
-      "sha256": "005974ce88f678ad86c199d60f3efaa5a9e5ec20bbf4d0df56da4d793ed0461c",
+      "sha256": "0afcf80b6474c7573e7cf4b838c15bcfb7ed6c099f82a692f8c5bfbb054b6322",
       "expected_error": null
     },
     {
       "name": "relational_complete_parent.kql",
-      "sha256": "3649ab8dc717d0fb5164484a5d083b50433d167f306390a2978796da4e848ccf",
+      "sha256": "42e81271e8a53d16321899a813ad4213ee2a276e6097f8ec70ac006f843a9883",
       "expected_error": null
     },
     {
       "name": "relational_display_1000.kql",
-      "sha256": "bae1058e79bcd3bc5264ebe80c775167041896f70c60b7f5045e14d58c687817",
+      "sha256": "d20b4ff1e1e99b490a0b5387c81a5097624caa712158328034819c507b09f07d",
       "expected_error": null
     },
     {
       "name": "relational_display_1001.kql",
-      "sha256": "b36a90ff5766a581bf117b4ea98c101bfab9c1086bc4780b29cab1006e7a685a",
+      "sha256": "285bd8a28299513e98228cd3c765124af9fa1282f680c646a19ddfbd30461716",
       "expected_error": null
     },
     {
       "name": "relational_display_999.kql",
-      "sha256": "2101d8e0bf73a49f68b2111473c2b8bb0a9fec2615f8ae9f2ec6da7451d794dc",
+      "sha256": "63c91cfcee31d0b1a79d0b66b8c2e1e8e2c332ccf79cd5c17a0275176351b87b",
       "expected_error": null
     },
     {
       "name": "relational_display_configured.kql",
-      "sha256": "02f0d24ad0600276cc5d189a2adbae5995535497d6bbad970dc0d26298806536",
+      "sha256": "683bc99d34a0ccc6421c795f0c436a04ac7387699851e20f23c73292a7ca0bfb",
       "expected_error": null
     },
     {
       "name": "relational_event_count_dedup.kql",
-      "sha256": "cf248fc697bde45904a963b1e3858c62fed703160cf21d11a9cdb33837a4664b",
+      "sha256": "3131560f131082a875dfc06509c3855a0d32d364891f3857ccd092c4b4ad4be6",
       "expected_error": null
     },
     {
       "name": "relational_ordered_alternatives.kql",
-      "sha256": "966a25e2e2ab98a2d4c26fb91d36f1c0ca685650615ea59ae3e2b05ab76d1db9",
+      "sha256": "dfdad9e40a67e3b05b89fb0d012a3c4b091b2d92f9e373f4061d36aa8d8d75d1",
       "expected_error": null
     },
     {
       "name": "relational_ordered_multilevel.kql",
-      "sha256": "2a013206a03c7fd59b761c8f831eb5d58edd4e61f1bb1ba2e3cb8bf97d1bcf20",
+      "sha256": "115e20f8e92bf5a21a3a169859be69f17f1d3743d3d395507493d5399f2993eb",
       "expected_error": null
     },
     {
       "name": "relational_temporal_shared.kql",
-      "sha256": "1c09a7ba3d3a59e89c6ab29fbee80f463c2b3a3b4b8e4a950500472c299b2586",
+      "sha256": "1c691fb789abdcecd4f56e49ee1bb8e63af6babacc23efb76e756df8f0c2b634",
       "expected_error": null
     },
     {
       "name": "relational_ungrouped_count.kql",
-      "sha256": "2fe35916a3883b32927e8ffcd69695b09e6ded91b69b43959fe97b129a5872fe",
+      "sha256": "30183688175c75825d1ad1f46881908afb48dd870edc4830090714a66c705da5",
       "expected_error": null
     },
     {
       "name": "relational_value_avg_dedup.kql",
-      "sha256": "29a9ed8ae23616bd839ba19f66f8b07941ce51bd8b319e302c5bc009a892fc8e",
+      "sha256": "dcd6e1e85f824a98b8c826f2b80a88d3a4d72db4ebfabedb8ed6a47dbd0fefcc",
       "expected_error": null
     },
     {
       "name": "relational_value_avg_metric.kql",
-      "sha256": "928ccc002e82419b09ae82610f57391036b425f9b63a6d4dbb1b63e52bc74aa0",
+      "sha256": "9e068763a2ad69317cb0ed49ff71ffdcc8d1552020eb9f278c0cb190ab6c7b90",
       "expected_error": null
     },
     {
       "name": "relational_value_percentile_dedup.kql",
-      "sha256": "60c7fae7391144bfac99fa019fc197754346356d310bac39968930a6e56ac8b7",
+      "sha256": "2bbe36eaf1818f8042a6c2739f7f2a011cc2dcf90748ba73c8e07a6de49921da",
       "expected_error": null
     },
     {
       "name": "relational_value_percentile_metric.kql",
-      "sha256": "1238e924ac3343cbe52a58eefa25e634493a82c9a1e55b5e646a5a5cafc3cf3a",
+      "sha256": "fca2c6698df3218185fde873397a57b36943e5d166b120f2685f3fb7313ffbd8",
       "expected_error": null
     },
     {
       "name": "relational_value_sum_dedup.kql",
-      "sha256": "b8b9680b03033f247724063468d5171c6bc7a8cba5f77ba929e21267d14acdf5",
+      "sha256": "9c7f717bbdaafa930f8561825ce15cf8f97d6db5fbfb645d737582ccd7fa78e9",
       "expected_error": null
     },
     {
       "name": "relational_value_sum_metric.kql",
-      "sha256": "d7689bcd26f60b153e6619b14143a97c521bb0363fa12abce352fa6167466546",
+      "sha256": "4c8e763bc460c4dceaf26e2c949954bdff77da5aed039e91ca05c3b7d2d49f6f",
+      "expected_error": null
+    },
+    {
+      "name": "reporting_adjacent_ticks.kql",
+      "sha256": "9b039801bdfd317f18801883954094f6eaf0380c2241da83d753f9e924d4717b",
+      "expected_error": null
+    },
+    {
+      "name": "reporting_context_callback.kql",
+      "sha256": "b95335ddd5cdfdf5e9e50c2e58895c0d51ec1abf3bd3902cc8d1c92613c240a7",
+      "expected_error": null
+    },
+    {
+      "name": "reporting_early_existence.kql",
+      "sha256": "8ace08a6d351667c4bd3be78bfc10d0ab78c00d86b6c0a5f9557164b049860ef",
+      "expected_error": null
+    },
+    {
+      "name": "reporting_early_general.kql",
+      "sha256": "585cbfb72c551f3afb4eb0bbf3c387f1cec6f4382d4baad7d14d00eb946d5b5e",
+      "expected_error": null
+    },
+    {
+      "name": "reporting_name_collision.kql",
+      "sha256": "e7578954bed9998ea180fbfbf786e53ad01e444cf59996d2ca6c8cebd009f984",
+      "expected_error": null
+    },
+    {
+      "name": "reporting_shared_multilevel.kql",
+      "sha256": "8b35d196b11b9ae26967cc9d7e2d29b8c1d9bcc4e19edcbdc46cfc8299b30ab4",
+      "expected_error": null
+    },
+    {
+      "name": "reporting_shared_reversed.kql",
+      "sha256": "8b35d196b11b9ae26967cc9d7e2d29b8c1d9bcc4e19edcbdc46cfc8299b30ab4",
+      "expected_error": null
+    },
+    {
+      "name": "reporting_string_timestamp.kql",
+      "sha256": "26efc3c6a50eda00cf2be01b326404118a7da62f28e662e2b0a129d77f4cb6d2",
       "expected_error": null
     },
     {
       "name": "source_predicates_securityevent.kql",
-      "sha256": "120494d80e695613471489b7effb949b069b43c6bd69ac003034d809ce010c10",
+      "sha256": "e396f9177e43ddce18c9f0a93d6d19e7200c3afd3de6db94de73b011caf83391",
       "expected_error": null
     },
     {
       "name": "standard_mappings.kql",
-      "sha256": "250ae6c521634ccaf9096d1f5933b70f7ce3b3c3ca2e1c110ad119a4709e189f",
+      "sha256": "434495ea0a0976132eabf211e9d6e86d016f45411e6e98cd27be7c5486b0d9cb",
       "expected_error": null
     },
     {
       "name": "standard_mappings_parent.kql",
-      "sha256": "52862f89e822cc09497d391b252259b13ab6b6573f4111949ecd45f6bc393c88",
+      "sha256": "fd7dab970893b97b3df7be6c7021e2e37ed1299a5e8b728e5a3415f9b928c815",
       "expected_error": null
     },
     {
@@ -784,37 +944,37 @@
     },
     {
       "name": "temporal_context_boolean.kql",
-      "sha256": "a63fc11ee31a37e78c7661bf650afe50d4d3383a481dce15cd9f5ca9d2d426ba",
+      "sha256": "8a0dee6030dd67d426176f17a781a2ddca56bdcea8c9761b6c8049bbdc93f548",
       "expected_error": null
     },
     {
       "name": "temporal_context_boolean_multilevel.kql",
-      "sha256": "6c7f148b815951e6f4e139b35f33579629c0fc772dc0ed50ace678019018dabf",
+      "sha256": "732261d520f4055b3302868d833ac2c6a5ec57bf9ae8dd0bb5fa9858d23b59c2",
       "expected_error": null
     },
     {
       "name": "temporal_context_multilevel.kql",
-      "sha256": "96657443b488f98dcca220d68acd6d9dce9bb19c5b0c7f5fd7b5f8bb81d2c5a8",
+      "sha256": "094008e380e1f9a92d730d68b9c2f8b27d38b08a1a27f2294ce2aa93d2b4b305",
       "expected_error": null
     },
     {
       "name": "temporal_context_ordered.kql",
-      "sha256": "5a50bb9992dab5cc962b95e6e6ccad9489a5f84e1bcd45f194548c9590f2195d",
+      "sha256": "05a2ffdc1b76c54a6f08225d91351ecc9a7b4dc73963e99d6e34b36d7b658d03",
       "expected_error": null
     },
     {
       "name": "temporal_context_ordered_multilevel.kql",
-      "sha256": "2a013206a03c7fd59b761c8f831eb5d58edd4e61f1bb1ba2e3cb8bf97d1bcf20",
+      "sha256": "115e20f8e92bf5a21a3a169859be69f17f1d3743d3d395507493d5399f2993eb",
       "expected_error": null
     },
     {
       "name": "temporal_context_shared.kql",
-      "sha256": "1c09a7ba3d3a59e89c6ab29fbee80f463c2b3a3b4b8e4a950500472c299b2586",
+      "sha256": "1c691fb789abdcecd4f56e49ee1bb8e63af6babacc23efb76e756df8f0c2b634",
       "expected_error": null
     },
     {
       "name": "temporal_context_unordered.kql",
-      "sha256": "541756419c940fbae51770dec02d2600ab0f3ae2fcc2ac5890d9ff994cb8e4a5",
+      "sha256": "71c92caf16e23d838fcbab904076f0f620d5ed09aa6f155d1a854ee5165d89ae",
       "expected_error": null
     },
     {
@@ -834,12 +994,12 @@
     },
     {
       "name": "typed_grouped_context.kql",
-      "sha256": "aba21d47718fd7b942485ecf3d62f42faadf23b0c7f940e9754983fa393d3be1",
+      "sha256": "2e73e99a38da62816340f4d91dde7ce32d39594942ad00da6e27b1dd71f5ce59",
       "expected_error": null
     },
     {
       "name": "typed_grouped_context_parent.kql",
-      "sha256": "99ca149fe32a67b6ffd5e337848f2bf02200f7fb5de6fc66fe31d2c7764205c9",
+      "sha256": "1c6f6028ae138b66dc76bf727197fd3156663268ecc14561974c25ef9649a1d3",
       "expected_error": null
     },
     {
@@ -849,12 +1009,12 @@
     },
     {
       "name": "typed_grouping_extended_chain.kql",
-      "sha256": "0607a1158de1f5d48d8eff87b47af21e3e283a9f3a216331c7e60d70c04e6d94",
+      "sha256": "2b67e9c84bd4e9b6c5f7780031fdd3f13b7675d85203accecd7878d1554bef90",
       "expected_error": null
     },
     {
       "name": "typed_grouping_mixed_chain.kql",
-      "sha256": "e6e5007ed3e9ca3e1b77304d81961e5767b8a7bf1a2bf35472e00b751a6e8680",
+      "sha256": "24b5533baecfd032d6925b64d83fae311a63b90993a284601b9e61d18481c46e",
       "expected_error": null
     },
     {
@@ -869,27 +1029,27 @@
     },
     {
       "name": "typed_grouping_value_avg.kql",
-      "sha256": "30e823fa0f55ee09844c9a8d9888a67b441f6f2641e675838f6f5420f900d087",
+      "sha256": "60dfaf4b176185524f9b32549d72908d48718cbf0043dd11afb097383cf575af",
       "expected_error": null
     },
     {
       "name": "typed_grouping_value_count.kql",
-      "sha256": "c340c283132f66d9faa018ebb4b5a976f96fc0970bc46503aed8205d43309e78",
+      "sha256": "779be21eb59ab3d2e2eec083c8ba4d9041ca175ce3c0b24c0e9a1f35eee1c690",
       "expected_error": null
     },
     {
       "name": "typed_grouping_value_percentile.kql",
-      "sha256": "05cf0b029b94ec95851a36927ed09b00d8c05ce904703d8b0312c1e1bf2a958f",
+      "sha256": "0f63d70cf8261c9ab77a8345897c626a8f9eccfcb73b4f973dc1c406d0792e69",
       "expected_error": null
     },
     {
       "name": "typed_grouping_value_sum.kql",
-      "sha256": "2565a30982f04f7d02af5f6f54401a7e48f1c30cd711c02856c499f5b3430554",
+      "sha256": "af9c06ce872823b958869ef87a1cd00abd661e5ffdb65d7963e1a5c72f82cd5a",
       "expected_error": null
     },
     {
       "name": "value_avg_chained.kql",
-      "sha256": "1c59e03ca6aac83ab9a917de5a8863f581d5b5a1a5f32305b26e812a473b8a08",
+      "sha256": "9674467ba3b1af4c9d39dd5cc8711102de2fff8944cab1a639f7479ad6955bf9",
       "expected_error": null
     },
     {
@@ -934,72 +1094,132 @@
     },
     {
       "name": "value_count_comparisons.kql",
-      "sha256": "a92479009ea5808a14564013c8022e9b23cf525b59e91f0a29b6bfadd8108eb1",
+      "sha256": "d04b7f0d6b2f19c85ff1ba7733e2a86d42e63a8354f9a961cc8ff718d9a04c38",
+      "expected_error": null
+    },
+    {
+      "name": "value_count_fractional.kql",
+      "sha256": "c09591fcc125cf37452409efca612ddf1d0b1498f68270ddcac70ac1c6167c95",
       "expected_error": null
     },
     {
       "name": "value_count_grouped.kql",
-      "sha256": "ca19de3f310a46947c69c2a3d70d916baaa093ef63fd74194bd915d218ac0c9e",
+      "sha256": "534fa2ec7e3b6e890e1d5bd897363297c565674a268a0b059d9e6b11b0ff04de",
+      "expected_error": null
+    },
+    {
+      "name": "value_count_grouped_counted_context.kql",
+      "sha256": "dbc2ddf726718424d68ac47c8074d4f79feccce1b84ddf3e93df9689599bea21",
       "expected_error": null
     },
     {
       "name": "value_count_multi_field_comparisons.kql",
-      "sha256": "aeb9b65846549885638cf7ec7ec44d57b0b8bfbf3bbc50c23f791a4d8828cfdc",
+      "sha256": "61f915b004a10a45d514402bfd4a4023d2e4ae2b289ade548395c911b3ecbf6a",
       "expected_error": null
     },
     {
       "name": "value_count_multi_field_grouped.kql",
-      "sha256": "b3a427a100e01762cfd65d2751372083e49eaeaf1d6acf87ff511f9ec74358a4",
+      "sha256": "6bae4b1b819d3e69d5bee6671ee484409db55a3e441465738d1467d89fc9f7eb",
+      "expected_error": null
+    },
+    {
+      "name": "value_count_native_types.kql",
+      "sha256": "fc2580612e37f10bf2b6c18ff75fe71cbdd6e9e514389fbc12f0d4f79426cf0a",
+      "expected_error": null
+    },
+    {
+      "name": "value_count_real_intervals.kql",
+      "sha256": "151267e4929eb934d5e673ffb6a3dc3c1b6daedfa7af8f73c339f7674448b883",
       "expected_error": null
     },
     {
       "name": "value_count_typed.kql",
-      "sha256": "7e685c1f67a8e1234a6d563c4e4ccb518863b893717eeb3fd814de22a8a90310",
+      "sha256": "20290842edf39183c3c33e8ce4f1754433a3a256566116facc9d887881a1d41f",
       "expected_error": null
     },
     {
       "name": "value_count_typed_chained.kql",
-      "sha256": "9f69279223468f4d2e2a49ee5cff8f711ede5f0d60e305e7a6d4be782bed6ddc",
+      "sha256": "74ea920d8d235f66b8508eac847d3c1c44c8532cdcffda4a1a2fc85cbc2d8f5e",
       "expected_error": null
     },
     {
       "name": "value_count_typed_multi_field.kql",
-      "sha256": "971b3bacd23735e425ba272c99adbcc2e7b08f18d88bdda7f2522197790544df",
+      "sha256": "8e03c2fd42f059490434f7b2a3c03e2c8c423a7eca00d55323ada2eaf375bee0",
       "expected_error": null
     },
     {
       "name": "value_count_typed_precision.kql",
-      "sha256": "8139cb1f1fcba90338d2508f581b703626d5684d1da06e2f5804005db46c907d",
+      "sha256": "9106fa00f04757af1187f8601fce61d2bcb8d97e02b41ade9cc8a29741539e87",
       "expected_error": null
     },
     {
       "name": "value_percentile_aliases.kql",
-      "sha256": "1183d5e04d1251ad822cf4d2791feb4423aea3cfd0a74f640b2c81458b099600",
+      "sha256": "338677dbce00b5f52f85cfc0e95b13e7d7f01aa74d8d3c0a7558300943805501",
       "expected_error": null
     },
     {
       "name": "value_percentile_chained.kql",
-      "sha256": "79d80962a19f19845d4727915496e14610e01ad47dc356318d3b81ad89f99934",
+      "sha256": "3a8fe1a94d78f11284abb74db28e67e30ac9471df391a72c14bee1225fa66a9c",
       "expected_error": null
     },
     {
       "name": "value_percentile_comparisons.kql",
-      "sha256": "43a55585dea4a8bd7c936f553be1abf47a03b71889f445a704bd8fa6c976fcb6",
+      "sha256": "6a14c36b665ae3d3fcf2f766ae9ff39bc4658a39600acddbdbbe53efe7ddea5e",
       "expected_error": null
     },
     {
       "name": "value_percentile_endpoints.kql",
-      "sha256": "133b0d1da44f788bda628f78092016f89c53a19f297ef208a5a5e87dd6319b43",
+      "sha256": "faec2990455c13a206e09fc5f5c538488e02a2954f749c97f21fc903cb15f455",
+      "expected_error": null
+    },
+    {
+      "name": "value_percentile_native_comparisons.kql",
+      "sha256": "6bbf90a6bb95e5b77ef57be6456ffc9202d6764107658bcd07ee95602baebf27",
+      "expected_error": null
+    },
+    {
+      "name": "value_percentile_native_decimal.kql",
+      "sha256": "4aa652f921a5128291c98b181ba715ca819ad5c3c4370b0ac57302931d0d80d4",
+      "expected_error": null
+    },
+    {
+      "name": "value_percentile_native_int.kql",
+      "sha256": "c3d101379fa70ea6dc3b44717bf86765982731274c42fa75c8181da9b59980ec",
+      "expected_error": null
+    },
+    {
+      "name": "value_percentile_native_long.kql",
+      "sha256": "0c1cd7a53229c5df06d737f6e60aa02f34292c96d5974fae573fb1dbbb9d5600",
+      "expected_error": null
+    },
+    {
+      "name": "value_percentile_native_mixed_context.kql",
+      "sha256": "389e27d834c4aabdddeb4b11fcff65ae1bee84f249c98094685002d8014aca87",
+      "expected_error": null
+    },
+    {
+      "name": "value_percentile_native_real.kql",
+      "sha256": "829e425f694d799018ef1f0de2be6dfea5b3525bddcc1c6393d7f8fbf1685734",
+      "expected_error": null
+    },
+    {
+      "name": "value_percentile_native_real_groups.kql",
+      "sha256": "3f5dd8eb536d02107d43f6c980814e0cd3fde40dac8e3e9396ff272551ace268",
+      "expected_error": null
+    },
+    {
+      "name": "value_percentile_native_ties.kql",
+      "sha256": "ef1e4254ec0dd76b021f7567c63cc05cf2e067c006a8db7ea380382744daabeb",
       "expected_error": null
     },
     {
       "name": "value_percentile_population.kql",
-      "sha256": "f3caf553df5355736a9dbbd9dfd8fefb6b166bb6e6128b3fd9888b948149831d",
+      "sha256": "8a95ed485c72f004de7f2343e360c5aba03ffc5f1da92a7d57b0ed918cc0933b",
       "expected_error": null
     },
     {
       "name": "value_sum_chained.kql",
-      "sha256": "f1d6887329e831719769ac921055a53ade73acf2d4bb1c298e2a13bc9a06d2d6",
+      "sha256": "5e89bfa49a02d15725868e9b6cb7982cc8b1a6baf4083708aab77d98c6981fb1",
       "expected_error": null
     },
     {
@@ -1024,7 +1244,7 @@
     },
     {
       "name": "value_sum_int_promotion.kql",
-      "sha256": "18ec1c2a8cd6c4b7c1b556040f65a7ff525de15a8b2b7053e10729871b06c791",
+      "sha256": "90ddb8259dfac53d0d7e8d983abd063c156eee2df1d4c7155dd34a65ee5b18d0",
       "expected_error": null
     },
     {

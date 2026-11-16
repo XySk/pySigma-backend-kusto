@@ -7,7 +7,7 @@ let Events=datatable(Timestamp:datetime,Amount:int,Marker:string) [
  datetime(2026-01-01T12:00:00Z),2000000000,"match"
 ];
 let Actual=(){
-let _sigma_child_0 = () {
+let Sum = () {
 let SumObservations = union (Events
 | where Marker =~ "match"
 | project EventTime_1 = todatetime(["Timestamp"]), MeasuredAmount = ["Amount"])
@@ -25,7 +25,7 @@ union (SumArrivals
 | where ValueSum >= 0
 | project WindowStart = SumBoundaryTime - 5m, WindowEnd = SumBoundaryTime, ValueSum
 };
-let SumObservations = union (_sigma_child_0()
+let SumObservations = union (Sum()
 | project EventTime = todatetime(["WindowEnd"]), MeasuredValueSum = ["ValueSum"])
 | where isnotnull(EventTime);
 let SumArrivals = SumObservations

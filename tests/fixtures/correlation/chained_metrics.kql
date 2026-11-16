@@ -25,7 +25,7 @@ let Events=datatable(Timestamp:string, Case:string, Host:dynamic, Marker:string)
 // Normalize Events scalar fixture inputs explicitly.
 | extend Host=tostring(Host), Timestamp=todatetime(Timestamp);
 let Actual = () {
-let _sigma_child_0 = () {
+let C = () {
 let SourceMatchArrivals = union (Events
 | where Marker =~ "E"
 | project EventTime_1 = todatetime(["Timestamp"]), GroupCase = ["Case"], GroupHost = ["Host"])
@@ -42,23 +42,39 @@ union (SourceMatchArrivals
 | where EventCount >= 2
 | project WindowStart = CountBoundaryTime - 5m, WindowEnd = CountBoundaryTime, ["Case"] = GroupCase, ["Host"] = GroupHost, EventCount
 };
-let _sigma_values = union (_sigma_child_0()
-| extend _sigma_timestamp = todatetime(["WindowEnd"]), _sigma_group_0 = ["Case"], _sigma_value_0 = ["EventCount"], _sigma_value_1 = ["Host"]
-| extend _sigma_rule = "C")
-| where isnotnull(_sigma_timestamp) and isnotempty(_sigma_group_0)
-| summarize by _sigma_timestamp, _sigma_group_0, _sigma_value_0, _sigma_value_1;
-_sigma_values
-| project _sigma_group_0, _sigma_window_end = _sigma_timestamp, _sigma_bin = bin(_sigma_timestamp, 5m)
-| distinct *
-| join kind=inner (
-    _sigma_values
-    | extend _sigma_bin = pack_array(bin(_sigma_timestamp, 5m), bin(_sigma_timestamp, 5m) + 5m)
-    | mv-expand _sigma_bin to typeof(datetime)
-) on _sigma_group_0, _sigma_bin
-| where _sigma_timestamp between ((_sigma_window_end - 5m) .. _sigma_window_end)
-| summarize ["ValueCount_EventCount"] = count_distinctif(_sigma_value_0, isnotempty(_sigma_value_0)), ["ValueCount_Host"] = count_distinctif(_sigma_value_1, isnotempty(_sigma_value_1)) by _sigma_window_end, _sigma_group_0
+let ValueCountSources = materialize(union (C()
+| project EventTime = todatetime(["WindowEnd"]), GroupCase = ["Case"], CountedEventCount = ["EventCount"], CountedHost = ["Host"])
+| where isnotnull(EventTime) and isnotempty(GroupCase));
+let CountedEventCountActivity = materialize(ValueCountSources
+| where isnotempty(CountedEventCount)
+| summarize by GroupCase, CountedEventCount, EventTime
+| sort by GroupCase asc, CountedEventCount asc, EventTime asc
+// Repeated values whose inclusive active intervals overlap contribute only once.
+| extend CountedEventCountStarts = isnull(prev(EventTime)) or GroupCase != prev(GroupCase) or CountedEventCount != prev(CountedEventCount) or EventTime > prev(EventTime) + 5m,
+    CountedEventCountEnds = isnull(next(EventTime)) or GroupCase != next(GroupCase) or CountedEventCount != next(CountedEventCount) or next(EventTime) > EventTime + 5m);
+let CountedHostActivity = materialize(ValueCountSources
+| where isnotempty(CountedHost)
+| summarize by GroupCase, CountedHost, EventTime
+| sort by GroupCase asc, CountedHost asc, EventTime asc
+// Repeated values whose inclusive active intervals overlap contribute only once.
+| extend CountedHostStarts = isnull(prev(EventTime)) or GroupCase != prev(GroupCase) or CountedHost != prev(CountedHost) or EventTime > prev(EventTime) + 5m,
+    CountedHostEnds = isnull(next(EventTime)) or GroupCase != next(GroupCase) or CountedHost != next(CountedHost) or next(EventTime) > EventTime + 5m);
+union (ValueCountSources | summarize by GroupCase, EventTime
+| project GroupCase, ValueBoundaryTime = EventTime, ValueBoundaryOrder = 1, CountedEventCountDelta = 0, CountedHostDelta = 0),
+(CountedEventCountActivity | where CountedEventCountStarts
+| project GroupCase, ValueBoundaryTime = EventTime, ValueBoundaryOrder = 0, CountedEventCountDelta = 1, CountedHostDelta = 0),
+(CountedEventCountActivity | where CountedEventCountEnds
+| project GroupCase, ValueBoundaryTime = EventTime + 5m, ValueBoundaryOrder = 2, CountedEventCountDelta = -1, CountedHostDelta = 0),
+(CountedHostActivity | where CountedHostStarts
+| project GroupCase, ValueBoundaryTime = EventTime, ValueBoundaryOrder = 0, CountedEventCountDelta = 0, CountedHostDelta = 1),
+(CountedHostActivity | where CountedHostEnds
+| project GroupCase, ValueBoundaryTime = EventTime + 5m, ValueBoundaryOrder = 2, CountedEventCountDelta = 0, CountedHostDelta = -1)
+// All interval starts precede anchors; equal-time expirations follow them.
+| sort by GroupCase asc, ValueBoundaryTime asc, ValueBoundaryOrder asc
+| extend ["ValueCount_EventCount"] = row_cumsum(CountedEventCountDelta, GroupCase != prev(GroupCase)), ["ValueCount_Host"] = row_cumsum(CountedHostDelta, GroupCase != prev(GroupCase))
+| where ValueBoundaryOrder == 1
 | where ["ValueCount_EventCount"] >= 2 and ["ValueCount_Host"] >= 2
-| project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ["Case"] = _sigma_group_0, ["ValueCount_EventCount"], ["ValueCount_Host"]
+| project WindowStart = ValueBoundaryTime - 5m, WindowEnd = ValueBoundaryTime, ["Case"] = GroupCase, ["ValueCount_EventCount"], ["ValueCount_Host"]
 };
 let Expected = datatable(WindowStart:datetime, WindowEnd:datetime, Case:string, ValueCount_EventCount:long, ValueCount_Host:long) [
     datetime(2026-01-01T11:57:00Z), datetime(2026-01-01T12:02:00Z), "pass", 2, 2

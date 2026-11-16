@@ -13,7 +13,7 @@ let Events=datatable(ProcessTime:string, Case:string, ProcessUser:string, Proces
 // Normalize Events scalar fixture inputs explicitly.
 | extend ProcessTime=todatetime(ProcessTime);
 let Actual = () {
-let _sigma_child_0 = () {
+let ChildRule = () {
 let SourceMatchArrivals = union (Events
 | where Marker =~ "match"
 | project EventTime_1 = todatetime(["ProcessTime"]), GroupCase = ["Case"], GroupActor = ["ProcessUser"], GroupHost = ["ProcessHost"])
@@ -30,7 +30,7 @@ union (SourceMatchArrivals
 | where EventCount >= 2
 | project WindowStart = CountBoundaryTime - 5m, WindowEnd = CountBoundaryTime, ["Case"] = GroupCase, ["Actor"] = GroupActor, ["Host"] = GroupHost, EventCount
 };
-let SourceMatchArrivals = union (_sigma_child_0()
+let SourceMatchArrivals = union (ChildRule()
 | project EventTime = todatetime(["WindowEnd"]), GroupCase = ["Case"], GroupActor = ["Actor"], GroupChildCount = ["EventCount"])
 | where isnotnull(EventTime) and isnotempty(GroupCase) and isnotempty(GroupActor) and isnotempty(GroupChildCount)
 | summarize SourceMatchCount = count() by EventTime, GroupCase, GroupActor, GroupChildCount;

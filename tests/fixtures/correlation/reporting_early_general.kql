@@ -4,7 +4,7 @@ let Events = union
 let Actual0 = () {
 let ReportStart_ = datetime(2026-01-01T10:18:00.0000000Z);
 let ReportEnd_ = datetime(2026-01-01T10:19:00.0000000Z);
-let _sigma_child_0 = () {
+let FailedLogonBursts = () {
 let ReportStart = datetime(2026-01-01T10:18:00.0000000Z);
 let ReportEnd = datetime(2026-01-01T10:19:00.0000000Z);
 let SourceMatchArrivals = union (Events
@@ -25,7 +25,7 @@ union (SourceMatchArrivals
 | project WindowStart = CountBoundaryTime - 10m, WindowEnd = CountBoundaryTime, ["User"] = GroupUser, EventCount
 };
 // Strict sequence: "failed-logon-bursts" -> "successful-logon". Total inclusive span: 10m.
-union (_sigma_child_0()
+union (FailedLogonBursts()
 | extend EventTime_1 = todatetime(["WindowEnd"]), GroupUser = ["User"]
 | extend SourceRule = "failed-logon-bursts"),
 (Events
