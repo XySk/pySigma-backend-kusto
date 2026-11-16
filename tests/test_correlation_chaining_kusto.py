@@ -73,12 +73,12 @@ def test_all_supported_types_produce_and_consume_child_summaries(producer, consu
     parent = summary_data_query(query).split("\n};\n", 1)[1]
     timestamp, group, source = (
         ("EventTime", "GroupHost", "SourceRule")
-        if consumer == "event_count"
+        if consumer in ("event_count", "temporal")
         else ("_sigma_timestamp", "_sigma_group_0", "_sigma_rule")
     )
     assert f'{timestamp} = todatetime(["WindowEnd"]), {group} = ["Host"]' in parent
     if consumer != "event_count":
-        assert f'| extend {source} = "child"' in parent
+        assert f'{source} = "child"' in parent
     consumer_metric = "RuleCount = tolong(1)" if consumer == "temporal_ordered" else METRICS[consumer]
     assert final_summary_projection(query).endswith(f", {consumer_metric}")
     if consumer in ("value_count", "value_sum", "value_percentile"):
@@ -177,11 +177,11 @@ def test_temporal_parent_counts_immediate_child_and_detection_identities():
     (query,) = convert_documents(documents)
 
     parent = summary_data_query(query).split("\n};\n", 1)[1]
-    assert '| extend _sigma_rule = "child"' in parent
-    assert '| extend _sigma_rule = "direct-rule"' in parent
+    assert 'SourceRule = "child"' in parent
+    assert 'SourceRule = "direct-rule"' in parent
     assert "source-rule" not in parent
     assert "second-rule" not in parent
-    assert "RuleCount = count_distinctif(_sigma_rule, isnotempty(_sigma_rule))" in parent
+    assert "RuleCount = tolong(HasChild) + tolong(HasDirectrule)" in parent
     assert "| where RuleCount >= 2\n" in parent
 
 

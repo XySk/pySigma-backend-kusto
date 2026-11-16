@@ -1,0 +1,41 @@
+// Public Sigma conversion; expected rows are worked inclusive-window examples.
+let Events=datatable(Timestamp:datetime,Host:string,Marker:string) [
+datetime(2026-01-01T00:00:00Z),"a","A",
+        datetime(2026-01-01T00:05:00Z),"b","B",
+        datetime(2026-01-01T00:05:00.0000001Z),"c","C"
+];
+let Actual=(){
+union (Events
+| where Marker =~ "A"
+| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "A"),
+(Events
+| where Marker =~ "B"
+| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "B"),
+(Events
+| where Marker =~ "C"
+| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "C")
+| where isnotnull(EventTime_1)
+// Batch simultaneous source matches before updating inclusive trailing presence.
+| summarize MatchesA = countif(SourceRule == "A") > 0, MatchesB = countif(SourceRule == "B") > 0, MatchesC = countif(SourceRule == "C") > 0 by EventTime_1
+| sort by EventTime_1 asc
+| extend NewCorrelationGroup = isnull(prev(EventTime_1))
+| scan declare (LastATime:datetime, LastBTime:datetime, LastCTime:datetime) with (
+    step PresenceWindow: true =>
+        LastATime = iff(MatchesA, EventTime_1, iff(NewCorrelationGroup, datetime(null), PresenceWindow.LastATime)),
+        LastBTime = iff(MatchesB, EventTime_1, iff(NewCorrelationGroup, datetime(null), PresenceWindow.LastBTime)),
+        LastCTime = iff(MatchesC, EventTime_1, iff(NewCorrelationGroup, datetime(null), PresenceWindow.LastCTime));
+)
+// Only source-match timestamps evaluate; expiration never creates an anchor.
+| extend HasA = isnotnull(LastATime) and LastATime >= EventTime_1 - 5m, HasB = isnotnull(LastBTime) and LastBTime >= EventTime_1 - 5m, HasC = isnotnull(LastCTime) and LastCTime >= EventTime_1 - 5m
+| extend RuleCount = tolong(HasA) + tolong(HasB) + tolong(HasC)
+| where RuleCount >= 2
+| project WindowStart = EventTime_1 - 5m, WindowEnd = EventTime_1, RuleCount
+| extend Host="all"
+};
+let Expected=datatable(WindowEnd:datetime,Host:string,RuleCount:long) [
+datetime(2026-01-01T00:05:00Z),"all",2,
+        datetime(2026-01-01T00:05:00.0000001Z),"all",2
+];
+union (Actual() | project WindowEnd,Host,RuleCount | extend Delta=1), (Expected | extend Delta=-1)
+| summarize Delta=sum(Delta) by WindowEnd,Host,RuleCount
+| where Delta!=0

@@ -17,21 +17,21 @@ def documents(expression, *, kind="temporal", rules=None):
 
 def test_boolean_presence_uses_upstream_references_and_inclusive_windows():
     (query,) = convert_documents(documents("A and B and not C"))
-    assert 'countif(_sigma_rule == "A") > 0' in query
-    assert 'countif(_sigma_rule == "B") > 0' in query
-    assert 'countif(_sigma_rule == "C") > 0' in query
+    assert 'countif(SourceRule == "A") > 0' in query
+    assert 'countif(SourceRule == "B") > 0' in query
+    assert 'countif(SourceRule == "C") > 0' in query
     assert "not(" in query
-    assert "between ((_sigma_window_end - 5m) .. _sigma_window_end)" in query
-    assert '["Host"] = _sigma_group_0, RuleCount' in query
+    assert "LastATime >= EventTime_1 - 5m" in query
+    assert '["Host"] = GroupHost, RuleCount' in query
 
 
 @pytest.mark.parametrize(
     ("expression", "predicate"),
     [
-        ("A or B and not C", "(_sigma_present or (_sigma_present_1 and not(_sigma_present_2)))"),
-        ("(A or B) and C", "((_sigma_present or _sigma_present_1) and _sigma_present_2)"),
-        ("not (A and not B)", "not((_sigma_present and not(_sigma_present_1)))"),
-        ("A", "_sigma_present"),
+        ("A or B and not C", "(HasA or (HasB and not(HasC)))"),
+        ("(A or B) and C", "((HasA or HasB) and HasC)"),
+        ("not (A and not B)", "not((HasA and not(HasB)))"),
+        ("A", "HasA"),
     ],
 )
 def test_boolean_preserves_parser_precedence_and_nesting(expression, predicate):
@@ -76,8 +76,8 @@ def test_boolean_child_and_detection_sources_preserve_aliases_and_generation():
     assert 'todatetime(["WindowEnd"])' in query
     assert '["Host"]' in query
     assert '["Device"]' in query
-    assert 'countif(_sigma_rule == "child") > 0' in query
-    assert '["Actor"] = _sigma_group_0, RuleCount' in query
+    assert 'countif(SourceRule == "child") > 0' in query
+    assert '["Actor"] = GroupActor, RuleCount' in query
 
 
 def test_boolean_uuid_reference_has_public_parser_error():
@@ -95,7 +95,7 @@ def test_boolean_generate_keeps_standalone_source_searches():
     docs[-1]["correlation"]["generate"] = True
     queries = convert_documents(docs)
     assert len(queries) == 4
-    assert 'countif(_sigma_rule == "C") > 0' in queries[-1]
+    assert 'countif(SourceRule == "C") > 0' in queries[-1]
 
 
 def test_boolean_prepared_fixtures_are_current_public_conversion_output():
@@ -112,7 +112,7 @@ def test_boolean_retains_context_without_changing_detection_membership():
     docs = documents("(A and B) or C")
     docs[-1]["fields"] = ["User", "Server"]
     (query,) = convert_documents(docs)
-    assert 'countif(_sigma_rule == "A") > 0' in query
+    assert 'countif(SourceRule == "A") > 0' in query
     assert '["User"] =' in query
     assert '["Server"] =' in query
     assert "RuleCount" in query
