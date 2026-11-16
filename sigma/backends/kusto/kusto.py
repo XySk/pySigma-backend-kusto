@@ -1033,8 +1033,8 @@ class KustoBackend(TextQueryBackend):
                 prefix += (
                     f"let {binding} = {context_matches}\n| join kind=inner ({identity_relation}) on {key}\n"
                     f"| summarize {value} = take_any({value}) by {source_id}, {identity}\n"
-                    f"| summarize {collection} = make_list(pack_array({value}[1]), 1048576), "
-                    f"{amount} = count() by {source_id};\n"
+                    f"| summarize {collection} = make_list_if(pack_array({value}[1]), isnotnull({value}[1]), 1048576), "
+                    f"{amount} = countif(isnotnull({value}[1])) by {source_id};\n"
                 )
                 collections.append((binding, collection, amount, field))
             self._register_correlation_guard(

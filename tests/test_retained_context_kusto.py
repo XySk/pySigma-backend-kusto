@@ -20,6 +20,17 @@ def test_count_retains_requested_source_and_correlation_fields_without_regroupin
     assert '"Kusto retained context collection limit exceeded"' in query
 
 
+def test_retained_context_omits_null_values_from_displayed_collection_and_limit_count():
+    source = source_document()
+    source["fields"] = ["Amount"]
+    summary = correlation_document("context", "event_count", ["source-rule"])
+
+    (query,) = convert_documents([source, summary])
+
+    assert "make_list_if(pack_array(_sigma_context_value[1]), isnotnull(_sigma_context_value[1]), 1048576)" in query
+    assert "countif(isnotnull(_sigma_context_value[1]))" in query
+
+
 @pytest.mark.parametrize(
     "kind,metric",
     [
