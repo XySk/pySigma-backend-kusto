@@ -119,7 +119,7 @@ def test_scalar_distinct_count_has_no_recursive_identity_query():
     (query,) = KustoBackend(processing_pipeline=pipeline, correlation_timestamp_field="Timestamp").convert(
         SigmaCollection.from_yaml(yaml.safe_dump_all(docs))
     )
-    assert '_sigma_value = ["User"]' in query
+    assert 'CountedUser = ["User"]' in query
     assert "_sigma_identity" not in query
     assert "assert(" not in query
 

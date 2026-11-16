@@ -1268,13 +1268,15 @@ class KustoBackend(TextQueryBackend):
         allocate = self._name_allocator(source_fields)
 
         event_count = rule.type == SigmaCorrelationType.EVENT_COUNT
+        value_count = rule.type == SigmaCorrelationType.VALUE_COUNT
+        readable = ordered or event_count or value_count
         columns = {
-            "timestamp": allocate("EventTime" if ordered or event_count else "_sigma_timestamp"),
-            "rule": allocate("SourceRule" if ordered or event_count else "_sigma_rule"),
+            "timestamp": allocate("EventTime" if readable else "_sigma_timestamp"),
+            "rule": allocate("SourceRule" if readable else "_sigma_rule"),
             "groups": [
                 allocate(
                     "Group" + re.sub(r"[^A-Za-z0-9_]", "_" if ordered else "", field)
-                    if ordered or event_count
+                    if readable
                     else f"_sigma_group_{index}"
                 )
                 for index, field in enumerate(rule.group_by or [])
@@ -1286,7 +1288,7 @@ class KustoBackend(TextQueryBackend):
                 "_sigma_types" if temporal else "_sigma_weights" if counted_fields is None else "_sigma_values"
             ),
         }
-        if event_count:
+        if event_count or value_count:
             columns["narrow_source"] = True
         numeric_context = rule.type in (
             SigmaCorrelationType.VALUE_SUM,
@@ -1299,8 +1301,12 @@ class KustoBackend(TextQueryBackend):
             columns["identify_values"] = True
         if counted_fields is not None:
             columns["values"] = [
-                allocate("_sigma_value" if len(counted_fields) == 1 else f"_sigma_value_{index}")
-                for index in range(len(counted_fields))
+                allocate(
+                    "Counted" + re.sub(r"[^A-Za-z0-9_]", "", field)
+                    if value_count
+                    else "_sigma_value" if len(counted_fields) == 1 else f"_sigma_value_{index}"
+                )
+                for index, field in enumerate(counted_fields)
             ]
         if rule.type == SigmaCorrelationType.VALUE_SUM:
             columns["integer_sum"] = allocate("_sigma_integer_sum")
@@ -1364,6 +1370,22 @@ class KustoBackend(TextQueryBackend):
             return [
                 self._convert_event_count(
                     rule, definitions, search, columns, valid_rows, span, query_operator, threshold, allocate
+                )
+            ]
+        if value_count:
+            return [
+                self._convert_value_count(
+                    rule,
+                    definitions,
+                    search,
+                    columns,
+                    valid_rows,
+                    span,
+                    query_operator,
+                    threshold,
+                    counted_fields,
+                    metrics,
+                    allocate,
                 )
             ]
         if ordered:
@@ -1484,15 +1506,6 @@ class KustoBackend(TextQueryBackend):
                 f"ValueAvg = avgif(toreal({value}[1]), {numeric})",
                 f"{columns['numeric_count']} = countif({numeric})",
             ]
-        else:
-            # Scalar identities retain empty-value rows as anchors. Each field
-            # is still counted independently across the entire window.
-            preaggregate = f"| summarize by {weighted_fields}, {', '.join(columns['values'])}"
-            distinct_anchors = "| distinct *\n"
-            aggregates = [
-                f"{metric} = count_distinctif({value}, isnotempty({value}))"
-                for metric, value in zip(metrics, columns["values"])
-            ]
         if boolean:
             references = {reference.reference: reference.rule for reference in rule.referenced_rules}
             presence = {}
@@ -1522,6 +1535,96 @@ class KustoBackend(TextQueryBackend):
             scope += summary_binding + aggregate + ");\n"
             aggregate = after_summary
         return [_CorrelationQuery(scope, aggregate + f"| where {comparisons}\n| project {result_fields}")]
+
+    def _convert_value_count(
+        self,
+        rule,
+        definitions,
+        search,
+        columns,
+        valid_rows,
+        span,
+        query_operator,
+        threshold,
+        counted_fields,
+        metrics,
+        allocate,
+    ):
+        """Merge each scalar's active intervals, then count at original source anchors."""
+        matches = allocate("ValueCountSources")
+        event_time, groups = columns["timestamp"], columns["groups"]
+        boundary_time, boundary_order = [allocate(name) for name in ("ValueBoundaryTime", "ValueBoundaryOrder")]
+        deltas = [allocate(value + "Delta") for value in columns["values"]]
+        definitions += f"let {matches} = materialize({search}\n| where {valid_rows});\n"
+
+        def changed(field, kind, neighbor):
+            previous = f"{neighbor}({field})"
+            expression = f"{field} != {previous}"
+            if kind == "real":
+                # Native summarize treats NaNs as one distinct scalar value.
+                expression = f"({expression} and not(isnan({field}) and isnan({previous})))"
+            return expression
+
+        branches = []
+
+        def boundary(source, time, order, active=None, amount=0):
+            projection = [*groups, f"{boundary_time} = {time}", f"{boundary_order} = {order}"]
+            projection.extend(f"{delta} = {amount if index == active else 0}" for index, delta in enumerate(deltas))
+            return f"({source}\n| project {', '.join(projection)})"
+
+        anchor_fields = ", ".join([*groups, event_time])
+        branches.append(boundary(f"{matches} | summarize by {anchor_fields}", event_time, 1))
+        group_kinds = [self._correlation_field_types[field] for field in rule.group_by or []]
+        for index, (field, value) in enumerate(zip(counted_fields, columns["values"])):
+            intervals = allocate(value + "Activity")
+            starts, ends = [allocate(value + suffix) for suffix in ("Starts", "Ends")]
+            keys = [*groups, value]
+            kinds = [*group_kinds, self._correlation_field_types[field]]
+            start = " or ".join(
+                [
+                    f"isnull(prev({event_time}))",
+                    *(changed(key, kind, "prev") for key, kind in zip(keys, kinds)),
+                    f"{event_time} > prev({event_time}) + {span}",
+                ]
+            )
+            end = " or ".join(
+                [
+                    f"isnull(next({event_time}))",
+                    *(changed(key, kind, "next") for key, kind in zip(keys, kinds)),
+                    f"next({event_time}) > {event_time} + {span}",
+                ]
+            )
+            definitions += (
+                f"let {intervals} = materialize({matches}\n| where isnotempty({value})\n"
+                f"| summarize by {', '.join([*keys, event_time])}\n"
+                f"| sort by {', '.join(f'{key} asc' for key in [*keys, event_time])}\n"
+                "// Repeated values whose inclusive active intervals overlap contribute only once.\n"
+                f"| extend {starts} = {start},\n    {ends} = {end});\n"
+            )
+            branches.append(boundary(f"{intervals} | where {starts}", event_time, 0, index, 1))
+            branches.append(boundary(f"{intervals} | where {ends}", f"{event_time} + {span}", 2, index, -1))
+        restart = " or ".join(changed(group, kind, "prev") for group, kind in zip(groups, group_kinds))
+        accumulators = [
+            f"{metric} = row_cumsum({delta}" + (f", {restart})" if restart else ")")
+            for metric, delta in zip(metrics, deltas)
+        ]
+        comparisons = " and ".join(
+            (
+                f"todecimal({metric}) {query_operator} decimal({threshold})"
+                if threshold != int(threshold)
+                else f"{metric} {query_operator} {threshold}"
+            )
+            for metric in metrics
+        )
+        projection = self._correlation_result_projection(rule, groups, boundary_time, span, metrics)
+        body = (
+            "union " + ",\n".join(branches) + "\n"
+            "// All interval starts precede anchors; equal-time expirations follow them.\n"
+            f"| sort by {', '.join(f'{key} asc' for key in [*groups, boundary_time, boundary_order])}\n"
+            f"| extend {', '.join(accumulators)}\n"
+            f"| where {boundary_order} == 1\n| where {comparisons}\n| project {projection}"
+        )
+        return _CorrelationQuery(definitions, body)
 
     def _convert_event_count(
         self, rule, definitions, search, columns, valid_rows, span, query_operator, threshold, allocate
@@ -1936,7 +2039,12 @@ class KustoBackend(TextQueryBackend):
             if mapped_field not in context_fields:
                 scalar = self._quote_correlation_field(mapped_field)
             fields.append(f"{column} = {scalar}")
-        if columns.get("narrow_source") and child and source_state.processing_state.get("kusto_context_artifact"):
+        if (
+            columns.get("child_match")
+            and columns.get("narrow_source")
+            and child
+            and source_state.processing_state.get("kusto_context_artifact")
+        ):
             fields.append(columns["child_match"])
         operator = "project" if columns.get("narrow_source") else "extend"
         result = _CorrelationNormalization(f"\n| {operator} " + ", ".join(fields), columns["rule"])
