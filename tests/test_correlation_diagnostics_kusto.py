@@ -21,6 +21,9 @@ def backend(**options):
     pipeline = ProcessingPipeline.from_dict(
         {"transformations": [{"type": "set_state", "key": "query_table", "val": "Events"}]}
     )
+    from tests.correlation_helpers import fixture_schema
+
+    pipeline.vars["kusto_schema"] = fixture_schema()
     return KustoBackend(processing_pipeline=pipeline, **{"correlation_timestamp_field": "Timestamp", **options})
 
 
