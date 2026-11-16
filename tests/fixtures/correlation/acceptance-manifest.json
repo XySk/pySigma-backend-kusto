@@ -563,6 +563,11 @@
       "expected_error": null
     },
     {
+      "name": "source_predicates_securityevent.kql",
+      "sha256": "120494d80e695613471489b7effb949b069b43c6bd69ac003034d809ce010c10",
+      "expected_error": null
+    },
+    {
       "name": "standard_mappings.kql",
       "sha256": "7b0017b6b368ea0b5d85b37439bad841744040c8bbc76aca930309d4c318bb63",
       "expected_error": null

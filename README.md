@@ -398,6 +398,20 @@ transformations:
 sigma convert -t kusto -p microsoft_xdr -p test_table_name_pipeline.yml test_rule.yml
 ```
 
+The Microsoft XDR pipeline applies its field/value rewrites and removes `EventID`,
+`EventCode`, and `ObjectType` only when the selected table belongs to its built-in
+XDR schema. Selecting `SecurityEvent` or another custom table keeps these source
+predicates and native field values. Supply that table's standard field mappings
+and relevant correlation field types explicitly; XDR generic mappings do not
+apply to custom tables. The Python `query_table` argument takes precedence over
+a table selected by an earlier custom pipeline.
+
+For authentication rules on `SecurityEvent`, explicitly map logical `User` to
+`TargetUserName` when it represents the account being authenticated. `SubjectUserName`
+identifies the actor and is a different account. A correlation grouped by `[User]`
+combines that target account's events across computers; include `Computer` only
+when the detection intentionally requires a separate group per computer.
+
 #### Python Pipelines
 
 You can also set the table name in the pipeline via Python by passing the `query_table` parameter to the pipeline.
