@@ -390,7 +390,18 @@ The generated strategies preserve actual inclusive sliding windows:
 
 Context-bearing queries retain complete native relationship rows and build bounded displays separately. Parents consume those complete relationships. Scalar normalization removes arbitrary recursive identity traversal, restoration joins, generated assertions, and duplicate validation queries. Normal engine errors and resource limits still fail execution. Joins remain where they establish actual window membership or observed contributor relationships; Kusto's shared per-node materialization cache can limit large queries.
 
-The [fixture guide](tests/fixtures/correlation/README.md) describes independent literal oracles and strict execution. [Runtime records](tests/fixtures/correlation/RUNTIME.md) identify the exact executed hashes, including failed historical attempts. The [original 64-workload baseline](tests/fixtures/correlation/BENCHMARK-BASELINE.md) and separately labeled strategy studies report measured elapsed, CPU, memory, query structure, and failures. Small emulator studies include planning cost and do not establish production capacity or a universal latency target.
+The [fixture guide](tests/fixtures/correlation/README.md) describes independent
+literal oracles and strict execution. The final integrated candidate passed all
+255 engine fixtures and all 192 repeated samples across 64 workloads. [Per-workload
+results](tests/fixtures/correlation/BENCHMARK-COMPARISON.md) compare unchanged
+input/oracle fixtures with the original baseline under matching engine/resources
+and 15s/13s deadlines. All 28 completed original plain workloads show lower final
+elapsed/total/planning medians; execution-CPU and memory exceptions are retained.
+The 36 original failed context/chain workloads now complete correctly. Historical
+failures, exact executed hashes, native schema migrations and separate larger
+strategy studies remain visible in [runtime records](tests/fixtures/correlation/RUNTIME.md).
+These synthetic emulator measurements establish the reported query behavior,
+without a production throughput, capacity or universal latency promise.
 
 ### Retained investigation context
 

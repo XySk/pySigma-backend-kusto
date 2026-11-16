@@ -6,6 +6,38 @@ Sections describing recursive nested identity, boxed values, generated assertion
 
 The [original 64-workload benchmark](BENCHMARK-BASELINE.md) preserves all 195 original attempts and distinguishes 28 verified plain workloads from 36 failed context/chain workloads. Later [value-count](VALUE-COUNT.md), [sum](runtime-evidence/native-sums/README.md), [average](runtime-evidence/native-averages/README.md), [percentile](runtime-evidence/native-percentiles/README.md), [ordered-context](TEMPORAL-PARTICIPANTS.md), and [existence](COUNT-EXISTENCE.md) studies use their own frozen revisions and settings. Timing comparisons and current combined acceptance require exact final query hashes; older passing hashes do not cover changed KQL.
 
+## Final integrated acceptance and repeated comparison (#49)
+
+On 2026-11-16, the final candidate at `59c455b5a5b008c042727eaef06f92c0da832044`
+passed **255/255 strict real-Kusto fixtures** and **192/192 repeated benchmark
+samples across all 64 workloads**. Publication independently rechecks every final
+raw request/query hash, response completion, native schema and independent result
+oracle. [Final corpus evidence](runtime-evidence/integrated-acceptance-final/README.md)
+retains the full frozen/executed corpus, including 49 producer/consumer edges,
+reporting/context chains, source predicates, empty numeric populations and the
+previously unexecuted grouping and counting the same field value-count fixture.
+
+[Per-workload benchmark results](BENCHMARK-COMPARISON.md) compare the exact same 64
+input/oracle/schema fixtures with original `07525ee` on the same engine/image,
+12 GiB limits, 15s client/13s server and cache-disabled settings. All 28 completed
+original plain workloads have lower final client/engine/total/planning medians;
+three sparse execution CPU and four average/percentile memory medians increase.
+All 36 original failed context/chain workloads now complete correctly, without
+inventing ratios for failed originals. The publication separates larger strategy
+studies and their deadlines/resource provenance from this planning-heavy corpus.
+
+The initial final-candidate benchmark was **189 PASS / 3 FAIL**, all hot plain-chain
+HTTP 400 errors. [The preserved offset proof](runtime-evidence/predecessor-offset-limit/README.md)
+shows the measured engine rejects prev offsets above 1024 with SEM0248; thresholds
+above 1,025 now retain general exact counts. New public regressions and literal
+positive/one-short engine examples cover 1,025/1,026/10,000. Initial failed samples,
+minimized failing probe, successful repair, and both final complete gates remain
+separate immutable artifacts. Failure handling and completion checks stay strict.
+
+The configured repository gate passed 739 tests with 97.20% coverage. Ruff,
+single-file Black and whitespace checks pass. These measured synthetic results
+supply no production throughput/capacity SLA and do not close or change #31/#32.
+
 # Ordered temporal prefix state acceptance (#41)
 
 On 2026-11-16, all five fixtures in [ordered-state-manifest.json](ordered-state-manifest.json) passed the strict real-Kusto harness on engine `2026.11.15.0741-2645-8e3387b-master`, database `NetDefaultDB`, with `max_memory_consumption_per_query_per_node=12884901888`. Each returned HTTP 200, one empty multiset diagnostic, and successful uncancelled completion without engine-error frames. Exact generated queries, frozen hashes, raw responses, engine version, and elapsed correctness-run samples are preserved in [ordered-state evidence](runtime-evidence/ordered-state/results.json).
