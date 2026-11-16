@@ -139,6 +139,8 @@ def strategy_fixture(prefilter, threshold):
 def fixtures():
     return {
         "value_percentile_native_comparisons.kql": comparisons_fixture(),
+        "value_percentile_native_ties.kql": ties_fixture(),
+        "value_percentile_native_int.kql": values_fixture("int", ["1", "2", "100", "200"], "2"),
         "value_percentile_native_mixed_context.kql": mixed_context_fixture(),
         "value_percentile_native_real_groups.kql": real_groups_fixture(),
         "value_percentile_native_long.kql": values_fixture(
@@ -235,3 +237,30 @@ let Observed=Actual() | extend Group=tostring(Group);
         + expected
         + check("Observed", "Expected", ["WindowStart", "WindowEnd", "Group", "ValuePercentile"])
     )
+
+
+def ties_fixture():
+    data = """let Events=datatable(Timestamp:datetime,Amount:long,Marker:string)[
+ datetime(2026-01-01T12:00:00Z),0,"match",
+ datetime(2026-01-01T12:00:00Z),0,"match",
+ datetime(2026-01-01T12:00:00Z),3,"match",
+ datetime(2026-01-01T12:05:00Z),long(null),"match",
+ datetime(2026-01-01T12:05:00.0000001Z),long(null),"match"
+];
+"""
+    calls, rows = [], []
+    for operator in OPERATORS:
+        for prefilter in (False, True):
+            name = f"Ties_{operator}_{prefilter}"
+            text = query(operator=operator)
+            if prefilter:
+                text = exact_prefilter(text, 50, operator, 0)
+            data += f"let {name}=(){{\n{text}\n}};\n"
+            calls.append(f'({name}() | extend Case="{name}")')
+            if operator in ("gte", "lte", "eq"):
+                for start, end in (("11:55:00", "12:00:00"), ("12:00:00", "12:05:00")):
+                    rows.append(f'"{name}",datetime(2026-01-01T{start}Z),datetime(2026-01-01T{end}Z),0')
+    data += "let Actual=union " + ",".join(calls) + ";\n"
+    data += "let Expected=datatable(Case:string,WindowStart:datetime,WindowEnd:datetime,ValuePercentile:long)[\n"
+    data += ",\n".join(rows) + "\n];\n"
+    return HEADER + data + check("Actual", "Expected", ["Case", "WindowStart", "WindowEnd", "ValuePercentile"])
