@@ -77,6 +77,9 @@ def query(*, operator="gte", threshold=2, groups=(), duplicate_sources=False, co
             }
         )
     pipeline = ProcessingPipeline.from_dict({"transformations": transformations})
+    from tests.correlation_helpers import fixture_schema
+
+    pipeline.vars["kusto_schema"] = fixture_schema(("Events", "OtherEvents"))
     if mapped_sources:
         pipeline.vars["kusto_field_mappings"] = FieldMappings(
             table_mappings={
@@ -978,6 +981,9 @@ def temporal_query(*, operator=None, threshold=2, groups=(), mapped_sources=Fals
             ]
         }
     )
+    from tests.correlation_helpers import fixture_schema
+
+    pipeline.vars["kusto_schema"] = fixture_schema(("Events", "OtherEvents"))
     if mapped_sources:
         pipeline.vars["kusto_field_mappings"] = FieldMappings(
             table_mappings={
@@ -1370,6 +1376,9 @@ def chained_query(*, operator="gte", threshold=2, grouped=False, mixed=False, me
             ]
         }
     )
+    from tests.correlation_helpers import fixture_schema
+
+    pipeline.vars["kusto_schema"] = fixture_schema(("Events", "OtherEvents"))
     pipeline.vars["kusto_field_mappings"] = FieldMappings(
         table_mappings={
             "Events": {"Timestamp": "ProcessTime", "User": "ProcessUser", "Computer": "ProcessHost"},
@@ -1824,9 +1833,14 @@ def typed_precision_value_count_fixture():
         chain_source("E", "match"),
         chain_correlation("C", "value_count", ["E"], groups=("Case",), field="Value", condition={"gte": 0}),
     ]
-    data = """// Equal-looking scalars must keep their full precision and runtime type.
+    data = (
+        """// Equal-looking scalars must keep their full precision and runtime type.
 // Reordered bags remain equal even with nested extended scalars and empty containers.
-let Deep = dynamic(""" + "[" * 65 + "0" + "]" * 65 + """);
+let Deep = dynamic("""
+        + "[" * 65
+        + "0"
+        + "]" * 65
+        + """);
 let Extended = pack_array(datetime(2020-01-01), 1s, guid(00000000-0000-0000-0000-000000000001));
 let Events = union
 (print Case="adjacent-double", Value=pack_array(real(1.0))[0]),
@@ -1851,6 +1865,7 @@ let Events = union
 (print Case="nested-precision", Value=bag_pack("a", pack_array(real(1.0), decimal(1.0))))
 | extend Timestamp="2026-01-01T12:00:00Z", Marker="match";
 """
+    )
     expected = """let Expected = datatable(WindowStart:datetime, WindowEnd:datetime, Case:string, ValueCount:long) [
     datetime(2026-01-01T11:55:00Z), datetime(2026-01-01T12:00:00Z), "adjacent-double", 2,
     datetime(2026-01-01T11:55:00Z), datetime(2026-01-01T12:00:00Z), "adjacent-long", 2,
