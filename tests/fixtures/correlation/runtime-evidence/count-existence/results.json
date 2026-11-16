@@ -1,0 +1,105 @@
+{
+  "started_utc": "2026-11-16T18:05:59.806502+00:00",
+  "endpoint": "http://localhost:8080",
+  "database": "NetDefaultDB",
+  "request_options": {
+    "max_memory_consumption_per_query_per_node": 12884901888
+  },
+  "timeout_seconds": 45,
+  "manifest_sha256": "5a07a9d2218037941dfea39decb5f02b26737564e452a06608ff25c8bfb723f6",
+  "fixtures": [
+    {
+      "name": "count_existence_targeted_logon.kql",
+      "sha256": "889fa3a3dfaccbc59c1ca8c1a26179782c7bc4a9146da58c186242f24b4100a1",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.088
+    },
+    {
+      "name": "count_existence_one.kql",
+      "sha256": "997b600de2532d44b15e2ac55cbc37c2938901287719e7278cfc1dac16e1b123",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.152
+    },
+    {
+      "name": "count_existence_duplicates.kql",
+      "sha256": "00e2f98b8ecb3512fd4f7afe903e2c7713b6f7e5f2990108acee848eeb529fb6",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.08
+    },
+    {
+      "name": "count_existence_ten.kql",
+      "sha256": "aa940cc161a5e9540e2945d1b36ec750f640a135bb94559379dcec14cab43aa0",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.076
+    },
+    {
+      "name": "count_existence_real_groups.kql",
+      "sha256": "48fe0318531bc7c4263bfb255a633a57cbd0c05d12a7f17033f53fa2133d17c1",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.135
+    },
+    {
+      "name": "count_existence_inherited_metric.kql",
+      "sha256": "5357fa1566236c6627814c327f37f73547fed16e9b2767e1b975aba0cf33ad7e",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.188
+    }
+  ],
+  "status": "PASS",
+  "engine_version": {
+    "Tables": [
+      {
+        "TableName": "Table_0",
+        "Columns": [
+          {
+            "ColumnName": "BuildVersion",
+            "DataType": "String"
+          },
+          {
+            "ColumnName": "BuildTime",
+            "DataType": "DateTime"
+          },
+          {
+            "ColumnName": "ServiceType",
+            "DataType": "String"
+          },
+          {
+            "ColumnName": "ProductVersion",
+            "DataType": "String"
+          },
+          {
+            "ColumnName": "ServiceOffering",
+            "DataType": "String"
+          }
+        ],
+        "Rows": [
+          [
+            "1.0.9815.14081",
+            "2026-11-15T07:49:22Z",
+            "Engine",
+            "2026.11.15.0741-2645-8e3387b-master",
+            ""
+          ]
+        ]
+      }
+    ]
+  }
+}

@@ -6,24 +6,19 @@ datetime(2026-01-01T00:00:00Z),"g","A",
         datetime(2026-01-01T00:06:00.0000001Z),"g","B"
 ] | extend Device=Host;
 let Actual=(){
-let _sigma_child_0 = () {
-let SourceMatchArrivals = union (Events
+let Child = () {
+union (Events
 | where Marker =~ "A"
 | project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"])
 | where isnotnull(EventTime_1) and isnotempty(GroupHost)
-| summarize SourceMatchCount = count() by EventTime_1, GroupHost;
-union (SourceMatchArrivals
-| project GroupHost, CountBoundaryTime = EventTime_1, CountBoundaryOrder = 0, SourceMatchDelta = SourceMatchCount),
-(SourceMatchArrivals
-| project GroupHost, CountBoundaryTime = EventTime_1 + 5m, CountBoundaryOrder = 1, SourceMatchDelta = -SourceMatchCount)
-// Arrivals evaluate before equal-time expirations; expirations never create matches.
-| sort by GroupHost asc, CountBoundaryTime asc, CountBoundaryOrder asc
-| extend EventCount = row_cumsum(SourceMatchDelta, GroupHost != prev(GroupHost))
-| where CountBoundaryOrder == 0
-| where EventCount >= 2
-| project WindowStart = CountBoundaryTime - 5m, WindowEnd = CountBoundaryTime, ["Host"] = GroupHost, EventCount
+// Preserve individual source matches, including timestamp ties, before the threshold lookup.
+| sort by GroupHost asc, EventTime_1 asc
+| extend ThresholdPredecessorTime = prev(EventTime_1, 1)
+| where ThresholdPredecessorTime >= EventTime_1 - 5m and GroupHost == prev(GroupHost, 1)
+| distinct EventTime_1, GroupHost
+| project WindowStart = EventTime_1 - 5m, WindowEnd = EventTime_1, ["Host"] = GroupHost
 };
-union (_sigma_child_0()
+union (Child()
 | project EventTime_1 = todatetime(["WindowEnd"]), GroupActor = ["Host"], SourceRule = "child"),
 (Events
 | where Marker =~ "B"
