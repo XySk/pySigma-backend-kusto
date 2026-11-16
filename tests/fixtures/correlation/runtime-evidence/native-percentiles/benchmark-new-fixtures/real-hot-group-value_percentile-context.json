@@ -1,0 +1,11 @@
+{
+  "name": "real-hot-group-value_percentile-context",
+  "schema": {
+    "WindowStart": "datetime",
+    "WindowEnd": "datetime",
+    "Host": "string",
+    "ValuePercentile": "real",
+    "User": "dynamic"
+  },
+  "expected": []
+}

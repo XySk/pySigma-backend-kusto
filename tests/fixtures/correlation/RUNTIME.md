@@ -856,3 +856,25 @@ peak-memory measurements increased despite lower elapsed time and CPU.
 The native-average strategy passed all 16 focused real-Kusto fixtures, including current-window results after a large real observation expires, finite-only and undefined populations, weighting, ordinary decimal-to-real rounding, aliases, child metrics, and retained context. Paired old/new strategy benchmarks passed all 48 samples across eight long/real, many-group/hot-group, plain/context workloads. All eight wall/engine medians decreased; one CPU median increased and one peak-memory median increased slightly. The query keeps exact candidate pairing and actual-time membership to avoid history-dependent floating-point residue.
 
 [Recorded evidence and per-workload results](runtime-evidence/native-averages/README.md) include frozen public queries and independent expected multisets, engine requests/responses, strict verdicts, version/settings, and raw CPU/memory statistics. These compare the old boxed average after scalar/context foundations against the native average; they are separate from the #35 pre-redesign baseline. The small emulator workloads do not establish production-scale capacity. Final integrated corpus and performance gates remain required.
+
+## Spec 34 exact native percentiles (#44)
+
+The native percentile strategy passed 15 initial and 17 final strict Kusto
+correctness cases. All 48 matched old/new samples and 12 direct/prefilter
+strategy samples passed exact result and native schema checks.
+[Native percentile evidence](runtime-evidence/native-percentiles/README.md)
+archives both frozen correctness sets, queries, requests, responses, engine
+statistics, expected outputs and per-workload measurements.
+
+Native min/max removes ranking at selectors 0 and 100. Other selectors retain
+one narrow candidate relation for population counting and a native sort,
+preserving exact long/decimal observations and the actual ValuePercentile
+metric for consumers. Undefined populations match no comparison.
+
+The exact threshold-count alternative was faster in the measured 10% and 90%
+qualifying workloads, especially at 10%; peak memory increased slightly at 90%.
+Direct selection remains the general default because conversion has no
+data-selectivity estimate and real/decimal prefilter performance is unmeasured.
+The candidate join can still grow quadratically. These are workload-specific
+emulator measurements; shared corpus regeneration and final integrated gates
+remain required.

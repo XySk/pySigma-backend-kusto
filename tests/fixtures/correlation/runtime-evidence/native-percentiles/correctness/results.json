@@ -1,0 +1,186 @@
+{
+  "started_utc": "2026-11-16T19:08:22.079225+00:00",
+  "endpoint": "http://localhost:8080",
+  "database": "NetDefaultDB",
+  "request_options": {
+    "max_memory_consumption_per_query_per_node": 12884901888
+  },
+  "timeout_seconds": 45,
+  "manifest_sha256": "2eeeb9a233c8569bb48ff92b8d4d7b49d7f05e6f9eb1a8e8967b39064af68dfe",
+  "fixtures": [
+    {
+      "name": "strategy_10_False.kql",
+      "sha256": "a4eda04e7e5353e5c50ffe5c7da09ccc52c1d2fb260366ec04d14b7976230f1f",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.052
+    },
+    {
+      "name": "strategy_10_True.kql",
+      "sha256": "4bf8a1902eca30a3c60c5d9b599aecf267f47ee5b2f039b7b853b62d082d0231",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.031
+    },
+    {
+      "name": "strategy_90_False.kql",
+      "sha256": "321859ef9366e82219a9336b44ba0d1f5ff7f8f0a62e019e230f10c69bb9671b",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.031
+    },
+    {
+      "name": "strategy_90_True.kql",
+      "sha256": "26746e71f86deccf5f66214b962f2221f520b524cb274a70006e587d1a6e11b4",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.031
+    },
+    {
+      "name": "value_percentile_aliases.kql",
+      "sha256": "338677dbce00b5f52f85cfc0e95b13e7d7f01aa74d8d3c0a7558300943805501",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.02
+    },
+    {
+      "name": "value_percentile_chained.kql",
+      "sha256": "508436aeb827385f2be4eeee0d8c80aece0ebea4f1f3ff7cb7bc75569c6bc181",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.034
+    },
+    {
+      "name": "value_percentile_comparisons.kql",
+      "sha256": "6a14c36b665ae3d3fcf2f766ae9ff39bc4658a39600acddbdbbe53efe7ddea5e",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.122
+    },
+    {
+      "name": "value_percentile_endpoints.kql",
+      "sha256": "faec2990455c13a206e09fc5f5c538488e02a2954f749c97f21fc903cb15f455",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.062
+    },
+    {
+      "name": "value_percentile_native_comparisons.kql",
+      "sha256": "6bbf90a6bb95e5b77ef57be6456ffc9202d6764107658bcd07ee95602baebf27",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.145
+    },
+    {
+      "name": "value_percentile_native_decimal.kql",
+      "sha256": "4aa652f921a5128291c98b181ba715ca819ad5c3c4370b0ac57302931d0d80d4",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.024
+    },
+    {
+      "name": "value_percentile_native_long.kql",
+      "sha256": "0c1cd7a53229c5df06d737f6e60aa02f34292c96d5974fae573fb1dbbb9d5600",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.031
+    },
+    {
+      "name": "value_percentile_native_mixed_context.kql",
+      "sha256": "7011cd9a12cfa396bdd2ede3153643c9bf52bce83828ae6ad93ec4b46225e75e",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.449
+    },
+    {
+      "name": "value_percentile_native_real.kql",
+      "sha256": "829e425f694d799018ef1f0de2be6dfea5b3525bddcc1c6393d7f8fbf1685734",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.017
+    },
+    {
+      "name": "value_percentile_native_real_groups.kql",
+      "sha256": "3f5dd8eb536d02107d43f6c980814e0cd3fde40dac8e3e9396ff272551ace268",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.023
+    },
+    {
+      "name": "value_percentile_population.kql",
+      "sha256": "8a95ed485c72f004de7f2343e360c5aba03ffc5f1da92a7d57b0ed918cc0933b",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.033
+    }
+  ],
+  "status": "PASS",
+  "engine_version": {
+    "Tables": [
+      {
+        "TableName": "Table_0",
+        "Columns": [
+          {
+            "ColumnName": "BuildVersion",
+            "DataType": "String"
+          },
+          {
+            "ColumnName": "BuildTime",
+            "DataType": "DateTime"
+          },
+          {
+            "ColumnName": "ServiceType",
+            "DataType": "String"
+          },
+          {
+            "ColumnName": "ProductVersion",
+            "DataType": "String"
+          },
+          {
+            "ColumnName": "ServiceOffering",
+            "DataType": "String"
+          }
+        ],
+        "Rows": [
+          [
+            "1.0.9815.14081",
+            "2026-11-15T07:49:22Z",
+            "Engine",
+            "2026.11.15.0741-2645-8e3387b-master",
+            ""
+          ]
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "source": "/tmp/kusto-spec34-baseline-context-batch3/container-inspect.json",
+  "note": "Root captured this snapshot in the immediately preceding exclusive baseline lane; not recaptured by this ticket.",
+  "container_id": "6a9e391a3161a3357ffd58aa7934fba14d55bfd885b54f8797654b62e42096be",
+  "image": "sha256:65e8298d9350856dec696e0e41327288e7bc105146768a1429fce62f3640acd8",
+  "Memory": 12884901888,
+  "MemorySwap": 12884901888,
+  "CpuQuota": 0,
+  "NanoCpus": 0
+}

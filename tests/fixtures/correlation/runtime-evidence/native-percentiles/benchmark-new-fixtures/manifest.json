@@ -1,0 +1,271 @@
+{
+  "revision": "d2cc22f405af4b89f849bda424e3e0d4a3b7cc05",
+  "baseline_revision": "07525ee846878754bda7933eab0684895a156086",
+  "oracle": "independent direct inclusive-window enumeration plus literal fixed group medians",
+  "workloads": [
+    {
+      "name": "long-many-groups-value_percentile-plain",
+      "fixture": "long-many-groups-value_percentile-plain.json",
+      "fixture_sha256": "03ed6db81bf71f123244de42aeb433d8c5528d605d47a560aadd173e7e9aa1bf",
+      "query": "long-many-groups-value_percentile-plain.kql",
+      "query_sha256": "0ed37bad7021e4b2a105b77bea7d2c4261c1b77d08cbfe209615d34727910ef3",
+      "query_bytes": 1591,
+      "query_lines": 28,
+      "operators": {
+        "where": 6,
+        "project": 5,
+        "distinct": 1,
+        "join": 2,
+        "extend": 2,
+        "mv-expand": 1,
+        "summarize": 1,
+        "sort": 1,
+        "serialize": 1
+      },
+      "input_rows": 96,
+      "expected_rows": 96
+    },
+    {
+      "name": "long-many-groups-value_percentile-context",
+      "fixture": "long-many-groups-value_percentile-context.json",
+      "fixture_sha256": "53e86ac66ef2f0ba2c7fa9a7c154f1f7ebc9370c8879047049549ae04dfdd77f",
+      "query": "long-many-groups-value_percentile-context.kql",
+      "query_sha256": "2162f10fb0975989bb22be52c89011a19790f6580400d3f95783be21028d7db2",
+      "query_bytes": 2977,
+      "query_lines": 54,
+      "operators": {
+        "where": 9,
+        "project": 9,
+        "distinct": 2,
+        "join": 4,
+        "extend": 6,
+        "mv-expand": 1,
+        "summarize": 3,
+        "sort": 1,
+        "serialize": 2
+      },
+      "input_rows": 96,
+      "expected_rows": 96
+    },
+    {
+      "name": "long-hot-group-value_percentile-plain",
+      "fixture": "long-hot-group-value_percentile-plain.json",
+      "fixture_sha256": "2e927e0ab91501336edf4f9868b4fb8789750f807b28ff39a6675ff2be648f7e",
+      "query": "long-hot-group-value_percentile-plain.kql",
+      "query_sha256": "1b1b6e5a68af7f23c259aef13ac848ef312a0076b473a03680ec2b5c3daefe35",
+      "query_bytes": 1595,
+      "query_lines": 28,
+      "operators": {
+        "where": 6,
+        "project": 5,
+        "distinct": 1,
+        "join": 2,
+        "extend": 2,
+        "mv-expand": 1,
+        "summarize": 1,
+        "sort": 1,
+        "serialize": 1
+      },
+      "input_rows": 96,
+      "expected_rows": 0
+    },
+    {
+      "name": "long-hot-group-value_percentile-context",
+      "fixture": "long-hot-group-value_percentile-context.json",
+      "fixture_sha256": "c7b307a1fcb8600454fa9f37584e34c4d1f71c0b8face7b1c20b6558ba8d7adf",
+      "query": "long-hot-group-value_percentile-context.kql",
+      "query_sha256": "f8916d099f2784825e2f909ba5cfb27a0c08ab194589a8c0300cafeff3a0b65d",
+      "query_bytes": 2981,
+      "query_lines": 54,
+      "operators": {
+        "where": 9,
+        "project": 9,
+        "distinct": 2,
+        "join": 4,
+        "extend": 6,
+        "mv-expand": 1,
+        "summarize": 3,
+        "sort": 1,
+        "serialize": 2
+      },
+      "input_rows": 96,
+      "expected_rows": 0
+    },
+    {
+      "name": "real-many-groups-value_percentile-plain",
+      "fixture": "real-many-groups-value_percentile-plain.json",
+      "fixture_sha256": "05653be9db8c1ae2c3feae7f030f136ae0179baa92d88ca5dd1c7804d776072f",
+      "query": "real-many-groups-value_percentile-plain.kql",
+      "query_sha256": "eb62d1332a2de629416c70ebe3df13a7baaedddd1cd6a59cc192a7f625304dc5",
+      "query_bytes": 1622,
+      "query_lines": 28,
+      "operators": {
+        "where": 6,
+        "project": 5,
+        "distinct": 1,
+        "join": 2,
+        "extend": 2,
+        "mv-expand": 1,
+        "summarize": 1,
+        "sort": 1,
+        "serialize": 1
+      },
+      "input_rows": 96,
+      "expected_rows": 96
+    },
+    {
+      "name": "real-many-groups-value_percentile-context",
+      "fixture": "real-many-groups-value_percentile-context.json",
+      "fixture_sha256": "b7b27b4a81cc5bb80b70eae1cd44466b9857793bc08734b76b03e915f8b3ca31",
+      "query": "real-many-groups-value_percentile-context.kql",
+      "query_sha256": "fbaf2f22b5dd8af952d5e9eaed6a9c65574c9d93904adbc648930948a84474e3",
+      "query_bytes": 3008,
+      "query_lines": 54,
+      "operators": {
+        "where": 9,
+        "project": 9,
+        "distinct": 2,
+        "join": 4,
+        "extend": 6,
+        "mv-expand": 1,
+        "summarize": 3,
+        "sort": 1,
+        "serialize": 2
+      },
+      "input_rows": 96,
+      "expected_rows": 96
+    },
+    {
+      "name": "real-hot-group-value_percentile-plain",
+      "fixture": "real-hot-group-value_percentile-plain.json",
+      "fixture_sha256": "e6ab37ce306a00d8a4fc975ab7a95db327a4fd2ab46ffb6113cd1d1f8ad5f47f",
+      "query": "real-hot-group-value_percentile-plain.kql",
+      "query_sha256": "20f71ca1eb831c760cf0da10742e0c6e53cf2835a7f255ebd540a205559653df",
+      "query_bytes": 1624,
+      "query_lines": 28,
+      "operators": {
+        "where": 6,
+        "project": 5,
+        "distinct": 1,
+        "join": 2,
+        "extend": 2,
+        "mv-expand": 1,
+        "summarize": 1,
+        "sort": 1,
+        "serialize": 1
+      },
+      "input_rows": 96,
+      "expected_rows": 0
+    },
+    {
+      "name": "real-hot-group-value_percentile-context",
+      "fixture": "real-hot-group-value_percentile-context.json",
+      "fixture_sha256": "b124b6a2bb535608f18d17bf734d6f3dfa0f49f7d2f69694092ff658e17f97ba",
+      "query": "real-hot-group-value_percentile-context.kql",
+      "query_sha256": "4d923692d4161292d4a34283fedf22a7252c8b5272f54600223057f5649682dc",
+      "query_bytes": 3010,
+      "query_lines": 54,
+      "operators": {
+        "where": 9,
+        "project": 9,
+        "distinct": 2,
+        "join": 4,
+        "extend": 6,
+        "mv-expand": 1,
+        "summarize": 3,
+        "sort": 1,
+        "serialize": 2
+      },
+      "input_rows": 96,
+      "expected_rows": 0
+    },
+    {
+      "name": "strategy-10-direct",
+      "fixture": "strategy-10-direct.json",
+      "fixture_sha256": "c53d0025b2d78c4050706e74147a3047a7e5542422073dba118987bf49c1ee5d",
+      "query": "strategy-10-direct.kql",
+      "query_sha256": "f8af7d9c3b37a867055a2f57444bd74bedaeedd639ac3560876fe5b6d54ad535",
+      "query_bytes": 1578,
+      "query_lines": 28,
+      "operators": {
+        "where": 6,
+        "project": 5,
+        "distinct": 1,
+        "join": 2,
+        "extend": 2,
+        "mv-expand": 1,
+        "summarize": 1,
+        "sort": 1,
+        "serialize": 1
+      },
+      "input_rows": 10000,
+      "expected_rows": 9000
+    },
+    {
+      "name": "strategy-10-prefilter",
+      "fixture": "strategy-10-prefilter.json",
+      "fixture_sha256": "6327f33a19e7332e29588dda52503d14e48f346acb295e16ee2d13f19047910c",
+      "query": "strategy-10-prefilter.kql",
+      "query_sha256": "cfa1c991218eada5aa97fe9c6a0c68b6ea57a5dc8e301c3a646876abe4d0eb26",
+      "query_bytes": 1813,
+      "query_lines": 29,
+      "operators": {
+        "where": 7,
+        "project": 5,
+        "distinct": 1,
+        "join": 2,
+        "extend": 2,
+        "mv-expand": 1,
+        "summarize": 1,
+        "sort": 1,
+        "serialize": 1
+      },
+      "input_rows": 10000,
+      "expected_rows": 9000
+    },
+    {
+      "name": "strategy-90-direct",
+      "fixture": "strategy-90-direct.json",
+      "fixture_sha256": "54d45eee87d08c52b9cea2cf3fb062c2d89f5933c3860ffceea1ac1910e6a0e1",
+      "query": "strategy-90-direct.kql",
+      "query_sha256": "4ec2d94548db591132040d87d3c5335ecafa1e09a0032484ec90e71e0d5a48d3",
+      "query_bytes": 1578,
+      "query_lines": 28,
+      "operators": {
+        "where": 6,
+        "project": 5,
+        "distinct": 1,
+        "join": 2,
+        "extend": 2,
+        "mv-expand": 1,
+        "summarize": 1,
+        "sort": 1,
+        "serialize": 1
+      },
+      "input_rows": 10000,
+      "expected_rows": 1000
+    },
+    {
+      "name": "strategy-90-prefilter",
+      "fixture": "strategy-90-prefilter.json",
+      "fixture_sha256": "c70a5977e2467623f92f63bfd935173c8992b23a77da1958f256c1c34049a9f4",
+      "query": "strategy-90-prefilter.kql",
+      "query_sha256": "84829c0b822498e0053c7d34e4a6372010fe598ed6c05af91628afa194bec003",
+      "query_bytes": 1813,
+      "query_lines": 29,
+      "operators": {
+        "where": 7,
+        "project": 5,
+        "distinct": 1,
+        "join": 2,
+        "extend": 2,
+        "mv-expand": 1,
+        "summarize": 1,
+        "sort": 1,
+        "serialize": 1
+      },
+      "input_rows": 10000,
+      "expected_rows": 1000
+    }
+  ]
+}

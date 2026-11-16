@@ -35,7 +35,11 @@ def exact_prefilter(query, selector, operator, threshold):
         f"max_of(1, (PercentilePopulation / 100) * {selector} + "
         f"tolong(ceiling(toreal((PercentilePopulation % 100) * {selector}) / 100.0)))"
     )
-    comparison = f"todecimal(MeasuredAmount) {{}} decimal({threshold})"
+    comparison = (
+        f"MeasuredAmount {{}} {threshold}"
+        if threshold == int(threshold)
+        else f"todecimal(MeasuredAmount) {{}} decimal({threshold})"
+    )
     summary = "PercentilePopulation = count() by "
     query = query.replace(
         summary,

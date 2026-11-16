@@ -59,7 +59,7 @@ PercentileObservations
 );
 PercentileWindowValues
 | join kind=inner (
-PercentileWindowValues | summarize PercentilePopulation = count(), BelowThreshold = countif(todecimal(MeasuredAmount) < decimal(0)), AtMostThreshold = countif(todecimal(MeasuredAmount) <= decimal(0)) by PercentileWindowEnd
+PercentileWindowValues | summarize PercentilePopulation = count(), BelowThreshold = countif(MeasuredAmount < 0), AtMostThreshold = countif(MeasuredAmount <= 0) by PercentileWindowEnd
 ) on PercentileWindowEnd
 | where AtMostThreshold < max_of(1, (PercentilePopulation / 100) * 50 + tolong(ceiling(toreal((PercentilePopulation % 100) * 50) / 100.0)))
 | project PercentileWindowEnd, MeasuredAmount, PercentilePopulation
@@ -120,7 +120,7 @@ PercentileObservations
 );
 PercentileWindowValues
 | join kind=inner (
-PercentileWindowValues | summarize PercentilePopulation = count(), BelowThreshold = countif(todecimal(MeasuredAmount) < decimal(0)), AtMostThreshold = countif(todecimal(MeasuredAmount) <= decimal(0)) by PercentileWindowEnd
+PercentileWindowValues | summarize PercentilePopulation = count(), BelowThreshold = countif(MeasuredAmount < 0), AtMostThreshold = countif(MeasuredAmount <= 0) by PercentileWindowEnd
 ) on PercentileWindowEnd
 | where BelowThreshold < max_of(1, (PercentilePopulation / 100) * 50 + tolong(ceiling(toreal((PercentilePopulation % 100) * 50) / 100.0)))
 | project PercentileWindowEnd, MeasuredAmount, PercentilePopulation
@@ -181,7 +181,7 @@ PercentileObservations
 );
 PercentileWindowValues
 | join kind=inner (
-PercentileWindowValues | summarize PercentilePopulation = count(), BelowThreshold = countif(todecimal(MeasuredAmount) < decimal(0)), AtMostThreshold = countif(todecimal(MeasuredAmount) <= decimal(0)) by PercentileWindowEnd
+PercentileWindowValues | summarize PercentilePopulation = count(), BelowThreshold = countif(MeasuredAmount < 0), AtMostThreshold = countif(MeasuredAmount <= 0) by PercentileWindowEnd
 ) on PercentileWindowEnd
 | where BelowThreshold >= max_of(1, (PercentilePopulation / 100) * 50 + tolong(ceiling(toreal((PercentilePopulation % 100) * 50) / 100.0)))
 | project PercentileWindowEnd, MeasuredAmount, PercentilePopulation
@@ -242,7 +242,7 @@ PercentileObservations
 );
 PercentileWindowValues
 | join kind=inner (
-PercentileWindowValues | summarize PercentilePopulation = count(), BelowThreshold = countif(todecimal(MeasuredAmount) < decimal(0)), AtMostThreshold = countif(todecimal(MeasuredAmount) <= decimal(0)) by PercentileWindowEnd
+PercentileWindowValues | summarize PercentilePopulation = count(), BelowThreshold = countif(MeasuredAmount < 0), AtMostThreshold = countif(MeasuredAmount <= 0) by PercentileWindowEnd
 ) on PercentileWindowEnd
 | where AtMostThreshold >= max_of(1, (PercentilePopulation / 100) * 50 + tolong(ceiling(toreal((PercentilePopulation % 100) * 50) / 100.0)))
 | project PercentileWindowEnd, MeasuredAmount, PercentilePopulation
@@ -303,7 +303,7 @@ PercentileObservations
 );
 PercentileWindowValues
 | join kind=inner (
-PercentileWindowValues | summarize PercentilePopulation = count(), BelowThreshold = countif(todecimal(MeasuredAmount) < decimal(0)), AtMostThreshold = countif(todecimal(MeasuredAmount) <= decimal(0)) by PercentileWindowEnd
+PercentileWindowValues | summarize PercentilePopulation = count(), BelowThreshold = countif(MeasuredAmount < 0), AtMostThreshold = countif(MeasuredAmount <= 0) by PercentileWindowEnd
 ) on PercentileWindowEnd
 | where BelowThreshold < max_of(1, (PercentilePopulation / 100) * 50 + tolong(ceiling(toreal((PercentilePopulation % 100) * 50) / 100.0))) and AtMostThreshold >= max_of(1, (PercentilePopulation / 100) * 50 + tolong(ceiling(toreal((PercentilePopulation % 100) * 50) / 100.0)))
 | project PercentileWindowEnd, MeasuredAmount, PercentilePopulation
@@ -364,7 +364,7 @@ PercentileObservations
 );
 PercentileWindowValues
 | join kind=inner (
-PercentileWindowValues | summarize PercentilePopulation = count(), BelowThreshold = countif(todecimal(MeasuredAmount) < decimal(0)), AtMostThreshold = countif(todecimal(MeasuredAmount) <= decimal(0)) by PercentileWindowEnd
+PercentileWindowValues | summarize PercentilePopulation = count(), BelowThreshold = countif(MeasuredAmount < 0), AtMostThreshold = countif(MeasuredAmount <= 0) by PercentileWindowEnd
 ) on PercentileWindowEnd
 | where BelowThreshold >= max_of(1, (PercentilePopulation / 100) * 50 + tolong(ceiling(toreal((PercentilePopulation % 100) * 50) / 100.0))) or AtMostThreshold < max_of(1, (PercentilePopulation / 100) * 50 + tolong(ceiling(toreal((PercentilePopulation % 100) * 50) / 100.0)))
 | project PercentileWindowEnd, MeasuredAmount, PercentilePopulation
