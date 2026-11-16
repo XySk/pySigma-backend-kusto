@@ -178,6 +178,47 @@ backend = KustoBackend(
 queries = backend.convert(collection)
 ```
 
+Optional `correlation_report_start` and `correlation_report_end` backend options
+restrict reported correlation `WindowEnd` values for each `convert()` call. Supply
+ISO 8601 strings with an explicit timezone (`Z` or an offset), for example:
+
+```python
+backend = KustoBackend(
+    processing_pipeline=microsoft_xdr_pipeline(),
+    correlation_timestamp_field="Timestamp",
+    correlation_report_start="2026-01-01T10:18:00Z",
+    correlation_report_end="2026-01-01T10:19:00Z",
+)
+queries = backend.convert(collection)
+```
+
+Either bound may be omitted. When both are configured, start must precede end.
+Up to seven fractional second digits are preserved, including Kusto's 100 ns tick.
+Generated queries expose readable `ReportStart`/`ReportEnd` definitions, with names
+adjusted when source columns or child definitions already use those identifiers.
+The report interval includes its start and excludes its end; two adjacent reports
+therefore assign their shared boundary once. Correlation windows still include
+both endpoints. Deliberately overlapping reports can repeat matches.
+
+Source filters include the complete preceding correlation lookback: the maximum
+sum of timespans along every consuming dependency path, including shared children
+and multiple levels. Internal child matches and complete retained context remain
+available before the report start; standalone correlation outputs receive their
+own public report cutoff. Append-only child callback filters and metric edits are
+preserved against that complete history when the backend removes its own cutoff
+for composition. Callbacks that replace generated queries or metadata must keep
+the public query and its provenance consistent.
+
+For example, ten failures spanning 10:00–10:09 in a ten-minute failure-count window,
+followed by success at 10:18 within a second ten-minute ordered window, qualify in
+a report starting at 10:18. Keep raw events back to 09:58 for that report: filtering
+all input to the parent's ten-minute interval would discard required failures.
+Configure the source retention and any upstream query filters to provide this
+history; generated filters cannot restore events already removed upstream. With
+bounds omitted, conversion adds no report interval, `ago()`, or one-hour default,
+and source history remains caller controlled. Reporting bounds apply to correlation
+outputs; ordinary standalone detection output follows its existing behavior.
+
 The only supported correlation method is `default` (also selected when the
 `correlation_method` argument is omitted). Unsupported selections fail conversion;
 they do not select fixed windows. `correlation_timestamp_field` must be a nonempty
@@ -236,7 +277,7 @@ Exact percentile queries retain native declared numeric values, including adjace
 
 To require several fields, use a list such as `field: [User, Target]`. Each field's exact count must satisfy the same comparison and threshold in the same window; the comparisons are combined with **AND**. Two users accessing one target fail `gte: 2`, while two users accessing two targets can pass. Missing values are ignored separately for each field, retaining anchors even when every counted value is missing. The result returns `ValueCount_User` and `ValueCount_Target`. In general, multiple fields return `ValueCount_<field>` using the logical condition field name (including an alias name), with quoting for names containing spaces or punctuation. Counted field names must be nonempty and unique.
 
-For `value_avg`, use the same measured-field condition with `type: value_avg`. The `ValueAvg` real metric averages every finite numeric source match, preserving repeated observations, zero, and negatives. Missing values, text (including numeric strings), NaN, and infinities do not enter the average, but valid source matches still establish evaluation timestamps. An anchored window with no numeric observations has an undefined average and satisfies no comparison, including `neq`. Kusto returns NaN for an empty `avgif` population, so generated queries explicitly require at least one numeric observation before comparing. Integer observations also enter floating-point arithmetic: averages do not preserve exact integer precision above 2^53. Comparisons preserve fractional thresholds and use ordinary floating-point results directly, with no tolerance; the average of 0.1 and 0.2 can differ from 0.15. Average parents consume scalar child metrics once per child summary at its `WindowEnd`; average children expose `ValueAvg` to parents. Retained child context contributes distinct numeric values per child and resulting parent group, as described below. The average fixtures have passed real-engine execution; see [runtime evidence](tests/fixtures/correlation/RUNTIME.md).
+For `value_avg`, use the same measured-field condition with `type: value_avg`. The `ValueAvg` real metric averages every finite numeric source match, preserving repeated observations, zero, and negatives. Missing values, text (including numeric strings), NaN, and infinities do not enter the average, but valid source matches still establish evaluation timestamps. An anchored window with no numeric observations has an undefined average and satisfies no comparison, including `neq`. Kusto returns NaN for an empty `avgif` population, so generated queries exclude nonfinite average results before comparing. Each average uses the actual current-window observations; expired large values leave no running-total residue. Declared numeric fields are projected directly, without runtime type boxes or context collections when no context is requested. Integer observations also enter floating-point arithmetic: averages do not preserve exact integer precision above 2^53. Comparisons preserve fractional thresholds and use ordinary floating-point results directly, with no tolerance; the average of 0.1 and 0.2 can differ from 0.15. Average parents consume scalar child metrics once per child summary at its `WindowEnd`; average children expose `ValueAvg` to parents. Retained child context contributes distinct numeric values per child and resulting parent group, as described below. The average fixtures have passed real-engine execution; see [runtime evidence](tests/fixtures/correlation/RUNTIME.md).
 
 For unordered `temporal`, omit the condition to require every referenced source-rule type:
 

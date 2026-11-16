@@ -1,0 +1,429 @@
+let Events=datatable(Timestamp:datetime,Host:string,Marker:string,User:string) [
+datetime(2026-01-01T10:00:00Z), "h", "match", "a",
+datetime(2026-01-01T10:01:00Z), "h", "match", "b",
+datetime(2026-01-01T10:02:00Z), "h", "match", "c",
+datetime(2026-01-01T10:08:00Z), "h", "success", "s"
+];
+let Expected=datatable(WindowEnd:datetime,Host:string,ValueCount:long) [datetime(2026-01-01T10:08:00Z), "h", 3] | extend WindowStart=WindowEnd-2m;
+let Actual0 = () {
+let ReportStart = datetime(2026-01-01T10:08:00.0000000Z);
+let ReportEnd = datetime(2026-01-01T10:09:00.0000000Z);
+let ContextSummary = () {
+let SourceMatchArrivals = union (Events
+| where Marker =~ "match"
+| where ["Timestamp"] >= ReportStart - 720s and ["Timestamp"] < ReportEnd
+| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"])
+| where isnotnull(EventTime_1) and isnotempty(GroupHost)
+| summarize SourceMatchCount = count() by EventTime_1, GroupHost;
+union (SourceMatchArrivals
+| project GroupHost, CountBoundaryTime = EventTime_1, CountBoundaryOrder = 0, SourceMatchDelta = SourceMatchCount),
+(SourceMatchArrivals
+| project GroupHost, CountBoundaryTime = EventTime_1 + 3m, CountBoundaryOrder = 1, SourceMatchDelta = -SourceMatchCount)
+// Arrivals evaluate before equal-time expirations; expirations never create matches.
+| sort by GroupHost asc, CountBoundaryTime asc, CountBoundaryOrder asc
+| extend EventCount = row_cumsum(SourceMatchDelta, GroupHost != prev(GroupHost))
+| where CountBoundaryOrder == 0
+| where EventCount >= 1
+| project WindowStart = CountBoundaryTime - 3m, WindowEnd = CountBoundaryTime, ["Host"] = GroupHost, EventCount
+};
+let CorrelationMatches = materialize(ContextSummary()
+| serialize CorrelationMatchId = row_number());
+let WindowSourceMatches = materialize(
+CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, ContextGroupHost = ["Host"], ContextPartition = 1
+| join kind=inner (
+union (Events
+| where Marker =~ "match"
+| where ["Timestamp"] >= ReportStart - 720s and ["Timestamp"] < ReportEnd
+| extend ContextEventTime = todatetime(["Timestamp"]), ContextGroupHost = ["Host"], ContextUser = ["User"]
+| extend ContextSourceRule = "source-rule")
+| project ContextEventTime, ContextSourceRule, ContextGroupHost, ContextUser, ContextPartition = 1
+) on ContextGroupHost
+| where ContextEventTime between ((CompletionTime - 3m) .. CompletionTime));
+let CompleteContextRelationships = materialize(WindowSourceMatches
+| project CorrelationMatchId, ContextUser
+| distinct *);
+let ValuesForUser = CompleteContextRelationships
+| where isnotnull(ContextUser)
+| summarize by CorrelationMatchId, ContextUser
+| summarize DisplayedUser = make_list(ContextUser, 1), DistinctUserCount = count() by CorrelationMatchId;
+CorrelationMatches
+| join kind=leftouter (ValuesForUser) on CorrelationMatchId
+| extend ["User"] = coalesce(DisplayedUser, dynamic([]))
+| extend ContextComplete = coalesce(DistinctUserCount, 0) <= 1
+| project ["WindowStart"], ["WindowEnd"], ["Host"], ["User"], ["EventCount"], ["ContextComplete"]
+| where WindowEnd >= ReportStart and WindowEnd < ReportEnd
+| extend EventCount=EventCount+10
+| where EventCount == 12
+};
+let Actual1 = () {
+let ReportStart_ = datetime(2026-01-01T10:08:00.0000000Z);
+let ReportEnd_ = datetime(2026-01-01T10:09:00.0000000Z);
+let _sigma_shared_child = () {
+let EligibleChildMatches = () {
+let ReportStart = datetime(2026-01-01T10:08:00.0000000Z);
+let ReportEnd = datetime(2026-01-01T10:09:00.0000000Z);
+let ContextSummary = () {
+let SourceMatchArrivals = union (Events
+| where Marker =~ "match"
+| where ["Timestamp"] >= ReportStart - 720s and ["Timestamp"] < ReportEnd
+| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"])
+| where isnotnull(EventTime_1) and isnotempty(GroupHost)
+| summarize SourceMatchCount = count() by EventTime_1, GroupHost;
+union (SourceMatchArrivals
+| project GroupHost, CountBoundaryTime = EventTime_1, CountBoundaryOrder = 0, SourceMatchDelta = SourceMatchCount),
+(SourceMatchArrivals
+| project GroupHost, CountBoundaryTime = EventTime_1 + 3m, CountBoundaryOrder = 1, SourceMatchDelta = -SourceMatchCount)
+// Arrivals evaluate before equal-time expirations; expirations never create matches.
+| sort by GroupHost asc, CountBoundaryTime asc, CountBoundaryOrder asc
+| extend EventCount = row_cumsum(SourceMatchDelta, GroupHost != prev(GroupHost))
+| where CountBoundaryOrder == 0
+| where EventCount >= 1
+| project WindowStart = CountBoundaryTime - 3m, WindowEnd = CountBoundaryTime, ["Host"] = GroupHost, EventCount
+};
+let CorrelationMatches = materialize(ContextSummary()
+| serialize CorrelationMatchId = row_number());
+let WindowSourceMatches = materialize(
+CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, ContextGroupHost = ["Host"], ContextPartition = 1
+| join kind=inner (
+union (Events
+| where Marker =~ "match"
+| where ["Timestamp"] >= ReportStart - 720s and ["Timestamp"] < ReportEnd
+| extend ContextEventTime = todatetime(["Timestamp"]), ContextGroupHost = ["Host"], ContextUser = ["User"]
+| extend ContextSourceRule = "source-rule")
+| project ContextEventTime, ContextSourceRule, ContextGroupHost, ContextUser, ContextPartition = 1
+) on ContextGroupHost
+| where ContextEventTime between ((CompletionTime - 3m) .. CompletionTime));
+let CompleteContextRelationships = materialize(WindowSourceMatches
+| project CorrelationMatchId, ContextUser
+| distinct *);
+let ValuesForUser = CompleteContextRelationships
+| where isnotnull(ContextUser)
+| summarize by CorrelationMatchId, ContextUser
+| summarize DisplayedUser = make_list(ContextUser, 1), DistinctUserCount = count() by CorrelationMatchId;
+CorrelationMatches
+| join kind=leftouter (ValuesForUser) on CorrelationMatchId
+| extend ["User"] = coalesce(DisplayedUser, dynamic([]))
+| extend ContextComplete = coalesce(DistinctUserCount, 0) <= 1
+| project ["WindowStart"], ["WindowEnd"], ["Host"], ["User"], ["EventCount"], ["ContextComplete"]
+| extend EventCount=EventCount+10
+| where EventCount == 12
+};
+let CompleteChildContext = () {
+let ReportStart = datetime(2026-01-01T10:08:00.0000000Z);
+let ReportEnd = datetime(2026-01-01T10:09:00.0000000Z);
+let ContextSummary = () {
+let SourceMatchArrivals = union (Events
+| where Marker =~ "match"
+| where ["Timestamp"] >= ReportStart - 720s and ["Timestamp"] < ReportEnd
+| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"])
+| where isnotnull(EventTime_1) and isnotempty(GroupHost)
+| summarize SourceMatchCount = count() by EventTime_1, GroupHost;
+union (SourceMatchArrivals
+| project GroupHost, CountBoundaryTime = EventTime_1, CountBoundaryOrder = 0, SourceMatchDelta = SourceMatchCount),
+(SourceMatchArrivals
+| project GroupHost, CountBoundaryTime = EventTime_1 + 3m, CountBoundaryOrder = 1, SourceMatchDelta = -SourceMatchCount)
+// Arrivals evaluate before equal-time expirations; expirations never create matches.
+| sort by GroupHost asc, CountBoundaryTime asc, CountBoundaryOrder asc
+| extend EventCount = row_cumsum(SourceMatchDelta, GroupHost != prev(GroupHost))
+| where CountBoundaryOrder == 0
+| where EventCount >= 1
+| project WindowStart = CountBoundaryTime - 3m, WindowEnd = CountBoundaryTime, ["Host"] = GroupHost, EventCount
+};
+let CorrelationMatches = materialize(ContextSummary()
+| serialize CorrelationMatchId = row_number());
+let WindowSourceMatches = materialize(
+CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, ContextGroupHost = ["Host"], ContextPartition = 1
+| join kind=inner (
+union (Events
+| where Marker =~ "match"
+| where ["Timestamp"] >= ReportStart - 720s and ["Timestamp"] < ReportEnd
+| extend ContextEventTime = todatetime(["Timestamp"]), ContextGroupHost = ["Host"], ContextUser = ["User"]
+| extend ContextSourceRule = "source-rule")
+| project ContextEventTime, ContextSourceRule, ContextGroupHost, ContextUser, ContextPartition = 1
+) on ContextGroupHost
+| where ContextEventTime between ((CompletionTime - 3m) .. CompletionTime));
+let CompleteContextRelationships = materialize(WindowSourceMatches
+| project CorrelationMatchId, ContextUser
+| distinct *);
+union (CorrelationMatches | extend ContextRowKind = "Summary"), (CorrelationMatches | join kind=inner (CompleteContextRelationships) on CorrelationMatchId | extend ContextRowKind = "ContextEvidence")
+};
+EligibleChildMatches() | project ["ContextComplete"], ["EventCount"], ["Host"], ["WindowEnd"], ["WindowStart"]
+| join kind=inner (CompleteChildContext() | project ["WindowEnd"], ["Host"], CorrelationMatchId, ContextRowKind, ContextUser) on ["WindowEnd"], ["Host"]
+};
+let _sigma_shared_results = materialize(_sigma_shared_child());
+let ContextSummary = () {
+// Strict sequence: "child" -> "success". Total inclusive span: 7m.
+union (_sigma_shared_results
+| where ["ContextRowKind"] == "Summary"
+| extend EventTime_1 = todatetime(["WindowEnd"]), GroupHost = ["Host"]
+| extend SourceRule = "child"),
+(Events
+| where Marker =~ "success"
+| where ["Timestamp"] >= ReportStart_ - 540s and ["Timestamp"] < ReportEnd_
+| extend EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"]
+| extend SourceRule = "success")
+| where isnotnull(EventTime_1) and isnotempty(GroupHost)
+// Batch equal timestamps: simultaneous source matches cannot advance strict sequence positions.
+| summarize HasChild = countif(SourceRule == "child") > 0, HasSuccess = countif(SourceRule == "success") > 0 by EventTime_1, GroupHost
+| sort by GroupHost asc, EventTime_1 asc
+| extend NewCorrelationGroup = isnull(prev(EventTime_1)) or GroupHost != prev(GroupHost)
+// Read preceding timestamp state for every assignment; preserve viable earlier prefixes.
+| scan declare (LatestChildStart:datetime = datetime(null), CompleteNow:bool = false) with (
+    step SequenceState: true =>
+        CompleteNow = not(NewCorrelationGroup) and HasSuccess and isnotnull(SequenceState.LatestChildStart) and SequenceState.LatestChildStart >= EventTime_1 - 7m,
+        LatestChildStart = iff(HasChild, EventTime_1, iff(NewCorrelationGroup, datetime(null), SequenceState.LatestChildStart));
+)
+| where CompleteNow
+| project WindowStart = EventTime_1 - 7m, WindowEnd = EventTime_1, ["Host"] = GroupHost, RuleCount = tolong(2)
+};
+let CorrelationMatches = materialize(ContextSummary()
+| serialize CorrelationMatchId = row_number());
+let WindowSourceMatches = materialize(
+CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, ContextGroupHost = ["Host"], ContextPartition = 1
+| join kind=inner (
+union (_sigma_shared_results | where ["ContextRowKind"] == "Summary"
+| project-away ["ContextUser"]
+| join kind=leftouter (_sigma_shared_results | where ["ContextRowKind"] == "ContextEvidence" | project ["CorrelationMatchId"], ["ContextUser"], HasContextEvidence = true) on ["CorrelationMatchId"]
+| extend ContextEventTime = todatetime(["WindowEnd"]), ContextGroupHost = ["Host"], ContextUser = tostring(pack_array(gettype(["ContextUser"]), ["ContextUser"])[1])
+| extend ContextSourceRule = "child"),
+((Events
+| where Marker =~ "success"
+| where ["Timestamp"] >= ReportStart_ - 540s and ["Timestamp"] < ReportEnd_
+| extend ContextEventTime = todatetime(["Timestamp"]), ContextGroupHost = ["Host"], ContextUser = ["User"]
+| extend ContextSourceRule = "success")
+| extend HasContextEvidence = true)
+| project ContextEventTime, ContextSourceRule, ContextGroupHost, ContextUser, HasContextEvidence, ContextPartition = 1
+) on ContextGroupHost
+| where ContextEventTime between ((CompletionTime - 7m) .. CompletionTime));
+// Successful one/two-step completions need only endpoint participant filters.
+let OrderedSourceRelationships = materialize(WindowSourceMatches
+| where (ContextSourceRule == "child" and ContextEventTime < CompletionTime) or (ContextSourceRule == "success" and ContextEventTime == CompletionTime));
+let CompleteContextRelationships = materialize(OrderedSourceRelationships
+| where HasContextEvidence
+| project CorrelationMatchId, ContextUser
+| distinct *);
+let ValuesForUser = CompleteContextRelationships
+| where isnotnull(ContextUser)
+| summarize by CorrelationMatchId, ContextUser
+| summarize DisplayedUser = make_list(ContextUser, 1), DistinctUserCount = count() by CorrelationMatchId;
+CorrelationMatches
+| join kind=leftouter (ValuesForUser) on CorrelationMatchId
+| extend ["User"] = coalesce(DisplayedUser, dynamic([]))
+| extend ContextComplete = coalesce(DistinctUserCount, 0) <= 1
+| project ["WindowStart"], ["WindowEnd"], ["Host"], ["User"], ["RuleCount"], ["ContextComplete"]
+| where WindowEnd >= ReportStart_ and WindowEnd < ReportEnd_
+};
+let Actual2 = () {
+let ReportStart__ = datetime(2026-01-01T10:08:00.0000000Z);
+let ReportEnd__ = datetime(2026-01-01T10:09:00.0000000Z);
+let _sigma_shared_child_1 = () {
+let ReportStart_ = datetime(2026-01-01T10:08:00.0000000Z);
+let ReportEnd_ = datetime(2026-01-01T10:09:00.0000000Z);
+let _sigma_shared_child = () {
+let EligibleChildMatches = () {
+let ReportStart = datetime(2026-01-01T10:08:00.0000000Z);
+let ReportEnd = datetime(2026-01-01T10:09:00.0000000Z);
+let ContextSummary = () {
+let SourceMatchArrivals = union (Events
+| where Marker =~ "match"
+| where ["Timestamp"] >= ReportStart - 720s and ["Timestamp"] < ReportEnd
+| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"])
+| where isnotnull(EventTime_1) and isnotempty(GroupHost)
+| summarize SourceMatchCount = count() by EventTime_1, GroupHost;
+union (SourceMatchArrivals
+| project GroupHost, CountBoundaryTime = EventTime_1, CountBoundaryOrder = 0, SourceMatchDelta = SourceMatchCount),
+(SourceMatchArrivals
+| project GroupHost, CountBoundaryTime = EventTime_1 + 3m, CountBoundaryOrder = 1, SourceMatchDelta = -SourceMatchCount)
+// Arrivals evaluate before equal-time expirations; expirations never create matches.
+| sort by GroupHost asc, CountBoundaryTime asc, CountBoundaryOrder asc
+| extend EventCount = row_cumsum(SourceMatchDelta, GroupHost != prev(GroupHost))
+| where CountBoundaryOrder == 0
+| where EventCount >= 1
+| project WindowStart = CountBoundaryTime - 3m, WindowEnd = CountBoundaryTime, ["Host"] = GroupHost, EventCount
+};
+let CorrelationMatches = materialize(ContextSummary()
+| serialize CorrelationMatchId = row_number());
+let WindowSourceMatches = materialize(
+CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, ContextGroupHost = ["Host"], ContextPartition = 1
+| join kind=inner (
+union (Events
+| where Marker =~ "match"
+| where ["Timestamp"] >= ReportStart - 720s and ["Timestamp"] < ReportEnd
+| extend ContextEventTime = todatetime(["Timestamp"]), ContextGroupHost = ["Host"], ContextUser = ["User"]
+| extend ContextSourceRule = "source-rule")
+| project ContextEventTime, ContextSourceRule, ContextGroupHost, ContextUser, ContextPartition = 1
+) on ContextGroupHost
+| where ContextEventTime between ((CompletionTime - 3m) .. CompletionTime));
+let CompleteContextRelationships = materialize(WindowSourceMatches
+| project CorrelationMatchId, ContextUser
+| distinct *);
+let ValuesForUser = CompleteContextRelationships
+| where isnotnull(ContextUser)
+| summarize by CorrelationMatchId, ContextUser
+| summarize DisplayedUser = make_list(ContextUser, 1), DistinctUserCount = count() by CorrelationMatchId;
+CorrelationMatches
+| join kind=leftouter (ValuesForUser) on CorrelationMatchId
+| extend ["User"] = coalesce(DisplayedUser, dynamic([]))
+| extend ContextComplete = coalesce(DistinctUserCount, 0) <= 1
+| project ["WindowStart"], ["WindowEnd"], ["Host"], ["User"], ["EventCount"], ["ContextComplete"]
+| extend EventCount=EventCount+10
+| where EventCount == 12
+};
+let CompleteChildContext = () {
+let ReportStart = datetime(2026-01-01T10:08:00.0000000Z);
+let ReportEnd = datetime(2026-01-01T10:09:00.0000000Z);
+let ContextSummary = () {
+let SourceMatchArrivals = union (Events
+| where Marker =~ "match"
+| where ["Timestamp"] >= ReportStart - 720s and ["Timestamp"] < ReportEnd
+| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"])
+| where isnotnull(EventTime_1) and isnotempty(GroupHost)
+| summarize SourceMatchCount = count() by EventTime_1, GroupHost;
+union (SourceMatchArrivals
+| project GroupHost, CountBoundaryTime = EventTime_1, CountBoundaryOrder = 0, SourceMatchDelta = SourceMatchCount),
+(SourceMatchArrivals
+| project GroupHost, CountBoundaryTime = EventTime_1 + 3m, CountBoundaryOrder = 1, SourceMatchDelta = -SourceMatchCount)
+// Arrivals evaluate before equal-time expirations; expirations never create matches.
+| sort by GroupHost asc, CountBoundaryTime asc, CountBoundaryOrder asc
+| extend EventCount = row_cumsum(SourceMatchDelta, GroupHost != prev(GroupHost))
+| where CountBoundaryOrder == 0
+| where EventCount >= 1
+| project WindowStart = CountBoundaryTime - 3m, WindowEnd = CountBoundaryTime, ["Host"] = GroupHost, EventCount
+};
+let CorrelationMatches = materialize(ContextSummary()
+| serialize CorrelationMatchId = row_number());
+let WindowSourceMatches = materialize(
+CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, ContextGroupHost = ["Host"], ContextPartition = 1
+| join kind=inner (
+union (Events
+| where Marker =~ "match"
+| where ["Timestamp"] >= ReportStart - 720s and ["Timestamp"] < ReportEnd
+| extend ContextEventTime = todatetime(["Timestamp"]), ContextGroupHost = ["Host"], ContextUser = ["User"]
+| extend ContextSourceRule = "source-rule")
+| project ContextEventTime, ContextSourceRule, ContextGroupHost, ContextUser, ContextPartition = 1
+) on ContextGroupHost
+| where ContextEventTime between ((CompletionTime - 3m) .. CompletionTime));
+let CompleteContextRelationships = materialize(WindowSourceMatches
+| project CorrelationMatchId, ContextUser
+| distinct *);
+union (CorrelationMatches | extend ContextRowKind = "Summary"), (CorrelationMatches | join kind=inner (CompleteContextRelationships) on CorrelationMatchId | extend ContextRowKind = "ContextEvidence")
+};
+EligibleChildMatches() | project ["ContextComplete"], ["EventCount"], ["Host"], ["WindowEnd"], ["WindowStart"]
+| join kind=inner (CompleteChildContext() | project ["WindowEnd"], ["Host"], CorrelationMatchId, ContextRowKind, ContextUser) on ["WindowEnd"], ["Host"]
+};
+let _sigma_shared_results = materialize(_sigma_shared_child());
+let ContextSummary = () {
+// Strict sequence: "child" -> "success". Total inclusive span: 7m.
+union (_sigma_shared_results
+| where ["ContextRowKind"] == "Summary"
+| extend EventTime_1 = todatetime(["WindowEnd"]), GroupHost = ["Host"]
+| extend SourceRule = "child"),
+(Events
+| where Marker =~ "success"
+| where ["Timestamp"] >= ReportStart_ - 540s and ["Timestamp"] < ReportEnd_
+| extend EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"]
+| extend SourceRule = "success")
+| where isnotnull(EventTime_1) and isnotempty(GroupHost)
+// Batch equal timestamps: simultaneous source matches cannot advance strict sequence positions.
+| summarize HasChild = countif(SourceRule == "child") > 0, HasSuccess = countif(SourceRule == "success") > 0 by EventTime_1, GroupHost
+| sort by GroupHost asc, EventTime_1 asc
+| extend NewCorrelationGroup = isnull(prev(EventTime_1)) or GroupHost != prev(GroupHost)
+// Read preceding timestamp state for every assignment; preserve viable earlier prefixes.
+| scan declare (LatestChildStart:datetime = datetime(null), CompleteNow:bool = false) with (
+    step SequenceState: true =>
+        CompleteNow = not(NewCorrelationGroup) and HasSuccess and isnotnull(SequenceState.LatestChildStart) and SequenceState.LatestChildStart >= EventTime_1 - 7m,
+        LatestChildStart = iff(HasChild, EventTime_1, iff(NewCorrelationGroup, datetime(null), SequenceState.LatestChildStart));
+)
+| where CompleteNow
+| project WindowStart = EventTime_1 - 7m, WindowEnd = EventTime_1, ["Host"] = GroupHost, RuleCount = tolong(2)
+};
+let CorrelationMatches = materialize(ContextSummary()
+| serialize CorrelationMatchId = row_number());
+let WindowSourceMatches = materialize(
+CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, ContextGroupHost = ["Host"], ContextPartition = 1
+| join kind=inner (
+union (_sigma_shared_results | where ["ContextRowKind"] == "Summary"
+| project-away ["ContextUser"]
+| join kind=leftouter (_sigma_shared_results | where ["ContextRowKind"] == "ContextEvidence" | project ["CorrelationMatchId"], ["ContextUser"], HasContextEvidence = true) on ["CorrelationMatchId"]
+| extend ContextEventTime = todatetime(["WindowEnd"]), ContextGroupHost = ["Host"], ContextUser = tostring(pack_array(gettype(["ContextUser"]), ["ContextUser"])[1])
+| extend ContextSourceRule = "child"),
+((Events
+| where Marker =~ "success"
+| where ["Timestamp"] >= ReportStart_ - 540s and ["Timestamp"] < ReportEnd_
+| extend ContextEventTime = todatetime(["Timestamp"]), ContextGroupHost = ["Host"], ContextUser = ["User"]
+| extend ContextSourceRule = "success")
+| extend HasContextEvidence = true)
+| project ContextEventTime, ContextSourceRule, ContextGroupHost, ContextUser, HasContextEvidence, ContextPartition = 1
+) on ContextGroupHost
+| where ContextEventTime between ((CompletionTime - 7m) .. CompletionTime));
+// Successful one/two-step completions need only endpoint participant filters.
+let OrderedSourceRelationships = materialize(WindowSourceMatches
+| where (ContextSourceRule == "child" and ContextEventTime < CompletionTime) or (ContextSourceRule == "success" and ContextEventTime == CompletionTime));
+let CompleteContextRelationships = materialize(OrderedSourceRelationships
+| where HasContextEvidence
+| project CorrelationMatchId, ContextUser
+| distinct *);
+union (CorrelationMatches | extend ContextRowKind_1 = "Summary"), (CorrelationMatches | join kind=inner (CompleteContextRelationships) on CorrelationMatchId | extend ContextRowKind_1 = "ContextEvidence")
+};
+let _sigma_shared_results_1 = materialize(_sigma_shared_child_1());
+let ContextSummary = () {
+let ValueCountSources = materialize(union (_sigma_shared_results_1 | where ["ContextRowKind_1"] == "Summary"
+| project-away ["ContextUser"]
+| join kind=leftouter (_sigma_shared_results_1 | where ["ContextRowKind_1"] == "ContextEvidence" | project ["CorrelationMatchId"], ["ContextUser"]) on ["CorrelationMatchId"]
+| project EventTime = todatetime(["WindowEnd"]), GroupHost = ["Host"], CountedUser = tostring(pack_array(gettype(["ContextUser"]), ["ContextUser"])[1]))
+| where isnotnull(EventTime) and isnotempty(GroupHost));
+let CountedUserActivity = materialize(ValueCountSources
+| where isnotempty(CountedUser)
+| summarize by GroupHost, CountedUser, EventTime
+| sort by GroupHost asc, CountedUser asc, EventTime asc
+// Repeated values whose inclusive active intervals overlap contribute only once.
+| extend CountedUserStarts = isnull(prev(EventTime)) or GroupHost != prev(GroupHost) or CountedUser != prev(CountedUser) or EventTime > prev(EventTime) + 2m,
+    CountedUserEnds = isnull(next(EventTime)) or GroupHost != next(GroupHost) or CountedUser != next(CountedUser) or next(EventTime) > EventTime + 2m);
+union (ValueCountSources | summarize by GroupHost, EventTime
+| project GroupHost, ValueBoundaryTime = EventTime, ValueBoundaryOrder = 1, CountedUserDelta = 0),
+(CountedUserActivity | where CountedUserStarts
+| project GroupHost, ValueBoundaryTime = EventTime, ValueBoundaryOrder = 0, CountedUserDelta = 1),
+(CountedUserActivity | where CountedUserEnds
+| project GroupHost, ValueBoundaryTime = EventTime + 2m, ValueBoundaryOrder = 2, CountedUserDelta = -1)
+// All interval starts precede anchors; equal-time expirations follow them.
+| sort by GroupHost asc, ValueBoundaryTime asc, ValueBoundaryOrder asc
+| extend ValueCount = row_cumsum(CountedUserDelta, GroupHost != prev(GroupHost))
+| where ValueBoundaryOrder == 1
+| where ValueCount == 3
+| project WindowStart = ValueBoundaryTime - 2m, WindowEnd = ValueBoundaryTime, ["Host"] = GroupHost, ValueCount
+};
+let CorrelationMatches = materialize(ContextSummary()
+| serialize CorrelationMatchId_1 = row_number());
+let WindowSourceMatches = materialize(
+CorrelationMatches | project CorrelationMatchId_1, CompletionTime = WindowEnd, ContextGroupHost = ["Host"], ContextPartition = 1
+| join kind=inner (
+union (_sigma_shared_results_1 | where ["ContextRowKind_1"] == "Summary"
+| project-away ["ContextUser"]
+| join kind=leftouter (_sigma_shared_results_1 | where ["ContextRowKind_1"] == "ContextEvidence" | project ["CorrelationMatchId"], ["ContextUser"], HasContextEvidence = true) on ["CorrelationMatchId"]
+| extend ContextEventTime = todatetime(["WindowEnd"]), ContextGroupHost = ["Host"], ContextUser_1 = tostring(pack_array(gettype(["ContextUser"]), ["ContextUser"])[1])
+| extend ContextSourceRule = "middle")
+| project ContextEventTime, ContextSourceRule, ContextGroupHost, ContextUser_1, HasContextEvidence, ContextPartition = 1
+) on ContextGroupHost
+| where ContextEventTime between ((CompletionTime - 2m) .. CompletionTime));
+let CompleteContextRelationships = materialize(WindowSourceMatches
+| where HasContextEvidence
+| project CorrelationMatchId_1, ContextUser_1
+| distinct *);
+let ValuesForUser = CompleteContextRelationships
+| where isnotnull(ContextUser_1)
+| summarize by CorrelationMatchId_1, ContextUser_1
+| summarize DisplayedUser = make_list(ContextUser_1, 1), DistinctUserCount = count() by CorrelationMatchId_1;
+CorrelationMatches
+| join kind=leftouter (ValuesForUser) on CorrelationMatchId_1
+| extend ["User"] = coalesce(DisplayedUser, dynamic([]))
+| extend ContextComplete = coalesce(DistinctUserCount, 0) <= 1
+| project ["WindowStart"], ["WindowEnd"], ["Host"], ["User"], ["ValueCount"], ["ContextComplete"]
+| where WindowEnd >= ReportStart__ and WindowEnd < ReportEnd__
+};
+let ChildRows=Actual0() | count;
+let MiddleInvalid=Actual1() | summarize Rows=count(), Invalid=countif(ContextComplete or array_length(User) != 1 or WindowEnd != datetime(2026-01-01T10:08:00Z) or WindowStart != datetime(2026-01-01T10:01:00Z) or Host != "h" or RuleCount != 2);
+union (Actual2() | project WindowStart,WindowEnd,Host,ValueCount | extend Host=tostring(Host) | extend Delta = 1), (Expected | extend Delta = -1)
+| summarize Delta = sum(Delta) by WindowStart, WindowEnd, Host, ValueCount
+| where Delta != 0
+| union (ChildRows | where Count != 0 | project WindowStart=datetime(null), WindowEnd=datetime(null), Host="child-public", ValueCount=Count, Delta=long(1))
+| union (MiddleInvalid | where Rows != 1 or Invalid != 0 | project WindowStart=datetime(null), WindowEnd=datetime(null), Host="middle-display", ValueCount=Rows, Delta=long(1))

@@ -157,7 +157,8 @@ let Events = datatable(Timestamp:datetime, Host:string, Amount:dynamic, Marker:s
             correlation_document(
                 "average", "value_avg", ["first", "second", "third"], groups=(), condition={"field": "Amount", "eq": 4}
             ),
-        ]
+        ],
+        schema=fixture_schema(Amount="real"),
     )[0]
     data = """let Events = datatable(Timestamp:datetime, Amount:dynamic, Marker:string) [
     datetime(2026-01-01T12:00:00Z), dynamic(2), "match",

@@ -1,0 +1,60 @@
+let Events = datatable(Timestamp:datetime, Host:string, Marker:string) [
+datetime(2026-01-01T09:55:00.0000000Z), "h", "match",
+datetime(2026-01-01T09:55:00.0000001Z), "h", "match",
+datetime(2026-01-01T10:00:00.0000000Z), "h", "match",
+datetime(2026-01-01T10:00:00.0000001Z), "h", "match",
+datetime(2026-01-01T10:00:00.0000002Z), "h", "match",
+datetime(2026-01-01T10:00:00.0000003Z), "h", "match",
+datetime(2026-01-01T10:00:00.0000004Z), "h", "match"
+];
+let Expected = datatable(Report:long, WindowEnd:datetime, EventCount:long) [
+0, datetime(2026-01-01T10:00:00.0000000Z), 3,
+0, datetime(2026-01-01T10:00:00.0000001Z), 3,
+1, datetime(2026-01-01T10:00:00.0000002Z), 3,
+1, datetime(2026-01-01T10:00:00.0000003Z), 4
+] | extend WindowStart=WindowEnd-5m, Host="h";
+let Actual0 = () {
+let ReportStart = datetime(2026-01-01T10:00:00.0000000Z);
+let ReportEnd = datetime(2026-01-01T10:00:00.0000002Z);
+let SourceMatchArrivals = union (Events
+| where Marker =~ "match"
+| where ["Timestamp"] >= ReportStart - 300s and ["Timestamp"] < ReportEnd
+| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"])
+| where isnotnull(EventTime_1) and isnotempty(GroupHost)
+| summarize SourceMatchCount = count() by EventTime_1, GroupHost;
+union (SourceMatchArrivals
+| project GroupHost, CountBoundaryTime = EventTime_1, CountBoundaryOrder = 0, SourceMatchDelta = SourceMatchCount),
+(SourceMatchArrivals
+| project GroupHost, CountBoundaryTime = EventTime_1 + 5m, CountBoundaryOrder = 1, SourceMatchDelta = -SourceMatchCount)
+// Arrivals evaluate before equal-time expirations; expirations never create matches.
+| sort by GroupHost asc, CountBoundaryTime asc, CountBoundaryOrder asc
+| extend EventCount = row_cumsum(SourceMatchDelta, GroupHost != prev(GroupHost))
+| where CountBoundaryOrder == 0
+| where EventCount >= 1
+| project WindowStart = CountBoundaryTime - 5m, WindowEnd = CountBoundaryTime, ["Host"] = GroupHost, EventCount
+| where WindowEnd >= ReportStart and WindowEnd < ReportEnd
+};
+let Actual1 = () {
+let ReportStart = datetime(2026-01-01T10:00:00.0000002Z);
+let ReportEnd = datetime(2026-01-01T10:00:00.0000004Z);
+let SourceMatchArrivals = union (Events
+| where Marker =~ "match"
+| where ["Timestamp"] >= ReportStart - 300s and ["Timestamp"] < ReportEnd
+| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"])
+| where isnotnull(EventTime_1) and isnotempty(GroupHost)
+| summarize SourceMatchCount = count() by EventTime_1, GroupHost;
+union (SourceMatchArrivals
+| project GroupHost, CountBoundaryTime = EventTime_1, CountBoundaryOrder = 0, SourceMatchDelta = SourceMatchCount),
+(SourceMatchArrivals
+| project GroupHost, CountBoundaryTime = EventTime_1 + 5m, CountBoundaryOrder = 1, SourceMatchDelta = -SourceMatchCount)
+// Arrivals evaluate before equal-time expirations; expirations never create matches.
+| sort by GroupHost asc, CountBoundaryTime asc, CountBoundaryOrder asc
+| extend EventCount = row_cumsum(SourceMatchDelta, GroupHost != prev(GroupHost))
+| where CountBoundaryOrder == 0
+| where EventCount >= 1
+| project WindowStart = CountBoundaryTime - 5m, WindowEnd = CountBoundaryTime, ["Host"] = GroupHost, EventCount
+| where WindowEnd >= ReportStart and WindowEnd < ReportEnd
+};
+union (union (Actual0() | extend Report=long(0)), (Actual1() | extend Report=long(1)) | extend Host=tostring(Host) | extend Delta = 1), (Expected | extend Delta = -1)
+| summarize Delta = sum(Delta) by Report, WindowStart, WindowEnd, Host, EventCount
+| where Delta != 0

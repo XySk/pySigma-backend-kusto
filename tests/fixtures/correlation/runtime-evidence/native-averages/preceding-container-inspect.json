@@ -1,0 +1,231 @@
+[
+    {
+        "Id": "6a9e391a3161a3357ffd58aa7934fba14d55bfd885b54f8797654b62e42096be",
+        "Created": "2026-11-15T13:32:23.585665642Z",
+        "Path": "/start-kusto.sh",
+        "Args": [],
+        "State": {
+            "Status": "running",
+            "Running": true,
+            "Paused": false,
+            "Restarting": false,
+            "OOMKilled": false,
+            "Dead": false,
+            "Pid": 4763,
+            "ExitCode": 0,
+            "Error": "",
+            "StartedAt": "2026-11-16T16:53:24.964369322Z",
+            "FinishedAt": "2026-11-16T15:09:36.213070994Z"
+        },
+        "Image": "sha256:65e8298d9350856dec696e0e41327288e7bc105146768a1429fce62f3640acd8",
+        "ResolvConfPath": "/var/lib/docker/containers/6a9e391a3161a3357ffd58aa7934fba14d55bfd885b54f8797654b62e42096be/resolv.conf",
+        "HostnamePath": "/var/lib/docker/containers/6a9e391a3161a3357ffd58aa7934fba14d55bfd885b54f8797654b62e42096be/hostname",
+        "HostsPath": "/var/lib/docker/containers/6a9e391a3161a3357ffd58aa7934fba14d55bfd885b54f8797654b62e42096be/hosts",
+        "LogPath": "/var/lib/docker/containers/6a9e391a3161a3357ffd58aa7934fba14d55bfd885b54f8797654b62e42096be/6a9e391a3161a3357ffd58aa7934fba14d55bfd885b54f8797654b62e42096be-json.log",
+        "Name": "/kusto-spec-17",
+        "RestartCount": 0,
+        "Driver": "overlay2",
+        "Platform": "linux",
+        "MountLabel": "",
+        "ProcessLabel": "",
+        "AppArmorProfile": "",
+        "ExecIDs": null,
+        "HostConfig": {
+            "Binds": null,
+            "ContainerIDFile": "",
+            "LogConfig": {
+                "Type": "json-file",
+                "Config": {}
+            },
+            "NetworkMode": "default",
+            "PortBindings": {
+                "8080/tcp": [
+                    {
+                        "HostIp": "",
+                        "HostPort": "8080"
+                    }
+                ]
+            },
+            "RestartPolicy": {
+                "Name": "no",
+                "MaximumRetryCount": 0
+            },
+            "AutoRemove": false,
+            "VolumeDriver": "",
+            "VolumesFrom": null,
+            "CapAdd": null,
+            "CapDrop": null,
+            "CgroupnsMode": "host",
+            "Dns": [],
+            "DnsOptions": [],
+            "DnsSearch": [],
+            "ExtraHosts": null,
+            "GroupAdd": null,
+            "IpcMode": "private",
+            "Cgroup": "",
+            "Links": null,
+            "OomScoreAdj": 0,
+            "PidMode": "",
+            "Privileged": false,
+            "PublishAllPorts": false,
+            "ReadonlyRootfs": false,
+            "SecurityOpt": null,
+            "UTSMode": "",
+            "UsernsMode": "",
+            "ShmSize": 67108864,
+            "Runtime": "runc",
+            "ConsoleSize": [
+                0,
+                0
+            ],
+            "Isolation": "",
+            "CpuShares": 0,
+            "Memory": 12884901888,
+            "NanoCpus": 0,
+            "CgroupParent": "",
+            "BlkioWeight": 0,
+            "BlkioWeightDevice": [],
+            "BlkioDeviceReadBps": null,
+            "BlkioDeviceWriteBps": null,
+            "BlkioDeviceReadIOps": null,
+            "BlkioDeviceWriteIOps": null,
+            "CpuPeriod": 0,
+            "CpuQuota": 0,
+            "CpuRealtimePeriod": 0,
+            "CpuRealtimeRuntime": 0,
+            "CpusetCpus": "",
+            "CpusetMems": "",
+            "Devices": [],
+            "DeviceCgroupRules": null,
+            "DeviceRequests": null,
+            "KernelMemory": 0,
+            "KernelMemoryTCP": 0,
+            "MemoryReservation": 0,
+            "MemorySwap": 12884901888,
+            "MemorySwappiness": null,
+            "OomKillDisable": false,
+            "PidsLimit": null,
+            "Ulimits": null,
+            "CpuCount": 0,
+            "CpuPercent": 0,
+            "IOMaximumIOps": 0,
+            "IOMaximumBandwidth": 0,
+            "MaskedPaths": [
+                "/proc/asound",
+                "/proc/acpi",
+                "/proc/kcore",
+                "/proc/keys",
+                "/proc/latency_stats",
+                "/proc/timer_list",
+                "/proc/timer_stats",
+                "/proc/sched_debug",
+                "/proc/scsi",
+                "/sys/firmware"
+            ],
+            "ReadonlyPaths": [
+                "/proc/bus",
+                "/proc/fs",
+                "/proc/irq",
+                "/proc/sys",
+                "/proc/sysrq-trigger"
+            ]
+        },
+        "GraphDriver": {
+            "Data": {
+                "LowerDir": "/var/lib/docker/overlay2/2b310de9161009afeb64f13a955dd554c97926096dbc0df850e556eec9f10090-init/diff:/var/lib/docker/overlay2/c7f43b6c8e8d9c5349a5a509ad7318c81e12384408fbff39dc9dfdb4c16e496a/diff:/var/lib/docker/overlay2/ab96cd45c8318184a4ed6b64ed08edf96f0eb7d66b915f1d58b4929991428460/diff:/var/lib/docker/overlay2/18b978ff3dfb9d15a38555960156e3fa8c2c900d9858f6787e8332bed25acd34/diff:/var/lib/docker/overlay2/4f7a9afeaedddd95269f55a18cefb160574cdda613c9f72bfe6a3babb97b4878/diff",
+                "MergedDir": "/var/lib/docker/overlay2/2b310de9161009afeb64f13a955dd554c97926096dbc0df850e556eec9f10090/merged",
+                "UpperDir": "/var/lib/docker/overlay2/2b310de9161009afeb64f13a955dd554c97926096dbc0df850e556eec9f10090/diff",
+                "WorkDir": "/var/lib/docker/overlay2/2b310de9161009afeb64f13a955dd554c97926096dbc0df850e556eec9f10090/work"
+            },
+            "Name": "overlay2"
+        },
+        "Mounts": [],
+        "Config": {
+            "Hostname": "6a9e391a3161",
+            "Domainname": "",
+            "User": "",
+            "AttachStdin": false,
+            "AttachStdout": false,
+            "AttachStderr": false,
+            "ExposedPorts": {
+                "8080/tcp": {}
+            },
+            "Tty": false,
+            "OpenStdin": false,
+            "StdinOnce": false,
+            "Env": [
+                "ACCEPT_EULA=Y",
+                "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                "TZ=Europe/London"
+            ],
+            "Cmd": null,
+            "Image": "mcr.microsoft.com/azuredataexplorer/kustainer-linux:latest",
+            "Volumes": null,
+            "WorkingDir": "/",
+            "Entrypoint": [
+                "/start-kusto.sh"
+            ],
+            "OnBuild": null,
+            "Labels": {
+                "com.visualstudio.msazure.image.build.buildnumber": "2026.11.15.0741-2645-8e3387b-master",
+                "com.visualstudio.msazure.image.build.builduri": "vstfs:///Build/Build/191325468",
+                "com.visualstudio.msazure.image.build.containerTask": "v1",
+                "com.visualstudio.msazure.image.build.definitionname": "Azure-Kusto-Service-Official-OB",
+                "com.visualstudio.msazure.image.build.dockerfilePath": "dst/Tools/kustainer/linux/Dockerfile",
+                "com.visualstudio.msazure.image.build.pipelineTemplate": "OneBranch.Official",
+                "com.visualstudio.msazure.image.build.repository.name": "Azure-Kusto-Service",
+                "com.visualstudio.msazure.image.build.repository.uri": "https://msazure.visualstudio.com/One/_git/Azure-Kusto-Service",
+                "com.visualstudio.msazure.image.build.sourcebranchname": "master",
+                "com.visualstudio.msazure.image.build.sourceversion": "8e3387bf339da04fcc1d87aaf19f9939d4c9f650",
+                "com.visualstudio.msazure.image.system.teamfoundationcollectionuri": "https://msazure.visualstudio.com/",
+                "com.visualstudio.msazure.image.system.teamproject": "One",
+                "desktop.docker.io/wsl-distro": "Debian",
+                "image.base.digest": "sha256:4ecd6b297db85c54ec2df07145a28536c3655a3e98e54eb2364189bc4e6eac23",
+                "image.base.ref.name": "mcr.microsoft.com/azurelinux/base/core:3.0.20260728"
+            }
+        },
+        "NetworkSettings": {
+            "Bridge": "",
+            "SandboxID": "ccd2d0ebc01588da08c015d3c44436cf0606d5ca3f8a5b56223a8e578124e2ac",
+            "HairpinMode": false,
+            "LinkLocalIPv6Address": "",
+            "LinkLocalIPv6PrefixLen": 0,
+            "Ports": {
+                "8080/tcp": [
+                    {
+                        "HostIp": "0.0.0.0",
+                        "HostPort": "8080"
+                    }
+                ]
+            },
+            "SandboxKey": "/var/run/docker/netns/ccd2d0ebc015",
+            "SecondaryIPAddresses": null,
+            "SecondaryIPv6Addresses": null,
+            "EndpointID": "03da611555db472d4790dc4679b995d46d9a3f9a1fc343055bfa2b5913605ee6",
+            "Gateway": "172.17.0.1",
+            "GlobalIPv6Address": "",
+            "GlobalIPv6PrefixLen": 0,
+            "IPAddress": "172.17.0.2",
+            "IPPrefixLen": 16,
+            "IPv6Gateway": "",
+            "MacAddress": "02:42:ac:11:00:02",
+            "Networks": {
+                "bridge": {
+                    "IPAMConfig": null,
+                    "Links": null,
+                    "Aliases": null,
+                    "NetworkID": "de7f144d32c06ed5030409a54f3b177de804594aa699d69cfdd29e05a6ab1535",
+                    "EndpointID": "03da611555db472d4790dc4679b995d46d9a3f9a1fc343055bfa2b5913605ee6",
+                    "Gateway": "172.17.0.1",
+                    "IPAddress": "172.17.0.2",
+                    "IPPrefixLen": 16,
+                    "IPv6Gateway": "",
+                    "GlobalIPv6Address": "",
+                    "GlobalIPv6PrefixLen": 0,
+                    "MacAddress": "02:42:ac:11:00:02",
+                    "DriverOpts": null
+                }
+            }
+        }
+    }
+]

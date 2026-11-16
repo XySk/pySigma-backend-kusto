@@ -1,6 +1,7 @@
 import json
 import re
 from copy import deepcopy
+from datetime import datetime, timezone
 from typing import ClassVar, Dict, Pattern, Tuple, Type, Union
 
 from sigma.conditions import (
@@ -61,7 +62,10 @@ class _CorrelationQuery(str):
         return instance
 
     def __add__(self, suffix):
-        return type(self)(self.definitions, self.body + suffix)
+        result = type(self)(self.definitions, self.body + suffix)
+        if hasattr(self, "context_artifact"):
+            result.context_artifact = self.context_artifact
+        return result
 
 
 class KustoBackend(TextQueryBackend):
@@ -227,9 +231,11 @@ class KustoBackend(TextQueryBackend):
         rule_collection.resolve_rule_references()
         self._correlation_graph = self._prepare_correlation_graph(rule_collection, callback)
         try:
+            self._correlation_reporting = self._reporting_options()
             return super().convert(rule_collection, output_format, correlation_method, callback)
         finally:
             del self._correlation_graph
+            self.__dict__.pop("_correlation_reporting", None)
 
     def _prepare_correlation_graph(self, rule_collection, callback=None):
         """Collect source/consumer requirements without a second rule parser."""
@@ -291,7 +297,55 @@ class KustoBackend(TextQueryBackend):
                 break
             else:
                 existence.add(id(child))
-        return {"consumers": consumers, "context": context, "existence_only": existence}
+        lookback, visiting = {}, set()
+
+        def required_history(rule):
+            if id(rule) in visiting:
+                raise SigmaConversionError(rule, rule.source, "Kusto correlation dependencies must be acyclic.")
+            if id(rule) not in lookback:
+                visiting.add(id(rule))
+                ancestors = [required_history(parent) for parent, _ in consumers.get(id(rule), ())]
+                own = rule.timespan.seconds if isinstance(rule, SigmaCorrelationRule) else 0
+                lookback[id(rule)] = own + max(ancestors, default=0)
+                visiting.remove(id(rule))
+            return lookback[id(rule)]
+
+        for rule in rule_collection.rules:
+            required_history(rule)
+        return {"consumers": consumers, "context": context, "existence_only": existence, "lookback": lookback}
+
+    def _reporting_options(self):
+        bounds = {}
+        comparable = {}
+        for bound in ("start", "end"):
+            name = "correlation_report_" + bound
+            value = self.backend_options.get(name)
+            if value is None:
+                continue
+            match = (
+                re.fullmatch(r"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})(?:\.(\d{1,7}))?(Z|[+-]\d{2}:\d{2})", value)
+                if isinstance(value, str)
+                else None
+            )
+            try:
+                if not match:
+                    raise ValueError()
+                fraction = (match[2] or "").ljust(7, "0")
+                parsed = datetime.fromisoformat(match[1] + "." + fraction[:6] + match[3]).astimezone(timezone.utc)
+                bounds[bound] = parsed.isoformat(timespec="seconds")[:-6] + "." + fraction + "Z"
+                comparable[bound] = (parsed, fraction[6])
+            except (ValueError, OverflowError):
+                raise SigmaConversionError(
+                    None,
+                    None,
+                    f"{name} must be an ISO 8601 datetime with timezone and at most seven fractional digits; "
+                    "for example '2026-01-01T10:00:00.0000001Z'.",
+                ) from None
+        if "start" in bounds and "end" in bounds and comparable["start"] >= comparable["end"]:
+            raise SigmaConversionError(
+                None, None, "correlation_report_start must be earlier than correlation_report_end."
+            )
+        return bounds
 
     def _count_existence_threshold(self, rule):
         if id(rule) not in getattr(self, "_correlation_graph", {}).get("existence_only", ()):
@@ -613,13 +667,26 @@ class KustoBackend(TextQueryBackend):
                 for source in children
             )
         )
+        report_names = {}
+        report_definitions = ""
+        for bound, value in getattr(self, "_correlation_reporting", {}).items():
+            name = "Report" + bound.title()
+            while name in reserved:
+                name += "_"
+            reserved.add(name)
+            report_names[bound] = name
+            report_definitions += f"let {name} = datetime({value});\n"
+        self._correlation_report_names = report_names
+        self._correlation_report_lookback = (
+            getattr(self, "_correlation_graph", {}).get("lookback", {}).get(id(rule), rule.timespan.seconds)
+        )
         shared = {"reserved": reserved, "definitions": [], "bindings": {}, "enabled": enabled}
         guards = {"column": error, "relations": [], "checks": [], "inherited": set(), "messages": set()}
         self._correlation_shared_children = shared
         self._correlation_guard_state = guards
         try:
             queries = self._build_count_rule(rule, counted_fields)
-            prefix = "".join(shared["definitions"])
+            prefix = report_definitions + "".join(shared["definitions"])
             raw_queries = [prefix + query for query in queries]
             checks = tuple(
                 dict.fromkeys(
@@ -660,8 +727,18 @@ class KustoBackend(TextQueryBackend):
                         f"let {failure} = toscalar(union {', '.join(calls)} | summarize countif(isnotempty({error})));\n"
                         f"{rows}\n| where assert({failure} == 0, {json.dumps(message)})"
                     )
+                report_conditions = []
+                if "start" in report_names:
+                    report_conditions.append(f"WindowEnd >= {report_names['start']}")
+                if "end" in report_names:
+                    report_conditions.append(f"WindowEnd < {report_names['end']}")
+                report_suffix = "\n| where " + " and ".join(report_conditions) if report_conditions else ""
+                if checks and report_suffix:
+                    public = report_definitions + public
+                public += report_suffix
                 state.processing_state.update(
                     {
+                        "kusto_report_suffix": report_suffix,
                         "kusto_raw_query": raw,
                         "kusto_public_query": public,
                         "kusto_error_column": error if checks else None,
@@ -676,6 +753,7 @@ class KustoBackend(TextQueryBackend):
             return output
         finally:
             del self._correlation_shared_children, self._correlation_guard_state
+            del self._correlation_report_names, self._correlation_report_lookback
 
     def _register_correlation_guard(self, relation, violation, message):
         column = self._correlation_guard_state["column"]
@@ -698,14 +776,24 @@ class KustoBackend(TextQueryBackend):
                 self._correlation_guard_state["checks"].append(query.definitions + f"union {errors}")
         return queries
 
-    @staticmethod
-    def _child_raw_query(query, state, source):
+    def _child_raw_query(self, query, state, source):
         raw, checked = state.get("kusto_raw_query"), state.get("kusto_public_query")
         checks, error = state.get("kusto_guard_queries"), state.get("kusto_error_column")
         messages = state.get("kusto_guard_messages")
         columns = state.get("kusto_guard_error_columns")
+        report_suffix = state.get("kusto_report_suffix", "")
+        unchecked_report = (
+            checked[: -len(report_suffix)]
+            if isinstance(report_suffix, str)
+            and report_suffix
+            and isinstance(checked, str)
+            and checked.endswith(report_suffix)
+            else checked
+        )
         valid = (
-            query == checked
+            isinstance(checked, str)
+            and isinstance(report_suffix, str)
+            and (query == checked or bool(report_suffix) and query.startswith(checked))
             and isinstance(raw, str)
             and bool(raw)
             and isinstance(checks, (tuple, list))
@@ -724,14 +812,20 @@ class KustoBackend(TextQueryBackend):
                     and raw != checked
                     and raw in checked
                 )
-                or (not checks and error is None and not messages and raw == checked)
+                or (not checks and error is None and not messages and raw == unchecked_report)
             )
         )
-        # Callback-modified or incomplete metadata keeps the checked public
-        # query. Never bypass its validation or silently discard a source edit.
+        # Strip only our own report cutoff, replaying an appended callback
+        # against complete history. Reporting requires coherent provenance;
+        # unbounded conversions retain the conservative checked-query fallback.
         if valid:
-            return raw, tuple(zip(checks, columns)), messages
-        if isinstance(checked, str) and checked and query.startswith(checked):
+            return raw + query[len(checked) :], tuple(zip(checks, columns)), messages
+        if (
+            not getattr(self, "_correlation_reporting", {})
+            and isinstance(checked, str)
+            and checked
+            and query.startswith(checked)
+        ):
             return query, (), ()
         if any(key.startswith("kusto_guard_") or key in ("kusto_raw_query", "kusto_public_query") for key in state):
             raise SigmaConversionError(
@@ -1454,8 +1548,9 @@ class KustoBackend(TextQueryBackend):
         value_count = rule.type == SigmaCorrelationType.VALUE_COUNT
         presence_temporal = rule.type == SigmaCorrelationType.TEMPORAL
         value_sum = rule.type == SigmaCorrelationType.VALUE_SUM
+        value_avg = rule.type == SigmaCorrelationType.VALUE_AVG
         value_percentile = rule.type == SigmaCorrelationType.VALUE_PERCENTILE
-        readable = temporal or event_count or value_count or value_sum or value_percentile
+        readable = temporal or event_count or value_count or value_sum or value_avg or value_percentile
         columns = {
             "timestamp": allocate("EventTime" if readable else "_sigma_timestamp"),
             "rule": allocate("SourceRule" if readable else "_sigma_rule"),
@@ -1476,7 +1571,7 @@ class KustoBackend(TextQueryBackend):
         }
         if event_count or value_count or presence_temporal and not self._uses_context_groups(rule):
             columns["narrow_source"] = True
-        if value_sum or value_percentile:
+        if value_sum or value_avg or value_percentile:
             columns["narrow_source"] = True
             columns["native_values"] = True
         if presence_temporal:
@@ -1497,14 +1592,12 @@ class KustoBackend(TextQueryBackend):
                     if value_count
                     else (
                         "Measured" + re.sub(r"[^A-Za-z0-9_]", "", field)
-                        if value_sum or value_percentile
+                        if value_sum or value_avg or value_percentile
                         else "_sigma_value" if len(counted_fields) == 1 else f"_sigma_value_{index}"
                     )
                 )
                 for index, field in enumerate(counted_fields)
             ]
-        if rule.type == SigmaCorrelationType.VALUE_AVG:
-            columns["numeric_count"] = allocate("_sigma_numeric_count")
         self._correlation_group_by = rule.group_by or []
         self._correlation_counted_fields = counted_fields or []
         self._correlation_columns = columns
@@ -1535,9 +1628,7 @@ class KustoBackend(TextQueryBackend):
                     # and resulting group; direct observations retain multiplicity.
                     value = columns["values"][0]
                     scalar_value = allocate("RetainedNumericValue")
-                    kind = self._correlation_field_types[counted_fields[0]]
-                    scalar = value if columns.get("native_values") else f"to{kind}({value}[1])"
-                    child_matches += f" | extend {scalar_value} = {scalar}"
+                    child_matches += f" | extend {scalar_value} = {value}"
                     keys.append(scalar_value)
                 search = (
                     f"union ({source_matches} | where isempty({child_id})), "
@@ -1547,9 +1638,7 @@ class KustoBackend(TextQueryBackend):
             del self._correlation_group_by
             del self._correlation_counted_fields
             del self._correlation_columns
-        timestamp, weight, window_end, time_bin, weights = (
-            columns[name] for name in ("timestamp", "weight", "window_end", "bin", "weights")
-        )
+        timestamp = columns["timestamp"]
         groups = columns["groups"]
         if len(metrics) > 1:
             metrics = [self._quote_correlation_field(metric) for metric in metrics]
@@ -1557,7 +1646,6 @@ class KustoBackend(TextQueryBackend):
         # timespan literals do not accept those units.
         span = rule.timespan.spec if rule.timespan.unit in "smhd" else f"{rule.timespan.seconds}s"
         valid_rows = " and ".join([f"isnotnull({timestamp})", *(f"isnotempty({field})" for field in groups)])
-        weighted_fields = ", ".join([timestamp, *groups])
         if rule.type == SigmaCorrelationType.EVENT_COUNT:
             existence_threshold = self._count_existence_threshold(rule)
             if existence_threshold is not None:
@@ -1615,10 +1703,12 @@ class KustoBackend(TextQueryBackend):
                     allocate,
                 )
             ]
-        anchor_fields = ", ".join([*groups, f"{window_end} = {timestamp}", f"{time_bin} = bin({timestamp}, {span})"])
-        join_fields = ", ".join([*groups, time_bin])
-        summary_fields = ", ".join([window_end, *groups])
-        result_fields = self._correlation_result_projection(rule, groups, window_end, span, metrics)
+        if value_avg:
+            return [
+                self._convert_value_avg(
+                    rule, definitions, search, columns, valid_rows, span, query_operator, threshold, allocate
+                )
+            ]
         if value_percentile:
             return [
                 self._convert_value_percentile(
@@ -1634,46 +1724,33 @@ class KustoBackend(TextQueryBackend):
                     allocate,
                 )
             ]
-        after_summary = ""
-        summary_binding = ""
-        if counted_fields is None:
-            preaggregate = f"| summarize {weight} = count() by {weighted_fields}"
-            distinct_anchors = ""
-            aggregates = [f"EventCount = sum({weight})"]
-        elif rule.type == SigmaCorrelationType.VALUE_AVG:
-            # Preserve every observation and every valid anchor, including
-            # anchors whose window contains no usable numeric observation.
-            preaggregate = ""
-            distinct_anchors = "| distinct *\n"
-            value = columns["values"][0]
-            numeric = (
-                f'tostring({value}[0]) in ("int", "long", "real", "double", "decimal") '
-                f"and isfinite(toreal({value}[1]))"
-            )
-            aggregates = [
-                f"ValueAvg = avgif(toreal({value}[1]), {numeric})",
-                f"{columns['numeric_count']} = countif({numeric})",
-            ]
-        if rule.type != SigmaCorrelationType.VALUE_SUM:
-            comparisons = " and ".join(f"{metric} {query_operator} {threshold}" for metric in metrics)
-        if rule.type == SigmaCorrelationType.VALUE_AVG:
-            # Kusto avgif() returns NaN for no observations, which satisfies
-            # neq. Require an observation before applying any comparison.
-            comparisons = f"{columns['numeric_count']} > 0 and {comparisons}"
-        # Bins only prune candidate pairs; actual timestamps decide membership.
-        scope = f"{definitions}let {weights} = {search}\n" f"| where {valid_rows}\n{preaggregate};\n"
-        aggregate = (
-            f"{weights}\n| project {anchor_fields}\n{distinct_anchors}"
-            f"| join kind=inner (\n    {weights}\n"
-            f"    | extend {time_bin} = pack_array(bin({timestamp}, {span}), bin({timestamp}, {span}) + {span})\n"
-            f"    | mv-expand {time_bin} to typeof(datetime)\n) on {join_fields}\n"
-            f"| where {timestamp} between (({window_end} - {span}) .. {window_end})\n"
-            f"| summarize {', '.join(aggregates)} by {summary_fields}\n"
+
+    def _convert_value_avg(
+        self, rule, definitions, search, columns, valid_rows, span, query_operator, threshold, allocate
+    ):
+        """Average the actual current observations; expired values leave no residue."""
+        observations = allocate("AverageObservations")
+        event_time, groups, value = columns["timestamp"], columns["groups"], columns["values"][0]
+        window_end, time_bin = allocate("AverageWindowEnd"), allocate("AverageTimeBin")
+        anchors = ", ".join([*groups, f"{window_end} = {event_time}", f"{time_bin} = bin({event_time}, {span})"])
+        join_keys = ", ".join([*groups, time_bin])
+        summary_keys = ", ".join([window_end, *groups])
+        result = self._correlation_result_projection(rule, groups, window_end, span, ["ValueAvg"])
+        # Preserve every observation, including duplicates and unusable values.
+        # The anchor's own row guarantees exact-time membership even if every
+        # other candidate in its bin has already expired.
+        definitions += f"let {observations} = {search}\n| where {valid_rows};\n"
+        return _CorrelationQuery(
+            definitions,
+            f"{observations}\n| summarize by {anchors}\n"
+            f"| join kind=inner (\n{observations}\n"
+            f"| extend {time_bin} = pack_array(bin({event_time}, {span}), bin({event_time}, {span}) + {span})\n"
+            f"| mv-expand {time_bin} to typeof(datetime)\n) on {join_keys}\n"
+            f"| where {event_time} between (({window_end} - {span}) .. {window_end})\n"
+            f"| summarize ValueAvg = avgif(toreal({value}), isfinite(toreal({value}))) by {summary_keys}\n"
+            # Empty avgif returns NaN, which otherwise satisfies inequality.
+            f"| where isfinite(ValueAvg) and ValueAvg {query_operator} {threshold}\n| project {result}",
         )
-        if summary_binding:
-            scope += summary_binding + aggregate + ");\n"
-            aggregate = after_summary
-        return [_CorrelationQuery(scope, aggregate + f"| where {comparisons}\n| project {result_fields}")]
 
     def _convert_value_percentile(
         self, rule, definitions, search, columns, valid_rows, span, query_operator, threshold, measured_field, allocate
@@ -2333,9 +2410,22 @@ class KustoBackend(TextQueryBackend):
             if child
             else map_field(self.backend_options["correlation_timestamp_field"])
         )
-        self._correlation_scalar_type(rule_reference.rule, source_state, timestamp_field)
+        timestamp_type = self._correlation_scalar_type(rule_reference.rule, source_state, timestamp_field)
         columns = self._correlation_columns
         fields = [f"{columns['timestamp']} = todatetime({self._quote_correlation_field(timestamp_field)})"]
+        source_filter = ""
+        if not child:
+            names = getattr(self, "_correlation_report_names", {})
+            source_time = self._quote_correlation_field(timestamp_field)
+            if timestamp_type != "datetime":
+                source_time = f"todatetime({source_time})"
+            conditions = []
+            if "start" in names:
+                conditions.append(f"{source_time} >= {names['start']} - {self._correlation_report_lookback}s")
+            if "end" in names:
+                conditions.append(f"{source_time} < {names['end']}")
+            if conditions:
+                source_filter = "\n| where " + " and ".join(conditions)
         context_fields = source_state.processing_state.get("kusto_context_fields", ()) if child else ()
         row_column = getattr(self, "_correlation_child_row", "_sigma_child_context_row")
         expanded = False
@@ -2386,16 +2476,10 @@ class KustoBackend(TextQueryBackend):
         for index, counted_field in enumerate(self._correlation_counted_fields):
             mapped_field = map_field(map_alias(counted_field))
             kind = record_type(counted_field, mapped_field)
-            if columns.get("native_values"):
+            if columns.get("native_values") or mapped_field not in context_fields:
                 value = native_scalar(mapped_field)
-            elif rule_reference.rule is not None and columns.get("identify_values"):
-                value = (
-                    f"to{kind}({boxed(mapped_field)}[1])"
-                    if mapped_field in context_fields
-                    else self._quote_correlation_field(mapped_field)
-                )
             else:
-                value = boxed(mapped_field)
+                value = f"to{kind}({boxed(mapped_field)}[1])"
             fields.append(f"{columns['values'][index]} = {value}")
         for field, column in zip(getattr(self, "_correlation_context_fields", []), columns.get("context", [])):
             mapped_field = map_field(map_alias(field))
@@ -2416,7 +2500,7 @@ class KustoBackend(TextQueryBackend):
             identity = json.dumps(str(rule_reference.rule.name or rule_reference.rule.id), ensure_ascii=False)
             fields.append(f"{columns['rule']} = {identity}")
         operator = "project" if columns.get("narrow_source") else "extend"
-        result = _CorrelationNormalization(f"\n| {operator} " + ", ".join(fields), columns["rule"])
+        result = _CorrelationNormalization(source_filter + f"\n| {operator} " + ", ".join(fields), columns["rule"])
         result.expands_context = expanded
         result.preserve_empty_context = bool(
             expanded

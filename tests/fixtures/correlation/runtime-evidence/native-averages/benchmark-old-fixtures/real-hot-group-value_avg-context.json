@@ -1,0 +1,11 @@
+{
+  "name": "real-hot-group-value_avg-context",
+  "schema": {
+    "WindowStart": "datetime",
+    "WindowEnd": "datetime",
+    "Host": "string",
+    "ValueAvg": "real",
+    "User": "dynamic"
+  },
+  "expected": []
+}
