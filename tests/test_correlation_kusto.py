@@ -239,7 +239,11 @@ def test_correlation_aliases_resolve_rule_identity_across_name_and_id_references
 
     (query,) = backend.convert(correlation_collection(correlation))
 
-    group = "GroupActor" if correlation_rule in (event_count_correlation, temporal_correlation) else "_sigma_group_0"
+    group = (
+        "GroupActor"
+        if correlation_rule in (event_count_correlation, temporal_correlation, ordered_temporal_correlation)
+        else "_sigma_group_0"
+    )
     assert f'{group} = ["AccountName"]' in query
     assert final_summary_projection(query).endswith(f'["Actor"] = {group}, {metric}')
     if correlation_rule is value_count_correlation:
@@ -267,16 +271,14 @@ def test_temporal_maps_group_aliases_and_timestamps_for_all_searches_across_tabl
 
     assert summary_data_query(query).count("(DeviceProcessEvents\n| where ") == 2
     assert summary_data_query(query).count("(DeviceNetworkEvents\n| where ") == 2
-    host, user = ("_sigma_group_0", "_sigma_group_1") if ordered else ("GroupHost", "GroupUser")
+    host, user = "GroupHost", "GroupUser"
     for prefix in ("Process", "Network"):
         assert query.count(f'todatetime(["{prefix}Time"]), {host} = ["{prefix}Host"], {user} = ["{prefix}User"]') == 2
-    timestamp = "_sigma_timestamp" if ordered else "EventTime_1"
+    timestamp = "EventTime_1"
     assert f"| where isnotnull({timestamp}) and isnotempty({host}) and isnotempty({user})\n" in query
     if ordered:
-        assert "by _sigma_sequence_end = _sigma_timestamp, _sigma_group_0, _sigma_group_1;" in query
-        assert final_summary_projection(query).endswith(
-            '["Host"] = _sigma_group_0, ["User"] = _sigma_group_1, RuleCount = tolong(2)'
-        )
+        assert "| scan declare (" in query
+        assert "GroupHost != prev(GroupHost) or GroupUser != prev(GroupUser)" in query
     else:
         assert "join kind=" not in query
         assert final_summary_projection(query).endswith('["Host"] = GroupHost, ["User"] = GroupUser, RuleCount')
@@ -319,16 +321,12 @@ def test_temporal_preserves_colliding_source_columns_escaped_identity_and_standa
 
     assert len(standalone) == 2
     assert standalone[0] == 'DeviceProcessEvents\n| where ProcessCommandLine =~ "suspicious.exe"'
+    assert query.count('EventTime_1 = todatetime(["Timestamp"])') == 2
+    assert query.count(f'SourceRule = "{identity}"') == 2
     if ordered:
-        assert "let _sigma_types_1 = union " in query
-        assert query.count('_sigma_timestamp_1 = todatetime(["Timestamp"])') == 2
-        assert query.count(f'| extend _sigma_rule_2 = "{identity}"') == 2
-        assert f'| where _sigma_rule_2 == "{identity}"' in query
-        assert "let _sigma_sequence_0_1 = " in query
-        assert "WindowEnd = _sigma_sequence_end_1, RuleCount = tolong(1)" in query
+        assert "| summarize by EventTime_1" in query
+        assert "WindowEnd = EventTime_1, RuleCount = tolong(1)" in query
     else:
-        assert query.count('EventTime_1 = todatetime(["Timestamp"])') == 2
-        assert query.count(f'SourceRule = "{identity}"') == 2
         assert "| scan declare (Last" in query
         assert "RuleCount = tolong(Has" in query
 
@@ -351,21 +349,14 @@ def test_ordered_temporal_requires_the_declared_full_sequence_with_strict_times_
 
     (query,) = backend.convert(ordered_temporal_collection())
 
-    assert '| where _sigma_rule == "source-rule"' in query
-    assert query.index('| where _sigma_rule == "source-rule"') < query.index('| where _sigma_rule == "other-rule"')
-    assert query.index('| where _sigma_rule == "other-rule"') < query.index('| where _sigma_rule == "third-rule"')
-    assert summary_data_query(query).count("| join kind=inner (") == 2
-    assert summary_data_query(query).count("| where _sigma_timestamp > _sigma_sequence_end") == 2
-    assert summary_data_query(query).count("and _sigma_timestamp <= _sigma_sequence_start + 5m") == 2
-    assert (
-        summary_data_query(query).count(
-            "| summarize _sigma_sequence_start = max(_sigma_sequence_start) by _sigma_sequence_end = _sigma_timestamp"
-        )
-        == 2
-    )
-    assert final_summary_projection(query).endswith(
-        "| project WindowStart = _sigma_sequence_end - 5m, WindowEnd = _sigma_sequence_end, RuleCount = tolong(3)"
-    )
+    assert "| join " not in query
+    assert "| scan declare (" in query
+    assert 'countif(SourceRule == "source-rule") > 0' in query
+    assert 'countif(SourceRule == "other-rule") > 0' in query
+    assert 'countif(SourceRule == "third-rule") > 0' in query
+    assert ">= EventTime_1 - 5m" in query
+    assert "| where CompleteNow" in query
+    assert final_summary_projection(query).endswith("WindowEnd = EventTime_1, RuleCount = tolong(3)")
 
 
 @pytest.mark.parametrize(
@@ -391,7 +382,7 @@ def test_ordered_temporal_accepts_equivalent_full_sequence_conditions(condition)
 
     (query,) = backend.convert(ordered_temporal_collection(condition=condition))
 
-    assert summary_data_query(query).count("| join kind=inner (") == 2
+    assert "| scan declare (" in query
     assert final_summary_projection(query).endswith("RuleCount = tolong(3)")
 
 
@@ -406,8 +397,8 @@ def test_ordered_temporal_repeated_list_positions_require_separate_later_matches
 
     (query,) = backend.convert(correlation_collection(correlation))
 
-    assert summary_data_query(query).count('| where _sigma_rule == "source-rule"') == 2
-    assert "| where _sigma_timestamp > _sigma_sequence_end and _sigma_timestamp <= _sigma_sequence_start + 5m" in query
+    assert query.count('countif(SourceRule == "source-rule") > 0') == 1
+    assert "| where CompleteNow" in query
     assert final_summary_projection(query).endswith("RuleCount = tolong(1)")
 
 
