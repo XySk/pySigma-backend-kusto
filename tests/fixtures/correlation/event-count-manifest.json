@@ -1,0 +1,91 @@
+{
+  "status": "PENDING",
+  "scope": "#38 exact weighted event count correctness only",
+  "fixtures": [
+    {
+      "name": "event_count_fractional.kql",
+      "sha256": "80a6b4aba0c6bb12153e8d1539162f59396408c90503b1767ab4cbab723849a8",
+      "expected_error": null
+    },
+    {
+      "name": "event_count_empty.kql",
+      "sha256": "43a68823e9bed3d804d80635e3556cae76896b74b21cb871df251053ffcf38c4",
+      "expected_error": null
+    },
+    {
+      "name": "event_count_grouped.kql",
+      "sha256": "3e740e0461d19b9ac96e4565f24812e4e3a2ad87ecfe2209ade736878f3561bf",
+      "expected_error": null
+    },
+    {
+      "name": "event_count_duplicate_sources.kql",
+      "sha256": "701b3a00846acae0ad7bfc143587baa89745c70d2fb2ca1a2305028f413f24c7",
+      "expected_error": null
+    },
+    {
+      "name": "event_count_comparisons.kql",
+      "sha256": "cc1b68ce172e9562b9e873c2014d6757c8a8b7ca5ea9402511dda9371771ef6d",
+      "expected_error": null
+    },
+    {
+      "name": "event_count_chained_grouped.kql",
+      "sha256": "06cc012f0d96a0fb4be059c9a1a11305edd5b99c170071a6204399e760c54c84",
+      "expected_error": null
+    },
+    {
+      "name": "event_count_chained_comparisons.kql",
+      "sha256": "ef3fe9d5c2f24766b49d6baf4c26baa5902bdd73fadb6c24c750a78a3d9e8fdd",
+      "expected_error": null
+    },
+    {
+      "name": "event_count_chained_metrics.kql",
+      "sha256": "29e3935d376b7f53ef168a5c9360cca84bd8d5208835c0bac64fd097a3d589c1",
+      "expected_error": null
+    },
+    {
+      "name": "typed_grouping_event_count.kql",
+      "sha256": "d43efd1ac8657edd57bc3649be61352b79451500c0a6104b12a3529ab885caee",
+      "expected_error": null
+    },
+    {
+      "name": "typed_grouping_extended_chain.kql",
+      "sha256": "0607a1158de1f5d48d8eff87b47af21e3e283a9f3a216331c7e60d70c04e6d94",
+      "expected_error": null
+    },
+    {
+      "name": "typed_grouping_mixed_chain.kql",
+      "sha256": "e6e5007ed3e9ca3e1b77304d81961e5767b8a7bf1a2bf35472e00b751a6e8680",
+      "expected_error": null
+    },
+    {
+      "name": "count_context_pairs.kql",
+      "sha256": "b2d89d5a59876d5d3f3656da0a3da280208da3ce29520ad8085279b98eff49d1",
+      "expected_error": null
+    },
+    {
+      "name": "count_context_mixed.kql",
+      "sha256": "ec0bdf8922dd51633df2b492f3b2e0e2e5a5e1bf80d2a0658f389c8d3e7faa80",
+      "expected_error": null
+    },
+    {
+      "name": "count_context_ungrouped.kql",
+      "sha256": "e1e81fd83d64d5c9cb2681bf1ce46a28a6636062445ec72db520a8d7c9123716",
+      "expected_error": null
+    },
+    {
+      "name": "count_context_values.kql",
+      "sha256": "a3763039e56ccaed58cfee1e8820a7aafa16be54e18698da18aad17f6eb19bcd",
+      "expected_error": null
+    },
+    {
+      "name": "count_context_restricted.kql",
+      "sha256": "0484692175a0b863c1c8329a17a4dace2c1b94b630b60de36d597e381f434c88",
+      "expected_error": null
+    },
+    {
+      "name": "count_context_typed.kql",
+      "sha256": "a21bf73890b56698071f1f7f27360042a8b12c04d70ce7cc85860b444d51a449",
+      "expected_error": null
+    }
+  ]
+}

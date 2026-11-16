@@ -41,7 +41,7 @@ def test_unknown_relevant_field_type_requires_partial_schema_declaration():
 
 def test_partial_schema_preserves_native_group_type_without_identity_restoration():
     (query,) = convert_scalar(fields={"Timestamp": "datetime", "User": "long"})
-    assert '_sigma_group_0 = ["User"]' in query
+    assert 'GroupUser = ["User"]' in query
     assert "_sigma_identity" not in query
     assert "_sigma_group_lookup" not in query
 
@@ -62,7 +62,7 @@ def test_child_scalar_group_type_survives_an_alias_and_document_order():
         condition={"gte": 1},
     )
     (query,) = convert_scalar(fields={"Timestamp": "datetime", "User": "guid"}, extra=(parent,))
-    assert '_sigma_group_0 = ["User"]' in query
+    assert 'GroupActor = ["User"]' in query
     assert "_sigma_identity" not in query
 
 
@@ -71,7 +71,7 @@ def test_standard_mapping_resolves_final_physical_schema_without_full_table_decl
         fields={"Event Time": "datetime", "Account ID": "long"},
         transformations=({"type": "field_name_mapping", "mapping": {"Timestamp": "Event Time", "User": "Account ID"}},),
     )
-    assert '_sigma_group_0 = ["Account ID"]' in query
+    assert 'GroupUser = ["Account ID"]' in query
 
 
 def test_incompatible_source_group_types_require_normalization():
@@ -153,7 +153,7 @@ def test_numeric_strings_require_explicit_numeric_normalization():
 @pytest.mark.parametrize("kind", ["string", "bool", "int", "long", "real", "decimal", "datetime", "timespan", "guid"])
 def test_supported_native_group_types_use_direct_columns(kind):
     (query,) = convert_scalar(fields={"Timestamp": "datetime", "User": kind, "Unused": "dynamic"})
-    assert '_sigma_group_0 = ["User"]' in query
+    assert 'GroupUser = ["User"]' in query
     assert "_sigma_identity" not in query
 
 
@@ -162,7 +162,7 @@ def test_final_physical_type_takes_precedence_after_explicit_normalization():
         fields={"Timestamp": "datetime", "User": "dynamic", "AccountID": "long"},
         transformations=({"type": "field_name_mapping", "mapping": {"User": "AccountID"}},),
     )
-    assert '_sigma_group_0 = ["AccountID"]' in query
+    assert 'GroupUser = ["AccountID"]' in query
 
 
 @pytest.mark.parametrize("role", ["counted", "retained"])

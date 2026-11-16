@@ -71,12 +71,14 @@ def test_all_supported_types_produce_and_consume_child_summaries(producer, consu
     producer_metric = "RuleCount = tolong(2)" if producer == "temporal_ordered" else METRICS[producer]
     assert summary_projections(query)[0].endswith(f", {producer_metric}")
     parent = summary_data_query(query).split("\n};\n", 1)[1]
-    if consumer == "temporal_ordered":
-        assert 'EventTime = todatetime(["WindowEnd"]), GroupHost = ["Host"]' in parent
-        assert '| extend SourceRule = "child"' in parent
-    else:
-        assert '_sigma_timestamp = todatetime(["WindowEnd"]), _sigma_group_0 = ["Host"]' in parent
-        assert '| extend _sigma_rule = "child"' in parent
+    timestamp, group, source = (
+        ("EventTime", "GroupHost", "SourceRule")
+        if consumer in ("event_count", "temporal_ordered")
+        else ("_sigma_timestamp", "_sigma_group_0", "_sigma_rule")
+    )
+    assert f'{timestamp} = todatetime(["WindowEnd"]), {group} = ["Host"]' in parent
+    if consumer != "event_count":
+        assert f'| extend {source} = "child"' in parent
     consumer_metric = "RuleCount = tolong(1)" if consumer == "temporal_ordered" else METRICS[consumer]
     assert final_summary_projection(query).endswith(f", {consumer_metric}")
     if consumer in ("value_count", "value_sum", "value_percentile"):
@@ -84,8 +86,8 @@ def test_all_supported_types_produce_and_consume_child_summaries(producer, consu
         expected_value = measured if consumer == "value_count" else f"pack_array(gettype({measured}), {measured})"
         assert f"_sigma_value = {expected_value}" in parent
     if consumer == "event_count":
-        assert "_sigma_weight = count()" in parent
-        assert "sum(_sigma_weight)" in parent
+        assert "SourceMatchCount = count()" in parent
+        assert "row_cumsum(SourceMatchDelta" in parent
 
 
 @pytest.mark.parametrize("producer", TYPES)
@@ -282,7 +284,7 @@ def test_multilevel_mixed_sources_keep_result_names_and_scope_bindings_separate_
     (query,) = convert_documents(multilevel_documents(), mappings=mappings)
 
     assert len(summary_projections(query)) == 3
-    assert summary_projections(query)[0].endswith(', ["Case"] = _sigma_group_0, ["Host"] = _sigma_group_1, EventCount')
+    assert summary_projections(query)[0].endswith(', ["Case"] = GroupCase, ["Host"] = GroupHost, EventCount')
     assert summary_projections(query)[1].endswith(', ["Tenant"] = _sigma_group_0, ValueCount')
     assert "union (_sigma_child_0()" in query
     assert "_sigma_correlation_error" not in summary_data_query(query)
@@ -369,4 +371,4 @@ def test_shared_child_remains_available_to_each_parent_and_any_consumer_can_supp
     assert final_summary_projection(queries[-1]).endswith("ValueCount")
     for parent in queries[-2:]:
         assert summary_data_query(parent).count("let _sigma_child_0 = () {") == 1
-        assert '_sigma_timestamp = todatetime(["WindowEnd"])' in parent
+        assert 'todatetime(["WindowEnd"])' in parent

@@ -1136,21 +1136,31 @@ class KustoBackend(TextQueryBackend):
                             )
                         else:
                             relation = f"{filtered}{normalization.expansion}{normalization}"
-                    searches.append(
-                        f"({relation}\n| extend {normalization.rule_column} = "
-                        f"{json.dumps(str(source.name or source.id), ensure_ascii=False)})"
-                    )
-                else:
-                    searches.append(
-                        self.correlation_search_multi_rule_query_expression.format(
-                            rule=source,
-                            ruleid=self.convert_correlation_ruleid(
-                                source.name or source.id, str(self.correlation_search_multi_rule_query_expression)
-                            ),
-                            query=query,
-                            normalization=normalization,
+                    if self._correlation_columns.get("narrow_source"):
+                        searches.append(f"({relation})")
+                    else:
+                        searches.append(
+                            f"({relation}\n| extend {normalization.rule_column} = "
+                            f"{json.dumps(str(source.name or source.id), ensure_ascii=False)})"
                         )
-                    )
+                else:
+                    if self._correlation_columns.get("narrow_source"):
+                        searches.append(
+                            _CorrelationQueryExpression("({query}{normalization})").format(
+                                rule=source, ruleid=None, query=query, normalization=normalization
+                            )
+                        )
+                    else:
+                        searches.append(
+                            self.correlation_search_multi_rule_query_expression.format(
+                                rule=source,
+                                ruleid=self.convert_correlation_ruleid(
+                                    source.name or source.id, str(self.correlation_search_multi_rule_query_expression)
+                                ),
+                                query=query,
+                                normalization=normalization,
+                            )
+                        )
         return "".join(definitions), "union " + self.correlation_search_multi_rule_query_expression_joiner.join(
             searches
         )
@@ -1207,11 +1217,16 @@ class KustoBackend(TextQueryBackend):
 
         allocate = self._name_allocator(source_fields)
 
+        event_count = rule.type == SigmaCorrelationType.EVENT_COUNT
         columns = {
-            "timestamp": allocate("EventTime" if ordered else "_sigma_timestamp"),
-            "rule": allocate("SourceRule" if ordered else "_sigma_rule"),
+            "timestamp": allocate("EventTime" if ordered or event_count else "_sigma_timestamp"),
+            "rule": allocate("SourceRule" if ordered or event_count else "_sigma_rule"),
             "groups": [
-                allocate("Group" + re.sub(r"[^A-Za-z0-9_]", "_", field) if ordered else f"_sigma_group_{index}")
+                allocate(
+                    "Group" + re.sub(r"[^A-Za-z0-9_]", "_" if ordered else "", field)
+                    if ordered or event_count
+                    else f"_sigma_group_{index}"
+                )
                 for index, field in enumerate(rule.group_by or [])
             ],
             "weight": allocate("_sigma_weight"),
@@ -1221,13 +1236,15 @@ class KustoBackend(TextQueryBackend):
                 "_sigma_types" if temporal else "_sigma_weights" if counted_fields is None else "_sigma_values"
             ),
         }
+        if event_count:
+            columns["narrow_source"] = True
         numeric_context = rule.type in (
             SigmaCorrelationType.VALUE_SUM,
             SigmaCorrelationType.VALUE_AVG,
             SigmaCorrelationType.VALUE_PERCENTILE,
         ) and self._uses_context_groups(rule, [*(rule.group_by or []), *(counted_fields or [])])
         if counted_fields is None and not temporal or numeric_context:
-            columns["child_match"] = allocate("_sigma_child_match")
+            columns["child_match"] = allocate("ChildCorrelationMatch" if event_count else "_sigma_child_match")
         if rule.type == SigmaCorrelationType.VALUE_COUNT:
             columns["identify_values"] = True
         if counted_fields is not None:
@@ -1306,6 +1323,12 @@ class KustoBackend(TextQueryBackend):
         span = rule.timespan.spec if rule.timespan.unit in "smhd" else f"{rule.timespan.seconds}s"
         valid_rows = " and ".join([f"isnotnull({timestamp})", *(f"isnotempty({field})" for field in groups)])
         weighted_fields = ", ".join([timestamp, *groups])
+        if rule.type == SigmaCorrelationType.EVENT_COUNT:
+            return [
+                self._convert_event_count(
+                    rule, definitions, search, columns, valid_rows, span, query_operator, threshold, allocate
+                )
+            ]
         if ordered:
             return [
                 _CorrelationQuery(definitions + query.definitions, query.body)
@@ -1462,6 +1485,58 @@ class KustoBackend(TextQueryBackend):
             scope += summary_binding + aggregate + ");\n"
             aggregate = after_summary
         return [_CorrelationQuery(scope, aggregate + f"| where {comparisons}\n| project {result_fields}")]
+
+    def _convert_event_count(
+        self, rule, definitions, search, columns, valid_rows, span, query_operator, threshold, allocate
+    ):
+        """Accumulate integer source-match weights at arrivals and expirations."""
+        arrivals = allocate("SourceMatchArrivals")
+        event_time = columns["timestamp"]
+        match_count = allocate("SourceMatchCount")
+        boundary_time = allocate("CountBoundaryTime")
+        boundary_order = allocate("CountBoundaryOrder")
+        delta = allocate("SourceMatchDelta")
+        groups = columns["groups"]
+        retained = ", ".join(groups)
+        retained = f"{retained}, " if retained else ""
+        order = ", ".join(f"{field} asc" for field in [*groups, boundary_time, boundary_order])
+        changes = []
+        for logical, field in zip(rule.group_by or [], groups):
+            changed = f"{field} != prev({field})"
+            if self._correlation_field_types[logical] == "real":
+                # Native summarize groups NaNs together; scalar NaN != NaN.
+                changed = f"({changed} and not(isnan({field}) and isnan(prev({field}))))"
+            changes.append(changed)
+        restart = " or ".join(changes)
+        cumulative = f"row_cumsum({delta}" + (f", {restart})" if restart else ")")
+        comparison = f"EventCount {query_operator} {threshold}"
+        if threshold != int(threshold):
+            # Kusto equality can coerce a real literal to the long column type.
+            # Decimal comparison preserves fractional thresholds and exact longs.
+            comparison = f"todecimal(EventCount) {query_operator} decimal({threshold})"
+        projection = self._correlation_result_projection(rule, groups, boundary_time, span, ["EventCount"])
+        definitions += (
+            f"let {arrivals} = {search}\n| where {valid_rows}\n"
+            f"| summarize {match_count} = count() by {event_time}"
+            + (f", {', '.join(groups)}" if groups else "")
+            + ";\n"
+        )
+        # One arrival per group/timestamp is both its complete positive delta
+        # and its only evaluation anchor. Expirations at T follow that anchor,
+        # preserving the inclusive [T - span, T] endpoint without adding ticks.
+        body = (
+            f"union ({arrivals}\n| project {retained}{boundary_time} = {event_time}, "
+            f"{boundary_order} = 0, {delta} = {match_count}),\n"
+            f"({arrivals}\n| project {retained}{boundary_time} = {event_time} + {span}, "
+            f"{boundary_order} = 1, {delta} = -{match_count})\n"
+            "// Arrivals evaluate before equal-time expirations; expirations never create matches.\n"
+            f"| sort by {order}\n"
+            f"| extend EventCount = {cumulative}\n"
+            f"| where {boundary_order} == 0\n"
+            f"| where {comparison}\n"
+            f"| project {projection}"
+        )
+        return _CorrelationQuery(definitions, body)
 
     def _boolean_temporal_expression(self, rule, node, presence):
         """Translate the upstream parsed tree over window-wide presence columns."""
@@ -1901,7 +1976,10 @@ class KustoBackend(TextQueryBackend):
             mapped_field = map_field(map_alias(field))
             record_type(field, mapped_field)
             fields.append(f"{column} = {boxed(mapped_field)}")
-        result = _CorrelationNormalization("\n| extend " + ", ".join(fields), columns["rule"])
+        if columns.get("narrow_source") and expanded:
+            fields.append(columns["child_match"])
+        operator = "project" if columns.get("narrow_source") else "extend"
+        result = _CorrelationNormalization(f"\n| {operator} " + ", ".join(fields), columns["rule"])
         result.expands_context = expanded
         if expanded:
             context_rows = self._quote_correlation_field(source_state.processing_state["kusto_context_rows"])

@@ -246,7 +246,11 @@ def test_correlation_aliases_resolve_rule_identity_across_name_and_id_references
 
     (query,) = backend.convert(correlation_collection(correlation))
 
-    group = "GroupActor" if correlation_rule is ordered_temporal_correlation else "_sigma_group_0"
+    group = (
+        "GroupActor"
+        if correlation_rule in (event_count_correlation, ordered_temporal_correlation)
+        else "_sigma_group_0"
+    )
     assert f'{group} = ["AccountName"]' in query
     assert final_summary_projection(query).endswith(f'["Actor"] = {group}, {metric}')
     if correlation_rule is value_count_correlation:
@@ -711,9 +715,8 @@ def test_single_source_event_count_combines_searches_and_maps_aliases():
     (query,) = backend.convert(correlation_collection(correlation, source_conditions="[selection, alternate]"))
 
     assert summary_data_query(query).count("(DeviceProcessEvents\n| where ") == 2
-    assert summary_data_query(query).count('_sigma_group_0 = ["AccountName"]') == 2
-    assert summary_data_query(query).count('| extend _sigma_rule = "source-rule"') == 2
-    assert summary_data_query(query).count("| summarize EventCount") == 1
+    assert summary_data_query(query).count('GroupActor = ["AccountName"]') == 2
+    assert summary_data_query(query).count("| extend EventCount = row_cumsum(") == 1
 
 
 def test_multi_rule_event_count_combines_source_tables_before_counting():
@@ -724,16 +727,12 @@ def test_multi_rule_event_count_combines_source_tables_before_counting():
 
     (query,) = backend.convert(multi_rule_collection(group_by=("User",)))
 
-    assert (
-        'let _sigma_weights = union (DeviceProcessEvents\n| where ProcessCommandLine =~ "suspicious.exe"\n'
-        '| extend _sigma_timestamp = todatetime(["Timestamp"]), _sigma_group_0 = ["AccountName"]\n'
-        '| extend _sigma_rule = "source-rule"),\n'
-        "(DeviceNetworkEvents\n| where RemotePort == 443\n"
-        '| extend _sigma_timestamp = todatetime(["Timestamp"]), _sigma_group_0 = ["InitiatingProcessAccountName"]\n'
-        '| extend _sigma_rule = "other-rule")\n'
-    ) in query
-    assert "| summarize EventCount = sum(_sigma_weight) by _sigma_window_end, _sigma_group_0\n" in query
-    assert final_summary_projection(query).endswith('["User"] = _sigma_group_0, EventCount')
+    assert 'DeviceProcessEvents\n| where ProcessCommandLine =~ "suspicious.exe"' in query
+    assert "DeviceNetworkEvents\n| where RemotePort == 443" in query
+    assert 'GroupUser = ["AccountName"]' in query
+    assert 'GroupUser = ["InitiatingProcessAccountName"]' in query
+    assert "| extend EventCount = row_cumsum(SourceMatchDelta, GroupUser != prev(GroupUser))\n" in query
+    assert final_summary_projection(query).endswith('["User"] = GroupUser, EventCount')
 
 
 def test_event_count_uses_exact_inclusive_windows_at_distinct_event_timestamps():
@@ -744,10 +743,10 @@ def test_event_count_uses_exact_inclusive_windows_at_distinct_event_timestamps()
 
     (query,) = backend.convert(correlation_collection(event_count_correlation(group_by=("User", "DeviceName"))))
 
-    assert "between ((_sigma_window_end - 5m) .. _sigma_window_end)" in query
+    assert "CountBoundaryTime = EventTime_1 + 5m" in query
     assert "| where EventCount >= 2" in query
     assert final_summary_projection(query).endswith(
-        '["User"] = _sigma_group_0, ["DeviceName"] = _sigma_group_1, EventCount'
+        '["User"] = GroupUser, ["DeviceName"] = GroupDeviceName, EventCount'
     )
 
 
@@ -817,8 +816,8 @@ def test_multi_rule_event_count_maps_aliases_and_timestamp_from_each_source_pipe
     )
     (query,) = backend.convert(collection, callback=change_mapping_for_other_source)
 
-    assert 'todatetime(["ProcessTime"]), _sigma_group_0 = ["ProcessUser"]' in query
-    assert 'todatetime(["NetworkTime"]), _sigma_group_0 = ["NetworkUser"]' in query
+    assert 'todatetime(["ProcessTime"]), GroupActor = ["ProcessUser"]' in query
+    assert 'todatetime(["NetworkTime"]), GroupActor = ["NetworkUser"]' in query
 
 
 def test_multi_rule_event_count_quotes_rule_identity_and_special_mapped_fields():
@@ -837,8 +836,6 @@ def test_multi_rule_event_count_quotes_rule_identity_and_special_mapped_fields()
 
     assert 'todatetime(["Event Time"])' in query
     assert '["Actor\'s Name"]' in query
-    assert '| extend _sigma_rule = "source\\"\\\\\\n*"' in query
-    assert '| extend _sigma_rule = "22222222-2222-2222-2222-222222222222"' in query
 
 
 def test_multi_rule_event_count_preserves_source_columns_that_overlap_normalized_names():
@@ -865,14 +862,10 @@ def test_multi_rule_event_count_preserves_source_columns_that_overlap_normalized
 
     (query,) = backend.convert(collection)
 
-    assert (
-        '| extend _sigma_timestamp_3 = todatetime(["_sigma_timestamp_2"]), _sigma_group_0_1 = ["_sigma_group_0"]'
-        in query
-    )
-    assert '| extend _sigma_rule_3 = "source-rule"' in query
-    assert "_sigma_window_end = _sigma_timestamp_3, _sigma_bin = bin(_sigma_timestamp_3, 5m)" in query
-    assert "| summarize EventCount = sum(_sigma_weight) by _sigma_window_end, _sigma_group_0_1" in query
-    assert "| project " not in query.split("| extend _sigma_timestamp_3")[0]
+    assert '| project EventTime_1 = todatetime(["_sigma_timestamp_2"]), GroupUser = ["_sigma_group_0"]' in query
+    assert "CountBoundaryTime = EventTime_1 + 5m" in query
+    assert "EventCount = row_cumsum(SourceMatchDelta, GroupUser != prev(GroupUser))" in query
+    assert "| project " not in query.split("| project EventTime_1")[0]
 
 
 def test_event_count_preserves_columns_that_overlap_sliding_window_names():
@@ -885,10 +878,10 @@ def test_event_count_preserves_columns_that_overlap_sliding_window_names():
 
     (query,) = backend.convert(collection)
 
-    assert "let _sigma_weights_1 = union (" in query
-    assert "| summarize _sigma_weight_1 = count() by _sigma_timestamp, _sigma_group_0;" in query
-    assert "_sigma_window_end_1 = _sigma_timestamp, _sigma_bin_1 = bin(_sigma_timestamp, 5m)" in query
-    assert "| summarize EventCount = sum(_sigma_weight_1) by _sigma_window_end_1, _sigma_group_0" in query
+    assert "let SourceMatchArrivals = union (" in query
+    assert "| summarize SourceMatchCount = count() by EventTime_1, GroupUser;" in query
+    assert "EventCount = row_cumsum(SourceMatchDelta, GroupUser != prev(GroupUser))" in query
+    assert 'pack_array(gettype(["_sigma_weight"]), ["_sigma_weight"])' in query
 
 
 def test_event_count_quotes_requested_group_names_in_result_summary():
@@ -901,8 +894,8 @@ def test_event_count_quotes_requested_group_names_in_result_summary():
 
     (query,) = backend.convert(correlation_collection(correlation))
 
-    assert '_sigma_group_0 = ["AccountName"]' in query
-    assert final_summary_projection(query).endswith('["Actor\\" Name"] = _sigma_group_0, EventCount')
+    assert 'GroupActorName = ["AccountName"]' in query
+    assert final_summary_projection(query).endswith('["Actor\\" Name"] = GroupActorName, EventCount')
 
 
 @pytest.mark.parametrize(
@@ -926,10 +919,8 @@ def test_multi_rule_event_count_retains_every_search_and_duplicate_rule_matches(
     # rule must contribute rows to the one combined count.
     assert summary_data_query(query).count('(CustomEvents\n| where CommandLine =~ "suspicious.exe"') == 2
     assert summary_data_query(query).count('(CustomEvents\n| where Image =~ "suspicious.exe"') == 2
-    assert summary_data_query(query).count('| extend _sigma_rule = "source-rule"') == 2
-    assert summary_data_query(query).count('| extend _sigma_rule = "other-rule"') == 2
-    assert "| summarize _sigma_weight = count() by _sigma_timestamp;" in query
-    assert "| summarize EventCount = sum(_sigma_weight) by _sigma_window_end\n" in query
+    assert "| summarize SourceMatchCount = count() by EventTime_1;" in query
+    assert "| extend EventCount = row_cumsum(SourceMatchDelta)\n" in query
     assert f"| where EventCount {query_operator} 3\n" in query
 
 
@@ -949,7 +940,7 @@ def test_event_count_correlation_uses_source_pipeline_and_comparison(operator, q
 
     (query,) = result
     assert '(DeviceProcessEvents\n| where ProcessCommandLine =~ "suspicious.exe"\n' in query
-    assert '_sigma_timestamp = todatetime(["TimestampField"]), _sigma_group_0 = ["AccountName"]' in query
+    assert 'EventTime_1 = todatetime(["TimestampField"]), GroupUser = ["AccountName"]' in query
     assert f"| where EventCount {query_operator} 2\n" in query
 
 
@@ -969,8 +960,7 @@ def test_event_count_correlation_preserves_multiple_source_queries():
     (query,) = result
     assert '(DeviceProcessEvents\n| where ProcessCommandLine =~ "suspicious.exe"\n' in query
     assert '(DeviceProcessEvents\n| where FolderPath =~ "suspicious.exe"\n' in query
-    assert summary_data_query(query).count('| extend _sigma_rule = "source-rule"') == 2
-    assert summary_data_query(query).count("| summarize EventCount") == 1
+    assert summary_data_query(query).count("| extend EventCount = row_cumsum(") == 1
 
 
 def test_event_count_correlation_rejects_unpaired_source_query_states():
@@ -1027,9 +1017,8 @@ def test_event_count_renders_extended_sigma_duration_units_as_kusto_seconds(span
 
     (query,) = backend.convert(correlation_collection(correlation))
 
-    assert f"bin(_sigma_timestamp, {seconds}s)" in query
-    assert f"between ((_sigma_window_end - {seconds}s) .. _sigma_window_end)" in query
-    assert f"WindowStart = _sigma_window_end - {seconds}s" in query
+    assert f"CountBoundaryTime = EventTime_1 + {seconds}s" in query
+    assert f"WindowStart = CountBoundaryTime - {seconds}s" in query
 
 
 @pytest.mark.parametrize("group", ["WindowStart", "WindowEnd", "EventCount"])
@@ -1065,12 +1054,11 @@ def test_event_count_parent_counts_child_summaries_at_window_end_without_expandi
     assert "union (DeviceProcessEvents\n| where " in summary_data_query(query)
     assert "| where EventCount >= 10\n" in query
     assert "union (_sigma_child_0()\n" in summary_data_query(query)
-    assert '_sigma_timestamp = todatetime(["WindowEnd"])' in query
-    assert '| extend _sigma_rule = "child-correlation")\n' in query
-    assert summary_data_query(query).count("| summarize _sigma_weight = count() by _sigma_timestamp;") == 2
-    assert "| where _sigma_timestamp between ((_sigma_window_end - 2m) .. _sigma_window_end)" in query
+    assert 'EventTime = todatetime(["WindowEnd"])' in query
+    assert summary_data_query(query).count("| summarize SourceMatchCount = count() by EventTime") == 2
+    assert "CountBoundaryTime = EventTime + 2m" in query
     assert final_summary_projection(query).endswith(
-        "| project WindowStart = _sigma_window_end - 2m, WindowEnd = _sigma_window_end, EventCount"
+        "| project WindowStart = CountBoundaryTime - 2m, WindowEnd = CountBoundaryTime, EventCount"
     )
 
 
@@ -1099,11 +1087,11 @@ def test_event_count_parent_resolves_child_group_and_metric_aliases_without_rema
 
     (query,) = backend.convert(SigmaCollection.from_yaml(yaml.safe_dump_all(documents)))
 
-    assert '_sigma_group_0 = ["AccountName"]' in query
-    assert '_sigma_group_0 = ["User"]' in query
-    assert '_sigma_group_1 = ["EventCount"]' in query
+    assert 'GroupUser = ["AccountName"]' in query
+    assert 'GroupActor = ["User"]' in query
+    assert 'GroupChildCount = ["EventCount"]' in query
     assert final_summary_projection(query).endswith(
-        '["Actor"] = _sigma_group_0, ["ChildCount"] = _sigma_group_1, EventCount'
+        '["Actor"] = GroupActor, ["ChildCount"] = GroupChildCount, EventCount'
     )
 
 
@@ -1126,9 +1114,9 @@ def test_event_count_parent_combines_direct_searches_with_child_groups_and_prese
     assert "let _sigma_child_0_1 = () {\n" in query
     assert summary_data_query(query).count("(DeviceProcessEvents\n| where ") == 2
     assert summary_data_query(query).count("(DeviceNetworkEvents\n| where ") == 2
-    assert '_sigma_timestamp_1 = todatetime(["WindowEnd"]), _sigma_group_0 = ["User"]' in query
-    assert '_sigma_timestamp_1 = todatetime(["Timestamp"]), _sigma_group_0 = ["InitiatingProcessAccountName"]' in query
-    assert final_summary_projection(query).endswith('["Actor"] = _sigma_group_0, EventCount')
+    assert 'EventTime_1 = todatetime(["WindowEnd"]), GroupActor = ["User"]' in query
+    assert 'EventTime_1 = todatetime(["Timestamp"]), GroupActor = ["InitiatingProcessAccountName"]' in query
+    assert final_summary_projection(query).endswith('["Actor"] = GroupActor, EventCount')
 
 
 @pytest.mark.parametrize("missing", ["kusto_result_fields", "kusto_result_timestamp"])
@@ -1186,10 +1174,7 @@ def test_event_count_chain_applies_parent_comparisons_after_counting_child_summa
 
     (query,) = backend.convert(chained_event_count_collection(parent_condition=f"{operator}: 2"))
 
-    assert (
-        f"| summarize EventCount = sum(_sigma_weight) by _sigma_window_end\n| where EventCount {query_operator} 2\n"
-        in query
-    )
+    assert f"| where CountBoundaryOrder == 0\n| where EventCount {query_operator} 2\n" in query
 
 
 @pytest.mark.parametrize(
