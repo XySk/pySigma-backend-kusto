@@ -1,0 +1,338 @@
+{
+  "ticket": 40,
+  "candidate_revision": "bb07f55bc264c949c2d1577f6fb48e25b99b4b8e",
+  "baseline_revision": "07525ee846878754bda7933eab0684895a156086",
+  "engine": {
+    "status": "PASS",
+    "response": {
+      "Tables": [
+        {
+          "TableName": "Table_0",
+          "Columns": [
+            {
+              "ColumnName": "BuildVersion",
+              "DataType": "String"
+            },
+            {
+              "ColumnName": "BuildTime",
+              "DataType": "DateTime"
+            },
+            {
+              "ColumnName": "ServiceType",
+              "DataType": "String"
+            },
+            {
+              "ColumnName": "ProductVersion",
+              "DataType": "String"
+            },
+            {
+              "ColumnName": "ServiceOffering",
+              "DataType": "String"
+            }
+          ],
+          "Rows": [
+            [
+              "1.0.9815.14081",
+              "2026-11-15T07:49:22Z",
+              "Engine",
+              "2026.11.15.0741-2645-8e3387b-master",
+              ""
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  "resources": {
+    "image": "sha256:65e8298d9350856dec696e0e41327288e7bc105146768a1429fce62f3640acd8",
+    "memory": 12884901888,
+    "memory_swap": 12884901888,
+    "cpu_quota": 0,
+    "nano_cpus": 0
+  },
+  "options": {
+    "max_memory_consumption_per_query_per_node": 12884901888,
+    "query_results_cache_max_age": "00:00:00",
+    "servertimeout": "00:00:13"
+  },
+  "timeout_seconds": 15,
+  "repeats": 3,
+  "raw_baseline": "/tmp/kusto-spec34-baseline-fast",
+  "raw_candidate": "/tmp/ticket40-runtime/benchmark-verified",
+  "frozen_candidate": "/tmp/ticket40-bench-candidate",
+  "core_correctness": "/tmp/ticket40-runtime/core",
+  "limitations": [
+    "Small fixed 96-row datatable workloads; much of elapsed improvement is planning cost, not production capacity.",
+    "Intermediate operator row growth is not observed.",
+    "Baseline Host dynamic is explicitly compared with candidate native string under the scalar migration contract.",
+    "These plain workloads do not measure retained-context contributor work; #47/#49 own broader coverage."
+  ],
+  "workloads": [
+    {
+      "name": "many-groups-temporal-plain",
+      "input_rows": 96,
+      "expected_rows": 72,
+      "baseline_shape": {
+        "query_bytes": 14980,
+        "query_lines": 131,
+        "operators": {
+          "distinct": 1,
+          "extend": 28,
+          "join": 8,
+          "mv-expand": 5,
+          "project": 16,
+          "project-away": 1,
+          "scan": 4,
+          "serialize": 4,
+          "sort": 6,
+          "summarize": 8,
+          "where": 22
+        }
+      },
+      "candidate_shape": {
+        "query_bytes": 1900,
+        "query_lines": 25,
+        "operators": {
+          "extend": 3,
+          "project": 4,
+          "scan": 1,
+          "sort": 1,
+          "summarize": 1,
+          "where": 5
+        }
+      },
+      "baseline": {
+        "engine_elapsed_seconds": [
+          0.9873653,
+          0.9805142,
+          1.0581286
+        ],
+        "elapsed_seconds": [
+          1.003871,
+          0.995739,
+          1.078726
+        ],
+        "peak_memory": [
+          6418848,
+          6656016,
+          6444864
+        ],
+        "observed_rows": [
+          72,
+          72,
+          72
+        ],
+        "query_sha256": [
+          "011b1e9128f6f54d4b63cc207554110459d1b8d4f077cf61f827b2d848f685a9",
+          "011b1e9128f6f54d4b63cc207554110459d1b8d4f077cf61f827b2d848f685a9",
+          "011b1e9128f6f54d4b63cc207554110459d1b8d4f077cf61f827b2d848f685a9"
+        ],
+        "fixture_sha256": [
+          "f1b3aa3ad4ad8bacdde41c51e72c7f95046769c25f3f629706d64d1c3f0e2970",
+          "f1b3aa3ad4ad8bacdde41c51e72c7f95046769c25f3f629706d64d1c3f0e2970",
+          "f1b3aa3ad4ad8bacdde41c51e72c7f95046769c25f3f629706d64d1c3f0e2970"
+        ],
+        "cpu_seconds": [
+          0.76582,
+          0.788956,
+          0.766347
+        ],
+        "query_planning_cpu_seconds": [
+          0.735288,
+          0.749792,
+          0.736568
+        ],
+        "query_execution_cpu_seconds": [
+          0.030532,
+          0.039164,
+          0.029779
+        ]
+      },
+      "candidate": {
+        "engine_elapsed_seconds": [
+          0.079493,
+          0.0513191,
+          0.0497449
+        ],
+        "elapsed_seconds": [
+          0.095022,
+          0.066807,
+          0.061606
+        ],
+        "peak_memory": [
+          2118784,
+          1598080,
+          2118352
+        ],
+        "observed_rows": [
+          72,
+          72,
+          72
+        ],
+        "query_sha256": [
+          "a27d2468da2df0536cfd28a30d3f6a5a909a94b51868688b3c19998ed9dc876a",
+          "a27d2468da2df0536cfd28a30d3f6a5a909a94b51868688b3c19998ed9dc876a",
+          "a27d2468da2df0536cfd28a30d3f6a5a909a94b51868688b3c19998ed9dc876a"
+        ],
+        "fixture_sha256": [
+          "f1b3aa3ad4ad8bacdde41c51e72c7f95046769c25f3f629706d64d1c3f0e2970",
+          "f1b3aa3ad4ad8bacdde41c51e72c7f95046769c25f3f629706d64d1c3f0e2970",
+          "f1b3aa3ad4ad8bacdde41c51e72c7f95046769c25f3f629706d64d1c3f0e2970"
+        ],
+        "cpu_seconds": [
+          0.070202,
+          0.043868,
+          0.04886
+        ],
+        "query_planning_cpu_seconds": [
+          0.045626,
+          0.040457,
+          0.045222
+        ],
+        "query_execution_cpu_seconds": [
+          0.024576,
+          0.003411,
+          0.003638
+        ]
+      }
+    },
+    {
+      "name": "hot-group-temporal-plain",
+      "input_rows": 96,
+      "expected_rows": 47,
+      "baseline_shape": {
+        "query_bytes": 15334,
+        "query_lines": 139,
+        "operators": {
+          "distinct": 1,
+          "extend": 32,
+          "join": 8,
+          "mv-expand": 5,
+          "project": 16,
+          "project-away": 1,
+          "scan": 4,
+          "serialize": 4,
+          "sort": 6,
+          "summarize": 8,
+          "where": 24
+        }
+      },
+      "candidate_shape": {
+        "query_bytes": 2339,
+        "query_lines": 29,
+        "operators": {
+          "extend": 3,
+          "project": 5,
+          "scan": 1,
+          "sort": 1,
+          "summarize": 1,
+          "where": 6
+        }
+      },
+      "baseline": {
+        "engine_elapsed_seconds": [
+          0.9240755,
+          0.9348819,
+          0.9600508
+        ],
+        "elapsed_seconds": [
+          0.938459,
+          0.951625,
+          0.979221
+        ],
+        "peak_memory": [
+          6576176,
+          6528544,
+          6626128
+        ],
+        "observed_rows": [
+          47,
+          47,
+          47
+        ],
+        "query_sha256": [
+          "86df5a95863ce256c7acef61833cccb85ede6b1539fe477e481ec0dce9852f5c",
+          "86df5a95863ce256c7acef61833cccb85ede6b1539fe477e481ec0dce9852f5c",
+          "86df5a95863ce256c7acef61833cccb85ede6b1539fe477e481ec0dce9852f5c"
+        ],
+        "fixture_sha256": [
+          "5bc37ed7f487b486a167251fa66e85a6742418e4f0552d2b5aa350b3dfce331a",
+          "5bc37ed7f487b486a167251fa66e85a6742418e4f0552d2b5aa350b3dfce331a",
+          "5bc37ed7f487b486a167251fa66e85a6742418e4f0552d2b5aa350b3dfce331a"
+        ],
+        "cpu_seconds": [
+          0.72439,
+          0.738614,
+          0.691754
+        ],
+        "query_planning_cpu_seconds": [
+          0.694536,
+          0.698583,
+          0.671945
+        ],
+        "query_execution_cpu_seconds": [
+          0.029854,
+          0.040031,
+          0.019809
+        ]
+      },
+      "candidate": {
+        "engine_elapsed_seconds": [
+          0.0947522,
+          0.0615673,
+          0.0762232
+        ],
+        "elapsed_seconds": [
+          0.10987,
+          0.073034,
+          0.091006
+        ],
+        "peak_memory": [
+          1599072,
+          2643616,
+          2139536
+        ],
+        "observed_rows": [
+          47,
+          47,
+          47
+        ],
+        "query_sha256": [
+          "14552e9afb690d705f648eaff96366443d952f69024002e637ab6dc439988515",
+          "14552e9afb690d705f648eaff96366443d952f69024002e637ab6dc439988515",
+          "14552e9afb690d705f648eaff96366443d952f69024002e637ab6dc439988515"
+        ],
+        "fixture_sha256": [
+          "5bc37ed7f487b486a167251fa66e85a6742418e4f0552d2b5aa350b3dfce331a",
+          "5bc37ed7f487b486a167251fa66e85a6742418e4f0552d2b5aa350b3dfce331a",
+          "5bc37ed7f487b486a167251fa66e85a6742418e4f0552d2b5aa350b3dfce331a"
+        ],
+        "cpu_seconds": [
+          0.081979,
+          0.061714,
+          0.074805
+        ],
+        "query_planning_cpu_seconds": [
+          0.051626,
+          0.053557,
+          0.065751
+        ],
+        "query_execution_cpu_seconds": [
+          0.030353,
+          0.008157,
+          0.009054
+        ]
+      }
+    }
+  ],
+  "post_relational_context_correctness": {
+    "integration_revision": "d1301d1",
+    "context_cases": 16,
+    "context_result": "PASS",
+    "raw_context": "/tmp/ticket40-runtime/context-verified",
+    "scalar_child_context_cases": 1,
+    "scalar_child_context_result": "PASS",
+    "raw_scalar_child_context": "/tmp/ticket40-runtime/scalar-child-context",
+    "preserved_failed_context_transport_attempt": "/tmp/ticket40-runtime/context"
+  }
+}
