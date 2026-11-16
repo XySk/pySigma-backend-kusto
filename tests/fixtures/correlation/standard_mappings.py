@@ -60,6 +60,9 @@ def fixture(parent=False):
             ]
         }
     )
+    from tests.correlation_helpers import fixture_schema
+
+    pipeline.vars["kusto_schema"] = fixture_schema()
     documents = [first, second, correlation]
     if parent:
         documents.append(
