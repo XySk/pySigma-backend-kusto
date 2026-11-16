@@ -41,24 +41,23 @@ union (_sigma_context_summaries | extend ContextRowKind = "Summary"), (_sigma_co
 };
 let _sigma_shared_results = materialize(_sigma_shared_child());
 let _sigma_context_summary = () {
-let _sigma_types = union (_sigma_shared_results
+union (_sigma_shared_results
 | where ["ContextRowKind"] == "Summary"
-| extend _sigma_timestamp = todatetime(["WindowEnd"])
-| extend _sigma_rule = "child")
-| where isnotnull(_sigma_timestamp)
-| summarize by _sigma_timestamp, _sigma_rule;
-_sigma_types
-| project _sigma_window_end = _sigma_timestamp, _sigma_bin = bin(_sigma_timestamp, 5m)
-| distinct *
-| join kind=inner (
-    _sigma_types
-    | extend _sigma_bin = pack_array(bin(_sigma_timestamp, 5m), bin(_sigma_timestamp, 5m) + 5m)
-    | mv-expand _sigma_bin to typeof(datetime)
-) on _sigma_bin
-| where _sigma_timestamp between ((_sigma_window_end - 5m) .. _sigma_window_end)
-| summarize RuleCount = count_distinctif(_sigma_rule, isnotempty(_sigma_rule)) by _sigma_window_end
+| project EventTime = todatetime(["WindowEnd"]), SourceRule = "child")
+| where isnotnull(EventTime)
+// Batch simultaneous source matches before updating inclusive trailing presence.
+| summarize MatchesChild = countif(SourceRule == "child") > 0 by EventTime
+| sort by EventTime asc
+| extend NewCorrelationGroup = isnull(prev(EventTime))
+| scan declare (LastChildTime:datetime) with (
+    step PresenceWindow: true =>
+        LastChildTime = iff(MatchesChild, EventTime, iff(NewCorrelationGroup, datetime(null), PresenceWindow.LastChildTime));
+)
+// Only source-match timestamps evaluate; expiration never creates an anchor.
+| extend HasChild = isnotnull(LastChildTime) and LastChildTime >= EventTime - 5m
+| extend RuleCount = tolong(HasChild)
 | where RuleCount >= 1
-| project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, RuleCount
+| project WindowStart = EventTime - 5m, WindowEnd = EventTime, RuleCount
 };
 let _sigma_context_summaries = materialize(_sigma_context_summary()
 | serialize _sigma_context_id = row_number());
