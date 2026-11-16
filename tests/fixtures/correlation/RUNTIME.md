@@ -878,3 +878,21 @@ data-selectivity estimate and real/decimal prefilter performance is unmeasured.
 The candidate join can still grow quadratically. These are workload-specific
 emulator measurements; shared corpus regeneration and final integrated gates
 remain required.
+
+# Pinned scalar redesign baseline (#35)
+
+The [pre-redesign baseline report](BENCHMARK-BASELINE.md) pins revision
+`07525ee` and 64 public-conversion workloads. All have three non-interrupted
+attempts on the same 12 GiB emulator/image/version with fixed 15-second client
+and 13-second server deadlines. Of 195 measured attempts, 81 were originally
+PASS and 114 FAIL; three schema-only boxed-sum failures are separately reassessed
+from their original frames, yielding 84 verified samples across 28 plain
+workloads. One explicit interruption remains FAIL/unverified. All 36 context/chain
+workloads failed to complete verified output; timeout/empty replies are not
+successful empty results and do not establish OOM.
+
+The report preserves every original raw ledger/request/response with hashes,
+repeated client/engine elapsed samples and actual CPU/peak memory when exposed.
+These 4/24/96-row synthetic inputs chiefly reveal planning cost and representative
+behavior, not production throughput or capacity. Intermediate growth is unobserved.
+Earlier focused evidence and later candidate studies remain separate.

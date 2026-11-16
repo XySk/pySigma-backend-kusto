@@ -60,6 +60,20 @@ def test_runtime_partial_or_cancelled_frames_fail_schema_and_result_gate():
     assert assess([empty, completion], {})[0] is False
 
 
+def test_candidate_context_requires_public_boolean_completeness_even_when_empty():
+    from tests.fixtures.correlation.benchmark import assess
+
+    fixture = {"schema": {}, "expected": [], "context": True}
+    primary = {"FrameType": "DataTable", "TableKind": "PrimaryResult", "Columns": [], "Rows": []}
+    complete = {"FrameType": "DataSetCompletion", "HasErrors": False}
+    assert assess([primary, complete], fixture)[0] is False
+    assert assess([primary, complete], fixture, baseline=True)[0] is True
+    primary["Columns"] = [{"ColumnName": "ContextComplete", "ColumnType": "string"}]
+    assert assess([primary, complete], fixture)[0] is False
+    primary["Columns"][0]["ColumnType"] = "bool"
+    assert assess([primary, complete], fixture)[0] is True
+
+
 def test_benchmark_preserves_query_resource_measurements_and_exact_output(tmp_path, monkeypatch):
     import subprocess
     from pathlib import Path

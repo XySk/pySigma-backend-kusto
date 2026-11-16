@@ -1,0 +1,92 @@
+[
+  {
+    "run": "kusto-spec34-baseline-measured",
+    "name": "sparse-value_sum-plain",
+    "repeat": 1,
+    "original_status": "FAIL",
+    "original_detail": "schema mismatch ValueSum: expected ['long'], observed dynamic",
+    "response_sha256": "19c07565a6b60cd262ac743a562c709ed6b9282ba4f886234039f0fbd26b04e2",
+    "fixture_sha256": "ee30ba527f4701d9446afc10d7558fcca7db561f1171dadc09b7308f1e4e750c",
+    "observed_schema": [
+      {
+        "ColumnName": "WindowStart",
+        "ColumnType": "datetime"
+      },
+      {
+        "ColumnName": "WindowEnd",
+        "ColumnType": "datetime"
+      },
+      {
+        "ColumnName": "Host",
+        "ColumnType": "dynamic"
+      },
+      {
+        "ColumnName": "ValueSum",
+        "ColumnType": "dynamic"
+      }
+    ],
+    "reassessed_status": "PASS",
+    "detail": "exact result multiset and declared schema",
+    "reason": "pre-redesign boxed dynamic ValueSum is an explicit schema migration; original ledger unchanged"
+  },
+  {
+    "run": "kusto-spec34-baseline-measured",
+    "name": "sparse-value_sum-plain",
+    "repeat": 2,
+    "original_status": "FAIL",
+    "original_detail": "schema mismatch ValueSum: expected ['long'], observed dynamic",
+    "response_sha256": "53ffc9296a7079a00ffef02ba59932d6953b5fef1e41439d13434457e6921c7d",
+    "fixture_sha256": "ee30ba527f4701d9446afc10d7558fcca7db561f1171dadc09b7308f1e4e750c",
+    "observed_schema": [
+      {
+        "ColumnName": "WindowStart",
+        "ColumnType": "datetime"
+      },
+      {
+        "ColumnName": "WindowEnd",
+        "ColumnType": "datetime"
+      },
+      {
+        "ColumnName": "Host",
+        "ColumnType": "dynamic"
+      },
+      {
+        "ColumnName": "ValueSum",
+        "ColumnType": "dynamic"
+      }
+    ],
+    "reassessed_status": "PASS",
+    "detail": "exact result multiset and declared schema",
+    "reason": "pre-redesign boxed dynamic ValueSum is an explicit schema migration; original ledger unchanged"
+  },
+  {
+    "run": "kusto-spec34-baseline-measured",
+    "name": "sparse-value_sum-plain",
+    "repeat": 3,
+    "original_status": "FAIL",
+    "original_detail": "schema mismatch ValueSum: expected ['long'], observed dynamic",
+    "response_sha256": "b3649ae879674772dd38ac4a82d519f421a0b3890fb1690c882704a1a5cb75f8",
+    "fixture_sha256": "ee30ba527f4701d9446afc10d7558fcca7db561f1171dadc09b7308f1e4e750c",
+    "observed_schema": [
+      {
+        "ColumnName": "WindowStart",
+        "ColumnType": "datetime"
+      },
+      {
+        "ColumnName": "WindowEnd",
+        "ColumnType": "datetime"
+      },
+      {
+        "ColumnName": "Host",
+        "ColumnType": "dynamic"
+      },
+      {
+        "ColumnName": "ValueSum",
+        "ColumnType": "dynamic"
+      }
+    ],
+    "reassessed_status": "PASS",
+    "detail": "exact result multiset and declared schema",
+    "reason": "pre-redesign boxed dynamic ValueSum is an explicit schema migration; original ledger unchanged"
+  }
+]
