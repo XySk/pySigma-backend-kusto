@@ -165,7 +165,7 @@ def test_standard_mapping_preserves_logical_child_group_fields():
         processing_pipeline=mapping_pipeline({"Host": "Machine Name"}), correlation_timestamp_field="Timestamp"
     ).convert(collection)
     assert '["Machine Name"]' in query
-    assert 'todatetime(["WindowEnd"]), _sigma_group_0 = ["Host"]' in query
+    assert 'todatetime(["WindowEnd"]), GroupHost = ["Host"]' in query
 
 
 def test_ordinary_detection_still_supports_one_to_many_and_escapes_identifier_quotes():

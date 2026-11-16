@@ -66,44 +66,39 @@ let OtherEvents=datatable(NetworkTime:string, Case:string, NetworkUser:dynamic, 
 | extend NetworkTime=todatetime(NetworkTime), NetworkUser=tostring(NetworkUser);
 let Actual = () {
 let _sigma_child_0 = () {
-let _sigma_weights = union (Events
+let SourceMatchArrivals = union (Events
 | where Marker =~ "match"
-| extend _sigma_timestamp = todatetime(["ProcessTime"]), _sigma_group_0 = ["Case"], _sigma_group_1 = ["ProcessUser"], _sigma_group_2 = ["ProcessHost"]
-| extend _sigma_rule = "source-rule")
-| where isnotnull(_sigma_timestamp) and isnotempty(_sigma_group_0) and isnotempty(_sigma_group_1) and isnotempty(_sigma_group_2)
-| summarize _sigma_weight = count() by _sigma_timestamp, _sigma_group_0, _sigma_group_1, _sigma_group_2;
-_sigma_weights
-| project _sigma_group_0, _sigma_group_1, _sigma_group_2, _sigma_window_end = _sigma_timestamp, _sigma_bin = bin(_sigma_timestamp, 5m)
-| join kind=inner (
-    _sigma_weights
-    | extend _sigma_bin = pack_array(bin(_sigma_timestamp, 5m), bin(_sigma_timestamp, 5m) + 5m)
-    | mv-expand _sigma_bin to typeof(datetime)
-) on _sigma_group_0, _sigma_group_1, _sigma_group_2, _sigma_bin
-| where _sigma_timestamp between ((_sigma_window_end - 5m) .. _sigma_window_end)
-| summarize EventCount = sum(_sigma_weight) by _sigma_window_end, _sigma_group_0, _sigma_group_1, _sigma_group_2
+| project EventTime_1 = todatetime(["ProcessTime"]), GroupCase = ["Case"], GroupActor = ["ProcessUser"], GroupHost = ["ProcessHost"])
+| where isnotnull(EventTime_1) and isnotempty(GroupCase) and isnotempty(GroupActor) and isnotempty(GroupHost)
+| summarize SourceMatchCount = count() by EventTime_1, GroupCase, GroupActor, GroupHost;
+union (SourceMatchArrivals
+| project GroupCase, GroupActor, GroupHost, CountBoundaryTime = EventTime_1, CountBoundaryOrder = 0, SourceMatchDelta = SourceMatchCount),
+(SourceMatchArrivals
+| project GroupCase, GroupActor, GroupHost, CountBoundaryTime = EventTime_1 + 5m, CountBoundaryOrder = 1, SourceMatchDelta = -SourceMatchCount)
+// Arrivals evaluate before equal-time expirations; expirations never create matches.
+| sort by GroupCase asc, GroupActor asc, GroupHost asc, CountBoundaryTime asc, CountBoundaryOrder asc
+| extend EventCount = row_cumsum(SourceMatchDelta, GroupCase != prev(GroupCase) or GroupActor != prev(GroupActor) or GroupHost != prev(GroupHost))
+| where CountBoundaryOrder == 0
 | where EventCount >= 2
-| project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ["Case"] = _sigma_group_0, ["Actor"] = _sigma_group_1, ["Host"] = _sigma_group_2, EventCount
+| project WindowStart = CountBoundaryTime - 5m, WindowEnd = CountBoundaryTime, ["Case"] = GroupCase, ["Actor"] = GroupActor, ["Host"] = GroupHost, EventCount
 };
-let _sigma_weights = union (_sigma_child_0()
-| extend _sigma_timestamp = todatetime(["WindowEnd"]), _sigma_group_0 = ["Case"], _sigma_group_1 = ["Actor"]
-| extend _sigma_rule = "child-rule"),
+let SourceMatchArrivals = union (_sigma_child_0()
+| project EventTime_1 = todatetime(["WindowEnd"]), GroupCase = ["Case"], GroupActor = ["Actor"]),
 (OtherEvents
 | where Marker =~ "match"
-| extend _sigma_timestamp = todatetime(["NetworkTime"]), _sigma_group_0 = ["Case"], _sigma_group_1 = ["NetworkUser"]
-| extend _sigma_rule = "direct-rule")
-| where isnotnull(_sigma_timestamp) and isnotempty(_sigma_group_0) and isnotempty(_sigma_group_1)
-| summarize _sigma_weight = count() by _sigma_timestamp, _sigma_group_0, _sigma_group_1;
-_sigma_weights
-| project _sigma_group_0, _sigma_group_1, _sigma_window_end = _sigma_timestamp, _sigma_bin = bin(_sigma_timestamp, 2m)
-| join kind=inner (
-    _sigma_weights
-    | extend _sigma_bin = pack_array(bin(_sigma_timestamp, 2m), bin(_sigma_timestamp, 2m) + 2m)
-    | mv-expand _sigma_bin to typeof(datetime)
-) on _sigma_group_0, _sigma_group_1, _sigma_bin
-| where _sigma_timestamp between ((_sigma_window_end - 2m) .. _sigma_window_end)
-| summarize EventCount = sum(_sigma_weight) by _sigma_window_end, _sigma_group_0, _sigma_group_1
+| project EventTime_1 = todatetime(["NetworkTime"]), GroupCase = ["Case"], GroupActor = ["NetworkUser"])
+| where isnotnull(EventTime_1) and isnotempty(GroupCase) and isnotempty(GroupActor)
+| summarize SourceMatchCount = count() by EventTime_1, GroupCase, GroupActor;
+union (SourceMatchArrivals
+| project GroupCase, GroupActor, CountBoundaryTime = EventTime_1, CountBoundaryOrder = 0, SourceMatchDelta = SourceMatchCount),
+(SourceMatchArrivals
+| project GroupCase, GroupActor, CountBoundaryTime = EventTime_1 + 2m, CountBoundaryOrder = 1, SourceMatchDelta = -SourceMatchCount)
+// Arrivals evaluate before equal-time expirations; expirations never create matches.
+| sort by GroupCase asc, GroupActor asc, CountBoundaryTime asc, CountBoundaryOrder asc
+| extend EventCount = row_cumsum(SourceMatchDelta, GroupCase != prev(GroupCase) or GroupActor != prev(GroupActor))
+| where CountBoundaryOrder == 0
 | where EventCount >= 2
-| project WindowStart = _sigma_window_end - 2m, WindowEnd = _sigma_window_end, ["Case"] = _sigma_group_0, ["Actor"] = _sigma_group_1, EventCount
+| project WindowStart = CountBoundaryTime - 2m, WindowEnd = CountBoundaryTime, ["Case"] = GroupCase, ["Actor"] = GroupActor, EventCount
 };
 let Expected = datatable(WindowStart:datetime, WindowEnd:datetime, Case:string, Actor:string, EventCount:long) [
     datetime(2026-01-01T12:04:00Z), datetime(2026-01-01T12:06:00Z), "child-time", "alice", 2,
