@@ -1219,10 +1219,14 @@ class KustoBackend(TextQueryBackend):
 
         event_count = rule.type == SigmaCorrelationType.EVENT_COUNT
         columns = {
-            "timestamp": allocate("EventTime" if event_count else "_sigma_timestamp"),
-            "rule": allocate("SourceRule" if event_count else "_sigma_rule"),
+            "timestamp": allocate("EventTime" if ordered or event_count else "_sigma_timestamp"),
+            "rule": allocate("SourceRule" if ordered or event_count else "_sigma_rule"),
             "groups": [
-                allocate("Group" + re.sub(r"[^A-Za-z_0-9]", "", field) if event_count else f"_sigma_group_{index}")
+                allocate(
+                    "Group" + re.sub(r"[^A-Za-z0-9_]", "_" if ordered else "", field)
+                    if ordered or event_count
+                    else f"_sigma_group_{index}"
+                )
                 for index, field in enumerate(rule.group_by or [])
             ],
             "weight": allocate("_sigma_weight"),
@@ -1254,10 +1258,6 @@ class KustoBackend(TextQueryBackend):
             columns["real_count"] = allocate("_sigma_real_count")
         if rule.type == SigmaCorrelationType.VALUE_AVG:
             columns["numeric_count"] = allocate("_sigma_numeric_count")
-        if ordered:
-            columns["sequence_start"] = allocate("_sigma_sequence_start")
-            columns["sequence_end"] = allocate("_sigma_sequence_end")
-            columns["steps"] = [allocate(f"_sigma_sequence_{index}") for index in range(len(rule.referenced_rules))]
         self._correlation_group_by = rule.group_by or []
         self._correlation_counted_fields = counted_fields or []
         self._correlation_columns = columns
@@ -1332,7 +1332,9 @@ class KustoBackend(TextQueryBackend):
         if ordered:
             return [
                 _CorrelationQuery(definitions + query.definitions, query.body)
-                for query in self._convert_ordered_temporal(rule, search, columns, valid_rows, span, source_type_count)
+                for query in self._convert_ordered_temporal(
+                    rule, search, columns, valid_rows, span, source_type_count, allocate
+                )
             ]
         anchor_fields = ", ".join([*groups, f"{window_end} = {timestamp}", f"{time_bin} = bin({timestamp}, {span})"])
         join_fields = ", ".join([*groups, time_bin])
@@ -1669,43 +1671,79 @@ class KustoBackend(TextQueryBackend):
         )
         return definitions, n["relation"], n["identity"]
 
-    def _convert_ordered_temporal(self, rule, search, columns, valid_rows, span, source_type_count):
-        timestamp, rule_column, types, start, end, time_bin = (
-            columns[name] for name in ("timestamp", "rule", "weights", "sequence_start", "sequence_end", "bin")
-        )
-        groups, steps = columns["groups"], columns["steps"]
+    def _convert_ordered_temporal(self, rule, search, columns, valid_rows, span, source_type_count, allocate):
+        groups = columns["groups"]
         identities = [reference.rule.name or str(reference.rule.id) for reference in rule.referenced_rules]
-        retained_fields = ", ".join([timestamp, *groups, rule_column])
-        first_fields = ", ".join([f"{start} = {timestamp}", f"{end} = {timestamp}", *groups])
-        candidate_fields = ", ".join([timestamp, *groups, f"{time_bin} = bin({timestamp}, {span})"])
-        join_fields = ", ".join([*groups, time_bin])
-        summary_fields = ", ".join([f"{end} = {timestamp}", *groups])
+        labels = [
+            "".join(part[:1].upper() + part[1:] for part in re.findall(r"[A-Za-z0-9]+", identity)) or "Source"
+            for identity in identities
+        ]
+        timestamp = columns["timestamp"]
+        complete = allocate("CompleteNow")
+        new_group = allocate("NewCorrelationGroup")
+        state = allocate("SequenceState")
+        memberships = {}
+        for identity, label in zip(identities, labels):
+            if identity not in memberships:
+                memberships[identity] = allocate(f"Has{label}")
+        aggregates = ", ".join(
+            f"{name} = countif({columns['rule']} == {json.dumps(identity, ensure_ascii=False)}) > 0"
+            for identity, name in memberships.items()
+        )
+        batch_fields = ", ".join([timestamp, *groups])
+        batch_summary = f"{aggregates} by {batch_fields}" if len(identities) > 1 else f"by {batch_fields}"
+        sequence = " -> ".join(json.dumps(identity, ensure_ascii=False) for identity in identities)
         query = (
-            f"let {types} = {search}\n| where {valid_rows}\n| summarize by {retained_fields};\n"
-            f"let {steps[0]} = {types}\n"
-            f"| where {rule_column} == {json.dumps(identities[0], ensure_ascii=False)}\n"
-            f"| project {first_fields};\n"
+            f"// Strict sequence: {sequence}. Total inclusive span: {span}.\n"
+            f"{search}\n| where {valid_rows}\n"
+            "// Batch equal timestamps: simultaneous source matches cannot advance strict sequence positions.\n"
+            f"| summarize {batch_summary}\n"
         )
-        for index, identity in enumerate(identities[1:], 1):
-            # Each prefix ending at one timestamp needs only its latest viable
-            # start. Any earlier start has the same future ordering constraints
-            # and a tighter expiry, so cannot enable an additional completion.
+        if len(identities) > 1:
+            prefixes = [allocate(f"Latest{'Then'.join(labels[:index])}Start") for index in range(1, len(identities))]
+            group_changes = []
+            for field, group in zip(rule.group_by or [], groups):
+                changed = f"{group} != prev({group})"
+                if self._correlation_field_types[field] == "real":
+                    # Native summarize groups NaNs together, while scalar NaN
+                    # inequality is true even for another NaN.
+                    changed = f"({changed} and not(isnan({group}) and isnan(prev({group}))))"
+                group_changes.append(changed)
+            reset = " or ".join([f"isnull(prev({timestamp}))", *group_changes])
             query += (
-                f"let {steps[index]} = {steps[index - 1]}\n"
-                f"| extend {time_bin} = pack_array(bin({start}, {span}), bin({start}, {span}) + {span})\n"
-                f"| mv-expand {time_bin} to typeof(datetime)\n"
-                f"| join kind=inner (\n"
-                f"    {types}\n"
-                f"    | where {rule_column} == {json.dumps(identity, ensure_ascii=False)}\n"
-                f"    | project {candidate_fields}\n"
-                f") on {join_fields}\n"
-                f"| where {timestamp} > {end} and {timestamp} <= {start} + {span}\n"
-                f"| summarize {start} = max({start}) by {summary_fields};\n"
+                f"| sort by {', '.join(f'{field} asc' for field in [*groups, timestamp])}\n"
+                f"| extend {new_group} = {reset}\n"
+                "// Read preceding timestamp state for every assignment; preserve viable earlier prefixes.\n"
+                f"| scan declare ({', '.join(f'{prefix}:datetime = datetime(null)' for prefix in prefixes)}, "
+                f"{complete}:bool = false) with (\n"
+                f"    step {state}: true =>\n"
+                f"        {complete} = not({new_group}) and {memberships[identities[-1]]} "
+                f"and isnotnull({state}.{prefixes[-1]}) and {state}.{prefixes[-1]} >= {timestamp} - {span},\n"
             )
+            assignments = []
+            for index, prefix in enumerate(prefixes):
+                # For future detection, the latest start dominates earlier
+                # starts with the same processed timestamp boundary. A new
+                # first-step event never overwrites a longer viable prefix.
+                previous = f"{state}.{prefix}"
+                if index == 0:
+                    value = (
+                        f"iff({memberships[identities[0]]}, {timestamp}, iff({new_group}, datetime(null), {previous}))"
+                    )
+                else:
+                    predecessor = f"{state}.{prefixes[index - 1]}"
+                    advance = (
+                        f"{memberships[identities[index]]} and isnotnull({predecessor}) "
+                        f"and {predecessor} >= {timestamp} - {span} "
+                        f"and (isnull({previous}) or {predecessor} > {previous})"
+                    )
+                    value = f"iff({new_group}, datetime(null), iff({advance}, {predecessor}, {previous}))"
+                assignments.append(f"        {prefix} = {value}")
+            query += ",\n".join(assignments) + ";\n)\n" + f"| where {complete}\n"
         result_fields = self._correlation_result_projection(
-            rule, groups, end, span, [f"RuleCount = tolong({source_type_count})"]
+            rule, groups, timestamp, span, [f"RuleCount = tolong({source_type_count})"]
         )
-        return [_CorrelationQuery(query, f"{steps[-1]}\n| project {result_fields}")]
+        return [_CorrelationQuery("", query + f"| project {result_fields}")]
 
     def _correlation_result_projection(self, rule, groups, window_end, span, metrics):
         return ", ".join(

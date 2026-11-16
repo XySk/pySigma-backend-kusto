@@ -57,7 +57,10 @@ def test_average_exposes_metric_to_chained_consumers_and_preserves_generate(chil
     queries = convert_documents([source_document(), child, parent])
 
     assert len(queries) == 1 + child_generate + parent_generate
-    assert any(final_summary_projection(query).endswith('["Host"] = _sigma_group_0, ValueAvg') for query in queries) == parent_generate
+    assert (
+        any(final_summary_projection(query).endswith('["Host"] = _sigma_group_0, ValueAvg') for query in queries)
+        == parent_generate
+    )
     assert final_summary_projection(queries[-1]).endswith('["Host"] = _sigma_group_0, ValueSum')
     assert any('pack_array(gettype(["ValueAvg"]), ["ValueAvg"])' in query for query in queries)
 
@@ -87,17 +90,19 @@ def test_average_honors_builtin_source_mapping():
     assert "ValueAvg > 0.5" in query
 
 
-@pytest.mark.parametrize(("kind", "condition"), [
-    ("event_count", {"gte": 1}),
-    ("value_count", {"field": "ValueAvg", "gte": 1}),
-    ("value_sum", {"field": "ValueAvg", "gte": 0}),
-    ("value_avg", {"field": "ValueAvg", "gte": 0}),
-    ("temporal", {"gte": 1}),
-    ("temporal_ordered", {"gte": 1}),
-])
+@pytest.mark.parametrize(
+    ("kind", "condition"),
+    [
+        ("event_count", {"gte": 1}),
+        ("value_count", {"field": "ValueAvg", "gte": 1}),
+        ("value_sum", {"field": "ValueAvg", "gte": 0}),
+        ("value_avg", {"field": "ValueAvg", "gte": 0}),
+        ("temporal", {"gte": 1}),
+        ("temporal_ordered", {"gte": 1}),
+    ],
+)
 def test_average_child_composes_with_every_supported_consumer(kind, condition):
-    child = correlation_document("child", "value_avg", ["source-rule"],
-                                 condition={"field": "Amount", "gte": 0})
+    child = correlation_document("child", "value_avg", ["source-rule"], condition={"field": "Amount", "gte": 0})
     parent = correlation_document("parent", kind, ["child"], field=condition.get("field"), condition=condition)
 
     (query,) = convert_documents([source_document(), child, parent])

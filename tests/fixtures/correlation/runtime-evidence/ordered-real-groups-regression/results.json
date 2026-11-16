@@ -1,0 +1,60 @@
+{
+  "started_utc": "2026-11-16T17:32:28.798356+00:00",
+  "endpoint": "http://localhost:8080",
+  "database": "NetDefaultDB",
+  "request_options": {
+    "max_memory_consumption_per_query_per_node": 12884901888
+  },
+  "timeout_seconds": 45,
+  "manifest_sha256": "2dd680e9aa0d49a856426f71abd95aec295dbb8781700911b2eeeea9babc2655",
+  "fixtures": [
+    {
+      "name": "ordered_state_real_groups.kql",
+      "sha256": "08153477eedb7ae637cef628e5e7df318eb9f90db5b31c489cdbcef4ef16fddc",
+      "expected_error": null,
+      "status": "FAIL",
+      "detail": "multiset differences: [[\"2025-12-31T23:57:00Z\", \"2026-01-01T00:02:00Z\", \"NaN\", 3, -1]]",
+      "http_status": 200,
+      "seconds": 0.236
+    }
+  ],
+  "status": "FAIL",
+  "engine_version": {
+    "Tables": [
+      {
+        "TableName": "Table_0",
+        "Columns": [
+          {
+            "ColumnName": "BuildVersion",
+            "DataType": "String"
+          },
+          {
+            "ColumnName": "BuildTime",
+            "DataType": "DateTime"
+          },
+          {
+            "ColumnName": "ServiceType",
+            "DataType": "String"
+          },
+          {
+            "ColumnName": "ProductVersion",
+            "DataType": "String"
+          },
+          {
+            "ColumnName": "ServiceOffering",
+            "DataType": "String"
+          }
+        ],
+        "Rows": [
+          [
+            "1.0.9815.14081",
+            "2026-11-15T07:49:22Z",
+            "Engine",
+            "2026.11.15.0741-2645-8e3387b-master",
+            ""
+          ]
+        ]
+      }
+    ]
+  }
+}
