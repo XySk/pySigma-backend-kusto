@@ -13,7 +13,16 @@ from tests.fixtures.correlation.source_predicates import PRIVILEGED_GROUP_SOURCE
 @pytest.mark.parametrize("explicit_override", [False, True])
 def test_security_event_selection_preserves_privileged_group_predicates(explicit_override):
     custom = ProcessingPipeline.from_dict(
-        {"priority": 1, "transformations": [{"type": "set_state", "key": "query_table", "val": "SecurityEvent"}]}
+        {
+            "priority": 1,
+            "transformations": [
+                {
+                    "type": "set_state",
+                    "key": "query_table",
+                    "val": "IgnoredTable" if explicit_override else "SecurityEvent",
+                }
+            ],
+        }
     )
     pipeline = custom + microsoft_xdr_pipeline(query_table="SecurityEvent" if explicit_override else None)
     (query,) = KustoBackend(processing_pipeline=pipeline).convert(SigmaCollection.from_yaml(PRIVILEGED_GROUP_SOURCE))

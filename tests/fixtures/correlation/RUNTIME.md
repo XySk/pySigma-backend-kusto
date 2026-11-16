@@ -741,6 +741,15 @@ included. This small predicate regression does not establish throughput.
 [Results and fixture hash](runtime-evidence/source-predicates/results.json),
 [engine response](runtime-evidence/source-predicates/engine-version.response.json),
 and [query response](runtime-evidence/source-predicates/source_predicates_securityevent.response.json)
-retain the execution evidence. Re-run with the targeted
-`source-predicates-manifest.json`; regenerate its fixture/hash after backend
-changes before claiming acceptance for the changed query.
+retain the execution evidence. The [executed query](runtime-evidence/source-predicates/executed-securityevent.kql)
+and [executed manifest](runtime-evidence/source-predicates/executed-manifest.json)
+preserve the exact passing inputs at fixture SHA-256
+`4645446c9123326b63007bb42538658630f472f9b8b39e8c8a0c151d12a4a120`.
+
+After merging the scalar-schema implementation, the current fixture uses native
+scalar output and checks its complete public schema (`WindowStart:datetime`,
+`WindowEnd:datetime`, `Actor:string`, `ValueCount:long`) as well as the result
+multiset. Its SHA-256 is `120494d80e695613471489b7effb949b069b43c6bd69ac003034d809ce010c10`.
+This changed query is **pending integrated engine execution**; the prior pass is
+predicate evidence for the archived query. Re-run the current targeted
+`source-predicates-manifest.json` at the integrated acceptance gate.

@@ -101,14 +101,23 @@ let Actual=() {
         + query
         + """
 };
-let Observed=Actual() | project WindowStart, WindowEnd, Actor=tostring(Actor), ValueCount;
+let ActualRows=materialize(Actual());
+let Observed=ActualRows | project WindowStart, WindowEnd, Actor, ValueCount;
 let Expected=datatable(WindowStart:datetime, WindowEnd:datetime, Actor:string, ValueCount:long) [
  datetime(2026-01-01T11:58:00Z),datetime(2026-01-01T12:03:00Z),"alice",4,
  datetime(2026-01-01T11:59:00Z),datetime(2026-01-01T12:04:00Z),"alice",4
 ];
-union (Observed | extend Delta=1),(Expected | extend Delta=-1)
-| summarize Delta=sum(Delta) by WindowStart,WindowEnd,Actor,ValueCount
-| where Delta!=0
+let SchemaObserved=ActualRows | getschema | project ColumnName,ColumnType;
+let SchemaExpected=datatable(ColumnName:string, ColumnType:string) [
+ "WindowStart","datetime", "WindowEnd","datetime", "Actor","string", "ValueCount","long"
+];
+union
+ (union (Observed | extend Delta=1),(Expected | extend Delta=-1)
+  | summarize Delta=sum(Delta) by WindowStart,WindowEnd,Actor,ValueCount
+  | where Delta!=0 | project Issue=strcat("rows: ", tostring(pack_all()))),
+ (union (SchemaObserved | extend Delta=1),(SchemaExpected | extend Delta=-1)
+  | summarize Delta=sum(Delta) by ColumnName,ColumnType
+  | where Delta!=0 | project Issue=strcat("schema: ", tostring(pack_all())))
 """
     )
 
