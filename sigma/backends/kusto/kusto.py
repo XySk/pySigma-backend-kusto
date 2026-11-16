@@ -1020,11 +1020,15 @@ class KustoBackend(TextQueryBackend):
             )
             left = f"{summaries} | project {left_projection}"
             right = f"{search}\n| project {right_projection}"
+            relationship_key = (
+                f"\n| serialize {key} = row_number()"
+                if rule.type == SigmaCorrelationType.TEMPORAL_ORDERED and len(rule.referenced_rules) > 2
+                else ""
+            )
             prefix += (
                 f"let {matched} = materialize(\n{left}\n"
                 f"| join kind=inner (\n{right}\n) on {join_fields}\n"
-                f"| where {timestamp} between (({end} - {span}) .. {end})\n"
-                f"| serialize {key} = row_number());\n"
+                f"| where {timestamp} between (({end} - {span}) .. {end}){relationship_key});\n"
             )
             if rule.type == SigmaCorrelationType.TEMPORAL_ORDERED:
                 membership, matched = self._ordered_context_membership(
