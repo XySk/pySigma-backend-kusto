@@ -253,18 +253,6 @@ def fixtures():
     }
 
 
-if __name__ == "__main__":
-    directory = Path(__file__).parent
-    prepared = []
-    for name, query in fixtures().items():
-        path = directory / name
-        path.write_text(query)
-        prepared.append({"name": name, "sha256": hashlib.sha256(path.read_bytes()).hexdigest(), "expected_error": None})
-    (directory / "count-existence-manifest.json").write_text(
-        json.dumps({"status": "PENDING", "fixtures": prepared}, indent=2) + "\n"
-    )
-
-
 def freeze_performance(destination):
     """Freeze paired plans for the existing strict benchmark runner."""
     import re
@@ -339,3 +327,15 @@ def freeze_performance(destination):
                 }
             )
     (destination / "manifest.json").write_text(json.dumps(record, indent=2) + "\n")
+
+
+if __name__ == "__main__":
+    directory = Path(__file__).parent
+    prepared = []
+    for name, query in fixtures().items():
+        path = directory / name
+        path.write_text(query)
+        prepared.append({"name": name, "sha256": hashlib.sha256(path.read_bytes()).hexdigest(), "expected_error": None})
+    (directory / "count-existence-manifest.json").write_text(
+        json.dumps({"status": "PENDING", "fixtures": prepared}, indent=2) + "\n"
+    )
