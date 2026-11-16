@@ -28,7 +28,7 @@
     },
     {
       "name": "reporting_context_callback.kql",
-      "sha256": "f2a946760f2f2a9a72f34da15f02cf66d14bdd772c06af68adf65bc8559f86fe",
+      "sha256": "b7fb256e662bf9ee2aa2401b5200caa8a6a1f57ffd50ad318d8d978debc21299",
       "expected_error": null
     },
     {

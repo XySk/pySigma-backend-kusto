@@ -145,13 +145,13 @@ let Expected=datatable(WindowEnd:datetime,Host:string,ValueCount:long) [datetime
     return (
         data
         + named_queries([child_query, middle_query, root_query])
-        + "let ChildRows=Actual0() | count;\nlet MiddleInvalid=Actual1() | where ContextComplete or array_length(User) != 1 | count;\n"
+        + 'let ChildRows=Actual0() | count;\nlet MiddleInvalid=Actual1() | summarize Rows=count(), Invalid=countif(ContextComplete or array_length(User) != 1 or WindowEnd != datetime(2026-01-01T10:08:00Z) or WindowStart != datetime(2026-01-01T10:01:00Z) or Host != "h" or RuleCount != 2);\n'
         + check(
             "Actual2() | project WindowStart,WindowEnd,Host,ValueCount",
             "Expected",
             ["WindowStart", "WindowEnd", "Host", "ValueCount"],
         )
-        + '| union (ChildRows | where Count != 0 | project WindowStart=datetime(null), WindowEnd=datetime(null), Host="child-public", ValueCount=Count, Delta=long(1))\n| union (MiddleInvalid | where Count != 0 | project WindowStart=datetime(null), WindowEnd=datetime(null), Host="middle-display", ValueCount=Count, Delta=long(1))\n'
+        + '| union (ChildRows | where Count != 0 | project WindowStart=datetime(null), WindowEnd=datetime(null), Host="child-public", ValueCount=Count, Delta=long(1))\n| union (MiddleInvalid | where Rows != 1 or Invalid != 0 | project WindowStart=datetime(null), WindowEnd=datetime(null), Host="middle-display", ValueCount=Rows, Delta=long(1))\n'
     )
 
 
