@@ -776,8 +776,7 @@ class KustoBackend(TextQueryBackend):
                 self._correlation_guard_state["checks"].append(query.definitions + f"union {errors}")
         return queries
 
-    @staticmethod
-    def _child_raw_query(query, state, source):
+    def _child_raw_query(self, query, state, source):
         raw, checked = state.get("kusto_raw_query"), state.get("kusto_public_query")
         checks, error = state.get("kusto_guard_queries"), state.get("kusto_error_column")
         messages = state.get("kusto_guard_messages")
@@ -785,11 +784,15 @@ class KustoBackend(TextQueryBackend):
         report_suffix = state.get("kusto_report_suffix", "")
         unchecked_report = (
             checked[: -len(report_suffix)]
-            if report_suffix and isinstance(checked, str) and checked.endswith(report_suffix)
+            if isinstance(report_suffix, str)
+            and report_suffix
+            and isinstance(checked, str)
+            and checked.endswith(report_suffix)
             else checked
         )
         valid = (
             isinstance(checked, str)
+            and isinstance(report_suffix, str)
             and (query == checked or bool(report_suffix) and query.startswith(checked))
             and isinstance(raw, str)
             and bool(raw)
@@ -816,7 +819,12 @@ class KustoBackend(TextQueryBackend):
         # against complete history. Incoherent metadata keeps the checked query.
         if valid:
             return raw + query[len(checked) :], tuple(zip(checks, columns)), messages
-        if isinstance(checked, str) and checked and query.startswith(checked):
+        if (
+            not getattr(self, "_correlation_reporting", {})
+            and isinstance(checked, str)
+            and checked
+            and query.startswith(checked)
+        ):
             return query, (), ()
         if any(key.startswith("kusto_guard_") or key in ("kusto_raw_query", "kusto_public_query") for key in state):
             raise SigmaConversionError(
