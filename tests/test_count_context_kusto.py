@@ -17,10 +17,11 @@ def documents(kind="event_count", groups=("User", "Server"), **kwargs):
 def test_count_parent_converts_observed_child_context_without_counting_display_lists(kind):
     (query,) = convert_documents(documents(kind))
     assert "| mv-expand " in query
-    assert "Kusto dynamic identity traversal incomplete" in query
+    assert "dynamic identity" not in query
     assert 'todatetime(["WindowEnd"])' in query
     assert ("EventCount" if kind == "event_count" else "ValueCount") in query
-    assert "| mv-expand _sigma_child_context_row" in query
+    assert "ContextEvidence" in query
+    assert "| mv-expand _sigma_child_context_row" not in query
 
 
 def test_logical_aliases_for_retained_fields_use_child_returned_schema():
@@ -41,7 +42,7 @@ def test_retained_context_parent_preserves_standalone_child_generation(generate)
     docs[1]["correlation"]["generate"] = generate
     queries = convert_documents(docs)
     assert len(queries) == (2 if generate else 1)
-    assert "| mv-expand _sigma_child_context_row" in queries[-1]
+    assert "ContextEvidence" in queries[-1]
     if generate:
         assert "| mv-expand _sigma_child_context_row" not in queries[0]
 
@@ -62,5 +63,6 @@ def test_child_context_alias_can_reference_uuid_when_parent_uses_logical_name():
     docs = documents(groups=("Actor",), aliases={"Actor": {child_id: "User"}})
     docs[1]["id"] = child_id
     (query,) = convert_documents(docs)
-    assert "| mv-expand _sigma_child_context_row" in query
+    assert "ContextEvidence" in query
+    assert "| mv-expand _sigma_child_context_row" not in query
     assert '["Actor"]' in query

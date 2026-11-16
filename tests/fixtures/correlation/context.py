@@ -30,22 +30,17 @@ let Actual = () {
         + f"""
 }};
 let Observed = Actual()
-| mv-apply Pair = _sigma_context_rows on (
-    summarize BadPairs = countif(not(
-        (tostring(Pair[0][1]) == "one" and gettype(Pair[1][1]) == "string" and tostring(Pair[1][1]) == "2") or
-        (tostring(Pair[0][1]) == "two" and gettype(Pair[1][1]) == "string" and tostring(Pair[1][1]) == "2")
-    )))
 | project WindowEnd, Host=tostring(Host), Metric = toreal({metric}),
-    UserCount = array_length(User), ServerCount = array_length(Server), BadPairs,
+    UserCount = array_length(User), ServerCount = array_length(Server), ContextComplete,
     UserLong = false,
     UserString = gettype(User[0]) == "string" or gettype(User[1]) == "string",
     HasServers = set_has_element(Server, "one") and set_has_element(Server, "two");
 let Expected = datatable(WindowEnd:datetime, Host:string, Metric:real, UserCount:long, ServerCount:long,
-    BadPairs:long, UserLong:bool, UserString:bool, HasServers:bool) [
- datetime(2026-01-01T12:01:00Z), "h", real({expected}), 2, 2, 0, false, true, true
+    ContextComplete:bool, UserLong:bool, UserString:bool, HasServers:bool) [
+ datetime(2026-01-01T12:01:00Z), "h", real({expected}), 2, 2, true, false, true, true
 ];
 union (Observed | extend Delta=1), (Expected | extend Delta=-1)
-| summarize Delta=sum(Delta) by WindowEnd, Host, Metric, UserCount, ServerCount, BadPairs, UserLong, UserString, HasServers
+| summarize Delta=sum(Delta) by WindowEnd, Host, Metric, UserCount, ServerCount, ContextComplete, UserLong, UserString, HasServers
 | where Delta != 0
 """
     )

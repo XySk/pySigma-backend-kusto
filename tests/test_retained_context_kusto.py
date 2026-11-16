@@ -17,7 +17,8 @@ def test_count_retains_requested_source_and_correlation_fields_without_regroupin
     assert '["User"] = ' in query
     assert '["Server"] = ' in query
     assert '["Host"] = _sigma_group_0' in query
-    assert '"Kusto retained context collection limit exceeded"' in query
+    assert '["ContextComplete"]' in query
+    assert "assert(" not in query
 
 
 def test_retained_context_omits_null_values_from_displayed_collection_and_limit_count():
@@ -27,8 +28,9 @@ def test_retained_context_omits_null_values_from_displayed_collection_and_limit_
 
     (query,) = convert_documents([source, summary])
 
-    assert "make_list_if(pack_array(_sigma_context_value[1]), isnotnull(_sigma_context_value[1]), 1048576)" in query
-    assert "countif(isnotnull(_sigma_context_value[1]))" in query
+    assert "| where isnotnull(_sigma_context_value)" in query
+    assert "make_list(_sigma_context_value, 1000)" in query
+    assert "DistinctValueCount = count()" in query
 
 
 @pytest.mark.parametrize(
@@ -76,7 +78,7 @@ def test_source_context_collision_can_be_resolved_by_explicit_alias():
     summary["fields"] = ["OriginalWindowEnd"]
     (query,) = convert_documents([source, summary])
     assert '["OriginalWindowEnd"] = ' in query
-    assert 'pack_array(gettype(["WindowEnd"]), ["WindowEnd"])' in query
+    assert '= ["WindowEnd"]' in query
 
 
 def test_ordered_summaries_retain_context_from_successful_full_sequences():
@@ -98,4 +100,5 @@ def test_ordered_child_exposes_retained_fields_to_parent_conversion():
     parent = correlation_document("parent", "value_count", ["ordered"], field="User")
     (query,) = convert_documents([first, last, child, parent])
     assert '["ValueCount"]' in query
-    assert 'pack_array(gettype(["User"]), ["User"])' in query
+    assert "ContextEvidence" in query
+    assert "mv-expand _sigma_child_context_row" not in query

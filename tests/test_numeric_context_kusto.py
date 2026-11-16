@@ -9,7 +9,8 @@ from tests.correlation_helpers import convert_documents, numeric_documents
 @pytest.mark.parametrize("groups", [(), ("User",)])
 def test_numeric_parent_consumes_retained_values_at_child_window_end(kind, groups):
     (query,) = convert_documents(numeric_documents(kind, groups))
-    assert "| mv-expand _sigma_child_context_row" in query
+    assert "ContextEvidence" in query
+    assert "| mv-expand _sigma_child_context_row" not in query
     assert 'todatetime(["WindowEnd"])' in query
     assert {"value_sum": "ValueSum", "value_avg": "ValueAvg", "value_percentile": "ValuePercentile"}[kind] in query
 
@@ -38,7 +39,8 @@ def test_measured_alias_resolves_logical_child_field():
     docs[-1]["correlation"]["aliases"] = {"Measurement": {"child": "Amount"}}
     (query,) = convert_documents(docs)
     assert "ValueSum" in query
-    assert "| mv-expand _sigma_child_context_row" in query
+    assert "ContextEvidence" in query
+    assert "| mv-expand _sigma_child_context_row" not in query
 
 
 @pytest.mark.parametrize("kind", ["value_sum", "value_count", "value_avg", "value_percentile"])
@@ -47,8 +49,8 @@ def test_empty_child_context_preserves_metric_anchors_only_without_retained_grou
     from tests.fixtures.correlation.empty_child_context import documents
 
     (query,) = convert_documents(documents(kind, groups))
-    placeholder = 'iff(array_length(["_sigma_context_rows"]) == 0, dynamic([null]), ["_sigma_context_rows"])'
-    assert (placeholder in query) == (groups != ("Amount",))
+    assert "ContextEvidence" in query
+    assert "array_length" not in query
 
 
 def test_empty_child_context_runtime_fixtures_use_public_conversion():

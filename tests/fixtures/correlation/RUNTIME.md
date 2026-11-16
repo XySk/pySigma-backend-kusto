@@ -775,3 +775,11 @@ multiset. Its SHA-256 is `120494d80e695613471489b7effb949b069b43c6bd69ac003034d8
 This changed query is **pending integrated engine execution**; the prior pass is
 predicate evidence for the archived query. Re-run the current targeted
 `source-predicates-manifest.json` at the integrated acceptance gate.
+
+## Relational context display gate (#46)
+
+The focused [frozen manifest](relational-context-manifest.json) passed all 26 diagnostics on Kusto Engine `1.0.9815.14081` (`2026.11.15.0741-2645-8e3387b-master`), using the existing strict v2 completion/multiset harness and 12 GiB per-query memory option. [Results and response frames](runtime-evidence/relational-context/results.json) include hashes and elapsed times. This gate covers displays of 999, 1,000, and 1,001 distinct values; configured limits; all 1,001 observed parent groups despite a display limit of two; grouped/ungrouped child counts; distinct retained numeric values and scalar child metrics; callback filters/metric edits; empty absence-only evidence; and shared, ordered, Boolean, and multilevel context. It establishes focused correctness, not production performance or completion of #32.
+
+The migration removes the public `_sigma_context_rows` array. Diagnostics now use requested public collections and `ContextComplete`; parent grouping diagnostics establish observed cross-field relationships. No internal test API is introduced. Complete native scalar evidence remains separate from bounded displays. Parent consumption of the display-only `ContextComplete` flag produces a clear conversion error.
+
+Two prior unverified diagnostic expectations required correction. A native scalar grouping field cannot be passed to `array_length`, even when the expected result is empty. The ordered multilevel example also incorrectly expected `(Alice,s3)` at 12:02: its ordered child completes with B@s4 at 12:02, while B@s3 at 12:01 participates only in the earlier child summary. A parent grouped by `(User,Server)` has an s3 source anchor at 12:01 and none at 12:02. The [original failed requests and responses](runtime-evidence/relational-context/prior-diagnostic-failures/full-results.json) are retained separately; these failures are not represented as successful execution of the earlier fixtures.

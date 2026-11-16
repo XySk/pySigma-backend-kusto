@@ -1,0 +1,103 @@
+let Events=datatable(Timestamp:datetime,Host:string,Marker:string,User:string,Server:string,Amount:long) [
+ datetime(2026-01-01),"h","match","u","s",1,
+ datetime(2026-01-01),"h","match","u","s",1,
+ datetime(2026-01-01),"h","match","u","s",2
+];
+let Actual=() {
+let _sigma_shared_child = () {
+let _sigma_context_summary = () {
+let _sigma_weights = union (Events
+| where Marker =~ "match"
+| extend _sigma_timestamp = todatetime(["Timestamp"]), _sigma_group_0 = ["Host"]
+| extend _sigma_rule = "source-rule")
+| where isnotnull(_sigma_timestamp) and isnotempty(_sigma_group_0)
+| summarize _sigma_weight = count() by _sigma_timestamp, _sigma_group_0;
+_sigma_weights
+| project _sigma_group_0, _sigma_window_end = _sigma_timestamp, _sigma_bin = bin(_sigma_timestamp, 5m)
+| join kind=inner (
+    _sigma_weights
+    | extend _sigma_bin = pack_array(bin(_sigma_timestamp, 5m), bin(_sigma_timestamp, 5m) + 5m)
+    | mv-expand _sigma_bin to typeof(datetime)
+) on _sigma_group_0, _sigma_bin
+| where _sigma_timestamp between ((_sigma_window_end - 5m) .. _sigma_window_end)
+| summarize EventCount = sum(_sigma_weight) by _sigma_window_end, _sigma_group_0
+| where EventCount >= 1
+| project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ["Host"] = _sigma_group_0, EventCount
+};
+let _sigma_context_summaries = materialize(_sigma_context_summary()
+| serialize _sigma_context_id = row_number());
+let _sigma_context_matches = materialize(
+_sigma_context_summaries | project _sigma_context_id, _sigma_context_end = WindowEnd, _sigma_context_group = ["Host"], _sigma_context_partition = 1
+| join kind=inner (
+union (Events
+| where Marker =~ "match"
+| extend _sigma_context_timestamp = todatetime(["Timestamp"]), _sigma_context_group = ["Host"], _sigma_context_value = ["User"], _sigma_context_value_1 = ["Server"], _sigma_context_value_2 = ["Amount"]
+| extend _sigma_context_rule = "source-rule")
+| project _sigma_context_timestamp, _sigma_context_rule, _sigma_context_group, _sigma_context_value, _sigma_context_value_1, _sigma_context_value_2, _sigma_context_partition = 1
+) on _sigma_context_group
+| where _sigma_context_timestamp between ((_sigma_context_end - 5m) .. _sigma_context_end)
+| serialize _sigma_context_key = row_number());
+let _sigma_context_rows = materialize(_sigma_context_matches
+| project _sigma_context_id, _sigma_context_value, _sigma_context_value_1, _sigma_context_value_2
+| distinct *);
+union (_sigma_context_summaries | extend ContextRowKind = "Summary"), (_sigma_context_summaries | join kind=inner (_sigma_context_rows) on _sigma_context_id | extend ContextRowKind = "ContextEvidence")
+};
+let _sigma_shared_results = materialize(_sigma_shared_child());
+let _sigma_context_summary = () {
+let _sigma_parent_matches = materialize(union (_sigma_shared_results
+| where ["ContextRowKind"] == "ContextEvidence"
+| extend _sigma_child_match = strcat("_sigma_shared_child", "_", tostring(["_sigma_context_id"]))
+| extend _sigma_timestamp = todatetime(["WindowEnd"]), _sigma_group_0 = tostring(pack_array(gettype(["_sigma_context_value"]), ["_sigma_context_value"])[1])
+| extend _sigma_rule = "child")
+| extend _sigma_child_match = tostring(column_ifexists("_sigma_child_match", "")));
+let _sigma_weights = union (_sigma_parent_matches | where isempty(_sigma_child_match)), (_sigma_parent_matches | where isnotempty(_sigma_child_match) | summarize take_any(*) by _sigma_child_match, _sigma_group_0)
+| where isnotnull(_sigma_timestamp) and isnotempty(_sigma_group_0)
+| summarize _sigma_weight = count() by _sigma_timestamp, _sigma_group_0;
+_sigma_weights
+| project _sigma_group_0, _sigma_window_end = _sigma_timestamp, _sigma_bin = bin(_sigma_timestamp, 5m)
+| join kind=inner (
+    _sigma_weights
+    | extend _sigma_bin = pack_array(bin(_sigma_timestamp, 5m), bin(_sigma_timestamp, 5m) + 5m)
+    | mv-expand _sigma_bin to typeof(datetime)
+) on _sigma_group_0, _sigma_bin
+| where _sigma_timestamp between ((_sigma_window_end - 5m) .. _sigma_window_end)
+| summarize EventCount = sum(_sigma_weight) by _sigma_window_end, _sigma_group_0
+| where EventCount >= 0
+| project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ["User"] = _sigma_group_0, EventCount
+};
+let _sigma_context_summaries = materialize(_sigma_context_summary()
+| serialize _sigma_context_id_1 = row_number());
+let _sigma_context_matches = materialize(
+_sigma_context_summaries | project _sigma_context_id_1, _sigma_context_end = WindowEnd, _sigma_context_group = ["User"], _sigma_context_partition = 1
+| join kind=inner (
+union (_sigma_shared_results
+| where ["ContextRowKind"] == "ContextEvidence"
+| extend _sigma_context_timestamp = todatetime(["WindowEnd"]), _sigma_context_group = tostring(pack_array(gettype(["_sigma_context_value"]), ["_sigma_context_value"])[1]), _sigma_context_value_1 = tostring(pack_array(gettype(["_sigma_context_value_1"]), ["_sigma_context_value_1"])[1]), _sigma_context_value_2 = tolong(pack_array(gettype(["_sigma_context_value_2"]), ["_sigma_context_value_2"])[1])
+| extend _sigma_context_rule = "child")
+| project _sigma_context_timestamp, _sigma_context_rule, _sigma_context_group, _sigma_context_value_1, _sigma_context_value_2, _sigma_context_partition = 1
+) on _sigma_context_group
+| where _sigma_context_timestamp between ((_sigma_context_end - 5m) .. _sigma_context_end)
+| serialize _sigma_context_key = row_number());
+let _sigma_context_rows = materialize(_sigma_context_matches
+| project _sigma_context_id_1, _sigma_context_value_1, _sigma_context_value_2
+| distinct *);
+let ContextValues = _sigma_context_rows
+| where isnotnull(_sigma_context_value_1)
+| summarize by _sigma_context_id_1, _sigma_context_value_1
+| summarize DisplayedValues = make_list(_sigma_context_value_1, 1), DistinctValueCount = count() by _sigma_context_id_1;
+let ContextValues_1 = _sigma_context_rows
+| where isnotnull(_sigma_context_value_2)
+| summarize by _sigma_context_id_1, _sigma_context_value_2
+| summarize DisplayedValues_1 = make_list(_sigma_context_value_2, 1), DistinctValueCount_1 = count() by _sigma_context_id_1;
+_sigma_context_summaries
+| join kind=leftouter (ContextValues) on _sigma_context_id_1
+| extend ["Server"] = coalesce(DisplayedValues, dynamic([]))
+| join kind=leftouter (ContextValues_1) on _sigma_context_id_1
+| extend ["Amount"] = coalesce(DisplayedValues_1, dynamic([]))
+| extend ContextComplete = coalesce(DistinctValueCount, 0) <= 1 and coalesce(DistinctValueCount_1, 0) <= 1
+| project ["WindowStart"], ["WindowEnd"], ["User"], ["Server"], ["Amount"], ["EventCount"], ["ContextComplete"]
+};
+let Observed=Actual() | project WindowEnd,Metric=toreal(EventCount);
+let Expected=datatable(WindowEnd:datetime,Metric:real) [datetime(2026-01-01),1];
+union (Observed | extend Delta=1), (Expected | extend Delta=-1)
+| summarize Delta=sum(Delta) by WindowEnd,Metric | where Delta != 0
