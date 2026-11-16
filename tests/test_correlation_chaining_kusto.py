@@ -76,23 +76,25 @@ def test_all_supported_types_produce_and_consume_child_summaries(producer, consu
     parent = summary_data_query(query).split("\n};\n", 1)[1]
     timestamp, group, source = (
         ("EventTime", "GroupHost", "SourceRule")
-        if consumer in ("event_count", "value_count", "value_sum", "temporal", "temporal_ordered")
+        if consumer in ("event_count", "value_count", "value_sum", "value_percentile", "temporal", "temporal_ordered")
         else ("_sigma_timestamp", "_sigma_group_0", "_sigma_rule")
     )
     assert f'{timestamp} = todatetime(["WindowEnd"]), {group} = ["Host"]' in parent
-    if consumer not in ("event_count", "value_count", "value_sum"):
+    if consumer not in ("event_count", "value_count", "value_sum", "value_percentile"):
         assert f'{source} = "child"' in parent
     consumer_metric = "RuleCount = tolong(1)" if consumer == "temporal_ordered" else METRICS[consumer]
     assert final_summary_projection(query).endswith(f", {consumer_metric}")
     if consumer in ("value_count", "value_sum", "value_percentile"):
         measured = f'["{METRICS[producer]}"]'
         expected_value = (
-            measured if consumer in ("value_count", "value_sum") else f"pack_array(gettype({measured}), {measured})"
+            measured
+            if consumer in ("value_count", "value_sum", "value_percentile")
+            else f"pack_array(gettype({measured}), {measured})"
         )
         column = (
             f"Counted{METRICS[producer]}"
             if consumer == "value_count"
-            else f"Measured{METRICS[producer]}" if consumer == "value_sum" else "_sigma_value"
+            else f"Measured{METRICS[producer]}" if consumer in ("value_sum", "value_percentile") else "_sigma_value"
         )
         assert f"{column} = {expected_value}" in parent
     if consumer == "event_count":

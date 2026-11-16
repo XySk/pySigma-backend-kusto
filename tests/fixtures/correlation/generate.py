@@ -1904,6 +1904,7 @@ def fixtures():
     from tests.fixtures.correlation.event_count_sliding import fixtures as event_count_sliding_fixtures
     from tests.fixtures.correlation.integrated import matrix_fixtures
     from tests.fixtures.correlation.native_average import fixtures as native_average_fixtures
+    from tests.fixtures.correlation.native_percentile import fixtures as native_percentile_fixtures
     from tests.fixtures.correlation.native_sum import fixtures as native_sum_fixtures
     from tests.fixtures.correlation.numeric_context import fixtures as numeric_context_fixtures
     from tests.fixtures.correlation.ordered_context import fixtures as ordered_context_fixtures
@@ -1949,6 +1950,7 @@ def fixtures():
         "value_sum_chained.kql": value_sum_chained_fixture(),
         "value_sum_reals.kql": value_sum_reals_fixture(),
         **native_sum_fixtures(),
+        **native_percentile_fixtures(),
         "value_sum_integer_bounds.kql": value_sum_integer_bounds_fixture(),
         "value_sum_duplicate_sources.kql": value_sum_duplicate_sources_fixture(),
         "value_count_grouped.kql": value_count_grouped_fixture(),
