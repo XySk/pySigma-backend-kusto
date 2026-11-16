@@ -1,0 +1,141 @@
+let Events = datatable(Timestamp:datetime, Host:string, Marker:string, Amount:real, User:string) [
+datetime(2026-01-01T12:00:00Z), "g0", "A", 0.5, "u0-0",
+datetime(2026-01-01T12:00:10Z), "g0", "B", 0.75, "u0-1",
+datetime(2026-01-01T12:00:20Z), "g0", "C", 1.0, "u0-2",
+datetime(2026-01-01T12:00:30Z), "g0", "A", 0.5, "u0-3",
+datetime(2026-01-01T12:00:40Z), "g0", "B", 0.75, "u0-4",
+datetime(2026-01-01T12:00:50Z), "g0", "C", 1.0, "u0-5",
+datetime(2026-01-01T12:01:00Z), "g0", "A", 0.5, "u0-6",
+datetime(2026-01-01T12:01:10Z), "g0", "B", 0.75, "u0-7",
+datetime(2026-01-01T12:00:00Z), "g1", "A", 0.5, "u1-0",
+datetime(2026-01-01T12:00:10Z), "g1", "B", 0.75, "u1-1",
+datetime(2026-01-01T12:00:20Z), "g1", "C", 1.0, "u1-2",
+datetime(2026-01-01T12:00:30Z), "g1", "A", 0.5, "u1-3",
+datetime(2026-01-01T12:00:40Z), "g1", "B", 0.75, "u1-4",
+datetime(2026-01-01T12:00:50Z), "g1", "C", 1.0, "u1-5",
+datetime(2026-01-01T12:01:00Z), "g1", "A", 0.5, "u1-6",
+datetime(2026-01-01T12:01:10Z), "g1", "B", 0.75, "u1-7",
+datetime(2026-01-01T12:00:00Z), "g2", "A", 0.5, "u2-0",
+datetime(2026-01-01T12:00:10Z), "g2", "B", 0.75, "u2-1",
+datetime(2026-01-01T12:00:20Z), "g2", "C", 1.0, "u2-2",
+datetime(2026-01-01T12:00:30Z), "g2", "A", 0.5, "u2-3",
+datetime(2026-01-01T12:00:40Z), "g2", "B", 0.75, "u2-4",
+datetime(2026-01-01T12:00:50Z), "g2", "C", 1.0, "u2-5",
+datetime(2026-01-01T12:01:00Z), "g2", "A", 0.5, "u2-6",
+datetime(2026-01-01T12:01:10Z), "g2", "B", 0.75, "u2-7",
+datetime(2026-01-01T12:00:00Z), "g3", "A", 0.5, "u3-0",
+datetime(2026-01-01T12:00:10Z), "g3", "B", 0.75, "u3-1",
+datetime(2026-01-01T12:00:20Z), "g3", "C", 1.0, "u3-2",
+datetime(2026-01-01T12:00:30Z), "g3", "A", 0.5, "u3-3",
+datetime(2026-01-01T12:00:40Z), "g3", "B", 0.75, "u3-4",
+datetime(2026-01-01T12:00:50Z), "g3", "C", 1.0, "u3-5",
+datetime(2026-01-01T12:01:00Z), "g3", "A", 0.5, "u3-6",
+datetime(2026-01-01T12:01:10Z), "g3", "B", 0.75, "u3-7",
+datetime(2026-01-01T12:00:00Z), "g4", "A", 0.5, "u4-0",
+datetime(2026-01-01T12:00:10Z), "g4", "B", 0.75, "u4-1",
+datetime(2026-01-01T12:00:20Z), "g4", "C", 1.0, "u4-2",
+datetime(2026-01-01T12:00:30Z), "g4", "A", 0.5, "u4-3",
+datetime(2026-01-01T12:00:40Z), "g4", "B", 0.75, "u4-4",
+datetime(2026-01-01T12:00:50Z), "g4", "C", 1.0, "u4-5",
+datetime(2026-01-01T12:01:00Z), "g4", "A", 0.5, "u4-6",
+datetime(2026-01-01T12:01:10Z), "g4", "B", 0.75, "u4-7",
+datetime(2026-01-01T12:00:00Z), "g5", "A", 0.5, "u5-0",
+datetime(2026-01-01T12:00:10Z), "g5", "B", 0.75, "u5-1",
+datetime(2026-01-01T12:00:20Z), "g5", "C", 1.0, "u5-2",
+datetime(2026-01-01T12:00:30Z), "g5", "A", 0.5, "u5-3",
+datetime(2026-01-01T12:00:40Z), "g5", "B", 0.75, "u5-4",
+datetime(2026-01-01T12:00:50Z), "g5", "C", 1.0, "u5-5",
+datetime(2026-01-01T12:01:00Z), "g5", "A", 0.5, "u5-6",
+datetime(2026-01-01T12:01:10Z), "g5", "B", 0.75, "u5-7",
+datetime(2026-01-01T12:00:00Z), "g6", "A", 0.5, "u6-0",
+datetime(2026-01-01T12:00:10Z), "g6", "B", 0.75, "u6-1",
+datetime(2026-01-01T12:00:20Z), "g6", "C", 1.0, "u6-2",
+datetime(2026-01-01T12:00:30Z), "g6", "A", 0.5, "u6-3",
+datetime(2026-01-01T12:00:40Z), "g6", "B", 0.75, "u6-4",
+datetime(2026-01-01T12:00:50Z), "g6", "C", 1.0, "u6-5",
+datetime(2026-01-01T12:01:00Z), "g6", "A", 0.5, "u6-6",
+datetime(2026-01-01T12:01:10Z), "g6", "B", 0.75, "u6-7",
+datetime(2026-01-01T12:00:00Z), "g7", "A", 0.5, "u7-0",
+datetime(2026-01-01T12:00:10Z), "g7", "B", 0.75, "u7-1",
+datetime(2026-01-01T12:00:20Z), "g7", "C", 1.0, "u7-2",
+datetime(2026-01-01T12:00:30Z), "g7", "A", 0.5, "u7-3",
+datetime(2026-01-01T12:00:40Z), "g7", "B", 0.75, "u7-4",
+datetime(2026-01-01T12:00:50Z), "g7", "C", 1.0, "u7-5",
+datetime(2026-01-01T12:01:00Z), "g7", "A", 0.5, "u7-6",
+datetime(2026-01-01T12:01:10Z), "g7", "B", 0.75, "u7-7",
+datetime(2026-01-01T12:00:00Z), "g8", "A", 0.5, "u8-0",
+datetime(2026-01-01T12:00:10Z), "g8", "B", 0.75, "u8-1",
+datetime(2026-01-01T12:00:20Z), "g8", "C", 1.0, "u8-2",
+datetime(2026-01-01T12:00:30Z), "g8", "A", 0.5, "u8-3",
+datetime(2026-01-01T12:00:40Z), "g8", "B", 0.75, "u8-4",
+datetime(2026-01-01T12:00:50Z), "g8", "C", 1.0, "u8-5",
+datetime(2026-01-01T12:01:00Z), "g8", "A", 0.5, "u8-6",
+datetime(2026-01-01T12:01:10Z), "g8", "B", 0.75, "u8-7",
+datetime(2026-01-01T12:00:00Z), "g9", "A", 0.5, "u9-0",
+datetime(2026-01-01T12:00:10Z), "g9", "B", 0.75, "u9-1",
+datetime(2026-01-01T12:00:20Z), "g9", "C", 1.0, "u9-2",
+datetime(2026-01-01T12:00:30Z), "g9", "A", 0.5, "u9-3",
+datetime(2026-01-01T12:00:40Z), "g9", "B", 0.75, "u9-4",
+datetime(2026-01-01T12:00:50Z), "g9", "C", 1.0, "u9-5",
+datetime(2026-01-01T12:01:00Z), "g9", "A", 0.5, "u9-6",
+datetime(2026-01-01T12:01:10Z), "g9", "B", 0.75, "u9-7",
+datetime(2026-01-01T12:00:00Z), "g10", "A", 0.5, "u10-0",
+datetime(2026-01-01T12:00:10Z), "g10", "B", 0.75, "u10-1",
+datetime(2026-01-01T12:00:20Z), "g10", "C", 1.0, "u10-2",
+datetime(2026-01-01T12:00:30Z), "g10", "A", 0.5, "u10-3",
+datetime(2026-01-01T12:00:40Z), "g10", "B", 0.75, "u10-4",
+datetime(2026-01-01T12:00:50Z), "g10", "C", 1.0, "u10-5",
+datetime(2026-01-01T12:01:00Z), "g10", "A", 0.5, "u10-6",
+datetime(2026-01-01T12:01:10Z), "g10", "B", 0.75, "u10-7",
+datetime(2026-01-01T12:00:00Z), "g11", "A", 0.5, "u11-0",
+datetime(2026-01-01T12:00:10Z), "g11", "B", 0.75, "u11-1",
+datetime(2026-01-01T12:00:20Z), "g11", "C", 1.0, "u11-2",
+datetime(2026-01-01T12:00:30Z), "g11", "A", 0.5, "u11-3",
+datetime(2026-01-01T12:00:40Z), "g11", "B", 0.75, "u11-4",
+datetime(2026-01-01T12:00:50Z), "g11", "C", 1.0, "u11-5",
+datetime(2026-01-01T12:01:00Z), "g11", "A", 0.5, "u11-6",
+datetime(2026-01-01T12:01:10Z), "g11", "B", 0.75, "u11-7"
+];
+let _sigma_context_summary = () {
+let SumObservations = union (Events
+| where Marker in~ ("A", "B", "C", "D")
+| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"], MeasuredAmount = ["Amount"])
+| where isnotnull(EventTime_1) and isnotempty(GroupHost);
+SumObservations
+| project GroupHost, SumWindowEnd = EventTime_1, SumTimeBin = bin(EventTime_1, 5m)
+| distinct *
+| join kind=inner (
+SumObservations
+| extend SumTimeBin = pack_array(bin(EventTime_1, 5m), bin(EventTime_1, 5m) + 5m)
+| mv-expand SumTimeBin to typeof(datetime)
+) on GroupHost, SumTimeBin
+| where EventTime_1 between ((SumWindowEnd - 5m) .. SumWindowEnd)
+| summarize ValueSum = sumif(MeasuredAmount, isfinite(MeasuredAmount)) by SumWindowEnd, GroupHost
+| where ValueSum >= 2
+| project WindowStart = SumWindowEnd - 5m, WindowEnd = SumWindowEnd, ["Host"] = GroupHost, ValueSum
+};
+let _sigma_context_summaries = materialize(_sigma_context_summary()
+| serialize _sigma_context_id = row_number());
+let _sigma_context_matches = materialize(
+_sigma_context_summaries | project _sigma_context_id, _sigma_context_end = WindowEnd, _sigma_context_group = ["Host"], _sigma_context_partition = 1
+| join kind=inner (
+union (Events
+| where Marker in~ ("A", "B", "C", "D")
+| extend _sigma_context_timestamp = todatetime(["Timestamp"]), _sigma_context_group = ["Host"], _sigma_context_value = ["User"]
+| extend _sigma_context_rule = "SourceEvents")
+| project _sigma_context_timestamp, _sigma_context_rule, _sigma_context_group, _sigma_context_value, _sigma_context_partition = 1
+) on _sigma_context_group
+| where _sigma_context_timestamp between ((_sigma_context_end - 5m) .. _sigma_context_end)
+| serialize _sigma_context_key = row_number());
+let _sigma_context_rows = materialize(_sigma_context_matches
+| project _sigma_context_id, _sigma_context_value
+| distinct *);
+let ContextValues = _sigma_context_rows
+| where isnotnull(_sigma_context_value)
+| summarize by _sigma_context_id, _sigma_context_value
+| summarize DisplayedValues = make_list(_sigma_context_value, 1000), DistinctValueCount = count() by _sigma_context_id;
+_sigma_context_summaries
+| join kind=leftouter (ContextValues) on _sigma_context_id
+| extend ["User"] = coalesce(DisplayedValues, dynamic([]))
+| extend ContextComplete = coalesce(DistinctValueCount, 0) <= 1000
+| project ["WindowStart"], ["WindowEnd"], ["Host"], ["User"], ["ValueSum"], ["ContextComplete"]

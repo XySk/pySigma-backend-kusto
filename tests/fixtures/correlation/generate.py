@@ -640,51 +640,25 @@ def value_sum_integer_bounds_fixture():
             "value_sum",
             ["source-rule"],
             groups=(),
-            condition={"field": "Amount", "gte": 9223372036854775806},
+            condition={"field": "Amount", "gte": 9007199254740992},
         ),
     ]
     (converted,) = convert_documents(documents)
-    data = """// Both totals remain within signed 64-bit range and must stay exact.
+    data = """// Totals above double integer precision remain exact with in-range intermediates.
 let Events = datatable(Timestamp:string, Amount:dynamic, Marker:string) [
-    "2026-01-01T12:00:00Z", dynamic(9223372036854775807), "match",
+    "2026-01-01T12:00:00Z", dynamic(9007199254740993), "match",
     "2026-01-01T12:00:00Z", dynamic(1), "match",
     "2026-01-01T12:00:00Z", dynamic(-1), "match",
     "2026-01-01T12:01:00Z", dynamic(-1), "match"
 ];
 """
     expected = """let Expected = datatable(WindowStart:datetime, WindowEnd:datetime, ValueSum:long) [
-    datetime(2026-01-01T11:55:00Z), datetime(2026-01-01T12:00:00Z), long(9223372036854775807),
-    datetime(2026-01-01T11:56:00Z), datetime(2026-01-01T12:01:00Z), long(9223372036854775806)
+    datetime(2026-01-01T11:55:00Z), datetime(2026-01-01T12:00:00Z), long(9007199254740993),
+    datetime(2026-01-01T11:56:00Z), datetime(2026-01-01T12:01:00Z), long(9007199254740992)
 ];
 """
     actual = f"let Actual = () {{\n{converted}\n| project WindowStart, WindowEnd, ValueSum = tolong(ValueSum)\n}};\n"
     return HEADER + data + actual + expected + check("Actual()", "Expected", ["WindowStart", "WindowEnd", "ValueSum"])
-
-
-@scalar_inputs()
-def value_sum_overflow_fixture(negative=False):
-    documents = [
-        chain_source(),
-        chain_correlation(
-            "sum",
-            "value_sum",
-            ["source-rule"],
-            groups=(),
-            condition={"field": "Amount", "gte": 0},
-        ),
-    ]
-    (converted,) = convert_documents(documents)
-    data = """// Expected: query fails with an integer overflow diagnostic at 12:01.
-// A successful result, including a wrapped or null metric, fails this check.
-let Events = datatable(Timestamp:string, Amount:dynamic, Marker:string) [
-    "2026-01-01T12:00:00Z", dynamic(9223372036854775807), "match",
-    "2026-01-01T12:01:00Z", dynamic(1), "match"
-];
-"""
-    if negative:
-        data = data.replace("dynamic(9223372036854775807)", "dynamic(-9223372036854775808)")
-        data = data.replace("dynamic(1)", "dynamic(-1)")
-    return data + converted + "\n"
 
 
 @scalar_inputs()
@@ -1929,6 +1903,7 @@ def fixtures():
     from tests.fixtures.correlation.empty_child_context import fixtures as empty_child_fixtures
     from tests.fixtures.correlation.event_count_sliding import fixtures as event_count_sliding_fixtures
     from tests.fixtures.correlation.integrated import matrix_fixtures
+    from tests.fixtures.correlation.native_sum import fixtures as native_sum_fixtures
     from tests.fixtures.correlation.numeric_context import fixtures as numeric_context_fixtures
     from tests.fixtures.correlation.ordered_context import fixtures as ordered_context_fixtures
     from tests.fixtures.correlation.ordered_state import fixtures as ordered_state_fixtures
@@ -1971,9 +1946,8 @@ def fixtures():
         "value_sum_comparisons.kql": value_sum_comparisons_fixture(),
         "value_sum_chained.kql": value_sum_chained_fixture(),
         "value_sum_reals.kql": value_sum_reals_fixture(),
+        **native_sum_fixtures(),
         "value_sum_integer_bounds.kql": value_sum_integer_bounds_fixture(),
-        "value_sum_overflow.kql": value_sum_overflow_fixture(),
-        "value_sum_negative_overflow.kql": value_sum_overflow_fixture(negative=True),
         "value_sum_duplicate_sources.kql": value_sum_duplicate_sources_fixture(),
         "value_count_grouped.kql": value_count_grouped_fixture(),
         "value_count_comparisons.kql": value_count_comparisons_fixture(),

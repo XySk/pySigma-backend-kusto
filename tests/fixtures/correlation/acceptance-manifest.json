@@ -199,17 +199,17 @@
     },
     {
       "name": "empty_child_value_sum_Amount_eq.kql",
-      "sha256": "1cf20ae06fc63eb98bb9ac040ecade2ce2e08b0c4b916237c610c018b526db9c",
+      "sha256": "a09620174887f7f6e3559999b639dbd8dc0108b81f8ab90f6c1127d9dd7f2d18",
       "expected_error": null
     },
     {
       "name": "empty_child_value_sum_ChildRuleCount_eq.kql",
-      "sha256": "48fed69d7974430eeabc99634b58c95d64f195325fcafcb53ce7daae158ad5f0",
+      "sha256": "2842c8498bb06de68411a641fcd4a7213e484a3c23d18559e786474401d14dcf",
       "expected_error": null
     },
     {
       "name": "empty_child_value_sum_ungrouped_eq.kql",
-      "sha256": "d36aaba54ed70e3369931040af6e77358dc889a4f3d69a9d7c66110489c67054",
+      "sha256": "3bd13638e857119ca0c041dfa9e4e7c8ba168d90fab93cbadfa2e39783c9d5ec",
       "expected_error": null
     },
     {
@@ -514,23 +514,23 @@
     },
     {
       "name": "numeric_context_metrics.kql",
-      "sha256": "9e87bec0ca6e95518d463f9474f753eadea9b83e5a0867ea276a21397a538ddf",
+      "sha256": "7eda2785f06c19e902d9427793287ba6e460ed8cca55faf676115f6db4633f68",
       "expected_error": null
     },
     {
       "name": "numeric_context_multiple_children.kql",
-      "sha256": "c467aee506b00ea57ff51a7c161b284f906ba647ab37e6df15b68093b495fcde",
+      "sha256": "175c896991cd38517defe0a841e9a01fe1c4e7565161f6fd8fadc4140bec5cd6",
       "expected_error": null
     },
     {
       "name": "numeric_context_nested.kql",
-      "sha256": "dd7b3867a43724081cc49841a70aa7a2bd2b9bd6a1ad65153052d2b89a9ab1ae",
+      "sha256": "4792e9745e951f566e9c1021a08876dcce055f9ddca40d76eb5ed3edad83df94",
       "expected_error": null
     },
     {
-      "name": "numeric_context_noqual_overflow.kql",
-      "sha256": "40116547712b0e20c0adb3d354983e8f7a30c9f55288b4fb4d7c6927685031b3",
-      "expected_error": "Kusto value_sum integer overflow"
+      "name": "numeric_context_noqual_supported.kql",
+      "sha256": "0bf43f721a8fcea98daa5fcd510733a2f71a10c3f3b0cabffe9760f23b3cc22b",
+      "expected_error": null
     },
     {
       "name": "numeric_context_real_boundaries.kql",
@@ -569,17 +569,17 @@
     },
     {
       "name": "numeric_context_value_sum.kql",
-      "sha256": "cbe800871a06918a98e61f2b9ba1027ff27b9b41ff9adef434d1b6a0f57ac90a",
+      "sha256": "4ea45f54e531e8cc09e9efe5b091a09da78aac4793162995f06118ca4ca90e8f",
       "expected_error": null
     },
     {
       "name": "numeric_context_value_sum_empty.kql",
-      "sha256": "faa86bb6b9e98a3f34ebc000d9f7cc5443925fcb422258eb48e7cba641401620",
+      "sha256": "24af7e3fb04b4fcae96a3b92978690ac5c46089f3c3cd41688c886ed0dc4f319",
       "expected_error": null
     },
     {
       "name": "numeric_context_value_sum_groups.kql",
-      "sha256": "cc2439af1fb9f94e361ebb03a55ba296973cef4b20e8c7416f813afcafcec9c6",
+      "sha256": "e699306505f24d9e59f747bde07e254ead732d1e374148f170f1bb1fff39dc83",
       "expected_error": null
     },
     {
@@ -984,37 +984,57 @@
     },
     {
       "name": "value_sum_chained.kql",
-      "sha256": "b17dcbe2efe89eadbaf6a981fcec7663286bcf48c08a993769d46ba679e00ee2",
+      "sha256": "f1d6887329e831719769ac921055a53ade73acf2d4bb1c298e2a13bc9a06d2d6",
       "expected_error": null
     },
     {
       "name": "value_sum_comparisons.kql",
-      "sha256": "8b4870ebd8b1ddc67d2e4de2094a5aab9dbc4f5f9644091cfea2eee9d292435e",
+      "sha256": "2ee004117fe6f462937f2895f0dc2433f1cd1e0ee11997d89c23c88935e4989f",
+      "expected_error": null
+    },
+    {
+      "name": "value_sum_decimal_precision.kql",
+      "sha256": "803dfe9fcc91dcd1cb41dfdbeead6f0e1b4f05823e66edfbc6aae782b67abfd2",
       "expected_error": null
     },
     {
       "name": "value_sum_duplicate_sources.kql",
-      "sha256": "247fe9c539d19fd88e2487a06b12ad4f4e8d445080997e67c26d3b036427d921",
+      "sha256": "7bebb6d0cce34169a44ca26619bf342b9cd59cf945d4e7c8cf5f1162d9a3e3fa",
+      "expected_error": null
+    },
+    {
+      "name": "value_sum_fractional.kql",
+      "sha256": "7857a83edd19f061a31b47b281e58372594b4ae03a7ce89d5b5f06b45f14cb28",
+      "expected_error": null
+    },
+    {
+      "name": "value_sum_int_promotion.kql",
+      "sha256": "18ec1c2a8cd6c4b7c1b556040f65a7ff525de15a8b2b7053e10729871b06c791",
       "expected_error": null
     },
     {
       "name": "value_sum_integer_bounds.kql",
-      "sha256": "e827e70adce55505e1c46f91f1de13de340b5e8761b270d0ab67e28d0364717c",
+      "sha256": "c3679d0776bad390889ab6444ee187d3200c570e1ee4f4662112e6d58e1c0e2c",
       "expected_error": null
     },
     {
-      "name": "value_sum_negative_overflow.kql",
-      "sha256": "9887fe0d5eb620beb2da431d91e15abd0435bc27cc8389893ec04496a8fbcb44",
-      "expected_error": "Kusto value_sum integer overflow"
+      "name": "value_sum_real_expiration.kql",
+      "sha256": "fb659b40b823ed05f23d0962cb9b455f02989cb871662c0c255cd4fc15726e6f",
+      "expected_error": null
     },
     {
-      "name": "value_sum_overflow.kql",
-      "sha256": "95567bcd75b2e673d7da489126dc9622b1719358a3b85fd93269ad99d44cdc2e",
-      "expected_error": "Kusto value_sum integer overflow"
+      "name": "value_sum_real_groups_long.kql",
+      "sha256": "39d97d2ae953138785c7c5b7455b6518e75e998b773fae148e758a23961cb9ea",
+      "expected_error": null
+    },
+    {
+      "name": "value_sum_real_groups_real.kql",
+      "sha256": "9f1b3358d89e83282da1f85a3446315a67a4686bdeae9e794f339e726b856f5e",
+      "expected_error": null
     },
     {
       "name": "value_sum_reals.kql",
-      "sha256": "c5c5519682bbdfb4d1727dd7b9b7f5f9dc7485792cef474b9c22d75760205899",
+      "sha256": "1e302eff4e611ab22f62ca8b45f94132fa2fa46b1b194a03f735d96ba4433830",
       "expected_error": null
     }
   ]

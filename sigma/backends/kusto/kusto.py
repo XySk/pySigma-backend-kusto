@@ -905,7 +905,9 @@ class KustoBackend(TextQueryBackend):
                 result_types[metric] = "real"
             elif rule.type == SigmaCorrelationType.VALUE_SUM:
                 result_types[metric] = (
-                    "long" if self._correlation_field_types[counted_fields[0]] in ("int", "long") else "real"
+                    "long"
+                    if self._correlation_field_types[counted_fields[0]] in ("int", "long")
+                    else self._correlation_field_types[counted_fields[0]]
                 )
             elif rule.type == SigmaCorrelationType.VALUE_PERCENTILE:
                 result_types[metric] = self._correlation_field_types[counted_fields[0]]
@@ -1451,7 +1453,8 @@ class KustoBackend(TextQueryBackend):
         event_count = rule.type == SigmaCorrelationType.EVENT_COUNT
         value_count = rule.type == SigmaCorrelationType.VALUE_COUNT
         presence_temporal = rule.type == SigmaCorrelationType.TEMPORAL
-        readable = temporal or event_count or value_count
+        value_sum = rule.type == SigmaCorrelationType.VALUE_SUM
+        readable = temporal or event_count or value_count or value_sum
         columns = {
             "timestamp": allocate("EventTime" if readable else "_sigma_timestamp"),
             "rule": allocate("SourceRule" if readable else "_sigma_rule"),
@@ -1472,6 +1475,9 @@ class KustoBackend(TextQueryBackend):
         }
         if event_count or value_count or presence_temporal and not self._uses_context_groups(rule):
             columns["narrow_source"] = True
+        if value_sum:
+            columns["narrow_source"] = True
+            columns["native_values"] = True
         if presence_temporal:
             columns["include_source_rule"] = True
         numeric_context = rule.type in (
@@ -1488,14 +1494,14 @@ class KustoBackend(TextQueryBackend):
                 allocate(
                     "Counted" + re.sub(r"[^A-Za-z0-9_]", "", field)
                     if value_count
-                    else "_sigma_value" if len(counted_fields) == 1 else f"_sigma_value_{index}"
+                    else (
+                        "Measured" + re.sub(r"[^A-Za-z0-9_]", "", field)
+                        if value_sum
+                        else "_sigma_value" if len(counted_fields) == 1 else f"_sigma_value_{index}"
+                    )
                 )
                 for index, field in enumerate(counted_fields)
             ]
-        if rule.type == SigmaCorrelationType.VALUE_SUM:
-            columns["integer_sum"] = allocate("_sigma_integer_sum")
-            columns["real_sum"] = allocate("_sigma_real_sum")
-            columns["real_count"] = allocate("_sigma_real_count")
         if rule.type == SigmaCorrelationType.VALUE_AVG:
             columns["numeric_count"] = allocate("_sigma_numeric_count")
         self._correlation_group_by = rule.group_by or []
@@ -1529,7 +1535,8 @@ class KustoBackend(TextQueryBackend):
                     value = columns["values"][0]
                     scalar_value = allocate("RetainedNumericValue")
                     kind = self._correlation_field_types[counted_fields[0]]
-                    child_matches += f" | extend {scalar_value} = to{kind}({value}[1])"
+                    scalar = value if columns.get("native_values") else f"to{kind}({value}[1])"
+                    child_matches += f" | extend {scalar_value} = {scalar}"
                     keys.append(scalar_value)
                 search = (
                     f"union ({source_matches} | where isempty({child_id})), "
@@ -1592,6 +1599,21 @@ class KustoBackend(TextQueryBackend):
                     rule, definitions, search, columns, valid_rows, span, query_operator, threshold, allocate
                 )
             ]
+        if value_sum:
+            return [
+                self._convert_value_sum(
+                    rule,
+                    definitions,
+                    search,
+                    columns,
+                    valid_rows,
+                    span,
+                    query_operator,
+                    threshold,
+                    counted_fields[0],
+                    allocate,
+                )
+            ]
         anchor_fields = ", ".join([*groups, f"{window_end} = {timestamp}", f"{time_bin} = bin({timestamp}, {span})"])
         join_fields = ", ".join([*groups, time_bin])
         summary_fields = ", ".join([window_end, *groups])
@@ -1644,45 +1666,6 @@ class KustoBackend(TextQueryBackend):
             preaggregate = f"| summarize {weight} = count() by {weighted_fields}"
             distinct_anchors = ""
             aggregates = [f"EventCount = sum({weight})"]
-        elif rule.type == SigmaCorrelationType.VALUE_SUM:
-            # All valid source matches remain in the stream, including repeated
-            # measured values and rows without a usable value. The latter still
-            # establish evaluation anchors.
-            preaggregate = ""
-            distinct_anchors = "| distinct *\n"
-            value = columns["values"][0]
-            value_type = f"tostring({value}[0])"
-            integer = f'{value_type} in ("int", "long")'
-            real = f'{value_type} in ("real", "double", "decimal") and isfinite(toreal({value}[1]))'
-            integer_sum = columns["integer_sum"]
-            real_sum = columns["real_sum"]
-            real_count = columns["real_count"]
-            aggregates = [
-                f"{integer_sum} = sumif(todecimal({value}[1]), {integer})",
-                f"{real_sum} = sumif(toreal({value}[1]), {real})",
-                f"{real_count} = countif({real})",
-            ]
-            # Native long sum silently wraps on overflow. Accumulate integers
-            # in decimal, check every anchored integer-only window before the
-            # rule comparison, then expose the supported signed-long result.
-            sums = allocate("_sigma_sums")
-            summary_binding = f"let {sums} = materialize(\n"
-            self._register_correlation_guard(
-                sums,
-                f"{real_count} == 0 and (isnull({integer_sum}) or "
-                f"{integer_sum} < decimal(-9223372036854775808) or "
-                f"{integer_sum} > decimal(9223372036854775807))",
-                "Kusto value_sum integer overflow",
-            )
-            result_kind = self._correlation_field_types[counted_fields[0]]
-            metric_expression = (
-                f"tolong({integer_sum})" if result_kind in ("int", "long") else f"toreal({integer_sum}) + {real_sum}"
-            )
-            after_summary = f"{sums}\n| extend ValueSum = {metric_expression}\n"
-            comparisons = (
-                f"({real_count} == 0 and todecimal({integer_sum}) {query_operator} decimal({threshold})) "
-                f"or ({real_count} > 0 and toreal({integer_sum}) + {real_sum} {query_operator} {threshold})"
-            )
         elif rule.type == SigmaCorrelationType.VALUE_AVG:
             # Preserve every observation and every valid anchor, including
             # anchors whose window contains no usable numeric observation.
@@ -1717,6 +1700,65 @@ class KustoBackend(TextQueryBackend):
             scope += summary_binding + aggregate + ");\n"
             aggregate = after_summary
         return [_CorrelationQuery(scope, aggregate + f"| where {comparisons}\n| project {result_fields}")]
+
+    def _convert_value_sum(
+        self, rule, definitions, search, columns, valid_rows, span, query_operator, threshold, measured_field, allocate
+    ):
+        """Use exact integer boundaries and current-window native noninteger sums."""
+        sources = allocate("SumObservations")
+        event_time, groups, value = columns["timestamp"], columns["groups"], columns["values"][0]
+        kind = self._correlation_field_types[measured_field]
+        comparison = f"ValueSum {query_operator} {threshold}"
+        if kind == "decimal":
+            comparison = f"ValueSum {query_operator} decimal({threshold})"
+        elif kind in ("int", "long") and threshold != int(threshold):
+            comparison = f"todecimal(ValueSum) {query_operator} decimal({threshold})"
+        definitions += f"let {sources} = {search}\n| where {valid_rows};\n"
+        if kind in ("int", "long"):
+            arrivals = allocate("SumArrivals")
+            arrival_sum, boundary_time, boundary_order, delta = [
+                allocate(name) for name in ("ArrivalSum", "SumBoundaryTime", "SumBoundaryOrder", "SumDelta")
+            ]
+            keys = ", ".join([event_time, *groups])
+            definitions += f"let {arrivals} = {sources}\n| summarize {arrival_sum} = sum({value}) by {keys};\n"
+            retained = ", ".join(groups)
+            retained = retained + ", " if retained else ""
+            order = ", ".join(f"{field} asc" for field in [*groups, boundary_time, boundary_order])
+            changes = []
+            for logical, field in zip(rule.group_by or [], groups):
+                changed = f"{field} != prev({field})"
+                if self._correlation_field_types[logical] == "real":
+                    changed = f"({changed} and not(isnan({field}) and isnan(prev({field}))))"
+                changes.append(changed)
+            restart = ", " + " or ".join(changes) if changes else ""
+            body = (
+                f"union ({arrivals}\n| project {retained}{boundary_time} = {event_time}, "
+                f"{boundary_order} = 0, {delta} = {arrival_sum}),\n"
+                f"({arrivals}\n| project {retained}{boundary_time} = {event_time} + {span}, "
+                f"{boundary_order} = 1, {delta} = -{arrival_sum})\n"
+                "// Arrivals evaluate before equal-time expirations, including zero and missing values.\n"
+                f"| sort by {order}\n| extend ValueSum = row_cumsum({delta}{restart})\n"
+                f"| where {boundary_order} == 0\n"
+            )
+            end = boundary_time
+        else:
+            end, time_bin = allocate("SumWindowEnd"), allocate("SumTimeBin")
+            anchors = ", ".join([*groups, f"{end} = {event_time}", f"{time_bin} = bin({event_time}, {span})"])
+            join_keys = ", ".join([*groups, time_bin])
+            summary = ", ".join([end, *groups])
+            aggregate = f"sumif({value}, isfinite({value}))" if kind == "real" else f"sum({value})"
+            # Every source row remains on the right so its own anchor survives,
+            # even when no finite observation belongs to its exact window.
+            body = (
+                f"{sources}\n| project {anchors}\n| distinct *\n"
+                f"| join kind=inner (\n{sources}\n"
+                f"| extend {time_bin} = pack_array(bin({event_time}, {span}), bin({event_time}, {span}) + {span})\n"
+                f"| mv-expand {time_bin} to typeof(datetime)\n) on {join_keys}\n"
+                f"| where {event_time} between (({end} - {span}) .. {end})\n"
+                f"| summarize ValueSum = {aggregate} by {summary}\n"
+            )
+        projection = self._correlation_result_projection(rule, groups, end, span, ["ValueSum"])
+        return _CorrelationQuery(definitions, body + f"| where {comparison}\n| project {projection}")
 
     def _convert_value_count(
         self,
@@ -2270,7 +2312,7 @@ class KustoBackend(TextQueryBackend):
                 )
             return kind
 
-        def boxed(field):
+        def native_scalar(field):
             nonlocal expanded
             if field in context_fields:
                 expanded = True
@@ -2281,15 +2323,19 @@ class KustoBackend(TextQueryBackend):
                         rule_reference.rule.source,
                         "Kusto retained child fields require complete relational context metadata; preserve conversion state.",
                     )
-                scalar = self._quote_correlation_field(artifact["fields"][field])
-                return f"pack_array(gettype({scalar}), {scalar})"
-            quoted = self._quote_correlation_field(field)
-            return f"pack_array(gettype({quoted}), {quoted})"
+                return self._quote_correlation_field(artifact["fields"][field])
+            return self._quote_correlation_field(field)
+
+        def boxed(field):
+            scalar = native_scalar(field)
+            return f"pack_array(gettype({scalar}), {scalar})"
 
         for index, field in enumerate(self._correlation_group_by):
             mapped_field = map_field(map_alias(field))
             kind = record_type(field, mapped_field)
-            if mapped_field in context_fields:
+            if columns.get("native_values"):
+                scalar = native_scalar(mapped_field)
+            elif mapped_field in context_fields:
                 scalar = f"to{kind}({boxed(mapped_field)}[1])"
             else:
                 scalar = self._quote_correlation_field(mapped_field)
@@ -2298,7 +2344,9 @@ class KustoBackend(TextQueryBackend):
         for index, counted_field in enumerate(self._correlation_counted_fields):
             mapped_field = map_field(map_alias(counted_field))
             kind = record_type(counted_field, mapped_field)
-            if rule_reference.rule is not None and columns.get("identify_values"):
+            if columns.get("native_values"):
+                value = native_scalar(mapped_field)
+            elif rule_reference.rule is not None and columns.get("identify_values"):
                 value = (
                     f"to{kind}({boxed(mapped_field)}[1])"
                     if mapped_field in context_fields

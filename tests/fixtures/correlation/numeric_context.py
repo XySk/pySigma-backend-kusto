@@ -20,7 +20,6 @@ DATA = """let Events=datatable(Timestamp:datetime,Host:string,Marker:string,User
 """
 
 
-@scalar_inputs()
 def fixture(kind, *, grouped=False, mixed=False, metric=False, nested=False, boundary=False, empty=False):
     docs = numeric_documents(kind, ("User",) if grouped else (), "EventCount" if metric else "Amount")
     docs[-1]["correlation"]["condition"]["gte"] = -1
@@ -49,7 +48,8 @@ def fixture(kind, *, grouped=False, mixed=False, metric=False, nested=False, bou
         # partition. Keep relationship/group/metric coverage in the other cases.
         docs[0]["fields"] = ["Amount"]
         docs[1]["correlation"]["group-by"] = []
-    (query,) = convert_documents(docs)
+    amount_type = "real" if empty else "long"
+    (query,) = convert_documents(docs, schema=fixture_schema(Amount=amount_type))
     metric_name = {"value_sum": "ValueSum", "value_avg": "ValueAvg", "value_percentile": "ValuePercentile"}[kind]
     groups = ["Actor"] if grouped else []
     if grouped:
@@ -104,7 +104,7 @@ def fixture(kind, *, grouped=False, mixed=False, metric=False, nested=False, bou
     if boundary:
         projection = f"Metric=tostring({metric_name})"
     keys = ", ".join([*groups, "Metric"])
-    return (
+    result = (
         data
         + "let Actual=(){\n"
         + query
@@ -114,6 +114,7 @@ def fixture(kind, *, grouped=False, mixed=False, metric=False, nested=False, bou
         + "union (Observed | extend Delta=1), (Expected | extend Delta=-1)\n"
         + f"| summarize Delta=sum(Delta) by {keys}\n| where Delta!=0\n"
     )
+    return scalar_inputs(Amount=amount_type)(lambda: result)()
 
 
 @scalar_inputs()
@@ -161,16 +162,19 @@ union (Observed | extend Delta=1),(Expected | extend Delta=-1)
     )
 
 
-def noqualifying_overflow_fixture():
+def noqualifying_supported_fixture():
     child = correlation_document(
         "child", "value_sum", ["source-rule"], groups=(), condition={"field": "Amount", "eq": 0}
     )
     parent = correlation_document("parent", "event_count", ["child"], groups=(), condition={"gte": 999})
     (query,) = convert_documents([source_document(), child, parent])
     return (
-        "// Expected failure: Kusto value_sum integer overflow, despite no qualifying child or parent.\n"
+        "// Supported in-range child values produce no qualifying child or parent.\n"
         "let Events=datatable(Timestamp:datetime,Marker:string,Amount:long) ["
-        'datetime(2026-01-01),"match",9223372036854775807,datetime(2026-01-01),"match",1];\n' + query + "\n"
+        'datetime(2026-01-01),"match",1000,datetime(2026-01-01),"match",1];\n'
+        + "let Actual=(){\n"
+        + query
+        + "\n};\nActual()\n| project Unexpected=1\n"
     )
 
 
@@ -185,5 +189,5 @@ def fixtures():
     result["numeric_context_boundaries.kql"] = fixture("value_percentile", boundary=True)
     result["numeric_context_real_boundaries.kql"] = real_boundaries_fixture()
     result["numeric_context_multiple_children.kql"] = multiple_children_fixture()
-    result["numeric_context_noqual_overflow.kql"] = noqualifying_overflow_fixture()
+    result["numeric_context_noqual_supported.kql"] = noqualifying_supported_fixture()
     return result

@@ -1,0 +1,10 @@
+{
+  "name": "real-hot-group-value_sum-plain",
+  "schema": {
+    "WindowStart": "datetime",
+    "WindowEnd": "datetime",
+    "Host": "string",
+    "ValueSum": "real"
+  },
+  "expected": []
+}

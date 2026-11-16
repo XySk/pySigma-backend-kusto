@@ -1,0 +1,141 @@
+{
+  "started_utc": "2026-11-16T18:54:53.791302+00:00",
+  "endpoint": "http://localhost:8080",
+  "database": "NetDefaultDB",
+  "request_options": {
+    "max_memory_consumption_per_query_per_node": 12884901888
+  },
+  "timeout_seconds": 45,
+  "manifest_sha256": "b9b72436208307dff4e053f99746eb888de57dfd742a47e277ce1e682e800453",
+  "fixtures": [
+    {
+      "name": "context_value_sum.kql",
+      "sha256": "0d40c8da9df830441582756fba94cc6c3c064620100ed3cfecabe3b8f0d8193a",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.025
+    },
+    {
+      "name": "empty_child_value_sum_Amount_eq.kql",
+      "sha256": "a09620174887f7f6e3559999b639dbd8dc0108b81f8ab90f6c1127d9dd7f2d18",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.028
+    },
+    {
+      "name": "empty_child_value_sum_ChildRuleCount_eq.kql",
+      "sha256": "2842c8498bb06de68411a641fcd4a7213e484a3c23d18559e786474401d14dcf",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.273
+    },
+    {
+      "name": "empty_child_value_sum_ungrouped_eq.kql",
+      "sha256": "3bd13638e857119ca0c041dfa9e4e7c8ba168d90fab93cbadfa2e39783c9d5ec",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.25
+    },
+    {
+      "name": "numeric_context_metrics.kql",
+      "sha256": "7eda2785f06c19e902d9427793287ba6e460ed8cca55faf676115f6db4633f68",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.173
+    },
+    {
+      "name": "numeric_context_multiple_children.kql",
+      "sha256": "175c896991cd38517defe0a841e9a01fe1c4e7565161f6fd8fadc4140bec5cd6",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.93
+    },
+    {
+      "name": "numeric_context_nested.kql",
+      "sha256": "4792e9745e951f566e9c1021a08876dcce055f9ddca40d76eb5ed3edad83df94",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 34.297
+    },
+    {
+      "name": "numeric_context_noqual_supported.kql",
+      "sha256": "0bf43f721a8fcea98daa5fcd510733a2f71a10c3f3b0cabffe9760f23b3cc22b",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.016
+    },
+    {
+      "name": "numeric_context_value_sum.kql",
+      "sha256": "4ea45f54e531e8cc09e9efe5b091a09da78aac4793162995f06118ca4ca90e8f",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.291
+    },
+    {
+      "name": "numeric_context_value_sum_empty.kql",
+      "sha256": "10a7c04016c6837e4e230968f21f430efc432d6eb3a3f1522b83ece6fad60def",
+      "expected_error": null,
+      "status": "FAIL",
+      "detail": "multiset differences: [[0.0, -1], [-9.223372036854776e+18, 1]]",
+      "http_status": 200,
+      "seconds": 0.466
+    }
+  ],
+  "status": "FAIL",
+  "engine_version": {
+    "Tables": [
+      {
+        "TableName": "Table_0",
+        "Columns": [
+          {
+            "ColumnName": "BuildVersion",
+            "DataType": "String"
+          },
+          {
+            "ColumnName": "BuildTime",
+            "DataType": "DateTime"
+          },
+          {
+            "ColumnName": "ServiceType",
+            "DataType": "String"
+          },
+          {
+            "ColumnName": "ProductVersion",
+            "DataType": "String"
+          },
+          {
+            "ColumnName": "ServiceOffering",
+            "DataType": "String"
+          }
+        ],
+        "Rows": [
+          [
+            "1.0.9815.14081",
+            "2026-11-15T07:49:22Z",
+            "Engine",
+            "2026.11.15.0741-2645-8e3387b-master",
+            ""
+          ]
+        ]
+      }
+    ]
+  }
+}
