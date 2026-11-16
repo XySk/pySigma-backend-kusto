@@ -178,6 +178,47 @@ backend = KustoBackend(
 queries = backend.convert(collection)
 ```
 
+Optional `correlation_report_start` and `correlation_report_end` backend options
+restrict reported correlation `WindowEnd` values for each `convert()` call. Supply
+ISO 8601 strings with an explicit timezone (`Z` or an offset), for example:
+
+```python
+backend = KustoBackend(
+    processing_pipeline=microsoft_xdr_pipeline(),
+    correlation_timestamp_field="Timestamp",
+    correlation_report_start="2026-01-01T10:18:00Z",
+    correlation_report_end="2026-01-01T10:19:00Z",
+)
+queries = backend.convert(collection)
+```
+
+Either bound may be omitted. When both are configured, start must precede end.
+Up to seven fractional second digits are preserved, including Kusto's 100 ns tick.
+Generated queries expose readable `ReportStart`/`ReportEnd` definitions, with names
+adjusted when source columns or child definitions already use those identifiers.
+The report interval includes its start and excludes its end; two adjacent reports
+therefore assign their shared boundary once. Correlation windows still include
+both endpoints. Deliberately overlapping reports can repeat matches.
+
+Source filters include the complete preceding correlation lookback: the maximum
+sum of timespans along every consuming dependency path, including shared children
+and multiple levels. Internal child matches and complete retained context remain
+available before the report start; standalone correlation outputs receive their
+own public report cutoff. Append-only child callback filters and metric edits are
+preserved against that complete history when the backend removes its own cutoff
+for composition. Callbacks that replace generated queries or metadata must keep
+the public query and its provenance consistent.
+
+For example, ten failures spanning 10:00–10:09 in a ten-minute failure-count window,
+followed by success at 10:18 within a second ten-minute ordered window, qualify in
+a report starting at 10:18. Keep raw events back to 09:58 for that report: filtering
+all input to the parent's ten-minute interval would discard required failures.
+Configure the source retention and any upstream query filters to provide this
+history; generated filters cannot restore events already removed upstream. With
+bounds omitted, conversion adds no report interval, `ago()`, or one-hour default,
+and source history remains caller controlled. Reporting bounds apply to correlation
+outputs; ordinary standalone detection output follows its existing behavior.
+
 The only supported correlation method is `default` (also selected when the
 `correlation_method` argument is omitted). Unsupported selections fail conversion;
 they do not select fixed windows. `correlation_timestamp_field` must be a nonempty
