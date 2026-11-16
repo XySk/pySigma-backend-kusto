@@ -1,6 +1,8 @@
 let Events=datatable(Amount:dynamic) [dynamic("10"),dynamic(null),dynamic("bad")]
 | union (print Amount=pack_array(real(nan))[0]), (print Amount=pack_array(real(+inf))[0]), (print Amount=pack_array(real(-inf))[0])
-| extend Timestamp=datetime(2026-01-01T12:00:00Z),Host="h",Marker="match",User="Alice";
+| extend Timestamp=datetime(2026-01-01T12:00:00Z),Host="h",Marker="match",User="Alice"
+// Normalize Events scalar fixture inputs explicitly.
+| extend Amount=iff(gettype(Amount) in ("int","long","real","double","decimal"), tolong(Amount), long(null));
 let Actual=(){
 let _sigma_guarded_query_ = () {
 let _sigma_shared_child = () {

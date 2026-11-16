@@ -25,7 +25,7 @@ _sigma_values
 | summarize _sigma_integer_sum = sumif(todecimal(_sigma_value[1]), tostring(_sigma_value[0]) in ("int", "long")), _sigma_real_sum = sumif(toreal(_sigma_value[1]), tostring(_sigma_value[0]) in ("real", "double", "decimal") and isfinite(toreal(_sigma_value[1]))), _sigma_real_count = countif(tostring(_sigma_value[0]) in ("real", "double", "decimal") and isfinite(toreal(_sigma_value[1]))) by _sigma_window_end
 );
 _sigma_sums
-| extend ValueSum = iff(_sigma_real_count > 0, pack_array(toreal(_sigma_integer_sum) + _sigma_real_sum)[0], pack_array(tolong(_sigma_integer_sum))[0])
+| extend ValueSum = toreal(_sigma_integer_sum) + _sigma_real_sum
 | where (_sigma_real_count == 0 and todecimal(_sigma_integer_sum) >= decimal(1)) or (_sigma_real_count > 0 and toreal(_sigma_integer_sum) + _sigma_real_sum >= 1)
 | project WindowStart = _sigma_window_end - 1m, WindowEnd = _sigma_window_end, ValueSum
 };
@@ -111,7 +111,7 @@ _sigma_ranked
 _sigma_ranked | summarize _sigma_population = max(_sigma_rank) by _sigma_partition
 ) on _sigma_partition
 | where _sigma_rank == max_of(1, (_sigma_population / 100) * 50 + tolong(ceiling(toreal((_sigma_population % 100) * 50) / 100.0)))
-| extend ValuePercentile = _sigma_value[1]
+| extend ValuePercentile = toreal(_sigma_value[1])
 | where (gettype(ValuePercentile) in ("int", "long") and todecimal(ValuePercentile) >= decimal(1)) or (gettype(ValuePercentile) in ("real", "double", "decimal") and toreal(ValuePercentile) >= 1)
 | project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ValuePercentile
 };
@@ -188,7 +188,7 @@ _sigma_values
 | summarize _sigma_integer_sum = sumif(todecimal(_sigma_value[1]), tostring(_sigma_value[0]) in ("int", "long")), _sigma_real_sum = sumif(toreal(_sigma_value[1]), tostring(_sigma_value[0]) in ("real", "double", "decimal") and isfinite(toreal(_sigma_value[1]))), _sigma_real_count = countif(tostring(_sigma_value[0]) in ("real", "double", "decimal") and isfinite(toreal(_sigma_value[1]))) by _sigma_window_end
 );
 _sigma_sums
-| extend ValueSum = iff(_sigma_real_count > 0, pack_array(toreal(_sigma_integer_sum) + _sigma_real_sum)[0], pack_array(tolong(_sigma_integer_sum))[0])
+| extend ValueSum = toreal(_sigma_integer_sum) + _sigma_real_sum
 | where (_sigma_real_count == 0 and todecimal(_sigma_integer_sum) >= decimal(1)) or (_sigma_real_count > 0 and toreal(_sigma_integer_sum) + _sigma_real_sum >= 1)
 | project WindowStart = _sigma_window_end - 1m, WindowEnd = _sigma_window_end, ValueSum
 };
@@ -274,7 +274,7 @@ _sigma_ranked
 _sigma_ranked | summarize _sigma_population = max(_sigma_rank) by _sigma_partition
 ) on _sigma_partition
 | where _sigma_rank == max_of(1, (_sigma_population / 100) * 50 + tolong(ceiling(toreal((_sigma_population % 100) * 50) / 100.0)))
-| extend ValuePercentile = _sigma_value[1]
+| extend ValuePercentile = toreal(_sigma_value[1])
 | where (gettype(ValuePercentile) in ("int", "long") and todecimal(ValuePercentile) >= decimal(1)) or (gettype(ValuePercentile) in ("real", "double", "decimal") and toreal(ValuePercentile) >= 1)
 | project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ValuePercentile
 };
@@ -345,7 +345,7 @@ _sigma_values
 | summarize _sigma_integer_sum = sumif(todecimal(_sigma_value[1]), tostring(_sigma_value[0]) in ("int", "long")), _sigma_real_sum = sumif(toreal(_sigma_value[1]), tostring(_sigma_value[0]) in ("real", "double", "decimal") and isfinite(toreal(_sigma_value[1]))), _sigma_real_count = countif(tostring(_sigma_value[0]) in ("real", "double", "decimal") and isfinite(toreal(_sigma_value[1]))) by _sigma_window_end
 );
 _sigma_sums
-| extend ValueSum = iff(_sigma_real_count > 0, pack_array(toreal(_sigma_integer_sum) + _sigma_real_sum)[0], pack_array(tolong(_sigma_integer_sum))[0])
+| extend ValueSum = toreal(_sigma_integer_sum) + _sigma_real_sum
 | where (_sigma_real_count == 0 and todecimal(_sigma_integer_sum) >= decimal(1)) or (_sigma_real_count > 0 and toreal(_sigma_integer_sum) + _sigma_real_sum >= 1)
 | project WindowStart = _sigma_window_end - 1m, WindowEnd = _sigma_window_end, ValueSum
 };

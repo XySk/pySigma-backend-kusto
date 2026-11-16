@@ -18,7 +18,7 @@ def test_value_count_parent_counts_child_value_metric_as_one_exact_value_per_sum
     (query,) = convert_documents(documents)
 
     assert '_sigma_timestamp = todatetime(["WindowEnd"])' in query
-    assert '_sigma_value = pack_array(gettype(["ValueCount"]), ["ValueCount"])' in query
+    assert '_sigma_value = ["ValueCount"]' in query
     assert summary_data_query(query).count("ValueCount = count_distinctif(_sigma_value, isnotempty(_sigma_value))") == 2
     assert final_summary_projection(query).endswith('["Host"] = _sigma_group_0, ValueCount')
 
@@ -35,9 +35,9 @@ def test_ordered_parent_scopes_complete_temporal_child_before_strict_window_end_
     (query,) = convert_documents(documents)
 
     assert "union (Events\n" in summary_data_query(query)
-    assert "union (_sigma_shared_results\n" in summary_data_query(query)
-    assert '_sigma_timestamp = todatetime(["WindowEnd"]), _sigma_group_0 = pack_array(gettype(["Host"]), ["Host"])' in query
-    assert '_sigma_timestamp = todatetime(["Timestamp"]), _sigma_group_0 = pack_array(gettype(["Host"]), ["Host"])' in query
+    assert "union (_sigma_child_0()\n" in summary_data_query(query)
+    assert '_sigma_timestamp = todatetime(["WindowEnd"]), _sigma_group_0 = ["Host"]' in query
+    assert '_sigma_timestamp = todatetime(["Timestamp"]), _sigma_group_0 = ["Host"]' in query
     assert '| where _sigma_rule == "child"' in query
     assert '| where _sigma_rule == "direct-rule"' in query
     assert "| where _sigma_timestamp > _sigma_sequence_end and _sigma_timestamp <= _sigma_sequence_start + 5m" in query
@@ -71,12 +71,14 @@ def test_all_supported_types_produce_and_consume_child_summaries(producer, consu
     producer_metric = "RuleCount = tolong(2)" if producer == "temporal_ordered" else METRICS[producer]
     assert summary_projections(query)[0].endswith(f", {producer_metric}")
     parent = summary_data_query(query).split("\n};\n", 1)[1]
-    assert '_sigma_timestamp = todatetime(["WindowEnd"]), _sigma_group_0 = pack_array(gettype(["Host"]), ["Host"])' in parent
+    assert '_sigma_timestamp = todatetime(["WindowEnd"]), _sigma_group_0 = ["Host"]' in parent
     assert '| extend _sigma_rule = "child"' in parent
     consumer_metric = "RuleCount = tolong(1)" if consumer == "temporal_ordered" else METRICS[consumer]
     assert final_summary_projection(query).endswith(f", {consumer_metric}")
     if consumer in ("value_count", "value_sum", "value_percentile"):
-        assert f'_sigma_value = pack_array(gettype(["{METRICS[producer]}"]), ["{METRICS[producer]}"])' in parent
+        measured = f'["{METRICS[producer]}"]'
+        expected_value = measured if consumer == "value_count" else f"pack_array(gettype({measured}), {measured})"
+        assert f"_sigma_value = {expected_value}" in parent
     if consumer == "event_count":
         assert "_sigma_weight = count()" in parent
         assert "sum(_sigma_weight)" in parent
@@ -112,10 +114,10 @@ def test_child_window_fields_group_and_actual_metric_can_all_be_aliased_without_
     parent_query = query.split("\n};\n", 1)[1]
     assert '_sigma_timestamp = todatetime(["WindowEnd"])' in parent_query
     for column, field in enumerate(["WindowStart", "WindowEnd", METRICS[producer], "Host"]):
-        assert f'_sigma_value_{column} = pack_array(gettype(["{field}"]), ["{field}"])' in parent_query
+        assert f'_sigma_value_{column} = ["{field}"]' in parent_query
     assert "Wrong" not in query
     assert 'todatetime(["PhysicalTime"])' in query
-    assert 'pack_array(gettype(["PhysicalHost"]), ["PhysicalHost"])' in query
+    assert '["PhysicalHost"]' in query
 
 
 @pytest.mark.parametrize(
@@ -133,14 +135,13 @@ def test_value_parent_counts_child_metric_and_host_independently_with_and(operat
 
     (query,) = convert_documents(documents)
 
-    assert (
-        '_sigma_value_0 = pack_array(gettype(["EventCount"]), ["EventCount"]), _sigma_value_1 = pack_array(gettype(["Host"]), ["Host"])'
-        in query
-    )
+    assert '_sigma_value_0 = ["EventCount"], _sigma_value_1 = ["Host"]' in query
     assert '["ValueCount_EventCount"] = count_distinctif(_sigma_value_0, isnotempty(_sigma_value_0))' in query
     assert '["ValueCount_Host"] = count_distinctif(_sigma_value_1, isnotempty(_sigma_value_1))' in query
     assert f'| where ["ValueCount_EventCount"] {query_operator} 2 and ["ValueCount_Host"] {query_operator} 2\n' in query
-    assert final_summary_projection(query).endswith('["Case"] = _sigma_group_0, ["ValueCount_EventCount"], ["ValueCount_Host"]')
+    assert final_summary_projection(query).endswith(
+        '["Case"] = _sigma_group_0, ["ValueCount_EventCount"], ["ValueCount_Host"]'
+    )
 
 
 def test_multifield_child_exposes_each_metric_for_counting_without_an_invented_valuecount():
@@ -152,11 +153,10 @@ def test_multifield_child_exposes_each_metric_for_counting_without_an_invented_v
 
     (query,) = convert_documents(documents)
 
-    assert (
-        '_sigma_value_0 = pack_array(gettype(["ValueCount_User"]), ["ValueCount_User"]), _sigma_value_1 = pack_array(gettype(["ValueCount_Target"]), ["ValueCount_Target"])'
-        in query
+    assert '_sigma_value_0 = ["ValueCount_User"], _sigma_value_1 = ["ValueCount_Target"]' in query
+    assert final_summary_projection(query).endswith(
+        '["Host"] = _sigma_group_0, ["ValueCount_ValueCount_User"], ["ValueCount_ValueCount_Target"]'
     )
-    assert final_summary_projection(query).endswith('["Host"] = _sigma_group_0, ["ValueCount_ValueCount_User"], ["ValueCount_ValueCount_Target"]')
 
 
 def test_temporal_parent_counts_immediate_child_and_detection_identities():
@@ -280,22 +280,19 @@ def test_multilevel_mixed_sources_keep_result_names_and_scope_bindings_separate_
     assert len(summary_projections(query)) == 3
     assert summary_projections(query)[0].endswith(', ["Case"] = _sigma_group_0, ["Host"] = _sigma_group_1, EventCount')
     assert summary_projections(query)[1].endswith(', ["Tenant"] = _sigma_group_0, ValueCount')
-    assert 'union (_sigma_shared_results' in query
-    assert 'let _sigma_shared_results = materialize(_sigma_shared_child());' in query
-    assert 'union (_sigma_shared_results\n' in query
-    assert '_sigma_correlation_error' not in summary_data_query(query)
-    assert query.count('| where assert(') == 1
-    assert 'countif(isnotempty(_sigma_correlation_error' in query
-    assert 'Kusto dynamic identity traversal incomplete or exceeds range limit' in query
+    assert "union (_sigma_child_0()" in query
+    assert "_sigma_correlation_error" not in summary_data_query(query)
+    assert "assert(" not in query
+    assert "_sigma_identity" not in query
     assert '(Events\n| where Marker =~ "match"' in query
     assert '(NetworkEvents\n| where Marker =~ "direct"' in query
     assert 'todatetime(["ProcessTime"])' in query
     assert 'todatetime(["NetworkTime"])' in query
-    assert 'pack_array(gettype(["ProcessCase"]), ["ProcessCase"])' in query
-    assert 'pack_array(gettype(["NetworkScope"]), ["NetworkScope"])' in query
-    assert 'pack_array(gettype(["Case"]), ["Case"])' in query
-    assert 'pack_array(gettype(["Tenant"]), ["Tenant"])' in query
-    assert 'pack_array(gettype(["EventCount"]), ["EventCount"])' in query
+    assert '["ProcessCase"]' in query
+    assert '["NetworkScope"]' in query
+    assert '["Case"]' in query
+    assert '["Tenant"]' in query
+    assert '["EventCount"]' in query
     assert summary_data_query(query).count('todatetime(["WindowEnd"])') == 2
     assert "Wrong" not in query
     assert "ago(" not in query
@@ -308,13 +305,13 @@ def test_chain_bindings_do_not_shadow_known_tables_in_direct_or_descendant_sourc
 
     # The outer function must avoid the raw table two correlation levels below,
     # and the ordered parent's retained stream must avoid its direct table.
-    assert "let _sigma_shared_child = () {\n" in query
-    assert "union (_sigma_shared_results" in query
+    assert "let _sigma_child_0_1 = () {\n" in query
+    assert "union (_sigma_child_0_1()" in query
     assert '(_sigma_child_0\n| where Marker =~ "match"' in query
     assert '(_sigma_types\n| where Marker =~ "direct"' in query
     assert "let _sigma_child_0 =" not in query
     assert "let _sigma_types =" not in query
-    assert "let _sigma_types_1 = _sigma_group_input\n" in query
+    assert "let _sigma_types_1 = union " in query
 
 
 @pytest.mark.parametrize(
@@ -366,5 +363,5 @@ def test_shared_child_remains_available_to_each_parent_and_any_consumer_can_supp
     assert final_summary_projection(queries[-2]).endswith("EventCount")
     assert final_summary_projection(queries[-1]).endswith("ValueCount")
     for parent in queries[-2:]:
-        assert summary_data_query(parent).count("let _sigma_shared_child = () {") == 1
+        assert summary_data_query(parent).count("let _sigma_child_0 = () {") == 1
         assert '_sigma_timestamp = todatetime(["WindowEnd"])' in parent

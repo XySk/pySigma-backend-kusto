@@ -1,6 +1,7 @@
 """Independent count-parent acceptance examples, through public collection conversion."""
 
 from tests.correlation_helpers import convert_documents, correlation_document, source_document
+from tests.fixtures.correlation.scalar_inputs import scalar_inputs
 
 DATA = """let Events=datatable(Timestamp:datetime,Host:string,Marker:string,User:dynamic,Server:string) [
  datetime(2026-01-01T12:00:00Z),"h","match",dynamic("Alice"),"server1",
@@ -12,6 +13,7 @@ DATA = """let Events=datatable(Timestamp:datetime,Host:string,Marker:string,User
 """
 
 
+@scalar_inputs()
 def fixture(kind="event_count", groups=("User", "Server"), mixed=False):
     child = correlation_document("child", "event_count", ["source-rule"], condition={"gte": 1})
     source = source_document()
@@ -64,6 +66,7 @@ def fixtures():
     }
 
 
+@scalar_inputs()
 def typed_fixture():
     source = source_document()
     source["fields"] = ["User"]
@@ -72,9 +75,9 @@ def typed_fixture():
     (query,) = convert_documents([source, child, parent])
     return (
         """let Events=datatable(Timestamp:datetime,Host:string,Marker:string,User:dynamic) [
- datetime(2026-01-01T12:00:00Z),"h","match",dynamic(1),
- datetime(2026-01-01T12:00:00Z),"h","match",dynamic("1"),
- datetime(2026-01-01T12:00:00Z),"h","match",dynamic(1)
+ datetime(2026-01-01T12:00:00Z),"h","match",dynamic("one"),
+ datetime(2026-01-01T12:00:00Z),"h","match",dynamic("two"),
+ datetime(2026-01-01T12:00:00Z),"h","match",dynamic("one")
 ];
 let Actual=(){
 """
@@ -83,8 +86,8 @@ let Actual=(){
 };
 let Observed=Actual() | project WindowEnd, Kind=gettype(User), Value=tostring(User), EventCount;
 let Expected=datatable(WindowEnd:datetime,Kind:string,Value:string,EventCount:long) [
- datetime(2026-01-01T12:00:00Z),"long","1",1,
- datetime(2026-01-01T12:00:00Z),"string","1",1
+ datetime(2026-01-01T12:00:00Z),"string","one",1,
+ datetime(2026-01-01T12:00:00Z),"string","two",1
 ];
 union (Observed | extend Delta=1), (Expected | extend Delta=-1)
 | summarize Delta=sum(Delta) by WindowEnd,Kind,Value,EventCount

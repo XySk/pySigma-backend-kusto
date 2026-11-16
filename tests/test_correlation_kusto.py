@@ -13,15 +13,23 @@ from sigma.pipelines.microsoft365defender import microsoft_365_defender_pipeline
 from sigma.processing.pipeline import ProcessingPipeline
 
 
-def microsoft_365_defender_pipeline(*args, **kwargs):
+def microsoft_365_defender_pipeline(*args, fixture_fields=(), **kwargs):
     """Declare additional fixture columns used beside built-in table fields."""
     from tests.correlation_helpers import fixture_schema
 
     pipeline = defender_pipeline(*args, **kwargs)
-    schema = pipeline.vars["kusto_schema"]
+    from copy import deepcopy
+
+    schema = deepcopy(pipeline.vars["kusto_schema"])
+    pipeline.vars["kusto_schema"] = schema
+    if table := kwargs.get("query_table"):
+        schema.tables.setdefault(table, fixture_schema((table,)).tables[table])
     for table in schema.tables.values():
         for name, info in fixture_schema().tables["Events"].fields.items():
             table.fields.setdefault(name, info)
+        table.fields.setdefault("TimestampField", FieldInfo("datetime", "Fixture timestamp"))
+        for name in fixture_fields:
+            table.fields.setdefault(name, FieldInfo("string", "Declared retained fixture column"))
     return pipeline
 
 
@@ -324,7 +332,8 @@ def test_temporal_preserves_colliding_source_columns_escaped_identity_and_standa
     documents[-1]["correlation"]["rules"] = [source["id"]]
     documents[-1]["correlation"]["generate"] = True
     backend = KustoBackend(
-        processing_pipeline=microsoft_365_defender_pipeline(), correlation_timestamp_field="Timestamp"
+        processing_pipeline=microsoft_365_defender_pipeline(fixture_fields=source["fields"]),
+        correlation_timestamp_field="Timestamp",
     )
 
     *standalone, query = backend.convert(SigmaCollection.from_yaml(yaml.safe_dump_all(documents)))
@@ -551,13 +560,16 @@ def test_multi_field_value_count_quotes_metrics_and_preserves_colliding_source_c
     collection = correlation_collection(value_count_correlation(field=counted, generate=True))
     collection.rules[0].fields = ["_sigma_value_0", "_sigma_value_1", "_sigma_values"]
     backend = KustoBackend(
-        processing_pipeline=microsoft_365_defender_pipeline(), correlation_timestamp_field="Timestamp"
+        processing_pipeline=microsoft_365_defender_pipeline(
+            fixture_fields=[*collection.rules[0].fields, 'Actor\'s "Name"']
+        ),
+        correlation_timestamp_field="Timestamp",
     )
 
     standalone, query = backend.convert(collection)
 
     assert standalone == 'DeviceProcessEvents\n| where ProcessCommandLine =~ "suspicious.exe"'
-    assert "let _sigma_values_1 = _sigma_value_identities\n" in query
+    assert "let _sigma_values_1 = union " in query
     assert '_sigma_value_0_1 = ["Actor\'s \\"Name\\""]' in query
     assert '_sigma_value_1_1 = ["_sigma_value_0"]' in query
     assert "| project " not in query.split("| extend _sigma_timestamp")[0]
@@ -657,7 +669,7 @@ def test_single_source_value_count_aliases_quoted_counted_fields_without_overwri
         "_sigma_window_end",
         "_sigma_bin",
     ]
-    pipeline = microsoft_365_defender_pipeline()
+    pipeline = microsoft_365_defender_pipeline(fixture_fields=collection.rules[0].fields)
     pipeline.vars["kusto_field_mappings"] = FieldMappings(generic_mappings={"User": 'Actor\'s "Name"'})
     backend = KustoBackend(processing_pipeline=pipeline, correlation_timestamp_field="Timestamp")
 
@@ -665,7 +677,7 @@ def test_single_source_value_count_aliases_quoted_counted_fields_without_overwri
 
     query = summary_data_query(query)
 
-    assert "let _sigma_values_1 = _sigma_value_identities\n" in query
+    assert "let _sigma_values_1 = union " in query
     assert summary_data_query(query).count('_sigma_value_1 = ["Actor\'s \\"Name\\""]') == 2
     assert "| project " not in query.split("| extend _sigma_timestamp")[0]
     assert "| summarize by _sigma_timestamp_1, _sigma_value_1;" in query
@@ -737,7 +749,7 @@ def test_multi_rule_event_count_combines_source_tables_before_counting():
     (query,) = backend.convert(multi_rule_collection(group_by=("User",)))
 
     assert (
-        'let _sigma_group_input = materialize(union (DeviceProcessEvents\n| where ProcessCommandLine =~ "suspicious.exe"\n'
+        'let _sigma_weights = union (DeviceProcessEvents\n| where ProcessCommandLine =~ "suspicious.exe"\n'
         '| extend _sigma_timestamp = todatetime(["Timestamp"]), _sigma_group_0 = ["AccountName"]\n'
         '| extend _sigma_rule = "source-rule"),\n'
         "(DeviceNetworkEvents\n| where RemotePort == 443\n"
@@ -758,7 +770,9 @@ def test_event_count_uses_exact_inclusive_windows_at_distinct_event_timestamps()
 
     assert "between ((_sigma_window_end - 5m) .. _sigma_window_end)" in query
     assert "| where EventCount >= 2" in query
-    assert '| project ["WindowStart"], ["WindowEnd"], ["User"], ["DeviceName"], ["EventCount"]' in query
+    assert final_summary_projection(query).endswith(
+        '["User"] = _sigma_group_0, ["DeviceName"] = _sigma_group_1, EventCount'
+    )
 
 
 @pytest.mark.parametrize(
@@ -859,7 +873,17 @@ def test_multi_rule_event_count_preserves_source_columns_that_overlap_normalized
         generic_mappings={"EventTime": "_sigma_timestamp_2", "User": "_sigma_group_0", "Unused": "_sigma_rule"}
     )
     pipeline.vars["kusto_schema"] = BaseSchema(
-        tables={"DeviceNetworkEvents": TableSchema(fields={"_sigma_rule_2": FieldInfo("string", "Original data")})}
+        tables={
+            table: TableSchema(
+                fields={
+                    "_sigma_rule_2": FieldInfo("string", "Original data"),
+                    "_sigma_timestamp_2": FieldInfo("datetime", "Mapped timestamp"),
+                    "_sigma_group_0": FieldInfo("string", "Mapped group"),
+                    **{field: FieldInfo("string", "Retained column") for field in collection.rules[0].fields},
+                }
+            )
+            for table in ("DeviceProcessEvents", "DeviceNetworkEvents")
+        }
     )
     backend = KustoBackend(processing_pipeline=pipeline, correlation_timestamp_field="EventTime")
 
@@ -879,7 +903,8 @@ def test_event_count_preserves_columns_that_overlap_sliding_window_names():
     collection = correlation_collection(event_count_correlation(group_by=("User",)))
     collection.rules[0].fields = ["_sigma_weight", "_sigma_window_end", "_sigma_bin", "_sigma_weights"]
     backend = KustoBackend(
-        processing_pipeline=microsoft_365_defender_pipeline(), correlation_timestamp_field="Timestamp"
+        processing_pipeline=microsoft_365_defender_pipeline(fixture_fields=collection.rules[0].fields),
+        correlation_timestamp_field="Timestamp",
     )
 
     (query,) = backend.convert(collection)
@@ -912,6 +937,9 @@ def test_multi_rule_event_count_retains_every_search_and_duplicate_rule_matches(
     pipeline = ProcessingPipeline.from_dict(
         {"transformations": [{"type": "set_state", "key": "query_table", "val": "CustomEvents"}]}
     )
+    from tests.correlation_helpers import fixture_schema
+
+    pipeline.vars["kusto_schema"] = fixture_schema(("CustomEvents",))
     backend = KustoBackend(processing_pipeline=pipeline, correlation_timestamp_field="Timestamp")
     collection = multi_rule_collection(source_conditions="[selection, alternate]", condition=f"{operator}: 3")
     collection.rules[1].detection = collection.rules[0].detection
@@ -1113,12 +1141,13 @@ def test_event_count_parent_combines_direct_searches_with_child_groups_and_prese
     parent["correlation"]["rules"].append("other-rule")
     parent["correlation"]["aliases"] = {"Actor": {"child-correlation": "User", "other-rule": "User"}}
     backend = KustoBackend(
-        processing_pipeline=microsoft_365_defender_pipeline(), correlation_timestamp_field="Timestamp"
+        processing_pipeline=microsoft_365_defender_pipeline(fixture_fields=child["correlation"]["group-by"]),
+        correlation_timestamp_field="Timestamp",
     )
 
     (query,) = backend.convert(SigmaCollection.from_yaml(yaml.safe_dump_all([parent, child, source, direct])))
 
-    assert "let _sigma_shared_child = () {\n" in query
+    assert "let _sigma_child_0_1 = () {\n" in query
     assert summary_data_query(query).count("(DeviceProcessEvents\n| where ") == 2
     assert summary_data_query(query).count("(DeviceNetworkEvents\n| where ") == 2
     assert '_sigma_timestamp_1 = todatetime(["WindowEnd"]), _sigma_group_0 = ["User"]' in query

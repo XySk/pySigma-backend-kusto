@@ -1,16 +1,18 @@
 """Generated public-path average queries with independently worked expected rows."""
 
 from sigma.pipelines.kusto_common.schema import FieldMappings
-from tests.correlation_helpers import convert_documents, correlation_document, source_document
+from tests.correlation_helpers import convert_documents, correlation_document, fixture_schema, source_document
+from tests.fixtures.correlation.scalar_inputs import scalar_inputs
 
 
+@scalar_inputs(Amount="real")
 def average_fixtures(check, header):
     header = header.replace(
         "Prepared deterministic fixture; live engine execution has not been performed.",
         "Deterministic fixture; see RUNTIME.md for recorded engine execution.",
     )
 
-    def converted(operator, threshold, **kwargs):
+    def converted(operator, threshold, *, input_kind="real", **kwargs):
         return convert_documents(
             [
                 source_document(),
@@ -21,7 +23,8 @@ def average_fixtures(check, header):
                     condition={"field": "Amount", operator: threshold},
                     **kwargs,
                 ),
-            ]
+            ],
+            schema=fixture_schema(Amount=input_kind),
         )[0]
 
     # Means at the four anchors: 2.5, 5/3, 2, 1.5. Empty-only
@@ -118,7 +121,7 @@ def average_fixtures(check, header):
             aliases={"Measured": {"child": "ValueAvg", "direct-source": "Amount"}},
         ),
     ]
-    query = convert_documents(documents)[0]
+    query = convert_documents(documents, schema=fixture_schema(Amount="real"))[0]
     chain_data = """// Child means 2 and 4 contribute once, alongside direct 9: parent 2 then 5.
 let Events = datatable(Timestamp:datetime, Host:string, Amount:dynamic, Marker:string) [
     datetime(2026-01-01T12:00:00Z), "h", dynamic(2), "child",
@@ -214,7 +217,7 @@ let Expected = datatable(WindowStart:datetime, WindowEnd:datetime, Machine:strin
             ["WindowStart", "WindowEnd", "Machine", "ValueAvg"],
         )
     )
-    query = converted("gte", -1)
+    query = converted("gte", -1, input_kind="long")
     data = """let Events = datatable(Timestamp:datetime, Host:string, Amount:long, Marker:string) [
     datetime(2026-01-01T12:00:00Z), "maximum", 9223372036854775807, "match",
     datetime(2026-01-01T12:00:00Z), "maximum", 9223372036854775807, "match",

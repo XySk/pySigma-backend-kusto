@@ -5,7 +5,7 @@
 // Child summaries end at 12:00, 12:01, 12:02, 12:07, and 12:07:00.0000001.
 // Their EventCounts are 2, 3, 4, 2, 2. Each contributes exactly once to the parent.
 // Parent counts at those anchors are 1, 2, 3, 1, 2; expiry alone creates no anchor.
-let Events = datatable(ProcessTime:string, Marker:string) [
+let Events=datatable(ProcessTime:string, Marker:string) [
     "2026-01-01T12:00:00Z", "match",
     "2026-01-01T12:00:00Z", "match",
     "2026-01-01T12:01:00Z", "match",
@@ -13,7 +13,9 @@ let Events = datatable(ProcessTime:string, Marker:string) [
     "2026-01-01T12:07:00Z", "match",
     "2026-01-01T12:07:00.0000001Z", "match",
     "invalid", "match"
-];
+]
+// Normalize Events scalar fixture inputs explicitly.
+| extend ProcessTime=todatetime(ProcessTime);
 let gt_2 = () {
 let _sigma_child_0 = () {
 let _sigma_weights = union (Events

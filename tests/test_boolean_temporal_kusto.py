@@ -74,8 +74,8 @@ def test_boolean_child_and_detection_sources_preserve_aliases_and_generation():
     }
     (query,) = convert_documents([parent, source_document("B", "B"), child, source_document("A", "A")])
     assert 'todatetime(["WindowEnd"])' in query
-    assert 'pack_array(gettype(["Host"]), ["Host"])' in query
-    assert 'pack_array(gettype(["Device"]), ["Device"])' in query
+    assert '["Host"]' in query
+    assert '["Device"]' in query
     assert 'countif(_sigma_rule == "child") > 0' in query
     assert '["Actor"] = _sigma_group_0, RuleCount' in query
 
@@ -115,7 +115,7 @@ def test_boolean_retains_context_without_changing_detection_membership():
     assert 'countif(_sigma_rule == "A") > 0' in query
     assert '["User"] =' in query
     assert '["Server"] =' in query
-    assert 'RuleCount' in query
+    assert "RuleCount" in query
 
 
 def test_boolean_context_fixtures_use_public_conversion_and_stay_current():

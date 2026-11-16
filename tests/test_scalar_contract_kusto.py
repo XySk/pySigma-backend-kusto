@@ -122,3 +122,62 @@ def test_scalar_distinct_count_has_no_recursive_identity_query():
     assert '_sigma_value = ["User"]' in query
     assert "_sigma_identity" not in query
     assert "assert(" not in query
+
+
+@pytest.mark.parametrize(("kind", "metric"), [("value_sum", "ValueSum"), ("value_percentile", "ValuePercentile")])
+def test_integer_numeric_metrics_are_returned_as_native_scalars(kind, metric):
+    from tests.correlation_helpers import convert_documents
+
+    (query,) = convert_documents(
+        [
+            source_document(),
+            correlation_document("numeric", kind, ["source-rule"], groups=(), field="Amount", condition={"gte": 0}),
+        ]
+    )
+    assert f"{metric} = tolong(" in query
+
+
+def test_numeric_strings_require_explicit_numeric_normalization():
+    from tests.correlation_helpers import convert_documents, fixture_schema
+
+    with pytest.raises(SigmaConversionError, match="Amount.*numeric.*normalize"):
+        convert_documents(
+            [
+                source_document(),
+                correlation_document("sum", "value_sum", ["source-rule"], field="Amount", condition={"gte": 1}),
+            ],
+            schema=fixture_schema(Amount="string"),
+        )
+
+
+@pytest.mark.parametrize("kind", ["string", "bool", "int", "long", "real", "decimal", "datetime", "timespan", "guid"])
+def test_supported_native_group_types_use_direct_columns(kind):
+    (query,) = convert_scalar(fields={"Timestamp": "datetime", "User": kind, "Unused": "dynamic"})
+    assert '_sigma_group_0 = ["User"]' in query
+    assert "_sigma_identity" not in query
+
+
+def test_final_physical_type_takes_precedence_after_explicit_normalization():
+    (query,) = convert_scalar(
+        fields={"Timestamp": "datetime", "User": "dynamic", "AccountID": "long"},
+        transformations=({"type": "field_name_mapping", "mapping": {"User": "AccountID"}},),
+    )
+    assert '_sigma_group_0 = ["AccountID"]' in query
+
+
+@pytest.mark.parametrize("role", ["counted", "retained"])
+def test_dynamic_counted_and_retained_fields_require_explicit_extraction(role):
+    from tests.correlation_helpers import convert_documents, fixture_schema
+
+    source = source_document()
+    if role == "retained":
+        source["fields"] = ["Payload"]
+    correlation = correlation_document(
+        "consumer",
+        "value_count" if role == "counted" else "event_count",
+        ["source-rule"],
+        field="Payload",
+        condition={"gte": 1},
+    )
+    with pytest.raises(SigmaConversionError, match="Payload.*native scalar.*extract.*normalize"):
+        convert_documents([source, correlation], schema=fixture_schema(Payload="dynamic"))

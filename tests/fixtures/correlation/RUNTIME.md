@@ -1,3 +1,5 @@
+> Current scalar redesign status (#37): query fixtures were regenerated with explicit native scalar declarations and normalization. The historical results below apply to their recorded hashes only. New representative scalar-engine acceptance remains pending while #35 captures the exclusive baseline; integrated acceptance must rerun the current hashes.
+
 # Numeric sum runtime evidence
 
 Executed on 2026-11-15 against the Microsoft Azure Data Explorer Kusto emulator,

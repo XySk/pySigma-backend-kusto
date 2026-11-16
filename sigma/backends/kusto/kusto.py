@@ -792,15 +792,16 @@ class KustoBackend(TextQueryBackend):
             **{field: self._correlation_field_types[field] for field in [*(rule.group_by or []), *context_fields]},
         }
         for metric in metrics:
-            result_types[metric] = (
-                "real"
-                if rule.type == SigmaCorrelationType.VALUE_AVG
-                else (
-                    self._correlation_field_types[counted_fields[0]]
-                    if rule.type in (SigmaCorrelationType.VALUE_SUM, SigmaCorrelationType.VALUE_PERCENTILE)
-                    else "long"
+            if rule.type == SigmaCorrelationType.VALUE_AVG:
+                result_types[metric] = "real"
+            elif rule.type == SigmaCorrelationType.VALUE_SUM:
+                result_types[metric] = (
+                    "long" if self._correlation_field_types[counted_fields[0]] in ("int", "long") else "real"
                 )
-            )
+            elif rule.type == SigmaCorrelationType.VALUE_PERCENTILE:
+                result_types[metric] = self._correlation_field_types[counted_fields[0]]
+            else:
+                result_types[metric] = "long"
         # Summaries expose their result columns, independent of source tables
         # and the pipeline mappings that produced their underlying events.
         rule.set_conversion_states(
@@ -1246,6 +1247,19 @@ class KustoBackend(TextQueryBackend):
         self._correlation_columns = columns
         try:
             definitions, search = self._count_search(rule, allocate)
+            if rule.type in (
+                SigmaCorrelationType.VALUE_SUM,
+                SigmaCorrelationType.VALUE_AVG,
+                SigmaCorrelationType.VALUE_PERCENTILE,
+            ):
+                for field in counted_fields:
+                    if self._correlation_field_types[field] not in ("int", "long", "real", "decimal"):
+                        raise SigmaConversionError(
+                            rule,
+                            rule.source,
+                            f"Kusto measured field {field!r} requires a numeric scalar type; explicitly normalize "
+                            "numeric strings or other scalar values in the pipeline and update kusto_schema.",
+                        )
             if "child_match" in columns and (numeric_context or self._uses_context_groups(rule)):
                 source_matches = allocate("_sigma_parent_matches")
                 child_id = columns["child_match"]
@@ -1336,7 +1350,7 @@ class KustoBackend(TextQueryBackend):
                     # population by 100, and keeps the ceil operand below 10000.
                     f"| where {rank} == max_of(1, ({population} / 100) * {selector} + "
                     f"tolong(ceiling(toreal(({population} % 100) * {selector}) / 100.0)))\n"
-                    f"| extend ValuePercentile = {value}[1]\n"
+                    f"| extend ValuePercentile = to{self._correlation_field_types[counted_fields[0]]}({value}[1])\n"
                     f'| where (gettype(ValuePercentile) in ("int", "long") and '
                     f"todecimal(ValuePercentile) {query_operator} decimal({threshold})) or "
                     f'(gettype(ValuePercentile) in ("real", "double", "decimal") and '
@@ -1386,11 +1400,11 @@ class KustoBackend(TextQueryBackend):
                 f"{integer_sum} > decimal(9223372036854775807))",
                 "Kusto value_sum integer overflow",
             )
-            after_summary = (
-                f"{sums}\n"
-                f"| extend ValueSum = iff({real_count} > 0, "
-                f"pack_array(toreal({integer_sum}) + {real_sum})[0], pack_array(tolong({integer_sum}))[0])\n"
+            result_kind = self._correlation_field_types[counted_fields[0]]
+            metric_expression = (
+                f"tolong({integer_sum})" if result_kind in ("int", "long") else f"toreal({integer_sum}) + {real_sum}"
             )
+            after_summary = f"{sums}\n| extend ValueSum = {metric_expression}\n"
             comparisons = (
                 f"({real_count} == 0 and todecimal({integer_sum}) {query_operator} decimal({threshold})) "
                 f"or ({real_count} > 0 and toreal({integer_sum}) + {real_sum} {query_operator} {threshold})"
