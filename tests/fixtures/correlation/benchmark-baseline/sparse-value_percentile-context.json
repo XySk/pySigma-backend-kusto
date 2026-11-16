@@ -1,0 +1,121 @@
+{
+  "name": "sparse-value_percentile-context",
+  "profile": "sparse",
+  "kind": "value_percentile",
+  "context": true,
+  "chain": false,
+  "documents": [
+    {
+      "title": "SourceEvents",
+      "name": "SourceEvents",
+      "logsource": {
+        "product": "benchmark"
+      },
+      "detection": {
+        "selection": {
+          "Marker": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ]
+        },
+        "condition": "selection"
+      }
+    },
+    {
+      "title": "ScalarCorrelation",
+      "name": "ScalarCorrelation",
+      "correlation": {
+        "type": "value_percentile",
+        "rules": [
+          "SourceEvents"
+        ],
+        "group-by": [
+          "Host"
+        ],
+        "timespan": "5m",
+        "condition": {
+          "gte": 2,
+          "field": "Amount",
+          "percentile": 50
+        }
+      },
+      "fields": [
+        "User"
+      ]
+    }
+  ],
+  "rows": [
+    {
+      "second": 0,
+      "Host": "g0",
+      "Marker": "A",
+      "Amount": 2,
+      "User": "u0"
+    },
+    {
+      "second": 0,
+      "Host": "g0",
+      "Marker": "A",
+      "Amount": 2,
+      "User": "u0"
+    },
+    {
+      "second": 300,
+      "Host": "g0",
+      "Marker": "B",
+      "Amount": 4,
+      "User": "u1"
+    },
+    {
+      "second": 601,
+      "Host": "g0",
+      "Marker": "C",
+      "Amount": 6,
+      "User": "u2"
+    }
+  ],
+  "schema": {
+    "WindowStart": "datetime",
+    "WindowEnd": "datetime",
+    "Host": "string",
+    "ValuePercentile": "long",
+    "User": "dynamic"
+  },
+  "expected": [
+    [
+      "2026-01-01T11:55:00Z",
+      "2026-01-01T12:00:00Z",
+      "g0",
+      2,
+      [
+        "u0"
+      ]
+    ],
+    [
+      "2026-01-01T12:00:00Z",
+      "2026-01-01T12:05:00Z",
+      "g0",
+      2,
+      [
+        "u0",
+        "u1"
+      ]
+    ],
+    [
+      "2026-01-01T12:05:01Z",
+      "2026-01-01T12:10:01Z",
+      "g0",
+      6,
+      [
+        "u2"
+      ]
+    ]
+  ],
+  "contract_changes": [
+    "Host output was dynamic before scalar redesign; values comparable via explicit string projection",
+    "ValuePercentile output was dynamic before scalar redesign; native scalar type required after redesign",
+    "ContextComplete is new output; require true for these below-limit scalar populations"
+  ]
+}

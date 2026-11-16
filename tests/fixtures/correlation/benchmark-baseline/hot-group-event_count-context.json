@@ -1,0 +1,734 @@
+{
+  "name": "hot-group-event_count-context",
+  "profile": "hot-group",
+  "kind": "event_count",
+  "context": true,
+  "chain": false,
+  "documents": [
+    {
+      "title": "SourceEvents",
+      "name": "SourceEvents",
+      "logsource": {
+        "product": "benchmark"
+      },
+      "detection": {
+        "selection": {
+          "Marker": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ]
+        },
+        "condition": "selection"
+      }
+    },
+    {
+      "title": "ScalarCorrelation",
+      "name": "ScalarCorrelation",
+      "correlation": {
+        "type": "event_count",
+        "rules": [
+          "SourceEvents"
+        ],
+        "group-by": [
+          "Host"
+        ],
+        "timespan": "5m",
+        "condition": {
+          "gte": 10000
+        }
+      },
+      "fields": [
+        "User"
+      ]
+    }
+  ],
+  "rows": [
+    {
+      "second": 0,
+      "Host": "g0",
+      "Marker": "A",
+      "Amount": 2,
+      "User": "u0"
+    },
+    {
+      "second": 0,
+      "Host": "g0",
+      "Marker": "B",
+      "Amount": 3,
+      "User": "u1"
+    },
+    {
+      "second": 1,
+      "Host": "g0",
+      "Marker": "C",
+      "Amount": 4,
+      "User": "u0"
+    },
+    {
+      "second": 1,
+      "Host": "g0",
+      "Marker": "D",
+      "Amount": 2,
+      "User": "u1"
+    },
+    {
+      "second": 2,
+      "Host": "g0",
+      "Marker": "A",
+      "Amount": 3,
+      "User": "u0"
+    },
+    {
+      "second": 2,
+      "Host": "g0",
+      "Marker": "B",
+      "Amount": 4,
+      "User": "u1"
+    },
+    {
+      "second": 3,
+      "Host": "g0",
+      "Marker": "C",
+      "Amount": 2,
+      "User": "u0"
+    },
+    {
+      "second": 3,
+      "Host": "g0",
+      "Marker": "D",
+      "Amount": 3,
+      "User": "u1"
+    },
+    {
+      "second": 4,
+      "Host": "g0",
+      "Marker": "A",
+      "Amount": 4,
+      "User": "u0"
+    },
+    {
+      "second": 4,
+      "Host": "g0",
+      "Marker": "B",
+      "Amount": 2,
+      "User": "u1"
+    },
+    {
+      "second": 5,
+      "Host": "g0",
+      "Marker": "C",
+      "Amount": 3,
+      "User": "u0"
+    },
+    {
+      "second": 5,
+      "Host": "g0",
+      "Marker": "D",
+      "Amount": 4,
+      "User": "u1"
+    },
+    {
+      "second": 6,
+      "Host": "g0",
+      "Marker": "A",
+      "Amount": 2,
+      "User": "u0"
+    },
+    {
+      "second": 6,
+      "Host": "g0",
+      "Marker": "B",
+      "Amount": 3,
+      "User": "u1"
+    },
+    {
+      "second": 7,
+      "Host": "g0",
+      "Marker": "C",
+      "Amount": 4,
+      "User": "u0"
+    },
+    {
+      "second": 7,
+      "Host": "g0",
+      "Marker": "D",
+      "Amount": 2,
+      "User": "u1"
+    },
+    {
+      "second": 8,
+      "Host": "g0",
+      "Marker": "A",
+      "Amount": 3,
+      "User": "u0"
+    },
+    {
+      "second": 8,
+      "Host": "g0",
+      "Marker": "B",
+      "Amount": 4,
+      "User": "u1"
+    },
+    {
+      "second": 9,
+      "Host": "g0",
+      "Marker": "C",
+      "Amount": 2,
+      "User": "u0"
+    },
+    {
+      "second": 9,
+      "Host": "g0",
+      "Marker": "D",
+      "Amount": 3,
+      "User": "u1"
+    },
+    {
+      "second": 10,
+      "Host": "g0",
+      "Marker": "A",
+      "Amount": 4,
+      "User": "u0"
+    },
+    {
+      "second": 10,
+      "Host": "g0",
+      "Marker": "B",
+      "Amount": 2,
+      "User": "u1"
+    },
+    {
+      "second": 11,
+      "Host": "g0",
+      "Marker": "C",
+      "Amount": 3,
+      "User": "u0"
+    },
+    {
+      "second": 11,
+      "Host": "g0",
+      "Marker": "D",
+      "Amount": 4,
+      "User": "u1"
+    },
+    {
+      "second": 12,
+      "Host": "g0",
+      "Marker": "A",
+      "Amount": 2,
+      "User": "u0"
+    },
+    {
+      "second": 12,
+      "Host": "g0",
+      "Marker": "B",
+      "Amount": 3,
+      "User": "u1"
+    },
+    {
+      "second": 13,
+      "Host": "g0",
+      "Marker": "C",
+      "Amount": 4,
+      "User": "u0"
+    },
+    {
+      "second": 13,
+      "Host": "g0",
+      "Marker": "D",
+      "Amount": 2,
+      "User": "u1"
+    },
+    {
+      "second": 14,
+      "Host": "g0",
+      "Marker": "A",
+      "Amount": 3,
+      "User": "u0"
+    },
+    {
+      "second": 14,
+      "Host": "g0",
+      "Marker": "B",
+      "Amount": 4,
+      "User": "u1"
+    },
+    {
+      "second": 15,
+      "Host": "g0",
+      "Marker": "C",
+      "Amount": 2,
+      "User": "u0"
+    },
+    {
+      "second": 15,
+      "Host": "g0",
+      "Marker": "D",
+      "Amount": 3,
+      "User": "u1"
+    },
+    {
+      "second": 16,
+      "Host": "g0",
+      "Marker": "A",
+      "Amount": 4,
+      "User": "u0"
+    },
+    {
+      "second": 16,
+      "Host": "g0",
+      "Marker": "B",
+      "Amount": 2,
+      "User": "u1"
+    },
+    {
+      "second": 17,
+      "Host": "g0",
+      "Marker": "C",
+      "Amount": 3,
+      "User": "u0"
+    },
+    {
+      "second": 17,
+      "Host": "g0",
+      "Marker": "D",
+      "Amount": 4,
+      "User": "u1"
+    },
+    {
+      "second": 18,
+      "Host": "g0",
+      "Marker": "A",
+      "Amount": 2,
+      "User": "u0"
+    },
+    {
+      "second": 18,
+      "Host": "g0",
+      "Marker": "B",
+      "Amount": 3,
+      "User": "u1"
+    },
+    {
+      "second": 19,
+      "Host": "g0",
+      "Marker": "C",
+      "Amount": 4,
+      "User": "u0"
+    },
+    {
+      "second": 19,
+      "Host": "g0",
+      "Marker": "D",
+      "Amount": 2,
+      "User": "u1"
+    },
+    {
+      "second": 20,
+      "Host": "g0",
+      "Marker": "A",
+      "Amount": 3,
+      "User": "u0"
+    },
+    {
+      "second": 20,
+      "Host": "g0",
+      "Marker": "B",
+      "Amount": 4,
+      "User": "u1"
+    },
+    {
+      "second": 21,
+      "Host": "g0",
+      "Marker": "C",
+      "Amount": 2,
+      "User": "u0"
+    },
+    {
+      "second": 21,
+      "Host": "g0",
+      "Marker": "D",
+      "Amount": 3,
+      "User": "u1"
+    },
+    {
+      "second": 22,
+      "Host": "g0",
+      "Marker": "A",
+      "Amount": 4,
+      "User": "u0"
+    },
+    {
+      "second": 22,
+      "Host": "g0",
+      "Marker": "B",
+      "Amount": 2,
+      "User": "u1"
+    },
+    {
+      "second": 23,
+      "Host": "g0",
+      "Marker": "C",
+      "Amount": 3,
+      "User": "u0"
+    },
+    {
+      "second": 23,
+      "Host": "g0",
+      "Marker": "D",
+      "Amount": 4,
+      "User": "u1"
+    },
+    {
+      "second": 24,
+      "Host": "g0",
+      "Marker": "A",
+      "Amount": 2,
+      "User": "u0"
+    },
+    {
+      "second": 24,
+      "Host": "g0",
+      "Marker": "B",
+      "Amount": 3,
+      "User": "u1"
+    },
+    {
+      "second": 25,
+      "Host": "g0",
+      "Marker": "C",
+      "Amount": 4,
+      "User": "u0"
+    },
+    {
+      "second": 25,
+      "Host": "g0",
+      "Marker": "D",
+      "Amount": 2,
+      "User": "u1"
+    },
+    {
+      "second": 26,
+      "Host": "g0",
+      "Marker": "A",
+      "Amount": 3,
+      "User": "u0"
+    },
+    {
+      "second": 26,
+      "Host": "g0",
+      "Marker": "B",
+      "Amount": 4,
+      "User": "u1"
+    },
+    {
+      "second": 27,
+      "Host": "g0",
+      "Marker": "C",
+      "Amount": 2,
+      "User": "u0"
+    },
+    {
+      "second": 27,
+      "Host": "g0",
+      "Marker": "D",
+      "Amount": 3,
+      "User": "u1"
+    },
+    {
+      "second": 28,
+      "Host": "g0",
+      "Marker": "A",
+      "Amount": 4,
+      "User": "u0"
+    },
+    {
+      "second": 28,
+      "Host": "g0",
+      "Marker": "B",
+      "Amount": 2,
+      "User": "u1"
+    },
+    {
+      "second": 29,
+      "Host": "g0",
+      "Marker": "C",
+      "Amount": 3,
+      "User": "u0"
+    },
+    {
+      "second": 29,
+      "Host": "g0",
+      "Marker": "D",
+      "Amount": 4,
+      "User": "u1"
+    },
+    {
+      "second": 30,
+      "Host": "g0",
+      "Marker": "A",
+      "Amount": 2,
+      "User": "u0"
+    },
+    {
+      "second": 30,
+      "Host": "g0",
+      "Marker": "B",
+      "Amount": 3,
+      "User": "u1"
+    },
+    {
+      "second": 31,
+      "Host": "g0",
+      "Marker": "C",
+      "Amount": 4,
+      "User": "u0"
+    },
+    {
+      "second": 31,
+      "Host": "g0",
+      "Marker": "D",
+      "Amount": 2,
+      "User": "u1"
+    },
+    {
+      "second": 32,
+      "Host": "g0",
+      "Marker": "A",
+      "Amount": 3,
+      "User": "u0"
+    },
+    {
+      "second": 32,
+      "Host": "g0",
+      "Marker": "B",
+      "Amount": 4,
+      "User": "u1"
+    },
+    {
+      "second": 33,
+      "Host": "g0",
+      "Marker": "C",
+      "Amount": 2,
+      "User": "u0"
+    },
+    {
+      "second": 33,
+      "Host": "g0",
+      "Marker": "D",
+      "Amount": 3,
+      "User": "u1"
+    },
+    {
+      "second": 34,
+      "Host": "g0",
+      "Marker": "A",
+      "Amount": 4,
+      "User": "u0"
+    },
+    {
+      "second": 34,
+      "Host": "g0",
+      "Marker": "B",
+      "Amount": 2,
+      "User": "u1"
+    },
+    {
+      "second": 35,
+      "Host": "g0",
+      "Marker": "C",
+      "Amount": 3,
+      "User": "u0"
+    },
+    {
+      "second": 35,
+      "Host": "g0",
+      "Marker": "D",
+      "Amount": 4,
+      "User": "u1"
+    },
+    {
+      "second": 36,
+      "Host": "g0",
+      "Marker": "A",
+      "Amount": 2,
+      "User": "u0"
+    },
+    {
+      "second": 36,
+      "Host": "g0",
+      "Marker": "B",
+      "Amount": 3,
+      "User": "u1"
+    },
+    {
+      "second": 37,
+      "Host": "g0",
+      "Marker": "C",
+      "Amount": 4,
+      "User": "u0"
+    },
+    {
+      "second": 37,
+      "Host": "g0",
+      "Marker": "D",
+      "Amount": 2,
+      "User": "u1"
+    },
+    {
+      "second": 38,
+      "Host": "g0",
+      "Marker": "A",
+      "Amount": 3,
+      "User": "u0"
+    },
+    {
+      "second": 38,
+      "Host": "g0",
+      "Marker": "B",
+      "Amount": 4,
+      "User": "u1"
+    },
+    {
+      "second": 39,
+      "Host": "g0",
+      "Marker": "C",
+      "Amount": 2,
+      "User": "u0"
+    },
+    {
+      "second": 39,
+      "Host": "g0",
+      "Marker": "D",
+      "Amount": 3,
+      "User": "u1"
+    },
+    {
+      "second": 40,
+      "Host": "g0",
+      "Marker": "A",
+      "Amount": 4,
+      "User": "u0"
+    },
+    {
+      "second": 40,
+      "Host": "g0",
+      "Marker": "B",
+      "Amount": 2,
+      "User": "u1"
+    },
+    {
+      "second": 41,
+      "Host": "g0",
+      "Marker": "C",
+      "Amount": 3,
+      "User": "u0"
+    },
+    {
+      "second": 41,
+      "Host": "g0",
+      "Marker": "D",
+      "Amount": 4,
+      "User": "u1"
+    },
+    {
+      "second": 42,
+      "Host": "g0",
+      "Marker": "A",
+      "Amount": 2,
+      "User": "u0"
+    },
+    {
+      "second": 42,
+      "Host": "g0",
+      "Marker": "B",
+      "Amount": 3,
+      "User": "u1"
+    },
+    {
+      "second": 43,
+      "Host": "g0",
+      "Marker": "C",
+      "Amount": 4,
+      "User": "u0"
+    },
+    {
+      "second": 43,
+      "Host": "g0",
+      "Marker": "D",
+      "Amount": 2,
+      "User": "u1"
+    },
+    {
+      "second": 44,
+      "Host": "g0",
+      "Marker": "A",
+      "Amount": 3,
+      "User": "u0"
+    },
+    {
+      "second": 44,
+      "Host": "g0",
+      "Marker": "B",
+      "Amount": 4,
+      "User": "u1"
+    },
+    {
+      "second": 45,
+      "Host": "g0",
+      "Marker": "C",
+      "Amount": 2,
+      "User": "u0"
+    },
+    {
+      "second": 45,
+      "Host": "g0",
+      "Marker": "D",
+      "Amount": 3,
+      "User": "u1"
+    },
+    {
+      "second": 46,
+      "Host": "g0",
+      "Marker": "A",
+      "Amount": 4,
+      "User": "u0"
+    },
+    {
+      "second": 46,
+      "Host": "g0",
+      "Marker": "B",
+      "Amount": 2,
+      "User": "u1"
+    },
+    {
+      "second": 47,
+      "Host": "g0",
+      "Marker": "C",
+      "Amount": 3,
+      "User": "u0"
+    },
+    {
+      "second": 47,
+      "Host": "g0",
+      "Marker": "D",
+      "Amount": 4,
+      "User": "u1"
+    }
+  ],
+  "schema": {
+    "WindowStart": "datetime",
+    "WindowEnd": "datetime",
+    "Host": "string",
+    "EventCount": "long",
+    "User": "dynamic"
+  },
+  "expected": [],
+  "contract_changes": [
+    "Host output was dynamic before scalar redesign; values comparable via explicit string projection",
+    "ValuePercentile output was dynamic before scalar redesign; native scalar type required after redesign",
+    "ContextComplete is new output; require true for these below-limit scalar populations"
+  ]
+}

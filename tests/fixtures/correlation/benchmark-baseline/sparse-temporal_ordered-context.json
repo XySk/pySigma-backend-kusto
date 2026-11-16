@@ -1,0 +1,113 @@
+{
+  "name": "sparse-temporal_ordered-context",
+  "profile": "sparse",
+  "kind": "temporal_ordered",
+  "context": true,
+  "chain": false,
+  "documents": [
+    {
+      "title": "SourceA",
+      "name": "SourceA",
+      "logsource": {
+        "product": "benchmark"
+      },
+      "detection": {
+        "selection": {
+          "Marker": "A"
+        },
+        "condition": "selection"
+      }
+    },
+    {
+      "title": "SourceB",
+      "name": "SourceB",
+      "logsource": {
+        "product": "benchmark"
+      },
+      "detection": {
+        "selection": {
+          "Marker": "B"
+        },
+        "condition": "selection"
+      }
+    },
+    {
+      "title": "SourceC",
+      "name": "SourceC",
+      "logsource": {
+        "product": "benchmark"
+      },
+      "detection": {
+        "selection": {
+          "Marker": "C"
+        },
+        "condition": "selection"
+      }
+    },
+    {
+      "title": "ScalarCorrelation",
+      "name": "ScalarCorrelation",
+      "correlation": {
+        "type": "temporal_ordered",
+        "rules": [
+          "SourceA",
+          "SourceB",
+          "SourceC"
+        ],
+        "group-by": [
+          "Host"
+        ],
+        "timespan": "5m",
+        "condition": {
+          "gte": 3
+        }
+      },
+      "fields": [
+        "User"
+      ]
+    }
+  ],
+  "rows": [
+    {
+      "second": 0,
+      "Host": "g0",
+      "Marker": "A",
+      "Amount": 2,
+      "User": "u0"
+    },
+    {
+      "second": 0,
+      "Host": "g0",
+      "Marker": "A",
+      "Amount": 2,
+      "User": "u0"
+    },
+    {
+      "second": 300,
+      "Host": "g0",
+      "Marker": "B",
+      "Amount": 4,
+      "User": "u1"
+    },
+    {
+      "second": 601,
+      "Host": "g0",
+      "Marker": "C",
+      "Amount": 6,
+      "User": "u2"
+    }
+  ],
+  "schema": {
+    "WindowStart": "datetime",
+    "WindowEnd": "datetime",
+    "Host": "string",
+    "RuleCount": "long",
+    "User": "dynamic"
+  },
+  "expected": [],
+  "contract_changes": [
+    "Host output was dynamic before scalar redesign; values comparable via explicit string projection",
+    "ValuePercentile output was dynamic before scalar redesign; native scalar type required after redesign",
+    "ContextComplete is new output; require true for these below-limit scalar populations"
+  ]
+}
