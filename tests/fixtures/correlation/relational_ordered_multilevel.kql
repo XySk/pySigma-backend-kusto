@@ -1,0 +1,131 @@
+// Generated with standard collection parsing; expected summaries are literal worked examples.
+let Events=datatable(Timestamp:datetime,Host:string,Marker:string,User:string,Server:string) [
+datetime(2026-01-01T12:00:00Z),"h","raw","Alice","s1",
+datetime(2026-01-01T12:00:00Z),"h","raw","Alice","s1",
+datetime(2026-01-01T12:00:00Z),"h","raw","Alice","s2",
+datetime(2026-01-01T12:00:00Z),"h","raw","Bob","b1",
+datetime(2026-01-01T12:01:00Z),"d","B","Alice","s3",
+datetime(2026-01-01T12:02:00Z),"d","B","Alice","s4"
+];
+let Actual=(){
+let Middle = () {
+let Child = () {
+let ContextSummary = () {
+let SourceMatchArrivals = union (Events
+| where Marker =~ "raw"
+| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"])
+| where isnotnull(EventTime_1) and isnotempty(GroupHost)
+| summarize SourceMatchCount = count() by EventTime_1, GroupHost;
+union (SourceMatchArrivals
+| project GroupHost, CountBoundaryTime = EventTime_1, CountBoundaryOrder = 0, SourceMatchDelta = SourceMatchCount),
+(SourceMatchArrivals
+| project GroupHost, CountBoundaryTime = EventTime_1 + 5m, CountBoundaryOrder = 1, SourceMatchDelta = -SourceMatchCount)
+// Arrivals evaluate before equal-time expirations; expirations never create matches.
+| sort by GroupHost asc, CountBoundaryTime asc, CountBoundaryOrder asc
+| extend EventCount = row_cumsum(SourceMatchDelta, GroupHost != prev(GroupHost))
+| where CountBoundaryOrder == 0
+| where EventCount >= 1
+| project WindowStart = CountBoundaryTime - 5m, WindowEnd = CountBoundaryTime, ["Host"] = GroupHost, EventCount
+};
+let CorrelationMatches = materialize(ContextSummary()
+| serialize CorrelationMatchId = row_number());
+let WindowSourceMatches = materialize(
+CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, ContextGroupHost = ["Host"], ContextPartition = 1
+| join kind=inner (
+union (Events
+| where Marker =~ "raw"
+| extend ContextEventTime = todatetime(["Timestamp"]), ContextGroupHost = ["Host"], ContextUser = ["User"], ContextServer = ["Server"]
+| extend ContextSourceRule = "raw")
+| project ContextEventTime, ContextSourceRule, ContextGroupHost, ContextUser, ContextServer, ContextPartition = 1
+) on ContextGroupHost
+| where ContextEventTime between ((CompletionTime - 5m) .. CompletionTime));
+let CompleteContextRelationships = materialize(WindowSourceMatches
+| project CorrelationMatchId, ContextUser, ContextServer
+| distinct *);
+union (CorrelationMatches | extend ContextRowKind = "Summary"), (CorrelationMatches | join kind=inner (CompleteContextRelationships) on CorrelationMatchId | extend ContextRowKind = "ContextEvidence")
+};
+let ChildResults = materialize(Child());
+let ContextSummary = () {
+// Strict sequence: "child" -> "B". Total inclusive span: 5m.
+union (ChildResults
+| where ["ContextRowKind"] == "ContextEvidence"
+| extend EventTime_1 = todatetime(["WindowEnd"]), GroupUser = ["ContextUser"]
+| extend SourceRule = "child"),
+(Events
+| where Marker =~ "B"
+| extend EventTime_1 = todatetime(["Timestamp"]), GroupUser = ["User"]
+| extend SourceRule = "B")
+| where isnotnull(EventTime_1) and isnotempty(GroupUser)
+// Batch equal timestamps: simultaneous source matches cannot advance strict sequence positions.
+| summarize HasChild = countif(SourceRule == "child") > 0, HasB = countif(SourceRule == "B") > 0 by EventTime_1, GroupUser
+| sort by GroupUser asc, EventTime_1 asc
+| extend NewCorrelationGroup = isnull(prev(EventTime_1)) or GroupUser != prev(GroupUser)
+// Read preceding timestamp state for every assignment; preserve viable earlier prefixes.
+| scan declare (LatestChildStart:datetime = datetime(null), CompleteNow:bool = false) with (
+    step SequenceState: true =>
+        CompleteNow = not(NewCorrelationGroup) and HasB and isnotnull(SequenceState.LatestChildStart) and SequenceState.LatestChildStart >= EventTime_1 - 5m,
+        LatestChildStart = iff(HasChild, EventTime_1, iff(NewCorrelationGroup, datetime(null), SequenceState.LatestChildStart));
+)
+| where CompleteNow
+| project WindowStart = EventTime_1 - 5m, WindowEnd = EventTime_1, ["User"] = GroupUser, RuleCount = tolong(2)
+};
+let CorrelationMatches = materialize(ContextSummary()
+| serialize CorrelationMatchId = row_number());
+let WindowSourceMatches = materialize(
+CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, ContextGroupUser = ["User"], ContextPartition = 1
+| join kind=inner (
+union (ChildResults | where ["ContextRowKind"] == "Summary"
+| project-away ["ContextUser"], ["ContextServer"]
+| join kind=leftouter (ChildResults | where ["ContextRowKind"] == "ContextEvidence" | project ["CorrelationMatchId"], ["ContextUser"], ["ContextServer"], HasContextEvidence = true) on ["CorrelationMatchId"]
+| extend ContextEventTime = todatetime(["WindowEnd"]), ContextGroupUser = ["ContextUser"], ContextServer = ["ContextServer"]
+| extend ContextSourceRule = "child"),
+((Events
+| where Marker =~ "B"
+| extend ContextEventTime = todatetime(["Timestamp"]), ContextGroupUser = ["User"], ContextServer = ["Server"]
+| extend ContextSourceRule = "B")
+| extend HasContextEvidence = true)
+| project ContextEventTime, ContextSourceRule, ContextGroupUser, ContextServer, HasContextEvidence, ContextPartition = 1
+) on ContextGroupUser
+| where ContextEventTime between ((CompletionTime - 5m) .. CompletionTime));
+// Successful one/two-step completions need only endpoint participant filters.
+let OrderedSourceRelationships = materialize(WindowSourceMatches
+| where (ContextSourceRule == "child" and ContextEventTime < CompletionTime) or (ContextSourceRule == "B" and ContextEventTime == CompletionTime));
+let CompleteContextRelationships = materialize(OrderedSourceRelationships
+| where HasContextEvidence
+| project CorrelationMatchId, ContextServer
+| distinct *);
+union (CorrelationMatches | extend ContextRowKind_1 = "Summary"), (CorrelationMatches | join kind=inner (CompleteContextRelationships) on CorrelationMatchId | extend ContextRowKind_1 = "ContextEvidence")
+};
+let MiddleResults = materialize(Middle());
+union (MiddleResults
+| where ["ContextRowKind_1"] == "ContextEvidence"
+| extend EventTime = todatetime(["WindowEnd"]), GroupUser = ["User"], GroupServer = ["ContextServer"]
+| extend SourceRule = "middle")
+| where isnotnull(EventTime) and isnotempty(GroupUser) and isnotempty(GroupServer)
+// Batch simultaneous source matches before updating inclusive trailing presence.
+| summarize MatchesMiddle = countif(SourceRule == "middle") > 0 by GroupUser, GroupServer, EventTime
+| sort by GroupUser asc, GroupServer asc, EventTime asc
+| extend NewCorrelationGroup = isnull(prev(EventTime)) or GroupUser != prev(GroupUser) or GroupServer != prev(GroupServer)
+| scan declare (LastMiddleTime:datetime) with (
+    step PresenceWindow: true =>
+        LastMiddleTime = iff(MatchesMiddle, EventTime, iff(NewCorrelationGroup, datetime(null), PresenceWindow.LastMiddleTime));
+)
+// Only source-match timestamps evaluate; expiration never creates an anchor.
+| extend HasMiddle = isnotnull(LastMiddleTime) and LastMiddleTime >= EventTime - 5m
+| extend RuleCount = tolong(HasMiddle)
+| where RuleCount >= 1
+| project WindowStart = EventTime - 5m, WindowEnd = EventTime, ["User"] = GroupUser, ["Server"] = GroupServer, RuleCount
+| extend ContextComplete = true
+};
+let Observed=Actual() | project WindowEnd, User=tostring(User), Server=tostring(Server), RuleCount;
+let Expected=datatable(WindowEnd:datetime, User:string, Server:string, RuleCount:long) [
+datetime(2026-01-01T12:01:00Z),"Alice","s1",1,
+datetime(2026-01-01T12:01:00Z),"Alice","s2",1,
+datetime(2026-01-01T12:01:00Z),"Alice","s3",1,
+datetime(2026-01-01T12:02:00Z),"Alice","s1",1,
+datetime(2026-01-01T12:02:00Z),"Alice","s2",1,
+datetime(2026-01-01T12:02:00Z),"Alice","s4",1
+];
+union (Observed | extend Delta=1), (Expected | extend Delta=-1)
+| summarize Delta=sum(Delta) by WindowEnd,User,Server,RuleCount
+| where Delta!=0

@@ -1,0 +1,36 @@
+let Events=datatable(Timestamp:datetime,Host:string,Marker:string,User:long,Server:string,Amount:long) [
+ datetime(2026-01-01T12:00:00Z),"h","match",1,"server",2,
+ datetime(2026-01-01T12:00:00Z),"h","match",1,"server",2,
+ datetime(2026-01-01T12:00:00Z),"h","match",2,"server",3,
+ datetime(null),"h","match",1,"server",100,
+ datetime(2026-01-01T12:00:00Z),"h","match",long(null),"server",100,
+ datetime(2026-01-01T12:00:00Z),"h","match",1,"",100
+];
+let Actual=(){
+let _sigma_values = union (Events
+| where Marker =~ "match"
+| extend _sigma_timestamp = todatetime(["Timestamp"]), _sigma_group_0 = ["User"], _sigma_group_1 = ["Server"], _sigma_value = ["User"]
+| extend _sigma_rule = "source-rule")
+| where isnotnull(_sigma_timestamp) and isnotempty(_sigma_group_0) and isnotempty(_sigma_group_1)
+| summarize by _sigma_timestamp, _sigma_group_0, _sigma_group_1, _sigma_value;
+_sigma_values
+| project _sigma_group_0, _sigma_group_1, _sigma_window_end = _sigma_timestamp, _sigma_bin = bin(_sigma_timestamp, 5m)
+| distinct *
+| join kind=inner (
+    _sigma_values
+    | extend _sigma_bin = pack_array(bin(_sigma_timestamp, 5m), bin(_sigma_timestamp, 5m) + 5m)
+    | mv-expand _sigma_bin to typeof(datetime)
+) on _sigma_group_0, _sigma_group_1, _sigma_bin
+| where _sigma_timestamp between ((_sigma_window_end - 5m) .. _sigma_window_end)
+| summarize ValueCount = count_distinctif(_sigma_value, isnotempty(_sigma_value)) by _sigma_window_end, _sigma_group_0, _sigma_group_1
+| where ValueCount >= 1
+| project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ["User"] = _sigma_group_0, ["Server"] = _sigma_group_1, ValueCount
+};
+let Observed=Actual() | project WindowEnd,Kind=gettype(User),Value=tostring(User),Server=tostring(Server),Metric=toreal(ValueCount);
+let Expected=datatable(WindowEnd:datetime,Kind:string,Value:string,Server:string,Metric:real) [
+ datetime(2026-01-01T12:00:00Z),"long","1",'server',1,
+ datetime(2026-01-01T12:00:00Z),"long","2",'server',1
+];
+union (Observed | extend Delta=1),(Expected | extend Delta=-1)
+| summarize Delta=sum(Delta) by WindowEnd,Kind,Value,Server,Metric
+| where Delta!=0

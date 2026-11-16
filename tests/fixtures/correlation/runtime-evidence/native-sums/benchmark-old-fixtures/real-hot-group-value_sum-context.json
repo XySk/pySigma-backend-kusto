@@ -1,0 +1,11 @@
+{
+  "name": "real-hot-group-value_sum-context",
+  "schema": {
+    "WindowStart": "datetime",
+    "WindowEnd": "datetime",
+    "Host": "string",
+    "ValueSum": "real",
+    "User": "dynamic"
+  },
+  "expected": []
+}

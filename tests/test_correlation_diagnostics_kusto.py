@@ -21,6 +21,9 @@ def backend(**options):
     pipeline = ProcessingPipeline.from_dict(
         {"transformations": [{"type": "set_state", "key": "query_table", "val": "Events"}]}
     )
+    from tests.correlation_helpers import fixture_schema
+
+    pipeline.vars["kusto_schema"] = fixture_schema()
     return KustoBackend(processing_pipeline=pipeline, **{"correlation_timestamp_field": "Timestamp", **options})
 
 
@@ -131,53 +134,20 @@ def test_dependency_runtime_fixtures_remain_deterministically_generated():
         assert Path(__file__).with_name("fixtures").joinpath("correlation", name).read_text() == query
 
 
-@pytest.mark.parametrize("mutation", ["missing-checks", "empty-checks", "changed-raw", "append-filter"])
-def test_incoherent_child_raw_metadata_keeps_checked_public_query(mutation):
+def test_callback_can_filter_native_sum_child_before_parent_conversion():
     docs = [
         source_document(),
         correlation_document("child", "value_sum", ["source-rule"], groups=(), field="Amount", condition={"gte": 1}),
         correlation_document("parent", "event_count", ["child"], groups=(), condition={"gte": 1}),
     ]
-    checked = []
+    children = []
 
-    def modify(rule, output_format, index, condition, result):
+    def filter_child(rule, output_format, index, condition, result):
         if rule.name == "child":
-            checked.append(result)
-            metadata = rule.get_conversion_states()[0].processing_state
-            if mutation == "missing-checks":
-                metadata.pop("kusto_guard_queries")
-            elif mutation == "empty-checks":
-                metadata.update(
-                    kusto_guard_queries=(),
-                    kusto_guard_error_columns=(),
-                    kusto_guard_messages=(),
-                    kusto_error_column=None,
-                )
-            elif mutation == "changed-raw":
-                metadata["kusto_raw_query"] += "\n| take 0"
-            else:
-                return result + "\n| take 1"
+            children.append(result + "\n| take 1")
+            return children[-1]
         return result
 
-    (query,) = backend().convert(collection(docs), callback=modify)
-
-    assert checked[0] in query
-    assert "| where assert(" in query
-    if mutation == "append-filter":
-        assert checked[0] + "\n| take 1" in query
-
-
-def test_callback_cannot_substitute_unchecked_raw_child_for_checked_query():
-    docs = [
-        source_document(),
-        correlation_document("child", "value_sum", ["source-rule"], groups=(), field="Amount", condition={"gte": 1}),
-        correlation_document("parent", "event_count", ["child"], groups=()),
-    ]
-
-    def remove_validation(rule, output_format, index, condition, result):
-        if rule.name == "child":
-            return rule.get_conversion_states()[0].processing_state["kusto_raw_query"]
-        return result
-
-    with pytest.raises(SigmaError, match="child correlation.*validation metadata.*preserve the checked public"):
-        backend().convert(collection(docs), callback=remove_validation)
+    (query,) = backend().convert(collection(docs), callback=filter_child)
+    assert children[0] in query
+    assert "assert(" not in query

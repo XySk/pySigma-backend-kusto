@@ -1,0 +1,69 @@
+{
+  "fixtures": [
+    {
+      "name": "presence_omitted.kql",
+      "sha256": "5a951457406cc80e7f767a8d992a9e715f867b4d68a283c1c5e8e1034b78882e",
+      "expected_error": null
+    },
+    {
+      "name": "presence_gt.kql",
+      "sha256": "a63de141f1301c8bc1216d4bc96b9009e3c2230b10f94b436e1162558fec1d61",
+      "expected_error": null
+    },
+    {
+      "name": "presence_gte.kql",
+      "sha256": "330f1dff87086c2c96f17eb517502504f72440438b6834b3d3617d8fa03764be",
+      "expected_error": null
+    },
+    {
+      "name": "presence_lt.kql",
+      "sha256": "e3b61cec8dc93c01685b4b71f1857ceefa7227d1c611fabf5aa7974acb23ca58",
+      "expected_error": null
+    },
+    {
+      "name": "presence_lte.kql",
+      "sha256": "83e130544b6d17e3dca01168ab8c2ddd0b9f350d80d957814d975902cc72735f",
+      "expected_error": null
+    },
+    {
+      "name": "presence_eq.kql",
+      "sha256": "1c973d3ef2c4a843d98397b29931d7aae6da89fe4ddc5eb25b073d0650d12822",
+      "expected_error": null
+    },
+    {
+      "name": "presence_neq.kql",
+      "sha256": "c8fbd9f727fae3ad7acf5aee385e8a74ba872ac3b35ebd80cb25c6565aa9fca0",
+      "expected_error": null
+    },
+    {
+      "name": "presence_fractional_eq.kql",
+      "sha256": "bf2085f45230e231052082f2422d84212a8b3a3fbb37e9c5c7606b930af48db7",
+      "expected_error": null
+    },
+    {
+      "name": "presence_fractional_neq.kql",
+      "sha256": "32b4885b87285b17bd78405e29fc02aa6710f5eb1059dbff4d71f3f59b2e4665",
+      "expected_error": null
+    },
+    {
+      "name": "presence_real_groups.kql",
+      "sha256": "30ab8d3f115fd3e192c2df64a788c4cba94c76892a6b0a2981a0eb18318f88c5",
+      "expected_error": null
+    },
+    {
+      "name": "presence_ungrouped.kql",
+      "sha256": "4b25a64efc4c5582f710177102cd882359525b8a9f44e152b5090ac3782242c5",
+      "expected_error": null
+    },
+    {
+      "name": "presence_mixed_alias.kql",
+      "sha256": "c40baa00853f2c4dd6e9fc7573fbe1d4d10d82238e6b6969ace09b6645ee99b4",
+      "expected_error": null
+    },
+    {
+      "name": "presence_scalar_child_context.kql",
+      "sha256": "8ea41579bf1d1633eec347a109f08e7c9bbc8a12eaa629960a038b0a835b01c0",
+      "expected_error": null
+    }
+  ]
+}

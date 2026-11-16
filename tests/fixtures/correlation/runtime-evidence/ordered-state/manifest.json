@@ -1,0 +1,31 @@
+{
+  "status": "PENDING",
+  "scope": "Ticket 41 strict ordered timestamp-batched scan correctness",
+  "fixtures": [
+    {
+      "name": "ordered_state_grouped.kql",
+      "sha256": "6664d4a9020145969bcc6c18e0ed6dc68236774418317b498641210f3e2cd71a",
+      "expected_error": null
+    },
+    {
+      "name": "ordered_state_repeated.kql",
+      "sha256": "cdff8de897cbbc16eec8c2341690a8133a02b76d84a72efa063fd6d606b8ea96",
+      "expected_error": null
+    },
+    {
+      "name": "ordered_state_ungrouped.kql",
+      "sha256": "dcdca8b5e32937d3b5e2bb8e33da80371eaeb4e3469ba06c578a6a0838f0f8f2",
+      "expected_error": null
+    },
+    {
+      "name": "temporal_ordered_grouped.kql",
+      "sha256": "7901847c9ee9755ea5a01ef4af6a669bee14e3ac7f78fabea40eab53bc137b24",
+      "expected_error": null
+    },
+    {
+      "name": "temporal_ordered_ungrouped.kql",
+      "sha256": "25942a2354311c244f13aaca0e5ba7618b76702026bca0acf9efe82b9de2251f",
+      "expected_error": null
+    }
+  ]
+}

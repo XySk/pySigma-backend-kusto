@@ -1,0 +1,100 @@
+let Events=datatable(Timestamp:datetime,Host:string,Marker:string,User:string,Server:string,Amount:long) [
+ datetime(2026-01-01),"h","match","u","s",1,
+ datetime(2026-01-01),"h","match","u","s",1,
+ datetime(2026-01-01),"h","match","u","s",2
+];
+let Actual=() {
+let Child = () {
+let ContextSummary = () {
+let SourceMatchArrivals = union (Events
+| where Marker =~ "match"
+| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"])
+| where isnotnull(EventTime_1) and isnotempty(GroupHost)
+| summarize SourceMatchCount = count() by EventTime_1, GroupHost;
+union (SourceMatchArrivals
+| project GroupHost, CountBoundaryTime = EventTime_1, CountBoundaryOrder = 0, SourceMatchDelta = SourceMatchCount),
+(SourceMatchArrivals
+| project GroupHost, CountBoundaryTime = EventTime_1 + 5m, CountBoundaryOrder = 1, SourceMatchDelta = -SourceMatchCount)
+// Arrivals evaluate before equal-time expirations; expirations never create matches.
+| sort by GroupHost asc, CountBoundaryTime asc, CountBoundaryOrder asc
+| extend EventCount = row_cumsum(SourceMatchDelta, GroupHost != prev(GroupHost))
+| where CountBoundaryOrder == 0
+| where EventCount >= 1
+| project WindowStart = CountBoundaryTime - 5m, WindowEnd = CountBoundaryTime, ["Host"] = GroupHost, EventCount
+};
+let CorrelationMatches = materialize(ContextSummary()
+| serialize CorrelationMatchId = row_number());
+let WindowSourceMatches = materialize(
+CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, ContextGroupHost = ["Host"], ContextPartition = 1
+| join kind=inner (
+union (Events
+| where Marker =~ "match"
+| extend ContextEventTime = todatetime(["Timestamp"]), ContextGroupHost = ["Host"], ContextUser = ["User"], ContextServer = ["Server"], ContextAmount = ["Amount"]
+| extend ContextSourceRule = "source-rule")
+| project ContextEventTime, ContextSourceRule, ContextGroupHost, ContextUser, ContextServer, ContextAmount, ContextPartition = 1
+) on ContextGroupHost
+| where ContextEventTime between ((CompletionTime - 5m) .. CompletionTime));
+let CompleteContextRelationships = materialize(WindowSourceMatches
+| project CorrelationMatchId, ContextUser, ContextServer, ContextAmount
+| distinct *);
+union (CorrelationMatches | extend ContextRowKind = "Summary"), (CorrelationMatches | join kind=inner (CompleteContextRelationships) on CorrelationMatchId | extend ContextRowKind = "ContextEvidence")
+};
+let ChildResults = materialize(Child());
+let ContextSummary = () {
+let ParentSourceMatches = materialize(union (ChildResults
+| where ["ContextRowKind"] == "ContextEvidence"
+| extend ChildCorrelationMatch = strcat("Child", "_", tostring(["CorrelationMatchId"]))
+| project EventTime = todatetime(["WindowEnd"]), GroupUser = ["ContextUser"], MeasuredAmount = ["ContextAmount"], ChildCorrelationMatch)
+| extend ChildCorrelationMatch = tostring(column_ifexists("ChildCorrelationMatch", "")));
+let SumObservations = union (ParentSourceMatches | where isempty(ChildCorrelationMatch)), (ParentSourceMatches | where isnotempty(ChildCorrelationMatch) | extend RetainedNumericValue = MeasuredAmount | summarize take_any(*) by ChildCorrelationMatch, GroupUser, RetainedNumericValue)
+| where isnotnull(EventTime) and isnotempty(GroupUser);
+let SumArrivals = SumObservations
+| summarize ArrivalSum = sum(MeasuredAmount) by EventTime, GroupUser;
+union (SumArrivals
+| project GroupUser, SumBoundaryTime = EventTime, SumBoundaryOrder = 0, SumDelta = ArrivalSum),
+(SumArrivals
+| project GroupUser, SumBoundaryTime = EventTime + 5m, SumBoundaryOrder = 1, SumDelta = -ArrivalSum)
+// Arrivals evaluate before equal-time expirations, including zero and missing values.
+| sort by GroupUser asc, SumBoundaryTime asc, SumBoundaryOrder asc
+| extend ValueSum = row_cumsum(SumDelta, GroupUser != prev(GroupUser))
+| where SumBoundaryOrder == 0
+| where ValueSum >= 0
+| project WindowStart = SumBoundaryTime - 5m, WindowEnd = SumBoundaryTime, ["User"] = GroupUser, ValueSum
+};
+let CorrelationMatches = materialize(ContextSummary()
+| serialize CorrelationMatchId_1 = row_number());
+let WindowSourceMatches = materialize(
+CorrelationMatches | project CorrelationMatchId_1, CompletionTime = WindowEnd, ContextGroupUser = ["User"], ContextPartition = 1
+| join kind=inner (
+union (ChildResults | where ["ContextRowKind"] == "Summary"
+| project-away ["ContextUser"], ["ContextServer"], ["ContextAmount"]
+| join kind=leftouter (ChildResults | where ["ContextRowKind"] == "ContextEvidence" | project ["CorrelationMatchId"], ["ContextUser"], ["ContextServer"], ["ContextAmount"], HasContextEvidence = true) on ["CorrelationMatchId"]
+| extend ContextEventTime = todatetime(["WindowEnd"]), ContextGroupUser = ["ContextUser"], ContextServer = ["ContextServer"], ContextAmount_1 = ["ContextAmount"]
+| extend ContextSourceRule = "child")
+| project ContextEventTime, ContextSourceRule, ContextGroupUser, ContextServer, ContextAmount_1, HasContextEvidence, ContextPartition = 1
+) on ContextGroupUser
+| where ContextEventTime between ((CompletionTime - 5m) .. CompletionTime));
+let CompleteContextRelationships = materialize(WindowSourceMatches
+| where HasContextEvidence
+| project CorrelationMatchId_1, ContextServer, ContextAmount_1
+| distinct *);
+let ValuesForServer = CompleteContextRelationships
+| where isnotnull(ContextServer)
+| summarize by CorrelationMatchId_1, ContextServer
+| summarize DisplayedServer = make_list(ContextServer, 1), DistinctServerCount = count() by CorrelationMatchId_1;
+let ValuesForAmount = CompleteContextRelationships
+| where isnotnull(ContextAmount_1)
+| summarize by CorrelationMatchId_1, ContextAmount_1
+| summarize DisplayedAmount = make_list(ContextAmount_1, 1), DistinctAmountCount = count() by CorrelationMatchId_1;
+CorrelationMatches
+| join kind=leftouter (ValuesForServer) on CorrelationMatchId_1
+| extend ["Server"] = coalesce(DisplayedServer, dynamic([]))
+| join kind=leftouter (ValuesForAmount) on CorrelationMatchId_1
+| extend ["Amount"] = coalesce(DisplayedAmount, dynamic([]))
+| extend ContextComplete = coalesce(DistinctServerCount, 0) <= 1 and coalesce(DistinctAmountCount, 0) <= 1
+| project ["WindowStart"], ["WindowEnd"], ["User"], ["Server"], ["Amount"], ["ValueSum"], ["ContextComplete"]
+};
+let Observed=Actual() | project WindowEnd,Metric=toreal(ValueSum);
+let Expected=datatable(WindowEnd:datetime,Metric:real) [datetime(2026-01-01),3];
+union (Observed | extend Delta=1), (Expected | extend Delta=-1)
+| summarize Delta=sum(Delta) by WindowEnd,Metric | where Delta != 0

@@ -1,0 +1,57 @@
+// Generated through public conversion; literal expected rows are independently worked.
+let SecurityEvent=datatable(TimeGenerated:datetime, EventID:long, CallerProcessId:string,
+ SubjectUserName:string, TargetUserName:string, Computer:string) [
+ datetime(2026-01-01T12:00:00Z),4799,"0x0","alice","Administrators","A",
+ datetime(2026-01-01T12:01:00Z),4799,"0x0","alice","Remote Desktop Users","B",
+ datetime(2026-01-01T12:02:00Z),4799,"0x0","alice","Remote Management Users","A",
+ datetime(2026-01-01T12:03:00Z),4799,"0x0","alice","Distributed COM Users","B",
+ datetime(2026-01-01T12:04:00Z),4799,"0x0","alice","Administrators","A",
+ datetime(2026-01-01T12:04:10Z),4624,"0x0","alice","Distributed COM Users","A",
+ datetime(2026-01-01T12:04:20Z),4799,"0x1","alice","Distributed COM Users","A",
+ datetime(2026-01-01T12:04:30Z),4799,"0x0","alice","Unprivileged","A",
+ datetime(2026-01-01T12:00:00Z),4799,"0x0","bob","Administrators","A",
+ datetime(2026-01-01T12:01:00Z),4799,"0x0","bob","Remote Desktop Users","A",
+ datetime(2026-01-01T12:02:00Z),4799,"0x0","bob","Remote Management Users","A"
+];
+let Actual=() {
+let ValueCountSources = materialize(union (SecurityEvent
+| where EventID == 4799 and CallerProcessId =~ "0x0" and (TargetUserName in~ ("Administrators", "Remote Desktop Users", "Remote Management Users", "Distributed COM Users"))
+| project EventTime = todatetime(["TimeGenerated"]), GroupActor = ["SubjectUserName"], CountedGroup = ["TargetUserName"])
+| where isnotnull(EventTime) and isnotempty(GroupActor));
+let CountedGroupActivity = materialize(ValueCountSources
+| where isnotempty(CountedGroup)
+| summarize by GroupActor, CountedGroup, EventTime
+| sort by GroupActor asc, CountedGroup asc, EventTime asc
+// Repeated values whose inclusive active intervals overlap contribute only once.
+| extend CountedGroupStarts = isnull(prev(EventTime)) or GroupActor != prev(GroupActor) or CountedGroup != prev(CountedGroup) or EventTime > prev(EventTime) + 5m,
+    CountedGroupEnds = isnull(next(EventTime)) or GroupActor != next(GroupActor) or CountedGroup != next(CountedGroup) or next(EventTime) > EventTime + 5m);
+union (ValueCountSources | summarize by GroupActor, EventTime
+| project GroupActor, ValueBoundaryTime = EventTime, ValueBoundaryOrder = 1, CountedGroupDelta = 0),
+(CountedGroupActivity | where CountedGroupStarts
+| project GroupActor, ValueBoundaryTime = EventTime, ValueBoundaryOrder = 0, CountedGroupDelta = 1),
+(CountedGroupActivity | where CountedGroupEnds
+| project GroupActor, ValueBoundaryTime = EventTime + 5m, ValueBoundaryOrder = 2, CountedGroupDelta = -1)
+// All interval starts precede anchors; equal-time expirations follow them.
+| sort by GroupActor asc, ValueBoundaryTime asc, ValueBoundaryOrder asc
+| extend ValueCount = row_cumsum(CountedGroupDelta, GroupActor != prev(GroupActor))
+| where ValueBoundaryOrder == 1
+| where ValueCount >= 4
+| project WindowStart = ValueBoundaryTime - 5m, WindowEnd = ValueBoundaryTime, ["Actor"] = GroupActor, ValueCount
+};
+let ActualRows=materialize(Actual());
+let Observed=ActualRows | project WindowStart, WindowEnd, Actor, ValueCount;
+let Expected=datatable(WindowStart:datetime, WindowEnd:datetime, Actor:string, ValueCount:long) [
+ datetime(2026-01-01T11:58:00Z),datetime(2026-01-01T12:03:00Z),"alice",4,
+ datetime(2026-01-01T11:59:00Z),datetime(2026-01-01T12:04:00Z),"alice",4
+];
+let SchemaObserved=ActualRows | getschema | project ColumnName,ColumnType;
+let SchemaExpected=datatable(ColumnName:string, ColumnType:string) [
+ "WindowStart","datetime", "WindowEnd","datetime", "Actor","string", "ValueCount","long"
+];
+union
+ (union (Observed | extend Delta=1),(Expected | extend Delta=-1)
+  | summarize Delta=sum(Delta) by WindowStart,WindowEnd,Actor,ValueCount
+  | where Delta!=0 | project Issue=strcat("rows: ", tostring(pack_all()))),
+ (union (SchemaObserved | extend Delta=1),(SchemaExpected | extend Delta=-1)
+  | summarize Delta=sum(Delta) by ColumnName,ColumnType
+  | where Delta!=0 | project Issue=strcat("schema: ", tostring(pack_all())))

@@ -1,0 +1,9 @@
+{
+  "fixtures": [
+    {
+      "name": "ordered_state_real_groups.kql",
+      "sha256": "b239455ee82bcd3aa42563235c6e42588de147c1cdbfc949c0887d16f2a18b34",
+      "expected_error": null
+    }
+  ]
+}

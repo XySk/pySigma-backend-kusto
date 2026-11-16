@@ -1,0 +1,35 @@
+{
+  "status": "PENDING",
+  "fixtures": [
+    {
+      "name": "count_existence_targeted_logon.kql",
+      "sha256": "889fa3a3dfaccbc59c1ca8c1a26179782c7bc4a9146da58c186242f24b4100a1",
+      "expected_error": null
+    },
+    {
+      "name": "count_existence_one.kql",
+      "sha256": "997b600de2532d44b15e2ac55cbc37c2938901287719e7278cfc1dac16e1b123",
+      "expected_error": null
+    },
+    {
+      "name": "count_existence_duplicates.kql",
+      "sha256": "00e2f98b8ecb3512fd4f7afe903e2c7713b6f7e5f2990108acee848eeb529fb6",
+      "expected_error": null
+    },
+    {
+      "name": "count_existence_ten.kql",
+      "sha256": "aa940cc161a5e9540e2945d1b36ec750f640a135bb94559379dcec14cab43aa0",
+      "expected_error": null
+    },
+    {
+      "name": "count_existence_real_groups.kql",
+      "sha256": "48fe0318531bc7c4263bfb255a633a57cbd0c05d12a7f17033f53fa2133d17c1",
+      "expected_error": null
+    },
+    {
+      "name": "count_existence_inherited_metric.kql",
+      "sha256": "5357fa1566236c6627814c327f37f73547fed16e9b2767e1b975aba0cf33ad7e",
+      "expected_error": null
+    }
+  ]
+}

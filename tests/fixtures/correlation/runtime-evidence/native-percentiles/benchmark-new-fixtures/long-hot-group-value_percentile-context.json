@@ -1,0 +1,11 @@
+{
+  "name": "long-hot-group-value_percentile-context",
+  "schema": {
+    "WindowStart": "datetime",
+    "WindowEnd": "datetime",
+    "Host": "string",
+    "ValuePercentile": "long",
+    "User": "dynamic"
+  },
+  "expected": []
+}

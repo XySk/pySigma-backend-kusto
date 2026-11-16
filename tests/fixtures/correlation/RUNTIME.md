@@ -1,3 +1,75 @@
+# Runtime evidence index and contract versions
+
+Every result below applies only to its recorded query and manifest hashes. The current implementation follows the native scalar contract: relevant field declarations, optional explicit reporting bounds with complete accumulated lookback, sensible supported-range numeric arithmetic without generated overflow guards, complete internal relationship rows, and bounded displayed context with `ContextComplete`.
+
+Sections describing recursive nested identity, boxed values, generated assertions, overflow failures, full ordered path enumeration, or unbounded displayed context document historical implementations. Preserve their raw failures and measurements; they are not current requirements or certification of regenerated files. Current strategies and regeneration instructions are in [the fixture guide](README.md).
+
+The [original 64-workload benchmark](BENCHMARK-BASELINE.md) preserves all 195 original attempts and distinguishes 28 verified plain workloads from 36 failed context/chain workloads. Later [value-count](VALUE-COUNT.md), [sum](runtime-evidence/native-sums/README.md), [average](runtime-evidence/native-averages/README.md), [percentile](runtime-evidence/native-percentiles/README.md), [ordered-context](TEMPORAL-PARTICIPANTS.md), and [existence](COUNT-EXISTENCE.md) studies use their own frozen revisions and settings. Timing comparisons and current combined acceptance require exact final query hashes; older passing hashes do not cover changed KQL.
+
+## Final integrated acceptance and repeated comparison (#49)
+
+On 2026-11-16, the final candidate at `59c455b5a5b008c042727eaef06f92c0da832044`
+passed **255/255 strict real-Kusto fixtures** and **192/192 repeated benchmark
+samples across all 64 workloads**. Publication independently rechecks every final
+raw request/query hash, response completion, native schema and independent result
+oracle. [Final corpus evidence](runtime-evidence/integrated-acceptance-final/README.md)
+retains the full frozen/executed corpus, including 49 producer/consumer edges,
+reporting/context chains, source predicates, empty numeric populations and the
+previously unexecuted grouping and counting the same field value-count fixture.
+
+[Per-workload benchmark results](BENCHMARK-COMPARISON.md) compare the exact same 64
+input/oracle/schema fixtures with original `07525ee` on the same engine/image,
+12 GiB limits, 15s client/13s server and cache-disabled settings. All 28 completed
+original plain workloads have lower final client/engine/total/planning medians;
+three sparse execution CPU and four average/percentile memory medians increase.
+All 36 original failed context/chain workloads now complete correctly, without
+inventing ratios for failed originals. The publication separates larger strategy
+studies and their deadlines/resource provenance from this planning-heavy corpus.
+
+The initial final-candidate benchmark was **189 PASS / 3 FAIL**, all hot plain-chain
+HTTP 400 errors. [The preserved offset proof](runtime-evidence/predecessor-offset-limit/README.md)
+shows the measured engine rejects prev offsets above 1024 with SEM0248; thresholds
+above 1,025 now retain general exact counts. New public regressions and literal
+positive/one-short engine examples cover 1,025/1,026/10,000. Initial failed samples,
+minimized failing probe, successful repair, and both final complete gates remain
+separate immutable artifacts. Failure handling and completion checks stay strict.
+
+The configured repository gate passed 739 tests with 97.20% coverage. Ruff,
+single-file Black and whitespace checks pass. These measured synthetic results
+supply no production throughput/capacity SLA and do not close or change #31/#32.
+
+# Ordered temporal prefix state acceptance (#41)
+
+On 2026-11-16, all five fixtures in [ordered-state-manifest.json](ordered-state-manifest.json) passed the strict real-Kusto harness on engine `2026.11.15.0741-2645-8e3387b-master`, database `NetDefaultDB`, with `max_memory_consumption_per_query_per_node=12884901888`. Each returned HTTP 200, one empty multiset diagnostic, and successful uncancelled completion without engine-error frames. Exact generated queries, frozen hashes, raw responses, engine version, and elapsed correctness-run samples are preserved in [ordered-state evidence](runtime-evidence/ordered-state/results.json).
+
+A sixth [native real-group fixture](ordered-real-groups-manifest.json) also passes, preserving NaN, positive/negative infinity, signed zero, and finite grouping identity. The pre-fix scan lost exactly the NaN completion because scalar `NaN != NaN` triggered a reset; the type-aware comparison now agrees with an independent native `summarize` oracle. Both [the failing regression proof](runtime-evidence/ordered-real-groups-regression/results.json) and [the corrected successful execution](runtime-evidence/ordered-real-groups/results.json) are preserved.
+
+The generated single-step scan batches equal timestamps and reads qualified preceding-timestamp state for every assignment. Literal cases cover viable earlier prefixes after intervening first steps, repeated references, simultaneous memberships, group resets, ungrouped input, strict ties/reversals, exact and one-tick-outside total spans, multiple completions, aliases, and multiple source searches. These engine results establish assignment semantics and result correctness for the recorded hashes. This section records the earlier #41 detection checkpoint. #47 subsequently replaced ordered contributor enumeration with scalar prefix/suffix reachability; its exact evidence is linked in the index above.
+
+The detection path has one membership aggregation, one sort, and one scan with one datetime state per proper sequence prefix plus a completion flag. It performs no prefix joins and creates no full sequence tuples. A one-position sequence reduces to distinct group/timestamp rows. Correctness-run elapsed samples are not performance comparisons.
+
+# Native scalar source/type acceptance (#37 and refreshed #36)
+
+Executed on 2026-11-16 with the existing strict runtime harness against engine `2026.11.15.0741-2645-8e3387b-master`, database `NetDefaultDB`, and the query memory option `max_memory_consumption_per_query_per_node=12884901888`. All eleven generated queries returned HTTP 200, exactly one empty primary multiset/schema diagnostic, and successful uncancelled completion without engine errors. The SecurityEvent fixture also compares the complete public schema: datetime window bounds, native string Actor, and long ValueCount.
+
+The selected fixtures cover direct grouped and ungrouped sources, duplicate source matches, standard mappings, retained scalar context, native long/string grouping, guid alias chains, mixed direct/child sources, native sum/percentile output, and real/long/decimal distinct-value precision. Their expected rows are independent literal examples; this is a scoped correctness gate, not a full-corpus or performance result. Other regenerated hashes still need integrated acceptance. Historical results below apply only to their original recorded hashes.
+
+Exact executed queries, hashes, raw completion/error/resource frames, engine version, and harness results are preserved under [native-scalars](runtime-evidence/native-scalars/results.json) and [source-predicates-native](runtime-evidence/source-predicates-native/results.json).
+
+| Fixture | Executed SHA-256 | Result |
+| --- | --- | --- |
+| `event_count_duplicate_sources.kql` | `ce4be2e5c144899fb02a64e5bb6ba3de36d2c20dd3f7b6c0e2225cef240fa189` | PASS |
+| `event_count_grouped.kql` | `8ba348aeca8bd59c6dd74302739c63e6c79d7b95649a24bf142e5c34fcd5d37d` | PASS |
+| `standard_mappings.kql` | `df28cd7a67dbd37e8856d006feb3776b9b76940d6b44b52ed2c68d363fb2749d` | PASS |
+| `typed_grouping_event_count.kql` | `a92e409ee0ba26aaed07578e84991a9f72cbf1631a249ee57e57a8ad13866f19` | PASS |
+| `typed_grouping_extended_chain.kql` | `e313ca053afeae46a9d0d3ee29e615ba9eac14570892e9aaeea70f3c1885e876` | PASS |
+| `typed_grouping_mixed_chain.kql` | `9facfe2cc77005e26f568262a185ac7df84c93752bee2e4c35fbcba039377e54` | PASS |
+| `typed_grouping_value_count.kql` | `c340c283132f66d9faa018ebb4b5a976f96fc0970bc46503aed8205d43309e78` | PASS |
+| `typed_grouping_value_percentile.kql` | `05cf0b029b94ec95851a36927ed09b00d8c05ce904703d8b0312c1e1bf2a958f` | PASS |
+| `typed_grouping_value_sum.kql` | `2565a30982f04f7d02af5f6f54401a7e48f1c30cd711c02856c499f5b3430554` | PASS |
+| `value_count_typed_precision.kql` | `8139cb1f1fcba90338d2508f581b703626d5684d1da06e2f5804005db46c907d` | PASS |
+| `source_predicates_securityevent.kql` | `120494d80e695613471489b7effb949b069b43c6bd69ac003034d809ce010c10` | PASS |
+
 # Numeric sum runtime evidence
 
 Executed on 2026-11-15 against the Microsoft Azure Data Explorer Kusto emulator,
@@ -725,3 +797,142 @@ fixtures were not completed in this stream. Issue #31 still depends on released
 upstream range parsing, and partial ordered thresholds remain deferred. These gaps
 are follow-up work; they are not converted into acceptance passes by merging the
 available implementation.
+
+## Table-sensitive source predicates (2026-11-16)
+
+`source_predicates_securityevent.kql` passed the strict v2 runner on Kusto emulator
+`2026.11.15.0741-2645-8e3387b-master`, database `NetDefaultDB`, with the unchanged
+12 GiB per-query memory cap. HTTP 200, one empty primary multiset diagnostic, and
+a successful uncancelled completion establish the two independently expected
+four-distinct-group Alice windows. The source retains EventID 4799,
+CallerProcessId 0x0, and all four privileged-group predicates after custom
+SecurityEvent selection and Microsoft XDR processing. Standard field mappings,
+a per-source counted-field alias, and explicit detection-value normalization are
+included. This small predicate regression does not establish throughput.
+
+[Results and fixture hash](runtime-evidence/source-predicates/results.json),
+[engine response](runtime-evidence/source-predicates/engine-version.response.json),
+and [query response](runtime-evidence/source-predicates/source_predicates_securityevent.response.json)
+retain the execution evidence. The [executed query](runtime-evidence/source-predicates/executed-securityevent.kql)
+and [executed manifest](runtime-evidence/source-predicates/executed-manifest.json)
+preserve the exact passing inputs at fixture SHA-256
+`4645446c9123326b63007bb42538658630f472f9b8b39e8c8a0c151d12a4a120`.
+
+After merging the scalar-schema implementation, the current fixture uses native
+scalar output and checks its complete public schema (`WindowStart:datetime`,
+`WindowEnd:datetime`, `Actor:string`, `ValueCount:long`) as well as the result
+multiset. Its SHA-256 is `120494d80e695613471489b7effb949b069b43c6bd69ac003034d809ce010c10`.
+This changed query is **pending integrated engine execution**; the prior pass is
+predicate evidence for the archived query. Re-run the current targeted
+`source-predicates-manifest.json` at the integrated acceptance gate.
+
+## Relational context display gate (#46)
+
+The focused [executed frozen manifest](runtime-evidence/relational-context/executed-manifest.json) passed all 26 diagnostics on Kusto Engine `1.0.9815.14081` (`2026.11.15.0741-2645-8e3387b-master`), using the existing strict v2 completion/multiset harness and 12 GiB per-query memory option. [Results and response frames](runtime-evidence/relational-context/results.json) include hashes and elapsed times. This gate covers displays of 999, 1,000, and 1,001 distinct values; configured limits; all 1,001 observed parent groups despite a display limit of two; grouped/ungrouped child counts; distinct retained numeric values and scalar child metrics; callback filters/metric edits; empty absence-only evidence; and shared, ordered, Boolean, and multilevel context. It establishes focused correctness, not production performance or completion of #32.
+
+The migration removes the public `_sigma_context_rows` array. Diagnostics now use requested public collections and `ContextComplete`; parent grouping diagnostics establish observed cross-field relationships. No internal test API is introduced. Complete native scalar evidence remains separate from bounded displays. Parent consumption of the display-only `ContextComplete` flag produces a clear conversion error.
+
+Two prior unverified diagnostic expectations required correction. A native scalar grouping field cannot be passed to `array_length`, even when the expected result is empty. The ordered multilevel example also incorrectly expected `(Alice,s3)` at 12:02: its ordered child completes with B@s4 at 12:02, while B@s3 at 12:01 participates only in the earlier child summary. A parent grouped by `(User,Server)` has an s3 source anchor at 12:01 and none at 12:02. The [original failed requests and responses](runtime-evidence/relational-context/prior-diagnostic-failures/full-results.json) are retained separately; these failures are not represented as successful execution of the earlier fixtures.
+
+## Exact weighted event counts — #38 (2026-11-16)
+
+Seventeen focused public-conversion fixtures passed the strict v2 harness on
+engine `2026.11.15.0741-2645-8e3387b-master`, database `NetDefaultDB`, with the
+12 GiB query cap. Every response was HTTP 200 with exactly one empty primary
+multiset diagnostic and successful uncancelled completion. The scope covers
+integer/fractional comparisons, duplicate rows/searches, inclusive endpoints,
+one tick outside, independent groups, ties, overlaps, empty input, scalar metric
+chains, and retained child relationship deduplication. An additional native-real
+group fixture passed for NaN, both infinities, and signed zero.
+
+The generated event-count path projects native groups and event timestamps,
+preaggregates integer source-match weights, emits arrival/expiration boundaries,
+and accumulates with `row_cumsum`. Arrivals precede equal-time expirations;
+expiration rows never create evaluation anchors. No event/window candidate join,
+bin expansion, recursive identity traversal, or generated assertion is needed
+when no retained context is requested. Fractional comparisons explicitly compare
+exact long counts as decimals because this engine coerces real literals during
+long equality comparisons. Native real group changes also handle NaN equality
+consistently with `summarize`.
+
+Exact executed queries, hashes, requests, responses, engine version, and scoped
+ledgers are under [exact-event-count](runtime-evidence/exact-event-count/).
+The `fractional-coercion-failure` and `real-group-nan-failure` directories preserve
+the preceding failures that motivated these fixes. The native-real failure also
+contains deliberately corrected diagnostic spellings (`NaN`, `inf`, and `0.0`);
+its distinct wrong count of one at the second NaN timestamp establishes the
+actual group reset defect.
+
+These small correctness runs do not establish representative throughput.
+Performance comparison and regeneration/execution of the integrated corpus remain
+integration gates. Other corpus files containing event-count children may remain
+stale until that regeneration; historical evidence applies only to archived hashes.
+
+The #46 scoped evidence above was executed before the #38 event-count integration; regenerated integrated query hashes require their own gate.
+
+## Spec 34 sum contract migration (#42)
+
+The overflow failures recorded above are historical evidence for the superseded
+contract. They are preserved here and in their original evidence directories;
+they are no longer current acceptance requirements. The prepared positive and
+negative overflow fixtures and the no-qualifying overflow fixture are retired.
+Their replacement cases use supported native numeric ranges, native decimal
+precision, int-to-long child metrics, and current-window real arithmetic after a
+large observation expires. The runtime runner no longer assigns expected
+overflow errors by filename; supported fixtures must complete successfully.
+
+The new sum implementation passed 26 strict real-engine cases plus the
+supported-range integer replacement, and all 48 matched old/new benchmark
+samples. [Native sum evidence](runtime-evidence/native-sums/README.md) records
+exact frozen queries, engine responses/statistics, per-workload results and the
+retained initial fixture-normalization failure. Native int-to-long promotion,
+decimal precision, fractional integer equality/inequality, empty usable
+populations, real-group special values and large-observation expiration all
+passed. These measurements use small 96-row workloads; some many-group context
+peak-memory measurements increased despite lower elapsed time and CPU.
+
+## Native current-window averages (#43, 2026-11-16)
+
+The native-average strategy passed all 16 focused real-Kusto fixtures, including current-window results after a large real observation expires, finite-only and undefined populations, weighting, ordinary decimal-to-real rounding, aliases, child metrics, and retained context. Paired old/new strategy benchmarks passed all 48 samples across eight long/real, many-group/hot-group, plain/context workloads. All eight wall/engine medians decreased; one CPU median increased and one peak-memory median increased slightly. The query keeps exact candidate pairing and actual-time membership to avoid history-dependent floating-point residue.
+
+[Recorded evidence and per-workload results](runtime-evidence/native-averages/README.md) include frozen public queries and independent expected multisets, engine requests/responses, strict verdicts, version/settings, and raw CPU/memory statistics. These compare the old boxed average after scalar/context foundations against the native average; they are separate from the #35 pre-redesign baseline. The small emulator workloads do not establish production-scale capacity. Final integrated corpus and performance gates remain required.
+
+## Spec 34 exact native percentiles (#44)
+
+The native percentile strategy passed 15 initial and 17 final strict Kusto
+correctness cases. All 48 matched old/new samples and 12 direct/prefilter
+strategy samples passed exact result and native schema checks.
+[Native percentile evidence](runtime-evidence/native-percentiles/README.md)
+archives both frozen correctness sets, queries, requests, responses, engine
+statistics, expected outputs and per-workload measurements.
+
+Native min/max removes ranking at selectors 0 and 100. Other selectors retain
+one narrow candidate relation for population counting and a native sort,
+preserving exact long/decimal observations and the actual ValuePercentile
+metric for consumers. Undefined populations match no comparison.
+
+The exact threshold-count alternative was faster in the measured 10% and 90%
+qualifying workloads, especially at 10%; peak memory increased slightly at 90%.
+Direct selection remains the general default because conversion has no
+data-selectivity estimate and real/decimal prefilter performance is unmeasured.
+The candidate join can still grow quadratically. These are workload-specific
+emulator measurements; shared corpus regeneration and final integrated gates
+remain required.
+
+# Pinned scalar redesign baseline (#35)
+
+The [pre-redesign baseline report](BENCHMARK-BASELINE.md) pins revision
+`07525ee` and 64 public-conversion workloads. All have three non-interrupted
+attempts on the same 12 GiB emulator/image/version with fixed 15-second client
+and 13-second server deadlines. Of 195 measured attempts, 81 were originally
+PASS and 114 FAIL; three schema-only boxed-sum failures are separately reassessed
+from their original frames, yielding 84 verified samples across 28 plain
+workloads. One explicit interruption remains FAIL/unverified. All 36 context/chain
+workloads failed to complete verified output; timeout/empty replies are not
+successful empty results and do not establish OOM.
+
+The report preserves every original raw ledger/request/response with hashes,
+repeated client/engine elapsed samples and actual CPU/peak memory when exposed.
+These 4/24/96-row synthetic inputs chiefly reveal planning cost and representative
+behavior, not production throughput or capacity. Intermediate growth is unobserved.
+Earlier focused evidence and later candidate studies remain separate.

@@ -1,0 +1,11 @@
+{
+  "status": "PENDING",
+  "scope": "available features only; ranges blocked by #31; partial ordered thresholds deferred",
+  "fixtures": [
+    {
+      "name": "value_sum_integer_bounds.kql",
+      "sha256": "c3679d0776bad390889ab6444ee187d3200c570e1ee4f4662112e6d58e1c0e2c",
+      "expected_error": null
+    }
+  ]
+}

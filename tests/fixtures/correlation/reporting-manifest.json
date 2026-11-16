@@ -1,0 +1,45 @@
+{
+  "status": "PENDING",
+  "fixtures": [
+    {
+      "name": "reporting_early_existence.kql",
+      "sha256": "8ace08a6d351667c4bd3be78bfc10d0ab78c00d86b6c0a5f9557164b049860ef",
+      "expected_error": null
+    },
+    {
+      "name": "reporting_early_general.kql",
+      "sha256": "585cbfb72c551f3afb4eb0bbf3c387f1cec6f4382d4baad7d14d00eb946d5b5e",
+      "expected_error": null
+    },
+    {
+      "name": "reporting_adjacent_ticks.kql",
+      "sha256": "9b039801bdfd317f18801883954094f6eaf0380c2241da83d753f9e924d4717b",
+      "expected_error": null
+    },
+    {
+      "name": "reporting_shared_multilevel.kql",
+      "sha256": "8b35d196b11b9ae26967cc9d7e2d29b8c1d9bcc4e19edcbdc46cfc8299b30ab4",
+      "expected_error": null
+    },
+    {
+      "name": "reporting_shared_reversed.kql",
+      "sha256": "8b35d196b11b9ae26967cc9d7e2d29b8c1d9bcc4e19edcbdc46cfc8299b30ab4",
+      "expected_error": null
+    },
+    {
+      "name": "reporting_context_callback.kql",
+      "sha256": "b95335ddd5cdfdf5e9e50c2e58895c0d51ec1abf3bd3902cc8d1c92613c240a7",
+      "expected_error": null
+    },
+    {
+      "name": "reporting_name_collision.kql",
+      "sha256": "e7578954bed9998ea180fbfbf786e53ad01e444cf59996d2ca6c8cebd009f984",
+      "expected_error": null
+    },
+    {
+      "name": "reporting_string_timestamp.kql",
+      "sha256": "26efc3c6a50eda00cf2be01b326404118a7da62f28e662e2b0a129d77f4cb6d2",
+      "expected_error": null
+    }
+  ]
+}

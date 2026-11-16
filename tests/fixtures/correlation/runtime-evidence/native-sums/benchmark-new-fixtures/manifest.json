@@ -1,0 +1,167 @@
+{
+  "revision": "1b680826ce98c8155a4fce1128766ef038349a1e",
+  "baseline_revision": "07525ee846878754bda7933eab0684895a156086",
+  "oracle": "independent direct inclusive-window enumeration",
+  "workloads": [
+    {
+      "name": "long-many-groups-value_sum-plain",
+      "fixture": "long-many-groups-value_sum-plain.json",
+      "fixture_sha256": "89ce711445795e5f7c575cbdc337402eb0f18e48e7a8695b8b17ebd5095e3781",
+      "query": "long-many-groups-value_sum-plain.kql",
+      "query_sha256": "b8cf05b85ae94f19483b1db3130788041012e2bd1a5db36b9f3640389886d5bf",
+      "query_bytes": 957,
+      "query_lines": 16,
+      "operators": {
+        "where": 4,
+        "project": 4,
+        "summarize": 1,
+        "sort": 1,
+        "extend": 1
+      },
+      "input_rows": 96,
+      "expected_rows": 96
+    },
+    {
+      "name": "long-many-groups-value_sum-context",
+      "fixture": "long-many-groups-value_sum-context.json",
+      "fixture_sha256": "4e8acd9bef2582af176bc593742cea201cdb3edcc2f08206b3d0f5d6ccfd241f",
+      "query": "long-many-groups-value_sum-context.kql",
+      "query_sha256": "1716096ff1791e51650994ead554faca7785e97bda614f6d283dbe7d8b91c2e9",
+      "query_bytes": 2530,
+      "query_lines": 43,
+      "operators": {
+        "where": 7,
+        "project": 8,
+        "summarize": 3,
+        "sort": 1,
+        "extend": 5,
+        "serialize": 2,
+        "join": 2,
+        "distinct": 1
+      },
+      "input_rows": 96,
+      "expected_rows": 96
+    },
+    {
+      "name": "long-hot-group-value_sum-plain",
+      "fixture": "long-hot-group-value_sum-plain.json",
+      "fixture_sha256": "76e8f4538018a05616e5abb7abd9eba1e3fc1c02518eaa047d16e4b4279fdcb1",
+      "query": "long-hot-group-value_sum-plain.kql",
+      "query_sha256": "422becbad62d867e562ab0b92a81b253ee144a8028d5bf24a57aa96f096c3f6c",
+      "query_bytes": 961,
+      "query_lines": 16,
+      "operators": {
+        "where": 4,
+        "project": 4,
+        "summarize": 1,
+        "sort": 1,
+        "extend": 1
+      },
+      "input_rows": 96,
+      "expected_rows": 0
+    },
+    {
+      "name": "long-hot-group-value_sum-context",
+      "fixture": "long-hot-group-value_sum-context.json",
+      "fixture_sha256": "196c6fb5f91c5f008b08648ef9c6a6df31e2cac6ab614991f4027ac343f03a8f",
+      "query": "long-hot-group-value_sum-context.kql",
+      "query_sha256": "597a09f1add1e7d3551e7d1a16d84d113f91c0be54380bd2b53bf37213c9582a",
+      "query_bytes": 2534,
+      "query_lines": 43,
+      "operators": {
+        "where": 7,
+        "project": 8,
+        "summarize": 3,
+        "sort": 1,
+        "extend": 5,
+        "serialize": 2,
+        "join": 2,
+        "distinct": 1
+      },
+      "input_rows": 96,
+      "expected_rows": 0
+    },
+    {
+      "name": "real-many-groups-value_sum-plain",
+      "fixture": "real-many-groups-value_sum-plain.json",
+      "fixture_sha256": "4e71078f22bc4e2a31ff7c188f5b58c33cec4a6bc1e0f6fa007ffa528da850a9",
+      "query": "real-many-groups-value_sum-plain.kql",
+      "query_sha256": "08156e0a73af9bab80fd07fd4ba134141735697d72bfda8520bcb40b0e74d292",
+      "query_bytes": 821,
+      "query_lines": 16,
+      "operators": {
+        "where": 4,
+        "project": 3,
+        "distinct": 1,
+        "join": 1,
+        "extend": 1,
+        "mv-expand": 1,
+        "summarize": 1
+      },
+      "input_rows": 96,
+      "expected_rows": 72
+    },
+    {
+      "name": "real-many-groups-value_sum-context",
+      "fixture": "real-many-groups-value_sum-context.json",
+      "fixture_sha256": "9073ba8a20ec938a6da29e674f62424c07547f9b2425a9bb5daa3b180318ac0d",
+      "query": "real-many-groups-value_sum-context.kql",
+      "query_sha256": "2da3fc2c943ae7a20a0796aee220d8de33653b1263ae37608c976befb33e2f79",
+      "query_bytes": 2394,
+      "query_lines": 43,
+      "operators": {
+        "where": 7,
+        "project": 7,
+        "distinct": 2,
+        "join": 3,
+        "extend": 5,
+        "mv-expand": 1,
+        "summarize": 3,
+        "serialize": 2
+      },
+      "input_rows": 96,
+      "expected_rows": 72
+    },
+    {
+      "name": "real-hot-group-value_sum-plain",
+      "fixture": "real-hot-group-value_sum-plain.json",
+      "fixture_sha256": "e8202630a8ffb6b2b0598ac8ede454d652db15f86d423f54eeda037fb9e5fd90",
+      "query": "real-hot-group-value_sum-plain.kql",
+      "query_sha256": "1520cfec453b182c7a360be765113cf2892209e6ba5d379bb8089d70446601c1",
+      "query_bytes": 825,
+      "query_lines": 16,
+      "operators": {
+        "where": 4,
+        "project": 3,
+        "distinct": 1,
+        "join": 1,
+        "extend": 1,
+        "mv-expand": 1,
+        "summarize": 1
+      },
+      "input_rows": 96,
+      "expected_rows": 0
+    },
+    {
+      "name": "real-hot-group-value_sum-context",
+      "fixture": "real-hot-group-value_sum-context.json",
+      "fixture_sha256": "e84b0896ab01f8ab7c26db24a1313f7531c75adf312491747b77c58daf7c4e66",
+      "query": "real-hot-group-value_sum-context.kql",
+      "query_sha256": "848407bc56fcd5a5c782ac906020e857802be2c99b87f895cf6c21378e0f0119",
+      "query_bytes": 2398,
+      "query_lines": 43,
+      "operators": {
+        "where": 7,
+        "project": 7,
+        "distinct": 2,
+        "join": 3,
+        "extend": 5,
+        "mv-expand": 1,
+        "summarize": 3,
+        "serialize": 2
+      },
+      "input_rows": 96,
+      "expected_rows": 0
+    }
+  ]
+}

@@ -1,0 +1,133 @@
+let Events=datatable(Timestamp:datetime, Host:string, Marker:string, User:string, Server:string) [
+ datetime(2026-01-01T12:00:00Z), "h", "B", "incomplete", "bad-server",
+ datetime(2026-01-01T12:01:00Z), "h", "Finish", "finish", "finish-server"
+];
+let Actual=() {
+let AbsenceChild = () {
+let ContextSummary = () {
+union (Events
+| where Marker =~ "A"
+| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"], SourceRule = "A"),
+(Events
+| where Marker =~ "B"
+| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"], SourceRule = "B"),
+(Events
+| where Marker =~ "C"
+| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"], SourceRule = "C")
+| where isnotnull(EventTime_1) and isnotempty(GroupHost)
+// Batch simultaneous source matches before updating inclusive trailing presence.
+| summarize MatchesA = countif(SourceRule == "A") > 0, MatchesB = countif(SourceRule == "B") > 0, MatchesC = countif(SourceRule == "C") > 0 by GroupHost, EventTime_1
+| sort by GroupHost asc, EventTime_1 asc
+| extend NewCorrelationGroup = isnull(prev(EventTime_1)) or GroupHost != prev(GroupHost)
+| scan declare (LastATime:datetime, LastBTime:datetime, LastCTime:datetime) with (
+    step PresenceWindow: true =>
+        LastATime = iff(MatchesA, EventTime_1, iff(NewCorrelationGroup, datetime(null), PresenceWindow.LastATime)),
+        LastBTime = iff(MatchesB, EventTime_1, iff(NewCorrelationGroup, datetime(null), PresenceWindow.LastBTime)),
+        LastCTime = iff(MatchesC, EventTime_1, iff(NewCorrelationGroup, datetime(null), PresenceWindow.LastCTime));
+)
+// Only source-match timestamps evaluate; expiration never creates an anchor.
+| extend HasA = isnotnull(LastATime) and LastATime >= EventTime_1 - 5m, HasB = isnotnull(LastBTime) and LastBTime >= EventTime_1 - 5m, HasC = isnotnull(LastCTime) and LastCTime >= EventTime_1 - 5m
+| extend RuleCount = tolong(HasA) + tolong(HasB) + tolong(HasC)
+| where (not(HasA) or (HasB and HasC))
+| project WindowStart = EventTime_1 - 5m, WindowEnd = EventTime_1, ["Host"] = GroupHost, RuleCount
+};
+let CorrelationMatches = materialize(ContextSummary()
+| serialize CorrelationMatchId = row_number());
+let WindowSourceMatches = materialize(
+CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, ContextGroupHost = ["Host"], ContextPartition = 1
+| join kind=inner (
+union (Events
+| where Marker =~ "A"
+| extend ContextEventTime = todatetime(["Timestamp"]), ContextGroupHost = ["Host"], ContextUser = ["User"], ContextServer = ["Server"]
+| extend ContextSourceRule = "A"),
+(Events
+| where Marker =~ "B"
+| extend ContextEventTime = todatetime(["Timestamp"]), ContextGroupHost = ["Host"], ContextUser = ["User"], ContextServer = ["Server"]
+| extend ContextSourceRule = "B"),
+(Events
+| where Marker =~ "C"
+| extend ContextEventTime = todatetime(["Timestamp"]), ContextGroupHost = ["Host"], ContextUser = ["User"], ContextServer = ["Server"]
+| extend ContextSourceRule = "C")
+| project ContextEventTime, ContextSourceRule, ContextGroupHost, ContextUser, ContextServer, ContextPartition = 1
+) on ContextGroupHost
+| where ContextEventTime between ((CompletionTime - 5m) .. CompletionTime));
+let BooleanParticipants = materialize(WindowSourceMatches
+| join kind=inner (WindowSourceMatches | summarize HasA_1 = countif(ContextSourceRule == "A") > 0, HasB_1 = countif(ContextSourceRule == "B") > 0, HasC_1 = countif(ContextSourceRule == "C") > 0 by CorrelationMatchId) on CorrelationMatchId
+| where ((not(HasA_1) and (false)) or ((HasB_1 and HasC_1) and (((HasB_1 and HasC_1) and ((HasB_1 and (ContextSourceRule == "B")) or (HasC_1 and (ContextSourceRule == "C"))))))));
+let CompleteContextRelationships = materialize(BooleanParticipants
+| project CorrelationMatchId, ContextUser, ContextServer
+| distinct *);
+union (CorrelationMatches | extend ContextRowKind = "Summary"), (CorrelationMatches | join kind=inner (CompleteContextRelationships) on CorrelationMatchId | extend ContextRowKind = "ContextEvidence")
+};
+let AbsenceChildResults = materialize(AbsenceChild());
+let ContextSummary = () {
+// Strict sequence: "AbsenceChild" -> "Finish". Total inclusive span: 5m.
+union (AbsenceChildResults
+| where ["ContextRowKind"] == "Summary"
+| extend EventTime_1 = todatetime(["WindowEnd"]), GroupHost = ["Host"]
+| extend SourceRule = "AbsenceChild"),
+(Events
+| where Marker =~ "Finish"
+| extend EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"]
+| extend SourceRule = "Finish")
+| where isnotnull(EventTime_1) and isnotempty(GroupHost)
+// Batch equal timestamps: simultaneous source matches cannot advance strict sequence positions.
+| summarize HasAbsenceChild = countif(SourceRule == "AbsenceChild") > 0, HasFinish = countif(SourceRule == "Finish") > 0 by EventTime_1, GroupHost
+| sort by GroupHost asc, EventTime_1 asc
+| extend NewCorrelationGroup = isnull(prev(EventTime_1)) or GroupHost != prev(GroupHost)
+// Read preceding timestamp state for every assignment; preserve viable earlier prefixes.
+| scan declare (LatestAbsenceChildStart:datetime = datetime(null), CompleteNow:bool = false) with (
+    step SequenceState: true =>
+        CompleteNow = not(NewCorrelationGroup) and HasFinish and isnotnull(SequenceState.LatestAbsenceChildStart) and SequenceState.LatestAbsenceChildStart >= EventTime_1 - 5m,
+        LatestAbsenceChildStart = iff(HasAbsenceChild, EventTime_1, iff(NewCorrelationGroup, datetime(null), SequenceState.LatestAbsenceChildStart));
+)
+| where CompleteNow
+| project WindowStart = EventTime_1 - 5m, WindowEnd = EventTime_1, ["Host"] = GroupHost, RuleCount = tolong(2)
+};
+let CorrelationMatches = materialize(ContextSummary()
+| serialize CorrelationMatchId = row_number());
+let WindowSourceMatches = materialize(
+CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, ContextGroupHost = ["Host"], ContextPartition = 1
+| join kind=inner (
+union (AbsenceChildResults | where ["ContextRowKind"] == "Summary"
+| project-away ["ContextUser"], ["ContextServer"]
+| join kind=leftouter (AbsenceChildResults | where ["ContextRowKind"] == "ContextEvidence" | project ["CorrelationMatchId"], ["ContextUser"], ["ContextServer"], HasContextEvidence = true) on ["CorrelationMatchId"]
+| extend ContextEventTime = todatetime(["WindowEnd"]), ContextGroupHost = ["Host"], ContextUser = ["ContextUser"], ContextServer = ["ContextServer"]
+| extend ContextSourceRule = "AbsenceChild"),
+((Events
+| where Marker =~ "Finish"
+| extend ContextEventTime = todatetime(["Timestamp"]), ContextGroupHost = ["Host"], ContextUser = ["User"], ContextServer = ["Server"]
+| extend ContextSourceRule = "Finish")
+| extend HasContextEvidence = true)
+| project ContextEventTime, ContextSourceRule, ContextGroupHost, ContextUser, ContextServer, HasContextEvidence, ContextPartition = 1
+) on ContextGroupHost
+| where ContextEventTime between ((CompletionTime - 5m) .. CompletionTime));
+// Successful one/two-step completions need only endpoint participant filters.
+let OrderedSourceRelationships = materialize(WindowSourceMatches
+| where (ContextSourceRule == "AbsenceChild" and ContextEventTime < CompletionTime) or (ContextSourceRule == "Finish" and ContextEventTime == CompletionTime));
+let CompleteContextRelationships = materialize(OrderedSourceRelationships
+| where HasContextEvidence
+| project CorrelationMatchId, ContextUser, ContextServer
+| distinct *);
+let ValuesForUser = CompleteContextRelationships
+| where isnotnull(ContextUser)
+| summarize by CorrelationMatchId, ContextUser
+| summarize DisplayedUser = make_list(ContextUser, 1000), DistinctUserCount = count() by CorrelationMatchId;
+let ValuesForServer = CompleteContextRelationships
+| where isnotnull(ContextServer)
+| summarize by CorrelationMatchId, ContextServer
+| summarize DisplayedServer = make_list(ContextServer, 1000), DistinctServerCount = count() by CorrelationMatchId;
+CorrelationMatches
+| join kind=leftouter (ValuesForUser) on CorrelationMatchId
+| extend ["User"] = coalesce(DisplayedUser, dynamic([]))
+| join kind=leftouter (ValuesForServer) on CorrelationMatchId
+| extend ["Server"] = coalesce(DisplayedServer, dynamic([]))
+| extend ContextComplete = coalesce(DistinctUserCount, 0) <= 1000 and coalesce(DistinctServerCount, 0) <= 1000
+| project ["WindowStart"], ["WindowEnd"], ["Host"], ["User"], ["Server"], ["RuleCount"], ["ContextComplete"]
+};
+let Observed=Actual() | project WindowEnd, Users=tostring(array_sort_asc(User)), Servers=tostring(array_sort_asc(Server)), RuleCount, ContextComplete;
+let Expected=datatable(WindowEnd:datetime, Users:string, Servers:string, RuleCount:long, ContextComplete:bool) [
+ datetime(2026-01-01T12:01:00Z), '["finish"]', '["finish-server"]', 2, true
+];
+union (Observed | extend Delta=1), (Expected | extend Delta=-1)
+| summarize Delta=sum(Delta) by WindowEnd, Users, Servers, RuleCount, ContextComplete | where Delta != 0

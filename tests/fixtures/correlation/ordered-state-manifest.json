@@ -1,0 +1,31 @@
+{
+  "status": "PENDING",
+  "scope": "available features only; ranges blocked by #31; partial ordered thresholds deferred",
+  "fixtures": [
+    {
+      "name": "ordered_state_grouped.kql",
+      "sha256": "e3b056097c377a4e380fb5120e45bf2596c18690d02fed51c967ae2a230faa60",
+      "expected_error": null
+    },
+    {
+      "name": "ordered_state_repeated.kql",
+      "sha256": "7a33351c4c309d4dcb418680a2cf4adbb2a13960856c5f74412afc7c8e1c3ba5",
+      "expected_error": null
+    },
+    {
+      "name": "ordered_state_ungrouped.kql",
+      "sha256": "ebc8f2291aacf5ffb11e1ccbc39a7d68768005cc5920643e0ec7aab02ee2c8ec",
+      "expected_error": null
+    },
+    {
+      "name": "temporal_ordered_grouped.kql",
+      "sha256": "d0f79c753ea105f28293fc88c392b3194db81f82052d12c3fcf2dae583fb2974",
+      "expected_error": null
+    },
+    {
+      "name": "temporal_ordered_ungrouped.kql",
+      "sha256": "6cdf33a75deb6c1197b36b605d8097bd8534a9b1dd0f73b1b5e5f7c05d1f3314",
+      "expected_error": null
+    }
+  ]
+}

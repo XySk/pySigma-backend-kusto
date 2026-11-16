@@ -1,0 +1,33 @@
+let Events=datatable(Timestamp:datetime,Host:string,Marker:string,User:long,Server:string,Amount:long) [
+ datetime(2026-01-01T12:00:00Z),"h","match",1,"server",2,
+ datetime(2026-01-01T12:00:00Z),"h","match",1,"server",2,
+ datetime(2026-01-01T12:00:00Z),"h","match",2,"server",3,
+ datetime(null),"h","match",1,"server",100,
+ datetime(2026-01-01T12:00:00Z),"h","match",long(null),"server",100,
+ datetime(2026-01-01T12:00:00Z),"h","match",1,"",100
+];
+let Actual=(){
+let SourceMatchArrivals = union (Events
+| where Marker =~ "match"
+| project EventTime_1 = todatetime(["Timestamp"]), GroupUser = ["User"], GroupServer = ["Server"])
+| where isnotnull(EventTime_1) and isnotempty(GroupUser) and isnotempty(GroupServer)
+| summarize SourceMatchCount = count() by EventTime_1, GroupUser, GroupServer;
+union (SourceMatchArrivals
+| project GroupUser, GroupServer, CountBoundaryTime = EventTime_1, CountBoundaryOrder = 0, SourceMatchDelta = SourceMatchCount),
+(SourceMatchArrivals
+| project GroupUser, GroupServer, CountBoundaryTime = EventTime_1 + 5m, CountBoundaryOrder = 1, SourceMatchDelta = -SourceMatchCount)
+// Arrivals evaluate before equal-time expirations; expirations never create matches.
+| sort by GroupUser asc, GroupServer asc, CountBoundaryTime asc, CountBoundaryOrder asc
+| extend EventCount = row_cumsum(SourceMatchDelta, GroupUser != prev(GroupUser) or GroupServer != prev(GroupServer))
+| where CountBoundaryOrder == 0
+| where EventCount >= 1
+| project WindowStart = CountBoundaryTime - 5m, WindowEnd = CountBoundaryTime, ["User"] = GroupUser, ["Server"] = GroupServer, EventCount
+};
+let Observed=Actual() | project WindowEnd,Kind=gettype(User),Value=tostring(User),Server=tostring(Server),Metric=toreal(EventCount);
+let Expected=datatable(WindowEnd:datetime,Kind:string,Value:string,Server:string,Metric:real) [
+ datetime(2026-01-01T12:00:00Z),"long","1",'server',2,
+ datetime(2026-01-01T12:00:00Z),"long","2",'server',1
+];
+union (Observed | extend Delta=1),(Expected | extend Delta=-1)
+| summarize Delta=sum(Delta) by WindowEnd,Kind,Value,Server,Metric
+| where Delta!=0

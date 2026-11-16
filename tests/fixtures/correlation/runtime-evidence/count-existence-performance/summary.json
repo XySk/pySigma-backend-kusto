@@ -1,0 +1,643 @@
+{
+  "revision": "55b07d4ce1cb892e812afa232dbd907b77dfe364",
+  "status": "PASS",
+  "samples": 24,
+  "runs": [
+    {
+      "directory": "measured-55b07d4",
+      "ledger_sha256": "9687d03a30251f2be29ce85e9e2aec5bc59e2e38fd753a6fcab5ac07981919b7",
+      "revision": "55b07d4ce1cb892e812afa232dbd907b77dfe364",
+      "started_utc": "2026-11-16T18:50:53.785784+00:00",
+      "status": "PASS",
+      "container": {
+        "image": "sha256:65e8298d9350856dec696e0e41327288e7bc105146768a1429fce62f3640acd8",
+        "memory": 12884901888,
+        "memory_swap": 12884901888,
+        "cpu_quota": 0,
+        "nano_cpus": 0
+      },
+      "engine_version": {
+        "status": "PASS",
+        "response": {
+          "Tables": [
+            {
+              "TableName": "Table_0",
+              "Columns": [
+                {
+                  "ColumnName": "BuildVersion",
+                  "DataType": "String"
+                },
+                {
+                  "ColumnName": "BuildTime",
+                  "DataType": "DateTime"
+                },
+                {
+                  "ColumnName": "ServiceType",
+                  "DataType": "String"
+                },
+                {
+                  "ColumnName": "ProductVersion",
+                  "DataType": "String"
+                },
+                {
+                  "ColumnName": "ServiceOffering",
+                  "DataType": "String"
+                }
+              ],
+              "Rows": [
+                [
+                  "1.0.9815.14081",
+                  "2026-11-15T07:49:22Z",
+                  "Engine",
+                  "2026.11.15.0741-2645-8e3387b-master",
+                  ""
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "request_options": {
+        "max_memory_consumption_per_query_per_node": 12884901888,
+        "query_results_cache_max_age": "00:00:00",
+        "servertimeout": "00:00:43"
+      },
+      "timeout_seconds": 45
+    }
+  ],
+  "profiles": [
+    {
+      "profile": "many-groups",
+      "fixture_identity": "only name differs; schema and independent expected multisets identical",
+      "general": {
+        "name": "count-existence-many-groups-general",
+        "fixture": "count-existence-many-groups-general.json",
+        "fixture_sha256": "7967514aef91ab355e27728310b14f22e3a9338db85e6bf66d84232bdf3d04fb",
+        "query": "count-existence-many-groups-general.kql",
+        "query_sha256": "bb3df8e4bc7a2ef4cb0a51b0e2a1ca9306edc7fbc79585a6978e08b3fc88a4f4",
+        "query_bytes": 2548,
+        "query_lines": 38,
+        "operators": {
+          "extend": 6,
+          "project": 5,
+          "scan": 1,
+          "sort": 2,
+          "summarize": 2,
+          "where": 7
+        },
+        "input_rows": 38400,
+        "expected_rows": 5376,
+        "metrics": {
+          "elapsed_seconds": {
+            "samples": [
+              0.103895,
+              0.097752,
+              0.093736
+            ],
+            "median": 0.097752
+          },
+          "engine_elapsed_seconds": {
+            "samples": [
+              0.0693194,
+              0.0646046,
+              0.0604415
+            ],
+            "median": 0.0646046
+          },
+          "cpu_seconds": {
+            "samples": [
+              0.049933,
+              0.057736,
+              0.036677
+            ],
+            "median": 0.049933
+          },
+          "planning_cpu_seconds": {
+            "samples": [
+              0.012093,
+              0.017677,
+              0.019412
+            ],
+            "median": 0.017677
+          },
+          "execution_cpu_seconds": {
+            "samples": [
+              0.03784,
+              0.040059,
+              0.017265
+            ],
+            "median": 0.03784
+          },
+          "peak_memory_bytes": {
+            "samples": [
+              23961296,
+              24020176,
+              24467936
+            ],
+            "median": 24020176
+          }
+        }
+      },
+      "specialized": {
+        "name": "count-existence-many-groups-specialized",
+        "fixture": "count-existence-many-groups-specialized.json",
+        "fixture_sha256": "b5c4cf2faf82b56d93a4a6174433c559c07e005a09b730d469c9268e0158303d",
+        "query": "count-existence-many-groups-specialized.kql",
+        "query_sha256": "e47a1853ea3de5b8ed1e17e52bc9b5e13b096bd4c74171f3f37b48e28e449a0d",
+        "query_bytes": 2153,
+        "query_lines": 33,
+        "operators": {
+          "distinct": 1,
+          "extend": 6,
+          "project": 3,
+          "scan": 1,
+          "sort": 2,
+          "summarize": 1,
+          "where": 6
+        },
+        "input_rows": 38400,
+        "expected_rows": 5376,
+        "metrics": {
+          "elapsed_seconds": {
+            "samples": [
+              0.131756,
+              0.087853,
+              0.08911
+            ],
+            "median": 0.08911
+          },
+          "engine_elapsed_seconds": {
+            "samples": [
+              0.0679268,
+              0.0542303,
+              0.0542518
+            ],
+            "median": 0.0542518
+          },
+          "cpu_seconds": {
+            "samples": [
+              0.044468,
+              0.035135,
+              0.035919
+            ],
+            "median": 0.035919
+          },
+          "planning_cpu_seconds": {
+            "samples": [
+              0.012821,
+              0.021786,
+              0.013424
+            ],
+            "median": 0.013424
+          },
+          "execution_cpu_seconds": {
+            "samples": [
+              0.031647,
+              0.013349,
+              0.022495
+            ],
+            "median": 0.022495
+          },
+          "peak_memory_bytes": {
+            "samples": [
+              18904640,
+              18945856,
+              18949936
+            ],
+            "median": 18945856
+          }
+        }
+      }
+    },
+    {
+      "profile": "hot-group",
+      "fixture_identity": "only name differs; schema and independent expected multisets identical",
+      "general": {
+        "name": "count-existence-hot-group-general",
+        "fixture": "count-existence-hot-group-general.json",
+        "fixture_sha256": "e9919069f612c7ac14dc9b397fe5a13720c08d805cfa2445944d379c9ae42ee3",
+        "query": "count-existence-hot-group-general.kql",
+        "query_sha256": "729c6344d796fa519f646f8a4be00276c1dff67fc356f3a16767ea6e8934cccf",
+        "query_bytes": 2548,
+        "query_lines": 38,
+        "operators": {
+          "extend": 6,
+          "project": 5,
+          "scan": 1,
+          "sort": 2,
+          "summarize": 2,
+          "where": 7
+        },
+        "input_rows": 30000,
+        "expected_rows": 4284,
+        "metrics": {
+          "elapsed_seconds": {
+            "samples": [
+              0.077856,
+              0.080753,
+              0.080992
+            ],
+            "median": 0.080753
+          },
+          "engine_elapsed_seconds": {
+            "samples": [
+              0.0487008,
+              0.0503515,
+              0.0523288
+            ],
+            "median": 0.0503515
+          },
+          "cpu_seconds": {
+            "samples": [
+              0.040664,
+              0.041519,
+              0.034061
+            ],
+            "median": 0.040664
+          },
+          "planning_cpu_seconds": {
+            "samples": [
+              0.015937,
+              0.015088,
+              0.016321
+            ],
+            "median": 0.015937
+          },
+          "execution_cpu_seconds": {
+            "samples": [
+              0.024727,
+              0.026431,
+              0.01774
+            ],
+            "median": 0.024727
+          },
+          "peak_memory_bytes": {
+            "samples": [
+              18612096,
+              21794224,
+              21759824
+            ],
+            "median": 21759824
+          }
+        }
+      },
+      "specialized": {
+        "name": "count-existence-hot-group-specialized",
+        "fixture": "count-existence-hot-group-specialized.json",
+        "fixture_sha256": "f54b9778ed7b15d1c912ce950e0fb47728c4bac566cdd7f5f5b14cf8dbd570e3",
+        "query": "count-existence-hot-group-specialized.kql",
+        "query_sha256": "b5876dcc914f558b5cfab8a9df2ab603ac2f40e06905d9692fd1caada6568748",
+        "query_bytes": 2153,
+        "query_lines": 33,
+        "operators": {
+          "distinct": 1,
+          "extend": 6,
+          "project": 3,
+          "scan": 1,
+          "sort": 2,
+          "summarize": 1,
+          "where": 6
+        },
+        "input_rows": 30000,
+        "expected_rows": 4284,
+        "metrics": {
+          "elapsed_seconds": {
+            "samples": [
+              0.073454,
+              0.068958,
+              0.071979
+            ],
+            "median": 0.071979
+          },
+          "engine_elapsed_seconds": {
+            "samples": [
+              0.0454011,
+              0.0407991,
+              0.042984
+            ],
+            "median": 0.042984
+          },
+          "cpu_seconds": {
+            "samples": [
+              0.032646,
+              0.036405,
+              0.030079
+            ],
+            "median": 0.032646
+          },
+          "planning_cpu_seconds": {
+            "samples": [
+              0.013519,
+              0.018854,
+              0.019559
+            ],
+            "median": 0.018854
+          },
+          "execution_cpu_seconds": {
+            "samples": [
+              0.019127,
+              0.017551,
+              0.01052
+            ],
+            "median": 0.017551
+          },
+          "peak_memory_bytes": {
+            "samples": [
+              20940752,
+              20949264,
+              20957952
+            ],
+            "median": 20949264
+          }
+        }
+      }
+    },
+    {
+      "profile": "sparse",
+      "fixture_identity": "only name differs; schema and independent expected multisets identical",
+      "general": {
+        "name": "count-existence-sparse-general",
+        "fixture": "count-existence-sparse-general.json",
+        "fixture_sha256": "1d4be6f581a4499f3d4c5c881c3f8a3779ccba0ed33e2fab68391768efd90df1",
+        "query": "count-existence-sparse-general.kql",
+        "query_sha256": "c401a2a707ceb8acb15ca027b29149931c1a9ebd9755658c39270725c1abfd9e",
+        "query_bytes": 2548,
+        "query_lines": 38,
+        "operators": {
+          "extend": 6,
+          "project": 5,
+          "scan": 1,
+          "sort": 2,
+          "summarize": 2,
+          "where": 7
+        },
+        "input_rows": 6400,
+        "expected_rows": 0,
+        "metrics": {
+          "elapsed_seconds": {
+            "samples": [
+              0.035654,
+              0.03714,
+              0.032178
+            ],
+            "median": 0.035654
+          },
+          "engine_elapsed_seconds": {
+            "samples": [
+              0.0282898,
+              0.0289049,
+              0.0250885
+            ],
+            "median": 0.0282898
+          },
+          "cpu_seconds": {
+            "samples": [
+              0.014554,
+              0.015657,
+              0.02189
+            ],
+            "median": 0.015657
+          },
+          "planning_cpu_seconds": {
+            "samples": [
+              0.012631,
+              0.014864,
+              0.018445
+            ],
+            "median": 0.014864
+          },
+          "execution_cpu_seconds": {
+            "samples": [
+              0.001923,
+              0.000793,
+              0.003445
+            ],
+            "median": 0.001923
+          },
+          "peak_memory_bytes": {
+            "samples": [
+              5924496,
+              8747376,
+              5923984
+            ],
+            "median": 5924496
+          }
+        }
+      },
+      "specialized": {
+        "name": "count-existence-sparse-specialized",
+        "fixture": "count-existence-sparse-specialized.json",
+        "fixture_sha256": "f8b5e15b31900d26aea0c1eda68924edb23b04fb67a725841c12c6e86386fc8b",
+        "query": "count-existence-sparse-specialized.kql",
+        "query_sha256": "275872100704b8134af24f07fb3bad6e869c58136c631a95fadbfe1ab4b176e1",
+        "query_bytes": 2153,
+        "query_lines": 33,
+        "operators": {
+          "distinct": 1,
+          "extend": 6,
+          "project": 3,
+          "scan": 1,
+          "sort": 2,
+          "summarize": 1,
+          "where": 6
+        },
+        "input_rows": 6400,
+        "expected_rows": 0,
+        "metrics": {
+          "elapsed_seconds": {
+            "samples": [
+              0.029994,
+              0.029024,
+              0.031795
+            ],
+            "median": 0.029994
+          },
+          "engine_elapsed_seconds": {
+            "samples": [
+              0.0225474,
+              0.0224116,
+              0.025451
+            ],
+            "median": 0.0225474
+          },
+          "cpu_seconds": {
+            "samples": [
+              0.02084,
+              0.015601,
+              0.023981
+            ],
+            "median": 0.02084
+          },
+          "planning_cpu_seconds": {
+            "samples": [
+              0.014378,
+              0.014389,
+              0.01526
+            ],
+            "median": 0.014389
+          },
+          "execution_cpu_seconds": {
+            "samples": [
+              0.006462,
+              0.001212,
+              0.008721
+            ],
+            "median": 0.006462
+          },
+          "peak_memory_bytes": {
+            "samples": [
+              3744848,
+              3749120,
+              3744784
+            ],
+            "median": 3744848
+          }
+        }
+      }
+    },
+    {
+      "profile": "threshold-one",
+      "fixture_identity": "only name differs; schema and independent expected multisets identical",
+      "general": {
+        "name": "count-existence-threshold-one-general",
+        "fixture": "count-existence-threshold-one-general.json",
+        "fixture_sha256": "e1d8d846e6661c1314b9eac77ef4e1620a14a601f1466036205dc04059946cc4",
+        "query": "count-existence-threshold-one-general.kql",
+        "query_sha256": "cc1afa63b86ba786df5cfc7949314fce71973fa11cd9cba847c7911e75b84cff",
+        "query_bytes": 2547,
+        "query_lines": 38,
+        "operators": {
+          "extend": 6,
+          "project": 5,
+          "scan": 1,
+          "sort": 2,
+          "summarize": 2,
+          "where": 7
+        },
+        "input_rows": 30000,
+        "expected_rows": 4285,
+        "metrics": {
+          "elapsed_seconds": {
+            "samples": [
+              0.077803,
+              0.080111,
+              0.074234
+            ],
+            "median": 0.077803
+          },
+          "engine_elapsed_seconds": {
+            "samples": [
+              0.0492924,
+              0.0505736,
+              0.0463584
+            ],
+            "median": 0.0492924
+          },
+          "cpu_seconds": {
+            "samples": [
+              0.038721,
+              0.034715,
+              0.02638
+            ],
+            "median": 0.034715
+          },
+          "planning_cpu_seconds": {
+            "samples": [
+              0.016877,
+              0.018873,
+              0.018317
+            ],
+            "median": 0.018317
+          },
+          "execution_cpu_seconds": {
+            "samples": [
+              0.021844,
+              0.015842,
+              0.008063
+            ],
+            "median": 0.015842
+          },
+          "peak_memory_bytes": {
+            "samples": [
+              18631568,
+              21612624,
+              18602752
+            ],
+            "median": 18631568
+          }
+        }
+      },
+      "specialized": {
+        "name": "count-existence-threshold-one-specialized",
+        "fixture": "count-existence-threshold-one-specialized.json",
+        "fixture_sha256": "a9350e13dcb401ed8d496161c1d4cf39a594f21d99744e5316df91ef6c8ba534",
+        "query": "count-existence-threshold-one-specialized.kql",
+        "query_sha256": "cb8dda92577a5272d4cafb8fd9a038488bac12604766f36d90a5eb51957329bb",
+        "query_bytes": 1872,
+        "query_lines": 29,
+        "operators": {
+          "distinct": 1,
+          "extend": 5,
+          "project": 3,
+          "scan": 1,
+          "sort": 1,
+          "summarize": 1,
+          "where": 5
+        },
+        "input_rows": 30000,
+        "expected_rows": 4285,
+        "metrics": {
+          "elapsed_seconds": {
+            "samples": [
+              0.072168,
+              0.063622,
+              0.067493
+            ],
+            "median": 0.067493
+          },
+          "engine_elapsed_seconds": {
+            "samples": [
+              0.0436839,
+              0.0357439,
+              0.0396191
+            ],
+            "median": 0.0396191
+          },
+          "cpu_seconds": {
+            "samples": [
+              0.031382,
+              0.027511,
+              0.028316
+            ],
+            "median": 0.028316
+          },
+          "planning_cpu_seconds": {
+            "samples": [
+              0.014237,
+              0.011055,
+              0.017788
+            ],
+            "median": 0.014237
+          },
+          "execution_cpu_seconds": {
+            "samples": [
+              0.017145,
+              0.016456,
+              0.010528
+            ],
+            "median": 0.016456
+          },
+          "peak_memory_bytes": {
+            "samples": [
+              19032416,
+              19083968,
+              18911952
+            ],
+            "median": 19032416
+          }
+        }
+      }
+    }
+  ],
+  "intermediate_growth": "unobserved; no per-operator runtime profile captured"
+}

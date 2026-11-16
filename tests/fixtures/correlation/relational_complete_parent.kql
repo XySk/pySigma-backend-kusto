@@ -1,0 +1,90 @@
+let Events = range Index from 1 to 1001 step 1
+| project Timestamp=datetime(2026-01-01), Host="h", Marker="match", User=tostring(Index), Server=strcat("s", Index), Amount=Index;
+let Actual = () {
+let Child = () {
+let ContextSummary = () {
+let SourceMatchArrivals = union (Events
+| where Marker =~ "match"
+| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"])
+| where isnotnull(EventTime_1) and isnotempty(GroupHost)
+| summarize SourceMatchCount = count() by EventTime_1, GroupHost;
+union (SourceMatchArrivals
+| project GroupHost, CountBoundaryTime = EventTime_1, CountBoundaryOrder = 0, SourceMatchDelta = SourceMatchCount),
+(SourceMatchArrivals
+| project GroupHost, CountBoundaryTime = EventTime_1 + 5m, CountBoundaryOrder = 1, SourceMatchDelta = -SourceMatchCount)
+// Arrivals evaluate before equal-time expirations; expirations never create matches.
+| sort by GroupHost asc, CountBoundaryTime asc, CountBoundaryOrder asc
+| extend EventCount = row_cumsum(SourceMatchDelta, GroupHost != prev(GroupHost))
+| where CountBoundaryOrder == 0
+| where EventCount >= 1
+| project WindowStart = CountBoundaryTime - 5m, WindowEnd = CountBoundaryTime, ["Host"] = GroupHost, EventCount
+};
+let CorrelationMatches = materialize(ContextSummary()
+| serialize CorrelationMatchId = row_number());
+let WindowSourceMatches = materialize(
+CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, ContextGroupHost = ["Host"], ContextPartition = 1
+| join kind=inner (
+union (Events
+| where Marker =~ "match"
+| extend ContextEventTime = todatetime(["Timestamp"]), ContextGroupHost = ["Host"], ContextUser = ["User"], ContextServer = ["Server"], ContextAmount = ["Amount"]
+| extend ContextSourceRule = "source-rule")
+| project ContextEventTime, ContextSourceRule, ContextGroupHost, ContextUser, ContextServer, ContextAmount, ContextPartition = 1
+) on ContextGroupHost
+| where ContextEventTime between ((CompletionTime - 5m) .. CompletionTime));
+let CompleteContextRelationships = materialize(WindowSourceMatches
+| project CorrelationMatchId, ContextUser, ContextServer, ContextAmount
+| distinct *);
+union (CorrelationMatches | extend ContextRowKind = "Summary"), (CorrelationMatches | join kind=inner (CompleteContextRelationships) on CorrelationMatchId | extend ContextRowKind = "ContextEvidence")
+};
+let ChildResults = materialize(Child());
+let ContextSummary = () {
+let ParentSourceMatches = materialize(union (ChildResults
+| where ["ContextRowKind"] == "ContextEvidence"
+| extend ChildCorrelationMatch = strcat("Child", "_", tostring(["CorrelationMatchId"]))
+| project EventTime = todatetime(["WindowEnd"]), GroupUser = ["ContextUser"], GroupServer = ["ContextServer"], ChildCorrelationMatch)
+| extend ChildCorrelationMatch = tostring(column_ifexists("ChildCorrelationMatch", "")));
+let SourceMatchArrivals = union (ParentSourceMatches | where isempty(ChildCorrelationMatch)), (ParentSourceMatches | where isnotempty(ChildCorrelationMatch) | summarize take_any(*) by ChildCorrelationMatch, GroupUser, GroupServer)
+| where isnotnull(EventTime) and isnotempty(GroupUser) and isnotempty(GroupServer)
+| summarize SourceMatchCount = count() by EventTime, GroupUser, GroupServer;
+union (SourceMatchArrivals
+| project GroupUser, GroupServer, CountBoundaryTime = EventTime, CountBoundaryOrder = 0, SourceMatchDelta = SourceMatchCount),
+(SourceMatchArrivals
+| project GroupUser, GroupServer, CountBoundaryTime = EventTime + 5m, CountBoundaryOrder = 1, SourceMatchDelta = -SourceMatchCount)
+// Arrivals evaluate before equal-time expirations; expirations never create matches.
+| sort by GroupUser asc, GroupServer asc, CountBoundaryTime asc, CountBoundaryOrder asc
+| extend EventCount = row_cumsum(SourceMatchDelta, GroupUser != prev(GroupUser) or GroupServer != prev(GroupServer))
+| where CountBoundaryOrder == 0
+| where EventCount >= 1
+| project WindowStart = CountBoundaryTime - 5m, WindowEnd = CountBoundaryTime, ["User"] = GroupUser, ["Server"] = GroupServer, EventCount
+};
+let CorrelationMatches = materialize(ContextSummary()
+| serialize CorrelationMatchId_1 = row_number());
+let WindowSourceMatches = materialize(
+CorrelationMatches | project CorrelationMatchId_1, CompletionTime = WindowEnd, ContextGroupUser = ["User"], ContextGroupServer = ["Server"], ContextPartition = 1
+| join kind=inner (
+union (ChildResults | where ["ContextRowKind"] == "Summary"
+| project-away ["ContextUser"], ["ContextServer"], ["ContextAmount"]
+| join kind=leftouter (ChildResults | where ["ContextRowKind"] == "ContextEvidence" | project ["CorrelationMatchId"], ["ContextUser"], ["ContextServer"], ["ContextAmount"], HasContextEvidence = true) on ["CorrelationMatchId"]
+| extend ContextEventTime = todatetime(["WindowEnd"]), ContextGroupUser = ["ContextUser"], ContextGroupServer = ["ContextServer"], ContextAmount = ["ContextAmount"]
+| extend ContextSourceRule = "child")
+| project ContextEventTime, ContextSourceRule, ContextGroupUser, ContextGroupServer, ContextAmount, HasContextEvidence, ContextPartition = 1
+) on ContextGroupUser, ContextGroupServer
+| where ContextEventTime between ((CompletionTime - 5m) .. CompletionTime));
+let CompleteContextRelationships = materialize(WindowSourceMatches
+| where HasContextEvidence
+| project CorrelationMatchId_1, ContextAmount
+| distinct *);
+let ValuesForAmount = CompleteContextRelationships
+| where isnotnull(ContextAmount)
+| summarize by CorrelationMatchId_1, ContextAmount
+| summarize DisplayedAmount = make_list(ContextAmount, 2), DistinctAmountCount = count() by CorrelationMatchId_1;
+CorrelationMatches
+| join kind=leftouter (ValuesForAmount) on CorrelationMatchId_1
+| extend ["Amount"] = coalesce(DisplayedAmount, dynamic([]))
+| extend ContextComplete = coalesce(DistinctAmountCount, 0) <= 2
+| project ["WindowStart"], ["WindowEnd"], ["User"], ["Server"], ["Amount"], ["EventCount"], ["ContextComplete"]
+};
+let Observed=Actual() | project User,Server,EventCount;
+let Expected=range Index from 1 to 1001 step 1 | project User=tostring(Index),Server=strcat("s",Index),EventCount=long(1);
+union (Observed | extend Delta=1), (Expected | extend Delta=-1)
+| summarize Delta=sum(Delta) by User,Server,EventCount | where Delta != 0

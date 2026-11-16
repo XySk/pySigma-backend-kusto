@@ -1,0 +1,3806 @@
+{
+  "started_utc": "2026-11-16T19:06:37.099072+00:00",
+  "manifest_sha256": "27714971b00c7f2ac9a823375334be8bc7f8f2d2bbb59fd22a54ca987e19af9c",
+  "revision": "21c7b9b609fde0e3f1ede6391d2d993dbaae436e",
+  "endpoint": "http://localhost:8080",
+  "database": "NetDefaultDB",
+  "request_options": {
+    "max_memory_consumption_per_query_per_node": 12884901888,
+    "query_results_cache_max_age": "00:00:00",
+    "servertimeout": "00:00:43"
+  },
+  "timeout_seconds": 45,
+  "repeats": 3,
+  "status": "PASS",
+  "attempts": [
+    {
+      "name": "long-many-groups-value_avg-plain",
+      "repeat": 1,
+      "query_sha256": "0e1a7ab0598d7cb1c57a11ea45e1d4f7b7cb55719ff957081d0489294bb1181e",
+      "fixture_sha256": "231937ca99e9d7e6f836d77fd73aeb036b5f541f61fef474efd08d5da7723bd2",
+      "cpu": "00:00:00.0036850",
+      "peak_memory": 4599552,
+      "intermediate_growth": null,
+      "status": "PASS",
+      "detail": "exact result multiset and declared schema",
+      "observed_schema": [
+        {
+          "ColumnName": "WindowStart",
+          "ColumnType": "datetime"
+        },
+        {
+          "ColumnName": "WindowEnd",
+          "ColumnType": "datetime"
+        },
+        {
+          "ColumnName": "Host",
+          "ColumnType": "string"
+        },
+        {
+          "ColumnName": "ValueAvg",
+          "ColumnType": "real"
+        }
+      ],
+      "observed_rows": 96,
+      "engine_statistics": {
+        "FrameType": "DataTable",
+        "TableId": 2,
+        "TableKind": "QueryCompletionInformation",
+        "TableName": "QueryCompletionInformation",
+        "Columns": [
+          {
+            "ColumnName": "Timestamp",
+            "ColumnType": "datetime"
+          },
+          {
+            "ColumnName": "ClientRequestId",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "ActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "SubActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "ParentActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "Level",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "LevelName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "StatusCode",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "StatusCodeName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "EventType",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "EventTypeName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "Payload",
+            "ColumnType": "string"
+          }
+        ],
+        "Rows": [
+          [
+            "2026-11-16T19:06:37.1208412Z",
+            "unspecified;00814eb5-830e-4850-9558-c08abc438d8c",
+            "b198c72a-fd99-47a5-8e4c-4e4347f3d450",
+            "34b3f76c-0acd-4c90-81da-870eb3b3de38",
+            "6edd2b12-1eda-4881-aa5f-3885984fe641",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            4,
+            "QueryInfo",
+            "{\"Count\":1,\"Text\":\"Query completed successfully\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.1208457Z",
+            "unspecified;00814eb5-830e-4850-9558-c08abc438d8c",
+            "b198c72a-fd99-47a5-8e4c-4e4347f3d450",
+            "34b3f76c-0acd-4c90-81da-870eb3b3de38",
+            "6edd2b12-1eda-4881-aa5f-3885984fe641",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            5,
+            "WorkloadGroup",
+            "{\"Count\":1,\"Text\":\"default\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.1208486Z",
+            "unspecified;00814eb5-830e-4850-9558-c08abc438d8c",
+            "b198c72a-fd99-47a5-8e4c-4e4347f3d450",
+            "34b3f76c-0acd-4c90-81da-870eb3b3de38",
+            "6edd2b12-1eda-4881-aa5f-3885984fe641",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            6,
+            "EffectiveRequestOptions",
+            "{\"Count\":1,\"Text\":\"{\\\"DataScope\\\":\\\"All\\\",\\\"QueryConsistency\\\":\\\"strongconsistency\\\",\\\"MaxMemoryConsumptionPerIterator\\\":5368709120,\\\"MaxMemoryConsumptionPerQueryPerNode\\\":12884901888,\\\"QueryFanoutNodesPercent\\\":100,\\\"QueryFanoutThreadsPercent\\\":100}\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.1208592Z",
+            "unspecified;00814eb5-830e-4850-9558-c08abc438d8c",
+            "b198c72a-fd99-47a5-8e4c-4e4347f3d450",
+            "34b3f76c-0acd-4c90-81da-870eb3b3de38",
+            "6edd2b12-1eda-4881-aa5f-3885984fe641",
+            6,
+            "Stats",
+            0,
+            "S_OK (0)",
+            0,
+            "QueryResourceConsumption",
+            "{\"QueryHash\":\"2cf23a6a9522c391\",\"ExecutionTime\":0.008156,\"resource_usage\":{\"cache\":{\"shards\":{\"hot\":{\"hitbytes\":0,\"missbytes\":0,\"retrievebytes\":0},\"cold\":{\"hitbytes\":0,\"missbytes\":0,\"retrievebytes\":0},\"bypassbytes\":0}},\"cpu\":{\"user\":\"00:00:00.0036850\",\"kernel\":\"00:00:00\",\"total cpu\":\"00:00:00.0036850\",\"breakdown\":{\"query execution\":\"00:00:00.0010720\",\"query planning\":\"00:00:00.0026130\"}},\"memory\":{\"peak_per_node\":4599552},\"network\":{\"inter_cluster_total_bytes\":3887,\"cross_cluster_total_bytes\":0}},\"input_dataset_statistics\":{\"extents\":{\"total\":0,\"scanned\":0,\"scanned_min_datetime\":\"0001-01-01T00:00:00.0000000Z\",\"scanned_max_datetime\":\"0001-01-01T00:00:00.0000000Z\"},\"rows\":{\"total\":0,\"scanned\":0},\"rowstores\":{\"scanned_rows\":0,\"scanned_values_size\":0},\"shards\":{\"queries_generic\":0,\"queries_specialized\":0}},\"dataset_statistics\":[{\"table_row_count\":96,\"table_size\":3569}],\"cross_cluster_resource_usage\":{}}"
+          ]
+        ]
+      },
+      "engine_elapsed_seconds": 0.008156,
+      "output_statistics": [
+        {
+          "table_row_count": 96,
+          "table_size": 3569
+        }
+      ],
+      "elapsed_seconds": 0.015581
+    },
+    {
+      "name": "long-many-groups-value_avg-plain",
+      "repeat": 2,
+      "query_sha256": "0e1a7ab0598d7cb1c57a11ea45e1d4f7b7cb55719ff957081d0489294bb1181e",
+      "fixture_sha256": "231937ca99e9d7e6f836d77fd73aeb036b5f541f61fef474efd08d5da7723bd2",
+      "cpu": "00:00:00.0182060",
+      "peak_memory": 4596784,
+      "intermediate_growth": null,
+      "status": "PASS",
+      "detail": "exact result multiset and declared schema",
+      "observed_schema": [
+        {
+          "ColumnName": "WindowStart",
+          "ColumnType": "datetime"
+        },
+        {
+          "ColumnName": "WindowEnd",
+          "ColumnType": "datetime"
+        },
+        {
+          "ColumnName": "Host",
+          "ColumnType": "string"
+        },
+        {
+          "ColumnName": "ValueAvg",
+          "ColumnType": "real"
+        }
+      ],
+      "observed_rows": 96,
+      "engine_statistics": {
+        "FrameType": "DataTable",
+        "TableId": 2,
+        "TableKind": "QueryCompletionInformation",
+        "TableName": "QueryCompletionInformation",
+        "Columns": [
+          {
+            "ColumnName": "Timestamp",
+            "ColumnType": "datetime"
+          },
+          {
+            "ColumnName": "ClientRequestId",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "ActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "SubActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "ParentActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "Level",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "LevelName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "StatusCode",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "StatusCodeName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "EventType",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "EventTypeName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "Payload",
+            "ColumnType": "string"
+          }
+        ],
+        "Rows": [
+          [
+            "2026-11-16T19:06:37.1476555Z",
+            "unspecified;1a6ceca4-f6bb-4747-9bfa-e8238bba2fbe",
+            "74b961d9-0921-4178-98b5-9d7841e58766",
+            "1d0e4890-5534-49e5-9c82-1df22fb4fedc",
+            "9b6e6b32-74c8-4b16-9710-8843bce84573",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            4,
+            "QueryInfo",
+            "{\"Count\":1,\"Text\":\"Query completed successfully\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.1476599Z",
+            "unspecified;1a6ceca4-f6bb-4747-9bfa-e8238bba2fbe",
+            "74b961d9-0921-4178-98b5-9d7841e58766",
+            "1d0e4890-5534-49e5-9c82-1df22fb4fedc",
+            "9b6e6b32-74c8-4b16-9710-8843bce84573",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            5,
+            "WorkloadGroup",
+            "{\"Count\":1,\"Text\":\"default\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.1476628Z",
+            "unspecified;1a6ceca4-f6bb-4747-9bfa-e8238bba2fbe",
+            "74b961d9-0921-4178-98b5-9d7841e58766",
+            "1d0e4890-5534-49e5-9c82-1df22fb4fedc",
+            "9b6e6b32-74c8-4b16-9710-8843bce84573",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            6,
+            "EffectiveRequestOptions",
+            "{\"Count\":1,\"Text\":\"{\\\"DataScope\\\":\\\"All\\\",\\\"QueryConsistency\\\":\\\"strongconsistency\\\",\\\"MaxMemoryConsumptionPerIterator\\\":5368709120,\\\"MaxMemoryConsumptionPerQueryPerNode\\\":12884901888,\\\"QueryFanoutNodesPercent\\\":100,\\\"QueryFanoutThreadsPercent\\\":100}\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.1476737Z",
+            "unspecified;1a6ceca4-f6bb-4747-9bfa-e8238bba2fbe",
+            "74b961d9-0921-4178-98b5-9d7841e58766",
+            "1d0e4890-5534-49e5-9c82-1df22fb4fedc",
+            "9b6e6b32-74c8-4b16-9710-8843bce84573",
+            6,
+            "Stats",
+            0,
+            "S_OK (0)",
+            0,
+            "QueryResourceConsumption",
+            "{\"QueryHash\":\"2cf23a6a9522c391\",\"ExecutionTime\":0.0188133,\"resource_usage\":{\"cache\":{\"shards\":{\"hot\":{\"hitbytes\":0,\"missbytes\":0,\"retrievebytes\":0},\"cold\":{\"hitbytes\":0,\"missbytes\":0,\"retrievebytes\":0},\"bypassbytes\":0}},\"cpu\":{\"user\":\"00:00:00.0182060\",\"kernel\":\"00:00:00\",\"total cpu\":\"00:00:00.0182060\",\"breakdown\":{\"query execution\":\"00:00:00.0062230\",\"query planning\":\"00:00:00.0119830\"}},\"memory\":{\"peak_per_node\":4596784},\"network\":{\"inter_cluster_total_bytes\":3887,\"cross_cluster_total_bytes\":0}},\"input_dataset_statistics\":{\"extents\":{\"total\":0,\"scanned\":0,\"scanned_min_datetime\":\"0001-01-01T00:00:00.0000000Z\",\"scanned_max_datetime\":\"0001-01-01T00:00:00.0000000Z\"},\"rows\":{\"total\":0,\"scanned\":0},\"rowstores\":{\"scanned_rows\":0,\"scanned_values_size\":0},\"shards\":{\"queries_generic\":0,\"queries_specialized\":0}},\"dataset_statistics\":[{\"table_row_count\":96,\"table_size\":3569}],\"cross_cluster_resource_usage\":{}}"
+          ]
+        ]
+      },
+      "engine_elapsed_seconds": 0.0188133,
+      "output_statistics": [
+        {
+          "table_row_count": 96,
+          "table_size": 3569
+        }
+      ],
+      "elapsed_seconds": 0.027181
+    },
+    {
+      "name": "long-many-groups-value_avg-plain",
+      "repeat": 3,
+      "query_sha256": "0e1a7ab0598d7cb1c57a11ea45e1d4f7b7cb55719ff957081d0489294bb1181e",
+      "fixture_sha256": "231937ca99e9d7e6f836d77fd73aeb036b5f541f61fef474efd08d5da7723bd2",
+      "cpu": "00:00:00.0104800",
+      "peak_memory": 4586768,
+      "intermediate_growth": null,
+      "status": "PASS",
+      "detail": "exact result multiset and declared schema",
+      "observed_schema": [
+        {
+          "ColumnName": "WindowStart",
+          "ColumnType": "datetime"
+        },
+        {
+          "ColumnName": "WindowEnd",
+          "ColumnType": "datetime"
+        },
+        {
+          "ColumnName": "Host",
+          "ColumnType": "string"
+        },
+        {
+          "ColumnName": "ValueAvg",
+          "ColumnType": "real"
+        }
+      ],
+      "observed_rows": 96,
+      "engine_statistics": {
+        "FrameType": "DataTable",
+        "TableId": 2,
+        "TableKind": "QueryCompletionInformation",
+        "TableName": "QueryCompletionInformation",
+        "Columns": [
+          {
+            "ColumnName": "Timestamp",
+            "ColumnType": "datetime"
+          },
+          {
+            "ColumnName": "ClientRequestId",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "ActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "SubActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "ParentActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "Level",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "LevelName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "StatusCode",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "StatusCodeName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "EventType",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "EventTypeName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "Payload",
+            "ColumnType": "string"
+          }
+        ],
+        "Rows": [
+          [
+            "2026-11-16T19:06:37.1675629Z",
+            "unspecified;ab13b9dd-eff7-433a-b8cc-3438cb22ed08",
+            "0d672fe6-1735-4eb5-bb23-0b4ed6c2e31b",
+            "855ccd02-cb02-484f-993c-e8ce15ded8e1",
+            "e3a08487-2dc5-44e6-8010-26c687ab58f4",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            4,
+            "QueryInfo",
+            "{\"Count\":1,\"Text\":\"Query completed successfully\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.1675685Z",
+            "unspecified;ab13b9dd-eff7-433a-b8cc-3438cb22ed08",
+            "0d672fe6-1735-4eb5-bb23-0b4ed6c2e31b",
+            "855ccd02-cb02-484f-993c-e8ce15ded8e1",
+            "e3a08487-2dc5-44e6-8010-26c687ab58f4",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            5,
+            "WorkloadGroup",
+            "{\"Count\":1,\"Text\":\"default\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.167572Z",
+            "unspecified;ab13b9dd-eff7-433a-b8cc-3438cb22ed08",
+            "0d672fe6-1735-4eb5-bb23-0b4ed6c2e31b",
+            "855ccd02-cb02-484f-993c-e8ce15ded8e1",
+            "e3a08487-2dc5-44e6-8010-26c687ab58f4",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            6,
+            "EffectiveRequestOptions",
+            "{\"Count\":1,\"Text\":\"{\\\"DataScope\\\":\\\"All\\\",\\\"QueryConsistency\\\":\\\"strongconsistency\\\",\\\"MaxMemoryConsumptionPerIterator\\\":5368709120,\\\"MaxMemoryConsumptionPerQueryPerNode\\\":12884901888,\\\"QueryFanoutNodesPercent\\\":100,\\\"QueryFanoutThreadsPercent\\\":100}\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.1675853Z",
+            "unspecified;ab13b9dd-eff7-433a-b8cc-3438cb22ed08",
+            "0d672fe6-1735-4eb5-bb23-0b4ed6c2e31b",
+            "855ccd02-cb02-484f-993c-e8ce15ded8e1",
+            "e3a08487-2dc5-44e6-8010-26c687ab58f4",
+            6,
+            "Stats",
+            0,
+            "S_OK (0)",
+            0,
+            "QueryResourceConsumption",
+            "{\"QueryHash\":\"2cf23a6a9522c391\",\"ExecutionTime\":0.0115991,\"resource_usage\":{\"cache\":{\"shards\":{\"hot\":{\"hitbytes\":0,\"missbytes\":0,\"retrievebytes\":0},\"cold\":{\"hitbytes\":0,\"missbytes\":0,\"retrievebytes\":0},\"bypassbytes\":0}},\"cpu\":{\"user\":\"00:00:00.0025610\",\"kernel\":\"00:00:00.0079190\",\"total cpu\":\"00:00:00.0104800\",\"breakdown\":{\"query execution\":\"00:00:00.0055920\",\"query planning\":\"00:00:00.0048880\"}},\"memory\":{\"peak_per_node\":4586768},\"network\":{\"inter_cluster_total_bytes\":3887,\"cross_cluster_total_bytes\":0}},\"input_dataset_statistics\":{\"extents\":{\"total\":0,\"scanned\":0,\"scanned_min_datetime\":\"0001-01-01T00:00:00.0000000Z\",\"scanned_max_datetime\":\"0001-01-01T00:00:00.0000000Z\"},\"rows\":{\"total\":0,\"scanned\":0},\"rowstores\":{\"scanned_rows\":0,\"scanned_values_size\":0},\"shards\":{\"queries_generic\":0,\"queries_specialized\":0}},\"dataset_statistics\":[{\"table_row_count\":96,\"table_size\":3569}],\"cross_cluster_resource_usage\":{}}"
+          ]
+        ]
+      },
+      "engine_elapsed_seconds": 0.0115991,
+      "output_statistics": [
+        {
+          "table_row_count": 96,
+          "table_size": 3569
+        }
+      ],
+      "elapsed_seconds": 0.019381
+    },
+    {
+      "name": "long-many-groups-value_avg-context",
+      "repeat": 1,
+      "query_sha256": "b64897013cbc4c100d0b05f375ecc70de47d69c1cf0573a569a8da88231d176f",
+      "fixture_sha256": "eea5e03a785cfe1d606a241f16fc607b04dcc12eabcab5b7808fa48c28393e7f",
+      "cpu": "00:00:00.0061600",
+      "peak_memory": 8244624,
+      "intermediate_growth": null,
+      "status": "PASS",
+      "detail": "exact result multiset and declared schema",
+      "observed_schema": [
+        {
+          "ColumnName": "WindowStart",
+          "ColumnType": "datetime"
+        },
+        {
+          "ColumnName": "WindowEnd",
+          "ColumnType": "datetime"
+        },
+        {
+          "ColumnName": "Host",
+          "ColumnType": "string"
+        },
+        {
+          "ColumnName": "User",
+          "ColumnType": "dynamic"
+        },
+        {
+          "ColumnName": "ValueAvg",
+          "ColumnType": "real"
+        },
+        {
+          "ColumnName": "ContextComplete",
+          "ColumnType": "bool"
+        }
+      ],
+      "observed_rows": 96,
+      "engine_statistics": {
+        "FrameType": "DataTable",
+        "TableId": 2,
+        "TableKind": "QueryCompletionInformation",
+        "TableName": "QueryCompletionInformation",
+        "Columns": [
+          {
+            "ColumnName": "Timestamp",
+            "ColumnType": "datetime"
+          },
+          {
+            "ColumnName": "ClientRequestId",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "ActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "SubActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "ParentActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "Level",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "LevelName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "StatusCode",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "StatusCodeName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "EventType",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "EventTypeName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "Payload",
+            "ColumnType": "string"
+          }
+        ],
+        "Rows": [
+          [
+            "2026-11-16T19:06:37.1944677Z",
+            "unspecified;1a60cf7e-146e-4261-8eb9-c64eb001e7d9",
+            "c7d8ca86-8b15-44f3-9783-c0dba1fff6de",
+            "fea294cc-21eb-4b1b-9fa8-1cdaab8c2a57",
+            "55dec615-8788-4d7e-b966-8f0bfee76f4c",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            4,
+            "QueryInfo",
+            "{\"Count\":1,\"Text\":\"Query completed successfully\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.194471Z",
+            "unspecified;1a60cf7e-146e-4261-8eb9-c64eb001e7d9",
+            "c7d8ca86-8b15-44f3-9783-c0dba1fff6de",
+            "fea294cc-21eb-4b1b-9fa8-1cdaab8c2a57",
+            "55dec615-8788-4d7e-b966-8f0bfee76f4c",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            5,
+            "WorkloadGroup",
+            "{\"Count\":1,\"Text\":\"default\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.1944737Z",
+            "unspecified;1a60cf7e-146e-4261-8eb9-c64eb001e7d9",
+            "c7d8ca86-8b15-44f3-9783-c0dba1fff6de",
+            "fea294cc-21eb-4b1b-9fa8-1cdaab8c2a57",
+            "55dec615-8788-4d7e-b966-8f0bfee76f4c",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            6,
+            "EffectiveRequestOptions",
+            "{\"Count\":1,\"Text\":\"{\\\"DataScope\\\":\\\"All\\\",\\\"QueryConsistency\\\":\\\"strongconsistency\\\",\\\"MaxMemoryConsumptionPerIterator\\\":5368709120,\\\"MaxMemoryConsumptionPerQueryPerNode\\\":12884901888,\\\"QueryFanoutNodesPercent\\\":100,\\\"QueryFanoutThreadsPercent\\\":100}\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.1944824Z",
+            "unspecified;1a60cf7e-146e-4261-8eb9-c64eb001e7d9",
+            "c7d8ca86-8b15-44f3-9783-c0dba1fff6de",
+            "fea294cc-21eb-4b1b-9fa8-1cdaab8c2a57",
+            "55dec615-8788-4d7e-b966-8f0bfee76f4c",
+            6,
+            "Stats",
+            0,
+            "S_OK (0)",
+            0,
+            "QueryResourceConsumption",
+            "{\"QueryHash\":\"41cfe75b53b84fc2\",\"ExecutionTime\":0.0179945,\"resource_usage\":{\"cache\":{\"shards\":{\"hot\":{\"hitbytes\":0,\"missbytes\":0,\"retrievebytes\":0},\"cold\":{\"hitbytes\":0,\"missbytes\":0,\"retrievebytes\":0},\"bypassbytes\":0}},\"cpu\":{\"user\":\"00:00:00.0061600\",\"kernel\":\"00:00:00\",\"total cpu\":\"00:00:00.0061600\",\"breakdown\":{\"query execution\":\"00:00:00.0017830\",\"query planning\":\"00:00:00.0043770\"}},\"memory\":{\"peak_per_node\":8244624},\"network\":{\"inter_cluster_total_bytes\":12071,\"cross_cluster_total_bytes\":0}},\"input_dataset_statistics\":{\"extents\":{\"total\":0,\"scanned\":0,\"scanned_min_datetime\":\"0001-01-01T00:00:00.0000000Z\",\"scanned_max_datetime\":\"0001-01-01T00:00:00.0000000Z\"},\"rows\":{\"total\":0,\"scanned\":0},\"rowstores\":{\"scanned_rows\":0,\"scanned_values_size\":0},\"shards\":{\"queries_generic\":0,\"queries_specialized\":0}},\"dataset_statistics\":[{\"table_row_count\":96,\"table_size\":10170}],\"cross_cluster_resource_usage\":{}}"
+          ]
+        ]
+      },
+      "engine_elapsed_seconds": 0.0179945,
+      "output_statistics": [
+        {
+          "table_row_count": 96,
+          "table_size": 10170
+        }
+      ],
+      "elapsed_seconds": 0.02615
+    },
+    {
+      "name": "long-many-groups-value_avg-context",
+      "repeat": 2,
+      "query_sha256": "b64897013cbc4c100d0b05f375ecc70de47d69c1cf0573a569a8da88231d176f",
+      "fixture_sha256": "eea5e03a785cfe1d606a241f16fc607b04dcc12eabcab5b7808fa48c28393e7f",
+      "cpu": "00:00:00.0144910",
+      "peak_memory": 8192656,
+      "intermediate_growth": null,
+      "status": "PASS",
+      "detail": "exact result multiset and declared schema",
+      "observed_schema": [
+        {
+          "ColumnName": "WindowStart",
+          "ColumnType": "datetime"
+        },
+        {
+          "ColumnName": "WindowEnd",
+          "ColumnType": "datetime"
+        },
+        {
+          "ColumnName": "Host",
+          "ColumnType": "string"
+        },
+        {
+          "ColumnName": "User",
+          "ColumnType": "dynamic"
+        },
+        {
+          "ColumnName": "ValueAvg",
+          "ColumnType": "real"
+        },
+        {
+          "ColumnName": "ContextComplete",
+          "ColumnType": "bool"
+        }
+      ],
+      "observed_rows": 96,
+      "engine_statistics": {
+        "FrameType": "DataTable",
+        "TableId": 2,
+        "TableKind": "QueryCompletionInformation",
+        "TableName": "QueryCompletionInformation",
+        "Columns": [
+          {
+            "ColumnName": "Timestamp",
+            "ColumnType": "datetime"
+          },
+          {
+            "ColumnName": "ClientRequestId",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "ActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "SubActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "ParentActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "Level",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "LevelName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "StatusCode",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "StatusCodeName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "EventType",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "EventTypeName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "Payload",
+            "ColumnType": "string"
+          }
+        ],
+        "Rows": [
+          [
+            "2026-11-16T19:06:37.2188747Z",
+            "unspecified;7ef7f3dd-ceff-457e-bd94-d94499ec1b48",
+            "0269d053-f920-484c-abd6-fc9d73096b14",
+            "44ebe0a8-1470-4644-82f6-39d352b41337",
+            "aef3f151-d86a-4577-b32b-5c41c705ca14",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            4,
+            "QueryInfo",
+            "{\"Count\":1,\"Text\":\"Query completed successfully\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.2188802Z",
+            "unspecified;7ef7f3dd-ceff-457e-bd94-d94499ec1b48",
+            "0269d053-f920-484c-abd6-fc9d73096b14",
+            "44ebe0a8-1470-4644-82f6-39d352b41337",
+            "aef3f151-d86a-4577-b32b-5c41c705ca14",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            5,
+            "WorkloadGroup",
+            "{\"Count\":1,\"Text\":\"default\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.2188852Z",
+            "unspecified;7ef7f3dd-ceff-457e-bd94-d94499ec1b48",
+            "0269d053-f920-484c-abd6-fc9d73096b14",
+            "44ebe0a8-1470-4644-82f6-39d352b41337",
+            "aef3f151-d86a-4577-b32b-5c41c705ca14",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            6,
+            "EffectiveRequestOptions",
+            "{\"Count\":1,\"Text\":\"{\\\"DataScope\\\":\\\"All\\\",\\\"QueryConsistency\\\":\\\"strongconsistency\\\",\\\"MaxMemoryConsumptionPerIterator\\\":5368709120,\\\"MaxMemoryConsumptionPerQueryPerNode\\\":12884901888,\\\"QueryFanoutNodesPercent\\\":100,\\\"QueryFanoutThreadsPercent\\\":100}\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.2189012Z",
+            "unspecified;7ef7f3dd-ceff-457e-bd94-d94499ec1b48",
+            "0269d053-f920-484c-abd6-fc9d73096b14",
+            "44ebe0a8-1470-4644-82f6-39d352b41337",
+            "aef3f151-d86a-4577-b32b-5c41c705ca14",
+            6,
+            "Stats",
+            0,
+            "S_OK (0)",
+            0,
+            "QueryResourceConsumption",
+            "{\"QueryHash\":\"41cfe75b53b84fc2\",\"ExecutionTime\":0.016426,\"resource_usage\":{\"cache\":{\"shards\":{\"hot\":{\"hitbytes\":0,\"missbytes\":0,\"retrievebytes\":0},\"cold\":{\"hitbytes\":0,\"missbytes\":0,\"retrievebytes\":0},\"bypassbytes\":0}},\"cpu\":{\"user\":\"00:00:00.0144910\",\"kernel\":\"00:00:00\",\"total cpu\":\"00:00:00.0144910\",\"breakdown\":{\"query execution\":\"00:00:00.0060800\",\"query planning\":\"00:00:00.0084110\"}},\"memory\":{\"peak_per_node\":8192656},\"network\":{\"inter_cluster_total_bytes\":12075,\"cross_cluster_total_bytes\":0}},\"input_dataset_statistics\":{\"extents\":{\"total\":0,\"scanned\":0,\"scanned_min_datetime\":\"0001-01-01T00:00:00.0000000Z\",\"scanned_max_datetime\":\"0001-01-01T00:00:00.0000000Z\"},\"rows\":{\"total\":0,\"scanned\":0},\"rowstores\":{\"scanned_rows\":0,\"scanned_values_size\":0},\"shards\":{\"queries_generic\":0,\"queries_specialized\":0}},\"dataset_statistics\":[{\"table_row_count\":96,\"table_size\":10170}],\"cross_cluster_resource_usage\":{}}"
+          ]
+        ]
+      },
+      "engine_elapsed_seconds": 0.016426,
+      "output_statistics": [
+        {
+          "table_row_count": 96,
+          "table_size": 10170
+        }
+      ],
+      "elapsed_seconds": 0.024558
+    },
+    {
+      "name": "long-many-groups-value_avg-context",
+      "repeat": 3,
+      "query_sha256": "b64897013cbc4c100d0b05f375ecc70de47d69c1cf0573a569a8da88231d176f",
+      "fixture_sha256": "eea5e03a785cfe1d606a241f16fc607b04dcc12eabcab5b7808fa48c28393e7f",
+      "cpu": "00:00:00.0050410",
+      "peak_memory": 8208128,
+      "intermediate_growth": null,
+      "status": "PASS",
+      "detail": "exact result multiset and declared schema",
+      "observed_schema": [
+        {
+          "ColumnName": "WindowStart",
+          "ColumnType": "datetime"
+        },
+        {
+          "ColumnName": "WindowEnd",
+          "ColumnType": "datetime"
+        },
+        {
+          "ColumnName": "Host",
+          "ColumnType": "string"
+        },
+        {
+          "ColumnName": "User",
+          "ColumnType": "dynamic"
+        },
+        {
+          "ColumnName": "ValueAvg",
+          "ColumnType": "real"
+        },
+        {
+          "ColumnName": "ContextComplete",
+          "ColumnType": "bool"
+        }
+      ],
+      "observed_rows": 96,
+      "engine_statistics": {
+        "FrameType": "DataTable",
+        "TableId": 2,
+        "TableKind": "QueryCompletionInformation",
+        "TableName": "QueryCompletionInformation",
+        "Columns": [
+          {
+            "ColumnName": "Timestamp",
+            "ColumnType": "datetime"
+          },
+          {
+            "ColumnName": "ClientRequestId",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "ActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "SubActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "ParentActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "Level",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "LevelName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "StatusCode",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "StatusCodeName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "EventType",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "EventTypeName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "Payload",
+            "ColumnType": "string"
+          }
+        ],
+        "Rows": [
+          [
+            "2026-11-16T19:06:37.2440982Z",
+            "unspecified;8404c803-15c4-4c8a-9f03-afb0985e8114",
+            "27c83dc6-ac99-4cb6-a9de-b763edcfda3c",
+            "1a6ca41a-9436-4eed-b998-7e8815aa9cbb",
+            "83e64057-1af2-4958-8553-6b8e44135930",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            4,
+            "QueryInfo",
+            "{\"Count\":1,\"Text\":\"Query completed successfully\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.2441022Z",
+            "unspecified;8404c803-15c4-4c8a-9f03-afb0985e8114",
+            "27c83dc6-ac99-4cb6-a9de-b763edcfda3c",
+            "1a6ca41a-9436-4eed-b998-7e8815aa9cbb",
+            "83e64057-1af2-4958-8553-6b8e44135930",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            5,
+            "WorkloadGroup",
+            "{\"Count\":1,\"Text\":\"default\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.2441049Z",
+            "unspecified;8404c803-15c4-4c8a-9f03-afb0985e8114",
+            "27c83dc6-ac99-4cb6-a9de-b763edcfda3c",
+            "1a6ca41a-9436-4eed-b998-7e8815aa9cbb",
+            "83e64057-1af2-4958-8553-6b8e44135930",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            6,
+            "EffectiveRequestOptions",
+            "{\"Count\":1,\"Text\":\"{\\\"DataScope\\\":\\\"All\\\",\\\"QueryConsistency\\\":\\\"strongconsistency\\\",\\\"MaxMemoryConsumptionPerIterator\\\":5368709120,\\\"MaxMemoryConsumptionPerQueryPerNode\\\":12884901888,\\\"QueryFanoutNodesPercent\\\":100,\\\"QueryFanoutThreadsPercent\\\":100}\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.2441137Z",
+            "unspecified;8404c803-15c4-4c8a-9f03-afb0985e8114",
+            "27c83dc6-ac99-4cb6-a9de-b763edcfda3c",
+            "1a6ca41a-9436-4eed-b998-7e8815aa9cbb",
+            "83e64057-1af2-4958-8553-6b8e44135930",
+            6,
+            "Stats",
+            0,
+            "S_OK (0)",
+            0,
+            "QueryResourceConsumption",
+            "{\"QueryHash\":\"41cfe75b53b84fc2\",\"ExecutionTime\":0.0168143,\"resource_usage\":{\"cache\":{\"shards\":{\"hot\":{\"hitbytes\":0,\"missbytes\":0,\"retrievebytes\":0},\"cold\":{\"hitbytes\":0,\"missbytes\":0,\"retrievebytes\":0},\"bypassbytes\":0}},\"cpu\":{\"user\":\"00:00:00.0050410\",\"kernel\":\"00:00:00\",\"total cpu\":\"00:00:00.0050410\",\"breakdown\":{\"query execution\":\"00:00:00.0014770\",\"query planning\":\"00:00:00.0035640\"}},\"memory\":{\"peak_per_node\":8208128},\"network\":{\"inter_cluster_total_bytes\":12075,\"cross_cluster_total_bytes\":0}},\"input_dataset_statistics\":{\"extents\":{\"total\":0,\"scanned\":0,\"scanned_min_datetime\":\"0001-01-01T00:00:00.0000000Z\",\"scanned_max_datetime\":\"0001-01-01T00:00:00.0000000Z\"},\"rows\":{\"total\":0,\"scanned\":0},\"rowstores\":{\"scanned_rows\":0,\"scanned_values_size\":0},\"shards\":{\"queries_generic\":0,\"queries_specialized\":0}},\"dataset_statistics\":[{\"table_row_count\":96,\"table_size\":10170}],\"cross_cluster_resource_usage\":{}}"
+          ]
+        ]
+      },
+      "engine_elapsed_seconds": 0.0168143,
+      "output_statistics": [
+        {
+          "table_row_count": 96,
+          "table_size": 10170
+        }
+      ],
+      "elapsed_seconds": 0.024545
+    },
+    {
+      "name": "long-hot-group-value_avg-plain",
+      "repeat": 1,
+      "query_sha256": "13e45ce8a54e9fbe916dbe3f38839768477a4e8d087611af7cf1cbb8c32a45c4",
+      "fixture_sha256": "5771d699269e2ccc582a97f754bb2bb047a409994ea21b9bb424cd8d7a225622",
+      "cpu": "00:00:00.0070450",
+      "peak_memory": 4207792,
+      "intermediate_growth": null,
+      "status": "PASS",
+      "detail": "exact result multiset and declared schema",
+      "observed_schema": [
+        {
+          "ColumnName": "WindowStart",
+          "ColumnType": "datetime"
+        },
+        {
+          "ColumnName": "WindowEnd",
+          "ColumnType": "datetime"
+        },
+        {
+          "ColumnName": "Host",
+          "ColumnType": "string"
+        },
+        {
+          "ColumnName": "ValueAvg",
+          "ColumnType": "real"
+        }
+      ],
+      "observed_rows": 0,
+      "engine_statistics": {
+        "FrameType": "DataTable",
+        "TableId": 2,
+        "TableKind": "QueryCompletionInformation",
+        "TableName": "QueryCompletionInformation",
+        "Columns": [
+          {
+            "ColumnName": "Timestamp",
+            "ColumnType": "datetime"
+          },
+          {
+            "ColumnName": "ClientRequestId",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "ActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "SubActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "ParentActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "Level",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "LevelName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "StatusCode",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "StatusCodeName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "EventType",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "EventTypeName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "Payload",
+            "ColumnType": "string"
+          }
+        ],
+        "Rows": [
+          [
+            "2026-11-16T19:06:37.2605693Z",
+            "unspecified;3d256061-0502-494b-a598-183dd625e8b1",
+            "46829994-f237-47db-b901-cadbf51cd9c2",
+            "8741cfe5-3db0-4fae-986a-3fceea19cf80",
+            "a3401386-f61f-462d-9894-c2e94d1e466d",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            4,
+            "QueryInfo",
+            "{\"Count\":1,\"Text\":\"Query completed successfully\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.2605733Z",
+            "unspecified;3d256061-0502-494b-a598-183dd625e8b1",
+            "46829994-f237-47db-b901-cadbf51cd9c2",
+            "8741cfe5-3db0-4fae-986a-3fceea19cf80",
+            "a3401386-f61f-462d-9894-c2e94d1e466d",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            5,
+            "WorkloadGroup",
+            "{\"Count\":1,\"Text\":\"default\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.2605759Z",
+            "unspecified;3d256061-0502-494b-a598-183dd625e8b1",
+            "46829994-f237-47db-b901-cadbf51cd9c2",
+            "8741cfe5-3db0-4fae-986a-3fceea19cf80",
+            "a3401386-f61f-462d-9894-c2e94d1e466d",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            6,
+            "EffectiveRequestOptions",
+            "{\"Count\":1,\"Text\":\"{\\\"DataScope\\\":\\\"All\\\",\\\"QueryConsistency\\\":\\\"strongconsistency\\\",\\\"MaxMemoryConsumptionPerIterator\\\":5368709120,\\\"MaxMemoryConsumptionPerQueryPerNode\\\":12884901888,\\\"QueryFanoutNodesPercent\\\":100,\\\"QueryFanoutThreadsPercent\\\":100}\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.2605861Z",
+            "unspecified;3d256061-0502-494b-a598-183dd625e8b1",
+            "46829994-f237-47db-b901-cadbf51cd9c2",
+            "8741cfe5-3db0-4fae-986a-3fceea19cf80",
+            "a3401386-f61f-462d-9894-c2e94d1e466d",
+            6,
+            "Stats",
+            0,
+            "S_OK (0)",
+            0,
+            "QueryResourceConsumption",
+            "{\"QueryHash\":\"2cf23a6a9522c391\",\"ExecutionTime\":0.0085565,\"resource_usage\":{\"cache\":{\"shards\":{\"hot\":{\"hitbytes\":0,\"missbytes\":0,\"retrievebytes\":0},\"cold\":{\"hitbytes\":0,\"missbytes\":0,\"retrievebytes\":0},\"bypassbytes\":0}},\"cpu\":{\"user\":\"00:00:00.0065630\",\"kernel\":\"00:00:00.0004820\",\"total cpu\":\"00:00:00.0070450\",\"breakdown\":{\"query execution\":\"00:00:00.0070450\",\"query planning\":\"00:00:00\"}},\"memory\":{\"peak_per_node\":4207792},\"network\":{\"inter_cluster_total_bytes\":627,\"cross_cluster_total_bytes\":0}},\"input_dataset_statistics\":{\"extents\":{\"total\":0,\"scanned\":0,\"scanned_min_datetime\":\"0001-01-01T00:00:00.0000000Z\",\"scanned_max_datetime\":\"0001-01-01T00:00:00.0000000Z\"},\"rows\":{\"total\":0,\"scanned\":0},\"rowstores\":{\"scanned_rows\":0,\"scanned_values_size\":0},\"shards\":{\"queries_generic\":0,\"queries_specialized\":0}},\"dataset_statistics\":[{\"table_row_count\":0,\"table_size\":0}],\"cross_cluster_resource_usage\":{}}"
+          ]
+        ]
+      },
+      "engine_elapsed_seconds": 0.0085565,
+      "output_statistics": [
+        {
+          "table_row_count": 0,
+          "table_size": 0
+        }
+      ],
+      "elapsed_seconds": 0.015884
+    },
+    {
+      "name": "long-hot-group-value_avg-plain",
+      "repeat": 2,
+      "query_sha256": "13e45ce8a54e9fbe916dbe3f38839768477a4e8d087611af7cf1cbb8c32a45c4",
+      "fixture_sha256": "5771d699269e2ccc582a97f754bb2bb047a409994ea21b9bb424cd8d7a225622",
+      "cpu": "00:00:00.0071250",
+      "peak_memory": 4257520,
+      "intermediate_growth": null,
+      "status": "PASS",
+      "detail": "exact result multiset and declared schema",
+      "observed_schema": [
+        {
+          "ColumnName": "WindowStart",
+          "ColumnType": "datetime"
+        },
+        {
+          "ColumnName": "WindowEnd",
+          "ColumnType": "datetime"
+        },
+        {
+          "ColumnName": "Host",
+          "ColumnType": "string"
+        },
+        {
+          "ColumnName": "ValueAvg",
+          "ColumnType": "real"
+        }
+      ],
+      "observed_rows": 0,
+      "engine_statistics": {
+        "FrameType": "DataTable",
+        "TableId": 2,
+        "TableKind": "QueryCompletionInformation",
+        "TableName": "QueryCompletionInformation",
+        "Columns": [
+          {
+            "ColumnName": "Timestamp",
+            "ColumnType": "datetime"
+          },
+          {
+            "ColumnName": "ClientRequestId",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "ActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "SubActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "ParentActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "Level",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "LevelName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "StatusCode",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "StatusCodeName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "EventType",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "EventTypeName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "Payload",
+            "ColumnType": "string"
+          }
+        ],
+        "Rows": [
+          [
+            "2026-11-16T19:06:37.2798306Z",
+            "unspecified;0a4a9798-a4a8-43ba-81d1-4c318e89be9f",
+            "ae56c9c4-8643-45e9-92c3-a90f7cf04a0a",
+            "3e5bb317-35ad-43e4-b4e5-f760932ba7b1",
+            "613fa7ac-54b4-4ea3-af31-990fd34c52b0",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            4,
+            "QueryInfo",
+            "{\"Count\":1,\"Text\":\"Query completed successfully\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.2798369Z",
+            "unspecified;0a4a9798-a4a8-43ba-81d1-4c318e89be9f",
+            "ae56c9c4-8643-45e9-92c3-a90f7cf04a0a",
+            "3e5bb317-35ad-43e4-b4e5-f760932ba7b1",
+            "613fa7ac-54b4-4ea3-af31-990fd34c52b0",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            5,
+            "WorkloadGroup",
+            "{\"Count\":1,\"Text\":\"default\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.2798399Z",
+            "unspecified;0a4a9798-a4a8-43ba-81d1-4c318e89be9f",
+            "ae56c9c4-8643-45e9-92c3-a90f7cf04a0a",
+            "3e5bb317-35ad-43e4-b4e5-f760932ba7b1",
+            "613fa7ac-54b4-4ea3-af31-990fd34c52b0",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            6,
+            "EffectiveRequestOptions",
+            "{\"Count\":1,\"Text\":\"{\\\"DataScope\\\":\\\"All\\\",\\\"QueryConsistency\\\":\\\"strongconsistency\\\",\\\"MaxMemoryConsumptionPerIterator\\\":5368709120,\\\"MaxMemoryConsumptionPerQueryPerNode\\\":12884901888,\\\"QueryFanoutNodesPercent\\\":100,\\\"QueryFanoutThreadsPercent\\\":100}\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.2798499Z",
+            "unspecified;0a4a9798-a4a8-43ba-81d1-4c318e89be9f",
+            "ae56c9c4-8643-45e9-92c3-a90f7cf04a0a",
+            "3e5bb317-35ad-43e4-b4e5-f760932ba7b1",
+            "613fa7ac-54b4-4ea3-af31-990fd34c52b0",
+            6,
+            "Stats",
+            0,
+            "S_OK (0)",
+            0,
+            "QueryResourceConsumption",
+            "{\"QueryHash\":\"2cf23a6a9522c391\",\"ExecutionTime\":0.0085594,\"resource_usage\":{\"cache\":{\"shards\":{\"hot\":{\"hitbytes\":0,\"missbytes\":0,\"retrievebytes\":0},\"cold\":{\"hitbytes\":0,\"missbytes\":0,\"retrievebytes\":0},\"bypassbytes\":0}},\"cpu\":{\"user\":\"00:00:00.0065970\",\"kernel\":\"00:00:00.0005280\",\"total cpu\":\"00:00:00.0071250\",\"breakdown\":{\"query execution\":\"00:00:00.0071250\",\"query planning\":\"00:00:00\"}},\"memory\":{\"peak_per_node\":4257520},\"network\":{\"inter_cluster_total_bytes\":627,\"cross_cluster_total_bytes\":0}},\"input_dataset_statistics\":{\"extents\":{\"total\":0,\"scanned\":0,\"scanned_min_datetime\":\"0001-01-01T00:00:00.0000000Z\",\"scanned_max_datetime\":\"0001-01-01T00:00:00.0000000Z\"},\"rows\":{\"total\":0,\"scanned\":0},\"rowstores\":{\"scanned_rows\":0,\"scanned_values_size\":0},\"shards\":{\"queries_generic\":0,\"queries_specialized\":0}},\"dataset_statistics\":[{\"table_row_count\":0,\"table_size\":0}],\"cross_cluster_resource_usage\":{}}"
+          ]
+        ]
+      },
+      "engine_elapsed_seconds": 0.0085594,
+      "output_statistics": [
+        {
+          "table_row_count": 0,
+          "table_size": 0
+        }
+      ],
+      "elapsed_seconds": 0.019006
+    },
+    {
+      "name": "long-hot-group-value_avg-plain",
+      "repeat": 3,
+      "query_sha256": "13e45ce8a54e9fbe916dbe3f38839768477a4e8d087611af7cf1cbb8c32a45c4",
+      "fixture_sha256": "5771d699269e2ccc582a97f754bb2bb047a409994ea21b9bb424cd8d7a225622",
+      "cpu": "00:00:00.0073790",
+      "peak_memory": 4159024,
+      "intermediate_growth": null,
+      "status": "PASS",
+      "detail": "exact result multiset and declared schema",
+      "observed_schema": [
+        {
+          "ColumnName": "WindowStart",
+          "ColumnType": "datetime"
+        },
+        {
+          "ColumnName": "WindowEnd",
+          "ColumnType": "datetime"
+        },
+        {
+          "ColumnName": "Host",
+          "ColumnType": "string"
+        },
+        {
+          "ColumnName": "ValueAvg",
+          "ColumnType": "real"
+        }
+      ],
+      "observed_rows": 0,
+      "engine_statistics": {
+        "FrameType": "DataTable",
+        "TableId": 2,
+        "TableKind": "QueryCompletionInformation",
+        "TableName": "QueryCompletionInformation",
+        "Columns": [
+          {
+            "ColumnName": "Timestamp",
+            "ColumnType": "datetime"
+          },
+          {
+            "ColumnName": "ClientRequestId",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "ActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "SubActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "ParentActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "Level",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "LevelName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "StatusCode",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "StatusCodeName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "EventType",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "EventTypeName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "Payload",
+            "ColumnType": "string"
+          }
+        ],
+        "Rows": [
+          [
+            "2026-11-16T19:06:37.2973426Z",
+            "unspecified;e385231e-3daa-432a-86a6-4a94d320c18e",
+            "353be25f-3437-4818-875a-0ddca1425f9e",
+            "d758f4fa-4a8c-4fbe-84e0-03e13c620311",
+            "4edcd7f3-d82c-43f6-81d4-5e2e56682f53",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            4,
+            "QueryInfo",
+            "{\"Count\":1,\"Text\":\"Query completed successfully\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.2973472Z",
+            "unspecified;e385231e-3daa-432a-86a6-4a94d320c18e",
+            "353be25f-3437-4818-875a-0ddca1425f9e",
+            "d758f4fa-4a8c-4fbe-84e0-03e13c620311",
+            "4edcd7f3-d82c-43f6-81d4-5e2e56682f53",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            5,
+            "WorkloadGroup",
+            "{\"Count\":1,\"Text\":\"default\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.2973501Z",
+            "unspecified;e385231e-3daa-432a-86a6-4a94d320c18e",
+            "353be25f-3437-4818-875a-0ddca1425f9e",
+            "d758f4fa-4a8c-4fbe-84e0-03e13c620311",
+            "4edcd7f3-d82c-43f6-81d4-5e2e56682f53",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            6,
+            "EffectiveRequestOptions",
+            "{\"Count\":1,\"Text\":\"{\\\"DataScope\\\":\\\"All\\\",\\\"QueryConsistency\\\":\\\"strongconsistency\\\",\\\"MaxMemoryConsumptionPerIterator\\\":5368709120,\\\"MaxMemoryConsumptionPerQueryPerNode\\\":12884901888,\\\"QueryFanoutNodesPercent\\\":100,\\\"QueryFanoutThreadsPercent\\\":100}\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.2973605Z",
+            "unspecified;e385231e-3daa-432a-86a6-4a94d320c18e",
+            "353be25f-3437-4818-875a-0ddca1425f9e",
+            "d758f4fa-4a8c-4fbe-84e0-03e13c620311",
+            "4edcd7f3-d82c-43f6-81d4-5e2e56682f53",
+            6,
+            "Stats",
+            0,
+            "S_OK (0)",
+            0,
+            "QueryResourceConsumption",
+            "{\"QueryHash\":\"2cf23a6a9522c391\",\"ExecutionTime\":0.0097624,\"resource_usage\":{\"cache\":{\"shards\":{\"hot\":{\"hitbytes\":0,\"missbytes\":0,\"retrievebytes\":0},\"cold\":{\"hitbytes\":0,\"missbytes\":0,\"retrievebytes\":0},\"bypassbytes\":0}},\"cpu\":{\"user\":\"00:00:00.0073790\",\"kernel\":\"00:00:00\",\"total cpu\":\"00:00:00.0073790\",\"breakdown\":{\"query execution\":\"00:00:00.0041610\",\"query planning\":\"00:00:00.0032180\"}},\"memory\":{\"peak_per_node\":4159024},\"network\":{\"inter_cluster_total_bytes\":627,\"cross_cluster_total_bytes\":0}},\"input_dataset_statistics\":{\"extents\":{\"total\":0,\"scanned\":0,\"scanned_min_datetime\":\"0001-01-01T00:00:00.0000000Z\",\"scanned_max_datetime\":\"0001-01-01T00:00:00.0000000Z\"},\"rows\":{\"total\":0,\"scanned\":0},\"rowstores\":{\"scanned_rows\":0,\"scanned_values_size\":0},\"shards\":{\"queries_generic\":0,\"queries_specialized\":0}},\"dataset_statistics\":[{\"table_row_count\":0,\"table_size\":0}],\"cross_cluster_resource_usage\":{}}"
+          ]
+        ]
+      },
+      "engine_elapsed_seconds": 0.0097624,
+      "output_statistics": [
+        {
+          "table_row_count": 0,
+          "table_size": 0
+        }
+      ],
+      "elapsed_seconds": 0.017273
+    },
+    {
+      "name": "long-hot-group-value_avg-context",
+      "repeat": 1,
+      "query_sha256": "7a80c1a10b9d2a8e07852a5ebeb6d6ef15a0ab213abac3fea6990ee03e7c3963",
+      "fixture_sha256": "76757a5202df73c4ce63e56299ae5c8b5b72c87e4ec18d932fe700a5af950716",
+      "cpu": "00:00:00.0154620",
+      "peak_memory": 8597152,
+      "intermediate_growth": null,
+      "status": "PASS",
+      "detail": "exact result multiset and declared schema",
+      "observed_schema": [
+        {
+          "ColumnName": "WindowStart",
+          "ColumnType": "datetime"
+        },
+        {
+          "ColumnName": "WindowEnd",
+          "ColumnType": "datetime"
+        },
+        {
+          "ColumnName": "Host",
+          "ColumnType": "string"
+        },
+        {
+          "ColumnName": "User",
+          "ColumnType": "dynamic"
+        },
+        {
+          "ColumnName": "ValueAvg",
+          "ColumnType": "real"
+        },
+        {
+          "ColumnName": "ContextComplete",
+          "ColumnType": "bool"
+        }
+      ],
+      "observed_rows": 0,
+      "engine_statistics": {
+        "FrameType": "DataTable",
+        "TableId": 2,
+        "TableKind": "QueryCompletionInformation",
+        "TableName": "QueryCompletionInformation",
+        "Columns": [
+          {
+            "ColumnName": "Timestamp",
+            "ColumnType": "datetime"
+          },
+          {
+            "ColumnName": "ClientRequestId",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "ActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "SubActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "ParentActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "Level",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "LevelName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "StatusCode",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "StatusCodeName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "EventType",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "EventTypeName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "Payload",
+            "ColumnType": "string"
+          }
+        ],
+        "Rows": [
+          [
+            "2026-11-16T19:06:37.3225307Z",
+            "unspecified;2de56c0a-5dc7-4f40-b087-05febcaeb578",
+            "725f3d03-7569-433a-b9e0-964d5527b49c",
+            "209014f3-4ccb-4d8f-9d1a-ee72a0d4abd4",
+            "56236f3d-68a4-4890-92c3-88e009083619",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            4,
+            "QueryInfo",
+            "{\"Count\":1,\"Text\":\"Query completed successfully\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.3225344Z",
+            "unspecified;2de56c0a-5dc7-4f40-b087-05febcaeb578",
+            "725f3d03-7569-433a-b9e0-964d5527b49c",
+            "209014f3-4ccb-4d8f-9d1a-ee72a0d4abd4",
+            "56236f3d-68a4-4890-92c3-88e009083619",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            5,
+            "WorkloadGroup",
+            "{\"Count\":1,\"Text\":\"default\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.3225371Z",
+            "unspecified;2de56c0a-5dc7-4f40-b087-05febcaeb578",
+            "725f3d03-7569-433a-b9e0-964d5527b49c",
+            "209014f3-4ccb-4d8f-9d1a-ee72a0d4abd4",
+            "56236f3d-68a4-4890-92c3-88e009083619",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            6,
+            "EffectiveRequestOptions",
+            "{\"Count\":1,\"Text\":\"{\\\"DataScope\\\":\\\"All\\\",\\\"QueryConsistency\\\":\\\"strongconsistency\\\",\\\"MaxMemoryConsumptionPerIterator\\\":5368709120,\\\"MaxMemoryConsumptionPerQueryPerNode\\\":12884901888,\\\"QueryFanoutNodesPercent\\\":100,\\\"QueryFanoutThreadsPercent\\\":100}\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.3225461Z",
+            "unspecified;2de56c0a-5dc7-4f40-b087-05febcaeb578",
+            "725f3d03-7569-433a-b9e0-964d5527b49c",
+            "209014f3-4ccb-4d8f-9d1a-ee72a0d4abd4",
+            "56236f3d-68a4-4890-92c3-88e009083619",
+            6,
+            "Stats",
+            0,
+            "S_OK (0)",
+            0,
+            "QueryResourceConsumption",
+            "{\"QueryHash\":\"41cfe75b53b84fc2\",\"ExecutionTime\":0.0171038,\"resource_usage\":{\"cache\":{\"shards\":{\"hot\":{\"hitbytes\":0,\"missbytes\":0,\"retrievebytes\":0},\"cold\":{\"hitbytes\":0,\"missbytes\":0,\"retrievebytes\":0},\"bypassbytes\":0}},\"cpu\":{\"user\":\"00:00:00.0154620\",\"kernel\":\"00:00:00\",\"total cpu\":\"00:00:00.0154620\",\"breakdown\":{\"query execution\":\"00:00:00.0100930\",\"query planning\":\"00:00:00.0053690\"}},\"memory\":{\"peak_per_node\":8597152},\"network\":{\"inter_cluster_total_bytes\":2563,\"cross_cluster_total_bytes\":0}},\"input_dataset_statistics\":{\"extents\":{\"total\":0,\"scanned\":0,\"scanned_min_datetime\":\"0001-01-01T00:00:00.0000000Z\",\"scanned_max_datetime\":\"0001-01-01T00:00:00.0000000Z\"},\"rows\":{\"total\":0,\"scanned\":0},\"rowstores\":{\"scanned_rows\":0,\"scanned_values_size\":0},\"shards\":{\"queries_generic\":0,\"queries_specialized\":0}},\"dataset_statistics\":[{\"table_row_count\":0,\"table_size\":0}],\"cross_cluster_resource_usage\":{}}"
+          ]
+        ]
+      },
+      "engine_elapsed_seconds": 0.0171038,
+      "output_statistics": [
+        {
+          "table_row_count": 0,
+          "table_size": 0
+        }
+      ],
+      "elapsed_seconds": 0.024545
+    },
+    {
+      "name": "long-hot-group-value_avg-context",
+      "repeat": 2,
+      "query_sha256": "7a80c1a10b9d2a8e07852a5ebeb6d6ef15a0ab213abac3fea6990ee03e7c3963",
+      "fixture_sha256": "76757a5202df73c4ce63e56299ae5c8b5b72c87e4ec18d932fe700a5af950716",
+      "cpu": "00:00:00.0048800",
+      "peak_memory": 8572608,
+      "intermediate_growth": null,
+      "status": "PASS",
+      "detail": "exact result multiset and declared schema",
+      "observed_schema": [
+        {
+          "ColumnName": "WindowStart",
+          "ColumnType": "datetime"
+        },
+        {
+          "ColumnName": "WindowEnd",
+          "ColumnType": "datetime"
+        },
+        {
+          "ColumnName": "Host",
+          "ColumnType": "string"
+        },
+        {
+          "ColumnName": "User",
+          "ColumnType": "dynamic"
+        },
+        {
+          "ColumnName": "ValueAvg",
+          "ColumnType": "real"
+        },
+        {
+          "ColumnName": "ContextComplete",
+          "ColumnType": "bool"
+        }
+      ],
+      "observed_rows": 0,
+      "engine_statistics": {
+        "FrameType": "DataTable",
+        "TableId": 2,
+        "TableKind": "QueryCompletionInformation",
+        "TableName": "QueryCompletionInformation",
+        "Columns": [
+          {
+            "ColumnName": "Timestamp",
+            "ColumnType": "datetime"
+          },
+          {
+            "ColumnName": "ClientRequestId",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "ActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "SubActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "ParentActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "Level",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "LevelName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "StatusCode",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "StatusCodeName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "EventType",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "EventTypeName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "Payload",
+            "ColumnType": "string"
+          }
+        ],
+        "Rows": [
+          [
+            "2026-11-16T19:06:37.3469054Z",
+            "unspecified;ea659652-6ead-4cdd-b2ec-869879ae7aa2",
+            "792d6848-ee3b-4e4b-9341-4b6f04fd766a",
+            "aa8c4622-bc08-4817-8230-58de46d0eb6a",
+            "cd6b25f0-45a5-4ce9-a3d9-b77a3aeb2131",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            4,
+            "QueryInfo",
+            "{\"Count\":1,\"Text\":\"Query completed successfully\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.3469087Z",
+            "unspecified;ea659652-6ead-4cdd-b2ec-869879ae7aa2",
+            "792d6848-ee3b-4e4b-9341-4b6f04fd766a",
+            "aa8c4622-bc08-4817-8230-58de46d0eb6a",
+            "cd6b25f0-45a5-4ce9-a3d9-b77a3aeb2131",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            5,
+            "WorkloadGroup",
+            "{\"Count\":1,\"Text\":\"default\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.3469115Z",
+            "unspecified;ea659652-6ead-4cdd-b2ec-869879ae7aa2",
+            "792d6848-ee3b-4e4b-9341-4b6f04fd766a",
+            "aa8c4622-bc08-4817-8230-58de46d0eb6a",
+            "cd6b25f0-45a5-4ce9-a3d9-b77a3aeb2131",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            6,
+            "EffectiveRequestOptions",
+            "{\"Count\":1,\"Text\":\"{\\\"DataScope\\\":\\\"All\\\",\\\"QueryConsistency\\\":\\\"strongconsistency\\\",\\\"MaxMemoryConsumptionPerIterator\\\":5368709120,\\\"MaxMemoryConsumptionPerQueryPerNode\\\":12884901888,\\\"QueryFanoutNodesPercent\\\":100,\\\"QueryFanoutThreadsPercent\\\":100}\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.3469215Z",
+            "unspecified;ea659652-6ead-4cdd-b2ec-869879ae7aa2",
+            "792d6848-ee3b-4e4b-9341-4b6f04fd766a",
+            "aa8c4622-bc08-4817-8230-58de46d0eb6a",
+            "cd6b25f0-45a5-4ce9-a3d9-b77a3aeb2131",
+            6,
+            "Stats",
+            0,
+            "S_OK (0)",
+            0,
+            "QueryResourceConsumption",
+            "{\"QueryHash\":\"41cfe75b53b84fc2\",\"ExecutionTime\":0.0169207,\"resource_usage\":{\"cache\":{\"shards\":{\"hot\":{\"hitbytes\":0,\"missbytes\":0,\"retrievebytes\":0},\"cold\":{\"hitbytes\":0,\"missbytes\":0,\"retrievebytes\":0},\"bypassbytes\":0}},\"cpu\":{\"user\":\"00:00:00.0048800\",\"kernel\":\"00:00:00\",\"total cpu\":\"00:00:00.0048800\",\"breakdown\":{\"query execution\":\"00:00:00.0040800\",\"query planning\":\"00:00:00.0008000\"}},\"memory\":{\"peak_per_node\":8572608},\"network\":{\"inter_cluster_total_bytes\":2563,\"cross_cluster_total_bytes\":0}},\"input_dataset_statistics\":{\"extents\":{\"total\":0,\"scanned\":0,\"scanned_min_datetime\":\"0001-01-01T00:00:00.0000000Z\",\"scanned_max_datetime\":\"0001-01-01T00:00:00.0000000Z\"},\"rows\":{\"total\":0,\"scanned\":0},\"rowstores\":{\"scanned_rows\":0,\"scanned_values_size\":0},\"shards\":{\"queries_generic\":0,\"queries_specialized\":0}},\"dataset_statistics\":[{\"table_row_count\":0,\"table_size\":0}],\"cross_cluster_resource_usage\":{}}"
+          ]
+        ]
+      },
+      "engine_elapsed_seconds": 0.0169207,
+      "output_statistics": [
+        {
+          "table_row_count": 0,
+          "table_size": 0
+        }
+      ],
+      "elapsed_seconds": 0.023657
+    },
+    {
+      "name": "long-hot-group-value_avg-context",
+      "repeat": 3,
+      "query_sha256": "7a80c1a10b9d2a8e07852a5ebeb6d6ef15a0ab213abac3fea6990ee03e7c3963",
+      "fixture_sha256": "76757a5202df73c4ce63e56299ae5c8b5b72c87e4ec18d932fe700a5af950716",
+      "cpu": "00:00:00.0129760",
+      "peak_memory": 8405440,
+      "intermediate_growth": null,
+      "status": "PASS",
+      "detail": "exact result multiset and declared schema",
+      "observed_schema": [
+        {
+          "ColumnName": "WindowStart",
+          "ColumnType": "datetime"
+        },
+        {
+          "ColumnName": "WindowEnd",
+          "ColumnType": "datetime"
+        },
+        {
+          "ColumnName": "Host",
+          "ColumnType": "string"
+        },
+        {
+          "ColumnName": "User",
+          "ColumnType": "dynamic"
+        },
+        {
+          "ColumnName": "ValueAvg",
+          "ColumnType": "real"
+        },
+        {
+          "ColumnName": "ContextComplete",
+          "ColumnType": "bool"
+        }
+      ],
+      "observed_rows": 0,
+      "engine_statistics": {
+        "FrameType": "DataTable",
+        "TableId": 2,
+        "TableKind": "QueryCompletionInformation",
+        "TableName": "QueryCompletionInformation",
+        "Columns": [
+          {
+            "ColumnName": "Timestamp",
+            "ColumnType": "datetime"
+          },
+          {
+            "ColumnName": "ClientRequestId",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "ActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "SubActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "ParentActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "Level",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "LevelName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "StatusCode",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "StatusCodeName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "EventType",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "EventTypeName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "Payload",
+            "ColumnType": "string"
+          }
+        ],
+        "Rows": [
+          [
+            "2026-11-16T19:06:37.3696576Z",
+            "unspecified;d2ffacea-2536-4fd4-bb9d-14411638b9e2",
+            "01f0c4a1-15e7-40bc-96a4-537ea18c5b00",
+            "3101817c-f7ee-455a-999b-1b96f9a487e7",
+            "9746f7b6-07d7-4a75-8191-b4f7289dcc9d",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            4,
+            "QueryInfo",
+            "{\"Count\":1,\"Text\":\"Query completed successfully\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.3697054Z",
+            "unspecified;d2ffacea-2536-4fd4-bb9d-14411638b9e2",
+            "01f0c4a1-15e7-40bc-96a4-537ea18c5b00",
+            "3101817c-f7ee-455a-999b-1b96f9a487e7",
+            "9746f7b6-07d7-4a75-8191-b4f7289dcc9d",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            5,
+            "WorkloadGroup",
+            "{\"Count\":1,\"Text\":\"default\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.3697085Z",
+            "unspecified;d2ffacea-2536-4fd4-bb9d-14411638b9e2",
+            "01f0c4a1-15e7-40bc-96a4-537ea18c5b00",
+            "3101817c-f7ee-455a-999b-1b96f9a487e7",
+            "9746f7b6-07d7-4a75-8191-b4f7289dcc9d",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            6,
+            "EffectiveRequestOptions",
+            "{\"Count\":1,\"Text\":\"{\\\"DataScope\\\":\\\"All\\\",\\\"QueryConsistency\\\":\\\"strongconsistency\\\",\\\"MaxMemoryConsumptionPerIterator\\\":5368709120,\\\"MaxMemoryConsumptionPerQueryPerNode\\\":12884901888,\\\"QueryFanoutNodesPercent\\\":100,\\\"QueryFanoutThreadsPercent\\\":100}\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.3697178Z",
+            "unspecified;d2ffacea-2536-4fd4-bb9d-14411638b9e2",
+            "01f0c4a1-15e7-40bc-96a4-537ea18c5b00",
+            "3101817c-f7ee-455a-999b-1b96f9a487e7",
+            "9746f7b6-07d7-4a75-8191-b4f7289dcc9d",
+            6,
+            "Stats",
+            0,
+            "S_OK (0)",
+            0,
+            "QueryResourceConsumption",
+            "{\"QueryHash\":\"41cfe75b53b84fc2\",\"ExecutionTime\":0.0152281,\"resource_usage\":{\"cache\":{\"shards\":{\"hot\":{\"hitbytes\":0,\"missbytes\":0,\"retrievebytes\":0},\"cold\":{\"hitbytes\":0,\"missbytes\":0,\"retrievebytes\":0},\"bypassbytes\":0}},\"cpu\":{\"user\":\"00:00:00.0129760\",\"kernel\":\"00:00:00\",\"total cpu\":\"00:00:00.0129760\",\"breakdown\":{\"query execution\":\"00:00:00.0065940\",\"query planning\":\"00:00:00.0063820\"}},\"memory\":{\"peak_per_node\":8405440},\"network\":{\"inter_cluster_total_bytes\":2563,\"cross_cluster_total_bytes\":0}},\"input_dataset_statistics\":{\"extents\":{\"total\":0,\"scanned\":0,\"scanned_min_datetime\":\"0001-01-01T00:00:00.0000000Z\",\"scanned_max_datetime\":\"0001-01-01T00:00:00.0000000Z\"},\"rows\":{\"total\":0,\"scanned\":0},\"rowstores\":{\"scanned_rows\":0,\"scanned_values_size\":0},\"shards\":{\"queries_generic\":0,\"queries_specialized\":0}},\"dataset_statistics\":[{\"table_row_count\":0,\"table_size\":0}],\"cross_cluster_resource_usage\":{}}"
+          ]
+        ]
+      },
+      "engine_elapsed_seconds": 0.0152281,
+      "output_statistics": [
+        {
+          "table_row_count": 0,
+          "table_size": 0
+        }
+      ],
+      "elapsed_seconds": 0.022466
+    },
+    {
+      "name": "real-many-groups-value_avg-plain",
+      "repeat": 1,
+      "query_sha256": "e1cfe5be88b28e861497e42260738c2f8b7f5940f62eb057da48dca1995b643b",
+      "fixture_sha256": "236fffaa7ec1037e2a926bba3274970edeada0b8511f506e14f0adafd4af9cb5",
+      "cpu": "00:00:00.0104990",
+      "peak_memory": 4587712,
+      "intermediate_growth": null,
+      "status": "PASS",
+      "detail": "exact result multiset and declared schema",
+      "observed_schema": [
+        {
+          "ColumnName": "WindowStart",
+          "ColumnType": "datetime"
+        },
+        {
+          "ColumnName": "WindowEnd",
+          "ColumnType": "datetime"
+        },
+        {
+          "ColumnName": "Host",
+          "ColumnType": "string"
+        },
+        {
+          "ColumnName": "ValueAvg",
+          "ColumnType": "real"
+        }
+      ],
+      "observed_rows": 0,
+      "engine_statistics": {
+        "FrameType": "DataTable",
+        "TableId": 2,
+        "TableKind": "QueryCompletionInformation",
+        "TableName": "QueryCompletionInformation",
+        "Columns": [
+          {
+            "ColumnName": "Timestamp",
+            "ColumnType": "datetime"
+          },
+          {
+            "ColumnName": "ClientRequestId",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "ActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "SubActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "ParentActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "Level",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "LevelName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "StatusCode",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "StatusCodeName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "EventType",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "EventTypeName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "Payload",
+            "ColumnType": "string"
+          }
+        ],
+        "Rows": [
+          [
+            "2026-11-16T19:06:37.3881695Z",
+            "unspecified;f5b5f3a0-7cdc-421b-ac7d-8eb2047d02e3",
+            "fde6c979-0a8b-4af9-b36c-087c2ccd282c",
+            "6ff7423b-ecae-44dd-b620-2c48aad6da32",
+            "c1f68ca2-8a23-49e9-97f4-b33ee64c031c",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            4,
+            "QueryInfo",
+            "{\"Count\":1,\"Text\":\"Query completed successfully\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.3881731Z",
+            "unspecified;f5b5f3a0-7cdc-421b-ac7d-8eb2047d02e3",
+            "fde6c979-0a8b-4af9-b36c-087c2ccd282c",
+            "6ff7423b-ecae-44dd-b620-2c48aad6da32",
+            "c1f68ca2-8a23-49e9-97f4-b33ee64c031c",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            5,
+            "WorkloadGroup",
+            "{\"Count\":1,\"Text\":\"default\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.388176Z",
+            "unspecified;f5b5f3a0-7cdc-421b-ac7d-8eb2047d02e3",
+            "fde6c979-0a8b-4af9-b36c-087c2ccd282c",
+            "6ff7423b-ecae-44dd-b620-2c48aad6da32",
+            "c1f68ca2-8a23-49e9-97f4-b33ee64c031c",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            6,
+            "EffectiveRequestOptions",
+            "{\"Count\":1,\"Text\":\"{\\\"DataScope\\\":\\\"All\\\",\\\"QueryConsistency\\\":\\\"strongconsistency\\\",\\\"MaxMemoryConsumptionPerIterator\\\":5368709120,\\\"MaxMemoryConsumptionPerQueryPerNode\\\":12884901888,\\\"QueryFanoutNodesPercent\\\":100,\\\"QueryFanoutThreadsPercent\\\":100}\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.3881856Z",
+            "unspecified;f5b5f3a0-7cdc-421b-ac7d-8eb2047d02e3",
+            "fde6c979-0a8b-4af9-b36c-087c2ccd282c",
+            "6ff7423b-ecae-44dd-b620-2c48aad6da32",
+            "c1f68ca2-8a23-49e9-97f4-b33ee64c031c",
+            6,
+            "Stats",
+            0,
+            "S_OK (0)",
+            0,
+            "QueryResourceConsumption",
+            "{\"QueryHash\":\"eb48aad7dd6ac7a6\",\"ExecutionTime\":0.0110998,\"resource_usage\":{\"cache\":{\"shards\":{\"hot\":{\"hitbytes\":0,\"missbytes\":0,\"retrievebytes\":0},\"cold\":{\"hitbytes\":0,\"missbytes\":0,\"retrievebytes\":0},\"bypassbytes\":0}},\"cpu\":{\"user\":\"00:00:00.0104990\",\"kernel\":\"00:00:00\",\"total cpu\":\"00:00:00.0104990\",\"breakdown\":{\"query execution\":\"00:00:00.0067590\",\"query planning\":\"00:00:00.0037400\"}},\"memory\":{\"peak_per_node\":4587712},\"network\":{\"inter_cluster_total_bytes\":627,\"cross_cluster_total_bytes\":0}},\"input_dataset_statistics\":{\"extents\":{\"total\":0,\"scanned\":0,\"scanned_min_datetime\":\"0001-01-01T00:00:00.0000000Z\",\"scanned_max_datetime\":\"0001-01-01T00:00:00.0000000Z\"},\"rows\":{\"total\":0,\"scanned\":0},\"rowstores\":{\"scanned_rows\":0,\"scanned_values_size\":0},\"shards\":{\"queries_generic\":0,\"queries_specialized\":0}},\"dataset_statistics\":[{\"table_row_count\":0,\"table_size\":0}],\"cross_cluster_resource_usage\":{}}"
+          ]
+        ]
+      },
+      "engine_elapsed_seconds": 0.0110998,
+      "output_statistics": [
+        {
+          "table_row_count": 0,
+          "table_size": 0
+        }
+      ],
+      "elapsed_seconds": 0.017877
+    },
+    {
+      "name": "real-many-groups-value_avg-plain",
+      "repeat": 2,
+      "query_sha256": "e1cfe5be88b28e861497e42260738c2f8b7f5940f62eb057da48dca1995b643b",
+      "fixture_sha256": "236fffaa7ec1037e2a926bba3274970edeada0b8511f506e14f0adafd4af9cb5",
+      "cpu": "00:00:00.0019370",
+      "peak_memory": 4537728,
+      "intermediate_growth": null,
+      "status": "PASS",
+      "detail": "exact result multiset and declared schema",
+      "observed_schema": [
+        {
+          "ColumnName": "WindowStart",
+          "ColumnType": "datetime"
+        },
+        {
+          "ColumnName": "WindowEnd",
+          "ColumnType": "datetime"
+        },
+        {
+          "ColumnName": "Host",
+          "ColumnType": "string"
+        },
+        {
+          "ColumnName": "ValueAvg",
+          "ColumnType": "real"
+        }
+      ],
+      "observed_rows": 0,
+      "engine_statistics": {
+        "FrameType": "DataTable",
+        "TableId": 2,
+        "TableKind": "QueryCompletionInformation",
+        "TableName": "QueryCompletionInformation",
+        "Columns": [
+          {
+            "ColumnName": "Timestamp",
+            "ColumnType": "datetime"
+          },
+          {
+            "ColumnName": "ClientRequestId",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "ActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "SubActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "ParentActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "Level",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "LevelName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "StatusCode",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "StatusCodeName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "EventType",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "EventTypeName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "Payload",
+            "ColumnType": "string"
+          }
+        ],
+        "Rows": [
+          [
+            "2026-11-16T19:06:37.4035279Z",
+            "unspecified;655d5111-7cbc-4125-a0ef-8bd95c6aef9c",
+            "787da44a-4342-4a59-84d8-091e67808696",
+            "92381203-b34f-4f7b-af5d-3342ed63bf45",
+            "e1e3dad6-8957-44be-883e-ad89519d815c",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            4,
+            "QueryInfo",
+            "{\"Count\":1,\"Text\":\"Query completed successfully\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.4035322Z",
+            "unspecified;655d5111-7cbc-4125-a0ef-8bd95c6aef9c",
+            "787da44a-4342-4a59-84d8-091e67808696",
+            "92381203-b34f-4f7b-af5d-3342ed63bf45",
+            "e1e3dad6-8957-44be-883e-ad89519d815c",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            5,
+            "WorkloadGroup",
+            "{\"Count\":1,\"Text\":\"default\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.4035349Z",
+            "unspecified;655d5111-7cbc-4125-a0ef-8bd95c6aef9c",
+            "787da44a-4342-4a59-84d8-091e67808696",
+            "92381203-b34f-4f7b-af5d-3342ed63bf45",
+            "e1e3dad6-8957-44be-883e-ad89519d815c",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            6,
+            "EffectiveRequestOptions",
+            "{\"Count\":1,\"Text\":\"{\\\"DataScope\\\":\\\"All\\\",\\\"QueryConsistency\\\":\\\"strongconsistency\\\",\\\"MaxMemoryConsumptionPerIterator\\\":5368709120,\\\"MaxMemoryConsumptionPerQueryPerNode\\\":12884901888,\\\"QueryFanoutNodesPercent\\\":100,\\\"QueryFanoutThreadsPercent\\\":100}\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.4035438Z",
+            "unspecified;655d5111-7cbc-4125-a0ef-8bd95c6aef9c",
+            "787da44a-4342-4a59-84d8-091e67808696",
+            "92381203-b34f-4f7b-af5d-3342ed63bf45",
+            "e1e3dad6-8957-44be-883e-ad89519d815c",
+            6,
+            "Stats",
+            0,
+            "S_OK (0)",
+            0,
+            "QueryResourceConsumption",
+            "{\"QueryHash\":\"eb48aad7dd6ac7a6\",\"ExecutionTime\":0.0083361,\"resource_usage\":{\"cache\":{\"shards\":{\"hot\":{\"hitbytes\":0,\"missbytes\":0,\"retrievebytes\":0},\"cold\":{\"hitbytes\":0,\"missbytes\":0,\"retrievebytes\":0},\"bypassbytes\":0}},\"cpu\":{\"user\":\"00:00:00.0019370\",\"kernel\":\"00:00:00\",\"total cpu\":\"00:00:00.0019370\",\"breakdown\":{\"query execution\":\"00:00:00.0019370\",\"query planning\":\"00:00:00\"}},\"memory\":{\"peak_per_node\":4537728},\"network\":{\"inter_cluster_total_bytes\":627,\"cross_cluster_total_bytes\":0}},\"input_dataset_statistics\":{\"extents\":{\"total\":0,\"scanned\":0,\"scanned_min_datetime\":\"0001-01-01T00:00:00.0000000Z\",\"scanned_max_datetime\":\"0001-01-01T00:00:00.0000000Z\"},\"rows\":{\"total\":0,\"scanned\":0},\"rowstores\":{\"scanned_rows\":0,\"scanned_values_size\":0},\"shards\":{\"queries_generic\":0,\"queries_specialized\":0}},\"dataset_statistics\":[{\"table_row_count\":0,\"table_size\":0}],\"cross_cluster_resource_usage\":{}}"
+          ]
+        ]
+      },
+      "engine_elapsed_seconds": 0.0083361,
+      "output_statistics": [
+        {
+          "table_row_count": 0,
+          "table_size": 0
+        }
+      ],
+      "elapsed_seconds": 0.014917
+    },
+    {
+      "name": "real-many-groups-value_avg-plain",
+      "repeat": 3,
+      "query_sha256": "e1cfe5be88b28e861497e42260738c2f8b7f5940f62eb057da48dca1995b643b",
+      "fixture_sha256": "236fffaa7ec1037e2a926bba3274970edeada0b8511f506e14f0adafd4af9cb5",
+      "cpu": "00:00:00.0073140",
+      "peak_memory": 4488720,
+      "intermediate_growth": null,
+      "status": "PASS",
+      "detail": "exact result multiset and declared schema",
+      "observed_schema": [
+        {
+          "ColumnName": "WindowStart",
+          "ColumnType": "datetime"
+        },
+        {
+          "ColumnName": "WindowEnd",
+          "ColumnType": "datetime"
+        },
+        {
+          "ColumnName": "Host",
+          "ColumnType": "string"
+        },
+        {
+          "ColumnName": "ValueAvg",
+          "ColumnType": "real"
+        }
+      ],
+      "observed_rows": 0,
+      "engine_statistics": {
+        "FrameType": "DataTable",
+        "TableId": 2,
+        "TableKind": "QueryCompletionInformation",
+        "TableName": "QueryCompletionInformation",
+        "Columns": [
+          {
+            "ColumnName": "Timestamp",
+            "ColumnType": "datetime"
+          },
+          {
+            "ColumnName": "ClientRequestId",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "ActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "SubActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "ParentActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "Level",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "LevelName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "StatusCode",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "StatusCodeName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "EventType",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "EventTypeName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "Payload",
+            "ColumnType": "string"
+          }
+        ],
+        "Rows": [
+          [
+            "2026-11-16T19:06:37.4189727Z",
+            "unspecified;df5f9477-09ed-4a8d-a3b4-91f337d90a24",
+            "e25b85ac-df0e-4fdb-aecf-9ce8c1e7e196",
+            "0e89a87d-47f9-48cd-91d9-2a277b6be0aa",
+            "28a021a3-e358-48e2-8f6f-2cbef7cdc70d",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            4,
+            "QueryInfo",
+            "{\"Count\":1,\"Text\":\"Query completed successfully\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.4189771Z",
+            "unspecified;df5f9477-09ed-4a8d-a3b4-91f337d90a24",
+            "e25b85ac-df0e-4fdb-aecf-9ce8c1e7e196",
+            "0e89a87d-47f9-48cd-91d9-2a277b6be0aa",
+            "28a021a3-e358-48e2-8f6f-2cbef7cdc70d",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            5,
+            "WorkloadGroup",
+            "{\"Count\":1,\"Text\":\"default\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.4189798Z",
+            "unspecified;df5f9477-09ed-4a8d-a3b4-91f337d90a24",
+            "e25b85ac-df0e-4fdb-aecf-9ce8c1e7e196",
+            "0e89a87d-47f9-48cd-91d9-2a277b6be0aa",
+            "28a021a3-e358-48e2-8f6f-2cbef7cdc70d",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            6,
+            "EffectiveRequestOptions",
+            "{\"Count\":1,\"Text\":\"{\\\"DataScope\\\":\\\"All\\\",\\\"QueryConsistency\\\":\\\"strongconsistency\\\",\\\"MaxMemoryConsumptionPerIterator\\\":5368709120,\\\"MaxMemoryConsumptionPerQueryPerNode\\\":12884901888,\\\"QueryFanoutNodesPercent\\\":100,\\\"QueryFanoutThreadsPercent\\\":100}\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.4189898Z",
+            "unspecified;df5f9477-09ed-4a8d-a3b4-91f337d90a24",
+            "e25b85ac-df0e-4fdb-aecf-9ce8c1e7e196",
+            "0e89a87d-47f9-48cd-91d9-2a277b6be0aa",
+            "28a021a3-e358-48e2-8f6f-2cbef7cdc70d",
+            6,
+            "Stats",
+            0,
+            "S_OK (0)",
+            0,
+            "QueryResourceConsumption",
+            "{\"QueryHash\":\"eb48aad7dd6ac7a6\",\"ExecutionTime\":0.0079208,\"resource_usage\":{\"cache\":{\"shards\":{\"hot\":{\"hitbytes\":0,\"missbytes\":0,\"retrievebytes\":0},\"cold\":{\"hitbytes\":0,\"missbytes\":0,\"retrievebytes\":0},\"bypassbytes\":0}},\"cpu\":{\"user\":\"00:00:00.0072780\",\"kernel\":\"00:00:00.0000360\",\"total cpu\":\"00:00:00.0073140\",\"breakdown\":{\"query execution\":\"00:00:00.0073140\",\"query planning\":\"00:00:00\"}},\"memory\":{\"peak_per_node\":4488720},\"network\":{\"inter_cluster_total_bytes\":627,\"cross_cluster_total_bytes\":0}},\"input_dataset_statistics\":{\"extents\":{\"total\":0,\"scanned\":0,\"scanned_min_datetime\":\"0001-01-01T00:00:00.0000000Z\",\"scanned_max_datetime\":\"0001-01-01T00:00:00.0000000Z\"},\"rows\":{\"total\":0,\"scanned\":0},\"rowstores\":{\"scanned_rows\":0,\"scanned_values_size\":0},\"shards\":{\"queries_generic\":0,\"queries_specialized\":0}},\"dataset_statistics\":[{\"table_row_count\":0,\"table_size\":0}],\"cross_cluster_resource_usage\":{}}"
+          ]
+        ]
+      },
+      "engine_elapsed_seconds": 0.0079208,
+      "output_statistics": [
+        {
+          "table_row_count": 0,
+          "table_size": 0
+        }
+      ],
+      "elapsed_seconds": 0.015112
+    },
+    {
+      "name": "real-many-groups-value_avg-context",
+      "repeat": 1,
+      "query_sha256": "562ef16ce6832cf5822a23ce46b49dd3ca7541388db8aafd4b1c565f7150fda3",
+      "fixture_sha256": "7db519631532323d2c272bbd2ee45d45ebf3e2054a6ac5e1f6fa9d7108844bb8",
+      "cpu": "00:00:00.0152310",
+      "peak_memory": 4421312,
+      "intermediate_growth": null,
+      "status": "PASS",
+      "detail": "exact result multiset and declared schema",
+      "observed_schema": [
+        {
+          "ColumnName": "WindowStart",
+          "ColumnType": "datetime"
+        },
+        {
+          "ColumnName": "WindowEnd",
+          "ColumnType": "datetime"
+        },
+        {
+          "ColumnName": "Host",
+          "ColumnType": "string"
+        },
+        {
+          "ColumnName": "User",
+          "ColumnType": "dynamic"
+        },
+        {
+          "ColumnName": "ValueAvg",
+          "ColumnType": "real"
+        },
+        {
+          "ColumnName": "ContextComplete",
+          "ColumnType": "bool"
+        }
+      ],
+      "observed_rows": 0,
+      "engine_statistics": {
+        "FrameType": "DataTable",
+        "TableId": 2,
+        "TableKind": "QueryCompletionInformation",
+        "TableName": "QueryCompletionInformation",
+        "Columns": [
+          {
+            "ColumnName": "Timestamp",
+            "ColumnType": "datetime"
+          },
+          {
+            "ColumnName": "ClientRequestId",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "ActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "SubActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "ParentActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "Level",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "LevelName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "StatusCode",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "StatusCodeName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "EventType",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "EventTypeName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "Payload",
+            "ColumnType": "string"
+          }
+        ],
+        "Rows": [
+          [
+            "2026-11-16T19:06:37.4465624Z",
+            "unspecified;6c832194-3fe7-4eeb-a0be-000a3738b0a5",
+            "a11dee68-2462-4bcb-b817-7f9755168aa6",
+            "dfa9d6a6-3185-4595-9cbc-d01bf59b70c1",
+            "f0fd7d95-22b9-4fd3-8067-10dbd734a490",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            4,
+            "QueryInfo",
+            "{\"Count\":1,\"Text\":\"Query completed successfully\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.4465654Z",
+            "unspecified;6c832194-3fe7-4eeb-a0be-000a3738b0a5",
+            "a11dee68-2462-4bcb-b817-7f9755168aa6",
+            "dfa9d6a6-3185-4595-9cbc-d01bf59b70c1",
+            "f0fd7d95-22b9-4fd3-8067-10dbd734a490",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            5,
+            "WorkloadGroup",
+            "{\"Count\":1,\"Text\":\"default\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.4465692Z",
+            "unspecified;6c832194-3fe7-4eeb-a0be-000a3738b0a5",
+            "a11dee68-2462-4bcb-b817-7f9755168aa6",
+            "dfa9d6a6-3185-4595-9cbc-d01bf59b70c1",
+            "f0fd7d95-22b9-4fd3-8067-10dbd734a490",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            6,
+            "EffectiveRequestOptions",
+            "{\"Count\":1,\"Text\":\"{\\\"DataScope\\\":\\\"All\\\",\\\"QueryConsistency\\\":\\\"strongconsistency\\\",\\\"MaxMemoryConsumptionPerIterator\\\":5368709120,\\\"MaxMemoryConsumptionPerQueryPerNode\\\":12884901888,\\\"QueryFanoutNodesPercent\\\":100,\\\"QueryFanoutThreadsPercent\\\":100}\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.446579Z",
+            "unspecified;6c832194-3fe7-4eeb-a0be-000a3738b0a5",
+            "a11dee68-2462-4bcb-b817-7f9755168aa6",
+            "dfa9d6a6-3185-4595-9cbc-d01bf59b70c1",
+            "f0fd7d95-22b9-4fd3-8067-10dbd734a490",
+            6,
+            "Stats",
+            0,
+            "S_OK (0)",
+            0,
+            "QueryResourceConsumption",
+            "{\"QueryHash\":\"6d018e3398271d76\",\"ExecutionTime\":0.0164127,\"resource_usage\":{\"cache\":{\"shards\":{\"hot\":{\"hitbytes\":0,\"missbytes\":0,\"retrievebytes\":0},\"cold\":{\"hitbytes\":0,\"missbytes\":0,\"retrievebytes\":0},\"bypassbytes\":0}},\"cpu\":{\"user\":\"00:00:00.0152310\",\"kernel\":\"00:00:00\",\"total cpu\":\"00:00:00.0152310\",\"breakdown\":{\"query execution\":\"00:00:00.0045200\",\"query planning\":\"00:00:00.0107110\"}},\"memory\":{\"peak_per_node\":4421312},\"network\":{\"inter_cluster_total_bytes\":2563,\"cross_cluster_total_bytes\":0}},\"input_dataset_statistics\":{\"extents\":{\"total\":0,\"scanned\":0,\"scanned_min_datetime\":\"0001-01-01T00:00:00.0000000Z\",\"scanned_max_datetime\":\"0001-01-01T00:00:00.0000000Z\"},\"rows\":{\"total\":0,\"scanned\":0},\"rowstores\":{\"scanned_rows\":0,\"scanned_values_size\":0},\"shards\":{\"queries_generic\":0,\"queries_specialized\":0}},\"dataset_statistics\":[{\"table_row_count\":0,\"table_size\":0}],\"cross_cluster_resource_usage\":{}}"
+          ]
+        ]
+      },
+      "engine_elapsed_seconds": 0.0164127,
+      "output_statistics": [
+        {
+          "table_row_count": 0,
+          "table_size": 0
+        }
+      ],
+      "elapsed_seconds": 0.02687
+    },
+    {
+      "name": "real-many-groups-value_avg-context",
+      "repeat": 2,
+      "query_sha256": "562ef16ce6832cf5822a23ce46b49dd3ca7541388db8aafd4b1c565f7150fda3",
+      "fixture_sha256": "7db519631532323d2c272bbd2ee45d45ebf3e2054a6ac5e1f6fa9d7108844bb8",
+      "cpu": "00:00:00.0147380",
+      "peak_memory": 4520384,
+      "intermediate_growth": null,
+      "status": "PASS",
+      "detail": "exact result multiset and declared schema",
+      "observed_schema": [
+        {
+          "ColumnName": "WindowStart",
+          "ColumnType": "datetime"
+        },
+        {
+          "ColumnName": "WindowEnd",
+          "ColumnType": "datetime"
+        },
+        {
+          "ColumnName": "Host",
+          "ColumnType": "string"
+        },
+        {
+          "ColumnName": "User",
+          "ColumnType": "dynamic"
+        },
+        {
+          "ColumnName": "ValueAvg",
+          "ColumnType": "real"
+        },
+        {
+          "ColumnName": "ContextComplete",
+          "ColumnType": "bool"
+        }
+      ],
+      "observed_rows": 0,
+      "engine_statistics": {
+        "FrameType": "DataTable",
+        "TableId": 2,
+        "TableKind": "QueryCompletionInformation",
+        "TableName": "QueryCompletionInformation",
+        "Columns": [
+          {
+            "ColumnName": "Timestamp",
+            "ColumnType": "datetime"
+          },
+          {
+            "ColumnName": "ClientRequestId",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "ActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "SubActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "ParentActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "Level",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "LevelName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "StatusCode",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "StatusCodeName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "EventType",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "EventTypeName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "Payload",
+            "ColumnType": "string"
+          }
+        ],
+        "Rows": [
+          [
+            "2026-11-16T19:06:37.4706348Z",
+            "unspecified;48058ae7-998e-4937-a6c0-379bdd5e3efe",
+            "27cf1414-59b8-4551-a0e3-0827b35e40ab",
+            "53cfe578-49f6-4b4e-9e3e-d01ce62df8d5",
+            "9ca974c6-e173-47f7-a4fa-ad3267b1edd4",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            4,
+            "QueryInfo",
+            "{\"Count\":1,\"Text\":\"Query completed successfully\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.4706381Z",
+            "unspecified;48058ae7-998e-4937-a6c0-379bdd5e3efe",
+            "27cf1414-59b8-4551-a0e3-0827b35e40ab",
+            "53cfe578-49f6-4b4e-9e3e-d01ce62df8d5",
+            "9ca974c6-e173-47f7-a4fa-ad3267b1edd4",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            5,
+            "WorkloadGroup",
+            "{\"Count\":1,\"Text\":\"default\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.4706421Z",
+            "unspecified;48058ae7-998e-4937-a6c0-379bdd5e3efe",
+            "27cf1414-59b8-4551-a0e3-0827b35e40ab",
+            "53cfe578-49f6-4b4e-9e3e-d01ce62df8d5",
+            "9ca974c6-e173-47f7-a4fa-ad3267b1edd4",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            6,
+            "EffectiveRequestOptions",
+            "{\"Count\":1,\"Text\":\"{\\\"DataScope\\\":\\\"All\\\",\\\"QueryConsistency\\\":\\\"strongconsistency\\\",\\\"MaxMemoryConsumptionPerIterator\\\":5368709120,\\\"MaxMemoryConsumptionPerQueryPerNode\\\":12884901888,\\\"QueryFanoutNodesPercent\\\":100,\\\"QueryFanoutThreadsPercent\\\":100}\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.470652Z",
+            "unspecified;48058ae7-998e-4937-a6c0-379bdd5e3efe",
+            "27cf1414-59b8-4551-a0e3-0827b35e40ab",
+            "53cfe578-49f6-4b4e-9e3e-d01ce62df8d5",
+            "9ca974c6-e173-47f7-a4fa-ad3267b1edd4",
+            6,
+            "Stats",
+            0,
+            "S_OK (0)",
+            0,
+            "QueryResourceConsumption",
+            "{\"QueryHash\":\"6d018e3398271d76\",\"ExecutionTime\":0.0165202,\"resource_usage\":{\"cache\":{\"shards\":{\"hot\":{\"hitbytes\":0,\"missbytes\":0,\"retrievebytes\":0},\"cold\":{\"hitbytes\":0,\"missbytes\":0,\"retrievebytes\":0},\"bypassbytes\":0}},\"cpu\":{\"user\":\"00:00:00.0147380\",\"kernel\":\"00:00:00\",\"total cpu\":\"00:00:00.0147380\",\"breakdown\":{\"query execution\":\"00:00:00.0080290\",\"query planning\":\"00:00:00.0067090\"}},\"memory\":{\"peak_per_node\":4520384},\"network\":{\"inter_cluster_total_bytes\":2563,\"cross_cluster_total_bytes\":0}},\"input_dataset_statistics\":{\"extents\":{\"total\":0,\"scanned\":0,\"scanned_min_datetime\":\"0001-01-01T00:00:00.0000000Z\",\"scanned_max_datetime\":\"0001-01-01T00:00:00.0000000Z\"},\"rows\":{\"total\":0,\"scanned\":0},\"rowstores\":{\"scanned_rows\":0,\"scanned_values_size\":0},\"shards\":{\"queries_generic\":0,\"queries_specialized\":0}},\"dataset_statistics\":[{\"table_row_count\":0,\"table_size\":0}],\"cross_cluster_resource_usage\":{}}"
+          ]
+        ]
+      },
+      "engine_elapsed_seconds": 0.0165202,
+      "output_statistics": [
+        {
+          "table_row_count": 0,
+          "table_size": 0
+        }
+      ],
+      "elapsed_seconds": 0.023836
+    },
+    {
+      "name": "real-many-groups-value_avg-context",
+      "repeat": 3,
+      "query_sha256": "562ef16ce6832cf5822a23ce46b49dd3ca7541388db8aafd4b1c565f7150fda3",
+      "fixture_sha256": "7db519631532323d2c272bbd2ee45d45ebf3e2054a6ac5e1f6fa9d7108844bb8",
+      "cpu": "00:00:00.0127420",
+      "peak_memory": 4519616,
+      "intermediate_growth": null,
+      "status": "PASS",
+      "detail": "exact result multiset and declared schema",
+      "observed_schema": [
+        {
+          "ColumnName": "WindowStart",
+          "ColumnType": "datetime"
+        },
+        {
+          "ColumnName": "WindowEnd",
+          "ColumnType": "datetime"
+        },
+        {
+          "ColumnName": "Host",
+          "ColumnType": "string"
+        },
+        {
+          "ColumnName": "User",
+          "ColumnType": "dynamic"
+        },
+        {
+          "ColumnName": "ValueAvg",
+          "ColumnType": "real"
+        },
+        {
+          "ColumnName": "ContextComplete",
+          "ColumnType": "bool"
+        }
+      ],
+      "observed_rows": 0,
+      "engine_statistics": {
+        "FrameType": "DataTable",
+        "TableId": 2,
+        "TableKind": "QueryCompletionInformation",
+        "TableName": "QueryCompletionInformation",
+        "Columns": [
+          {
+            "ColumnName": "Timestamp",
+            "ColumnType": "datetime"
+          },
+          {
+            "ColumnName": "ClientRequestId",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "ActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "SubActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "ParentActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "Level",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "LevelName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "StatusCode",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "StatusCodeName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "EventType",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "EventTypeName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "Payload",
+            "ColumnType": "string"
+          }
+        ],
+        "Rows": [
+          [
+            "2026-11-16T19:06:37.4921628Z",
+            "unspecified;7f6b2fde-f89e-434c-ae8f-7ee4374b35b7",
+            "2b52d238-649f-4aa8-b971-616659baa7a8",
+            "0919634f-a032-41e3-8a48-db57e09a527a",
+            "bf4dd3e2-76e9-40f9-9466-a1bf31e7cc60",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            4,
+            "QueryInfo",
+            "{\"Count\":1,\"Text\":\"Query completed successfully\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.4921666Z",
+            "unspecified;7f6b2fde-f89e-434c-ae8f-7ee4374b35b7",
+            "2b52d238-649f-4aa8-b971-616659baa7a8",
+            "0919634f-a032-41e3-8a48-db57e09a527a",
+            "bf4dd3e2-76e9-40f9-9466-a1bf31e7cc60",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            5,
+            "WorkloadGroup",
+            "{\"Count\":1,\"Text\":\"default\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.4921693Z",
+            "unspecified;7f6b2fde-f89e-434c-ae8f-7ee4374b35b7",
+            "2b52d238-649f-4aa8-b971-616659baa7a8",
+            "0919634f-a032-41e3-8a48-db57e09a527a",
+            "bf4dd3e2-76e9-40f9-9466-a1bf31e7cc60",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            6,
+            "EffectiveRequestOptions",
+            "{\"Count\":1,\"Text\":\"{\\\"DataScope\\\":\\\"All\\\",\\\"QueryConsistency\\\":\\\"strongconsistency\\\",\\\"MaxMemoryConsumptionPerIterator\\\":5368709120,\\\"MaxMemoryConsumptionPerQueryPerNode\\\":12884901888,\\\"QueryFanoutNodesPercent\\\":100,\\\"QueryFanoutThreadsPercent\\\":100}\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.4921789Z",
+            "unspecified;7f6b2fde-f89e-434c-ae8f-7ee4374b35b7",
+            "2b52d238-649f-4aa8-b971-616659baa7a8",
+            "0919634f-a032-41e3-8a48-db57e09a527a",
+            "bf4dd3e2-76e9-40f9-9466-a1bf31e7cc60",
+            6,
+            "Stats",
+            0,
+            "S_OK (0)",
+            0,
+            "QueryResourceConsumption",
+            "{\"QueryHash\":\"6d018e3398271d76\",\"ExecutionTime\":0.0140041,\"resource_usage\":{\"cache\":{\"shards\":{\"hot\":{\"hitbytes\":0,\"missbytes\":0,\"retrievebytes\":0},\"cold\":{\"hitbytes\":0,\"missbytes\":0,\"retrievebytes\":0},\"bypassbytes\":0}},\"cpu\":{\"user\":\"00:00:00.0032720\",\"kernel\":\"00:00:00.0094700\",\"total cpu\":\"00:00:00.0127420\",\"breakdown\":{\"query execution\":\"00:00:00.0100620\",\"query planning\":\"00:00:00.0026800\"}},\"memory\":{\"peak_per_node\":4519616},\"network\":{\"inter_cluster_total_bytes\":2563,\"cross_cluster_total_bytes\":0}},\"input_dataset_statistics\":{\"extents\":{\"total\":0,\"scanned\":0,\"scanned_min_datetime\":\"0001-01-01T00:00:00.0000000Z\",\"scanned_max_datetime\":\"0001-01-01T00:00:00.0000000Z\"},\"rows\":{\"total\":0,\"scanned\":0},\"rowstores\":{\"scanned_rows\":0,\"scanned_values_size\":0},\"shards\":{\"queries_generic\":0,\"queries_specialized\":0}},\"dataset_statistics\":[{\"table_row_count\":0,\"table_size\":0}],\"cross_cluster_resource_usage\":{}}"
+          ]
+        ]
+      },
+      "engine_elapsed_seconds": 0.0140041,
+      "output_statistics": [
+        {
+          "table_row_count": 0,
+          "table_size": 0
+        }
+      ],
+      "elapsed_seconds": 0.020943
+    },
+    {
+      "name": "real-hot-group-value_avg-plain",
+      "repeat": 1,
+      "query_sha256": "df3c821d2dba1d43b38b842082012356dc39fcad6ed82765d3dd5e4e50a15ce6",
+      "fixture_sha256": "c53d1dff55d9955af271748a294e969e10e369c6a1e4b7b1b67349340ecb125b",
+      "cpu": "00:00:00.0106790",
+      "peak_memory": 4206976,
+      "intermediate_growth": null,
+      "status": "PASS",
+      "detail": "exact result multiset and declared schema",
+      "observed_schema": [
+        {
+          "ColumnName": "WindowStart",
+          "ColumnType": "datetime"
+        },
+        {
+          "ColumnName": "WindowEnd",
+          "ColumnType": "datetime"
+        },
+        {
+          "ColumnName": "Host",
+          "ColumnType": "string"
+        },
+        {
+          "ColumnName": "ValueAvg",
+          "ColumnType": "real"
+        }
+      ],
+      "observed_rows": 0,
+      "engine_statistics": {
+        "FrameType": "DataTable",
+        "TableId": 2,
+        "TableKind": "QueryCompletionInformation",
+        "TableName": "QueryCompletionInformation",
+        "Columns": [
+          {
+            "ColumnName": "Timestamp",
+            "ColumnType": "datetime"
+          },
+          {
+            "ColumnName": "ClientRequestId",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "ActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "SubActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "ParentActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "Level",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "LevelName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "StatusCode",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "StatusCodeName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "EventType",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "EventTypeName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "Payload",
+            "ColumnType": "string"
+          }
+        ],
+        "Rows": [
+          [
+            "2026-11-16T19:06:37.5113Z",
+            "unspecified;f5ce1323-db3c-4c25-9644-e5a558083ea0",
+            "60c2a6b8-5678-4248-880e-f0bd31513d6f",
+            "2cf0b089-3602-47c1-ad79-35dc9fd47ff1",
+            "324a2617-8b56-45c1-8c03-81058cceed0b",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            4,
+            "QueryInfo",
+            "{\"Count\":1,\"Text\":\"Query completed successfully\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.5113063Z",
+            "unspecified;f5ce1323-db3c-4c25-9644-e5a558083ea0",
+            "60c2a6b8-5678-4248-880e-f0bd31513d6f",
+            "2cf0b089-3602-47c1-ad79-35dc9fd47ff1",
+            "324a2617-8b56-45c1-8c03-81058cceed0b",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            5,
+            "WorkloadGroup",
+            "{\"Count\":1,\"Text\":\"default\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.5113089Z",
+            "unspecified;f5ce1323-db3c-4c25-9644-e5a558083ea0",
+            "60c2a6b8-5678-4248-880e-f0bd31513d6f",
+            "2cf0b089-3602-47c1-ad79-35dc9fd47ff1",
+            "324a2617-8b56-45c1-8c03-81058cceed0b",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            6,
+            "EffectiveRequestOptions",
+            "{\"Count\":1,\"Text\":\"{\\\"DataScope\\\":\\\"All\\\",\\\"QueryConsistency\\\":\\\"strongconsistency\\\",\\\"MaxMemoryConsumptionPerIterator\\\":5368709120,\\\"MaxMemoryConsumptionPerQueryPerNode\\\":12884901888,\\\"QueryFanoutNodesPercent\\\":100,\\\"QueryFanoutThreadsPercent\\\":100}\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.5113189Z",
+            "unspecified;f5ce1323-db3c-4c25-9644-e5a558083ea0",
+            "60c2a6b8-5678-4248-880e-f0bd31513d6f",
+            "2cf0b089-3602-47c1-ad79-35dc9fd47ff1",
+            "324a2617-8b56-45c1-8c03-81058cceed0b",
+            6,
+            "Stats",
+            0,
+            "S_OK (0)",
+            0,
+            "QueryResourceConsumption",
+            "{\"QueryHash\":\"eb48aad7dd6ac7a6\",\"ExecutionTime\":0.011564,\"resource_usage\":{\"cache\":{\"shards\":{\"hot\":{\"hitbytes\":0,\"missbytes\":0,\"retrievebytes\":0},\"cold\":{\"hitbytes\":0,\"missbytes\":0,\"retrievebytes\":0},\"bypassbytes\":0}},\"cpu\":{\"user\":\"00:00:00.0106790\",\"kernel\":\"00:00:00\",\"total cpu\":\"00:00:00.0106790\",\"breakdown\":{\"query execution\":\"00:00:00.0057670\",\"query planning\":\"00:00:00.0049120\"}},\"memory\":{\"peak_per_node\":4206976},\"network\":{\"inter_cluster_total_bytes\":627,\"cross_cluster_total_bytes\":0}},\"input_dataset_statistics\":{\"extents\":{\"total\":0,\"scanned\":0,\"scanned_min_datetime\":\"0001-01-01T00:00:00.0000000Z\",\"scanned_max_datetime\":\"0001-01-01T00:00:00.0000000Z\"},\"rows\":{\"total\":0,\"scanned\":0},\"rowstores\":{\"scanned_rows\":0,\"scanned_values_size\":0},\"shards\":{\"queries_generic\":0,\"queries_specialized\":0}},\"dataset_statistics\":[{\"table_row_count\":0,\"table_size\":0}],\"cross_cluster_resource_usage\":{}}"
+          ]
+        ]
+      },
+      "engine_elapsed_seconds": 0.011564,
+      "output_statistics": [
+        {
+          "table_row_count": 0,
+          "table_size": 0
+        }
+      ],
+      "elapsed_seconds": 0.018471
+    },
+    {
+      "name": "real-hot-group-value_avg-plain",
+      "repeat": 2,
+      "query_sha256": "df3c821d2dba1d43b38b842082012356dc39fcad6ed82765d3dd5e4e50a15ce6",
+      "fixture_sha256": "c53d1dff55d9955af271748a294e969e10e369c6a1e4b7b1b67349340ecb125b",
+      "cpu": "00:00:00.0070100",
+      "peak_memory": 4257024,
+      "intermediate_growth": null,
+      "status": "PASS",
+      "detail": "exact result multiset and declared schema",
+      "observed_schema": [
+        {
+          "ColumnName": "WindowStart",
+          "ColumnType": "datetime"
+        },
+        {
+          "ColumnName": "WindowEnd",
+          "ColumnType": "datetime"
+        },
+        {
+          "ColumnName": "Host",
+          "ColumnType": "string"
+        },
+        {
+          "ColumnName": "ValueAvg",
+          "ColumnType": "real"
+        }
+      ],
+      "observed_rows": 0,
+      "engine_statistics": {
+        "FrameType": "DataTable",
+        "TableId": 2,
+        "TableKind": "QueryCompletionInformation",
+        "TableName": "QueryCompletionInformation",
+        "Columns": [
+          {
+            "ColumnName": "Timestamp",
+            "ColumnType": "datetime"
+          },
+          {
+            "ColumnName": "ClientRequestId",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "ActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "SubActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "ParentActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "Level",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "LevelName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "StatusCode",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "StatusCodeName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "EventType",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "EventTypeName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "Payload",
+            "ColumnType": "string"
+          }
+        ],
+        "Rows": [
+          [
+            "2026-11-16T19:06:37.5271488Z",
+            "unspecified;04f24251-f6da-4469-9853-7770bacba98b",
+            "ef8e01e0-d2d6-44cf-88af-e38c3bccd116",
+            "752ef236-56ce-4ca0-ba43-2a85f41d22ec",
+            "1da716dd-b136-4337-9945-fcb0aaf2e1c2",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            4,
+            "QueryInfo",
+            "{\"Count\":1,\"Text\":\"Query completed successfully\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.5271527Z",
+            "unspecified;04f24251-f6da-4469-9853-7770bacba98b",
+            "ef8e01e0-d2d6-44cf-88af-e38c3bccd116",
+            "752ef236-56ce-4ca0-ba43-2a85f41d22ec",
+            "1da716dd-b136-4337-9945-fcb0aaf2e1c2",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            5,
+            "WorkloadGroup",
+            "{\"Count\":1,\"Text\":\"default\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.5271561Z",
+            "unspecified;04f24251-f6da-4469-9853-7770bacba98b",
+            "ef8e01e0-d2d6-44cf-88af-e38c3bccd116",
+            "752ef236-56ce-4ca0-ba43-2a85f41d22ec",
+            "1da716dd-b136-4337-9945-fcb0aaf2e1c2",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            6,
+            "EffectiveRequestOptions",
+            "{\"Count\":1,\"Text\":\"{\\\"DataScope\\\":\\\"All\\\",\\\"QueryConsistency\\\":\\\"strongconsistency\\\",\\\"MaxMemoryConsumptionPerIterator\\\":5368709120,\\\"MaxMemoryConsumptionPerQueryPerNode\\\":12884901888,\\\"QueryFanoutNodesPercent\\\":100,\\\"QueryFanoutThreadsPercent\\\":100}\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.5271663Z",
+            "unspecified;04f24251-f6da-4469-9853-7770bacba98b",
+            "ef8e01e0-d2d6-44cf-88af-e38c3bccd116",
+            "752ef236-56ce-4ca0-ba43-2a85f41d22ec",
+            "1da716dd-b136-4337-9945-fcb0aaf2e1c2",
+            6,
+            "Stats",
+            0,
+            "S_OK (0)",
+            0,
+            "QueryResourceConsumption",
+            "{\"QueryHash\":\"eb48aad7dd6ac7a6\",\"ExecutionTime\":0.0085189,\"resource_usage\":{\"cache\":{\"shards\":{\"hot\":{\"hitbytes\":0,\"missbytes\":0,\"retrievebytes\":0},\"cold\":{\"hitbytes\":0,\"missbytes\":0,\"retrievebytes\":0},\"bypassbytes\":0}},\"cpu\":{\"user\":\"00:00:00.0070100\",\"kernel\":\"00:00:00\",\"total cpu\":\"00:00:00.0070100\",\"breakdown\":{\"query execution\":\"00:00:00.0048190\",\"query planning\":\"00:00:00.0021910\"}},\"memory\":{\"peak_per_node\":4257024},\"network\":{\"inter_cluster_total_bytes\":627,\"cross_cluster_total_bytes\":0}},\"input_dataset_statistics\":{\"extents\":{\"total\":0,\"scanned\":0,\"scanned_min_datetime\":\"0001-01-01T00:00:00.0000000Z\",\"scanned_max_datetime\":\"0001-01-01T00:00:00.0000000Z\"},\"rows\":{\"total\":0,\"scanned\":0},\"rowstores\":{\"scanned_rows\":0,\"scanned_values_size\":0},\"shards\":{\"queries_generic\":0,\"queries_specialized\":0}},\"dataset_statistics\":[{\"table_row_count\":0,\"table_size\":0}],\"cross_cluster_resource_usage\":{}}"
+          ]
+        ]
+      },
+      "engine_elapsed_seconds": 0.0085189,
+      "output_statistics": [
+        {
+          "table_row_count": 0,
+          "table_size": 0
+        }
+      ],
+      "elapsed_seconds": 0.015412
+    },
+    {
+      "name": "real-hot-group-value_avg-plain",
+      "repeat": 3,
+      "query_sha256": "df3c821d2dba1d43b38b842082012356dc39fcad6ed82765d3dd5e4e50a15ce6",
+      "fixture_sha256": "c53d1dff55d9955af271748a294e969e10e369c6a1e4b7b1b67349340ecb125b",
+      "cpu": "00:00:00.0016370",
+      "peak_memory": 4257136,
+      "intermediate_growth": null,
+      "status": "PASS",
+      "detail": "exact result multiset and declared schema",
+      "observed_schema": [
+        {
+          "ColumnName": "WindowStart",
+          "ColumnType": "datetime"
+        },
+        {
+          "ColumnName": "WindowEnd",
+          "ColumnType": "datetime"
+        },
+        {
+          "ColumnName": "Host",
+          "ColumnType": "string"
+        },
+        {
+          "ColumnName": "ValueAvg",
+          "ColumnType": "real"
+        }
+      ],
+      "observed_rows": 0,
+      "engine_statistics": {
+        "FrameType": "DataTable",
+        "TableId": 2,
+        "TableKind": "QueryCompletionInformation",
+        "TableName": "QueryCompletionInformation",
+        "Columns": [
+          {
+            "ColumnName": "Timestamp",
+            "ColumnType": "datetime"
+          },
+          {
+            "ColumnName": "ClientRequestId",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "ActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "SubActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "ParentActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "Level",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "LevelName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "StatusCode",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "StatusCodeName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "EventType",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "EventTypeName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "Payload",
+            "ColumnType": "string"
+          }
+        ],
+        "Rows": [
+          [
+            "2026-11-16T19:06:37.5439799Z",
+            "unspecified;32e7dddd-ef8c-452a-9bcc-92f6f6090701",
+            "d52964b6-5cb5-4126-ac7b-1154e06017e5",
+            "be926258-76a9-4aa1-9ab3-cd5218022b70",
+            "8613852b-6c87-4b8b-9f20-98892253ef7f",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            4,
+            "QueryInfo",
+            "{\"Count\":1,\"Text\":\"Query completed successfully\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.543984Z",
+            "unspecified;32e7dddd-ef8c-452a-9bcc-92f6f6090701",
+            "d52964b6-5cb5-4126-ac7b-1154e06017e5",
+            "be926258-76a9-4aa1-9ab3-cd5218022b70",
+            "8613852b-6c87-4b8b-9f20-98892253ef7f",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            5,
+            "WorkloadGroup",
+            "{\"Count\":1,\"Text\":\"default\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.5439869Z",
+            "unspecified;32e7dddd-ef8c-452a-9bcc-92f6f6090701",
+            "d52964b6-5cb5-4126-ac7b-1154e06017e5",
+            "be926258-76a9-4aa1-9ab3-cd5218022b70",
+            "8613852b-6c87-4b8b-9f20-98892253ef7f",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            6,
+            "EffectiveRequestOptions",
+            "{\"Count\":1,\"Text\":\"{\\\"DataScope\\\":\\\"All\\\",\\\"QueryConsistency\\\":\\\"strongconsistency\\\",\\\"MaxMemoryConsumptionPerIterator\\\":5368709120,\\\"MaxMemoryConsumptionPerQueryPerNode\\\":12884901888,\\\"QueryFanoutNodesPercent\\\":100,\\\"QueryFanoutThreadsPercent\\\":100}\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.5439976Z",
+            "unspecified;32e7dddd-ef8c-452a-9bcc-92f6f6090701",
+            "d52964b6-5cb5-4126-ac7b-1154e06017e5",
+            "be926258-76a9-4aa1-9ab3-cd5218022b70",
+            "8613852b-6c87-4b8b-9f20-98892253ef7f",
+            6,
+            "Stats",
+            0,
+            "S_OK (0)",
+            0,
+            "QueryResourceConsumption",
+            "{\"QueryHash\":\"eb48aad7dd6ac7a6\",\"ExecutionTime\":0.0089427,\"resource_usage\":{\"cache\":{\"shards\":{\"hot\":{\"hitbytes\":0,\"missbytes\":0,\"retrievebytes\":0},\"cold\":{\"hitbytes\":0,\"missbytes\":0,\"retrievebytes\":0},\"bypassbytes\":0}},\"cpu\":{\"user\":\"00:00:00.0016370\",\"kernel\":\"00:00:00\",\"total cpu\":\"00:00:00.0016370\",\"breakdown\":{\"query execution\":\"00:00:00.0016370\",\"query planning\":\"00:00:00\"}},\"memory\":{\"peak_per_node\":4257136},\"network\":{\"inter_cluster_total_bytes\":627,\"cross_cluster_total_bytes\":0}},\"input_dataset_statistics\":{\"extents\":{\"total\":0,\"scanned\":0,\"scanned_min_datetime\":\"0001-01-01T00:00:00.0000000Z\",\"scanned_max_datetime\":\"0001-01-01T00:00:00.0000000Z\"},\"rows\":{\"total\":0,\"scanned\":0},\"rowstores\":{\"scanned_rows\":0,\"scanned_values_size\":0},\"shards\":{\"queries_generic\":0,\"queries_specialized\":0}},\"dataset_statistics\":[{\"table_row_count\":0,\"table_size\":0}],\"cross_cluster_resource_usage\":{}}"
+          ]
+        ]
+      },
+      "engine_elapsed_seconds": 0.0089427,
+      "output_statistics": [
+        {
+          "table_row_count": 0,
+          "table_size": 0
+        }
+      ],
+      "elapsed_seconds": 0.016066
+    },
+    {
+      "name": "real-hot-group-value_avg-context",
+      "repeat": 1,
+      "query_sha256": "ad45d1515e1a2dd321be5fe2613f8555b75b22bf6ac1beb62c03b450c8e2c9b2",
+      "fixture_sha256": "ba219b8fe0a40f53f6699a72185f62c5e9df81261b97c0069381070e9c5cedc1",
+      "cpu": "00:00:00.0149180",
+      "peak_memory": 8503232,
+      "intermediate_growth": null,
+      "status": "PASS",
+      "detail": "exact result multiset and declared schema",
+      "observed_schema": [
+        {
+          "ColumnName": "WindowStart",
+          "ColumnType": "datetime"
+        },
+        {
+          "ColumnName": "WindowEnd",
+          "ColumnType": "datetime"
+        },
+        {
+          "ColumnName": "Host",
+          "ColumnType": "string"
+        },
+        {
+          "ColumnName": "User",
+          "ColumnType": "dynamic"
+        },
+        {
+          "ColumnName": "ValueAvg",
+          "ColumnType": "real"
+        },
+        {
+          "ColumnName": "ContextComplete",
+          "ColumnType": "bool"
+        }
+      ],
+      "observed_rows": 0,
+      "engine_statistics": {
+        "FrameType": "DataTable",
+        "TableId": 2,
+        "TableKind": "QueryCompletionInformation",
+        "TableName": "QueryCompletionInformation",
+        "Columns": [
+          {
+            "ColumnName": "Timestamp",
+            "ColumnType": "datetime"
+          },
+          {
+            "ColumnName": "ClientRequestId",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "ActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "SubActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "ParentActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "Level",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "LevelName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "StatusCode",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "StatusCodeName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "EventType",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "EventTypeName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "Payload",
+            "ColumnType": "string"
+          }
+        ],
+        "Rows": [
+          [
+            "2026-11-16T19:06:37.5686834Z",
+            "unspecified;72260c6a-2a3d-4c33-87b8-8cf625e36f72",
+            "d2063378-c5b6-4e1c-be34-cfb2ac1dd6a4",
+            "91643616-1cb3-402e-9a43-d1fadf1d78f9",
+            "187f3a5c-6743-4a47-91c7-7265f174cadd",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            4,
+            "QueryInfo",
+            "{\"Count\":1,\"Text\":\"Query completed successfully\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.568687Z",
+            "unspecified;72260c6a-2a3d-4c33-87b8-8cf625e36f72",
+            "d2063378-c5b6-4e1c-be34-cfb2ac1dd6a4",
+            "91643616-1cb3-402e-9a43-d1fadf1d78f9",
+            "187f3a5c-6743-4a47-91c7-7265f174cadd",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            5,
+            "WorkloadGroup",
+            "{\"Count\":1,\"Text\":\"default\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.5686897Z",
+            "unspecified;72260c6a-2a3d-4c33-87b8-8cf625e36f72",
+            "d2063378-c5b6-4e1c-be34-cfb2ac1dd6a4",
+            "91643616-1cb3-402e-9a43-d1fadf1d78f9",
+            "187f3a5c-6743-4a47-91c7-7265f174cadd",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            6,
+            "EffectiveRequestOptions",
+            "{\"Count\":1,\"Text\":\"{\\\"DataScope\\\":\\\"All\\\",\\\"QueryConsistency\\\":\\\"strongconsistency\\\",\\\"MaxMemoryConsumptionPerIterator\\\":5368709120,\\\"MaxMemoryConsumptionPerQueryPerNode\\\":12884901888,\\\"QueryFanoutNodesPercent\\\":100,\\\"QueryFanoutThreadsPercent\\\":100}\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.5686992Z",
+            "unspecified;72260c6a-2a3d-4c33-87b8-8cf625e36f72",
+            "d2063378-c5b6-4e1c-be34-cfb2ac1dd6a4",
+            "91643616-1cb3-402e-9a43-d1fadf1d78f9",
+            "187f3a5c-6743-4a47-91c7-7265f174cadd",
+            6,
+            "Stats",
+            0,
+            "S_OK (0)",
+            0,
+            "QueryResourceConsumption",
+            "{\"QueryHash\":\"6d018e3398271d76\",\"ExecutionTime\":0.0171982,\"resource_usage\":{\"cache\":{\"shards\":{\"hot\":{\"hitbytes\":0,\"missbytes\":0,\"retrievebytes\":0},\"cold\":{\"hitbytes\":0,\"missbytes\":0,\"retrievebytes\":0},\"bypassbytes\":0}},\"cpu\":{\"user\":\"00:00:00.0149180\",\"kernel\":\"00:00:00\",\"total cpu\":\"00:00:00.0149180\",\"breakdown\":{\"query execution\":\"00:00:00.0055440\",\"query planning\":\"00:00:00.0093740\"}},\"memory\":{\"peak_per_node\":8503232},\"network\":{\"inter_cluster_total_bytes\":2563,\"cross_cluster_total_bytes\":0}},\"input_dataset_statistics\":{\"extents\":{\"total\":0,\"scanned\":0,\"scanned_min_datetime\":\"0001-01-01T00:00:00.0000000Z\",\"scanned_max_datetime\":\"0001-01-01T00:00:00.0000000Z\"},\"rows\":{\"total\":0,\"scanned\":0},\"rowstores\":{\"scanned_rows\":0,\"scanned_values_size\":0},\"shards\":{\"queries_generic\":0,\"queries_specialized\":0}},\"dataset_statistics\":[{\"table_row_count\":0,\"table_size\":0}],\"cross_cluster_resource_usage\":{}}"
+          ]
+        ]
+      },
+      "engine_elapsed_seconds": 0.0171982,
+      "output_statistics": [
+        {
+          "table_row_count": 0,
+          "table_size": 0
+        }
+      ],
+      "elapsed_seconds": 0.02422
+    },
+    {
+      "name": "real-hot-group-value_avg-context",
+      "repeat": 2,
+      "query_sha256": "ad45d1515e1a2dd321be5fe2613f8555b75b22bf6ac1beb62c03b450c8e2c9b2",
+      "fixture_sha256": "ba219b8fe0a40f53f6699a72185f62c5e9df81261b97c0069381070e9c5cedc1",
+      "cpu": "00:00:00.0148830",
+      "peak_memory": 8502976,
+      "intermediate_growth": null,
+      "status": "PASS",
+      "detail": "exact result multiset and declared schema",
+      "observed_schema": [
+        {
+          "ColumnName": "WindowStart",
+          "ColumnType": "datetime"
+        },
+        {
+          "ColumnName": "WindowEnd",
+          "ColumnType": "datetime"
+        },
+        {
+          "ColumnName": "Host",
+          "ColumnType": "string"
+        },
+        {
+          "ColumnName": "User",
+          "ColumnType": "dynamic"
+        },
+        {
+          "ColumnName": "ValueAvg",
+          "ColumnType": "real"
+        },
+        {
+          "ColumnName": "ContextComplete",
+          "ColumnType": "bool"
+        }
+      ],
+      "observed_rows": 0,
+      "engine_statistics": {
+        "FrameType": "DataTable",
+        "TableId": 2,
+        "TableKind": "QueryCompletionInformation",
+        "TableName": "QueryCompletionInformation",
+        "Columns": [
+          {
+            "ColumnName": "Timestamp",
+            "ColumnType": "datetime"
+          },
+          {
+            "ColumnName": "ClientRequestId",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "ActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "SubActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "ParentActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "Level",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "LevelName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "StatusCode",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "StatusCodeName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "EventType",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "EventTypeName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "Payload",
+            "ColumnType": "string"
+          }
+        ],
+        "Rows": [
+          [
+            "2026-11-16T19:06:37.5930579Z",
+            "unspecified;9ff70462-b414-4201-a11d-f7fbeedcad90",
+            "f14aa9af-6833-46be-bc59-72dfbedc975f",
+            "83a89501-266f-4554-b8ec-08b575405fa9",
+            "34060fe4-2bdc-448e-845b-f771e8663a1c",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            4,
+            "QueryInfo",
+            "{\"Count\":1,\"Text\":\"Query completed successfully\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.5930626Z",
+            "unspecified;9ff70462-b414-4201-a11d-f7fbeedcad90",
+            "f14aa9af-6833-46be-bc59-72dfbedc975f",
+            "83a89501-266f-4554-b8ec-08b575405fa9",
+            "34060fe4-2bdc-448e-845b-f771e8663a1c",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            5,
+            "WorkloadGroup",
+            "{\"Count\":1,\"Text\":\"default\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.5930656Z",
+            "unspecified;9ff70462-b414-4201-a11d-f7fbeedcad90",
+            "f14aa9af-6833-46be-bc59-72dfbedc975f",
+            "83a89501-266f-4554-b8ec-08b575405fa9",
+            "34060fe4-2bdc-448e-845b-f771e8663a1c",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            6,
+            "EffectiveRequestOptions",
+            "{\"Count\":1,\"Text\":\"{\\\"DataScope\\\":\\\"All\\\",\\\"QueryConsistency\\\":\\\"strongconsistency\\\",\\\"MaxMemoryConsumptionPerIterator\\\":5368709120,\\\"MaxMemoryConsumptionPerQueryPerNode\\\":12884901888,\\\"QueryFanoutNodesPercent\\\":100,\\\"QueryFanoutThreadsPercent\\\":100}\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.593075Z",
+            "unspecified;9ff70462-b414-4201-a11d-f7fbeedcad90",
+            "f14aa9af-6833-46be-bc59-72dfbedc975f",
+            "83a89501-266f-4554-b8ec-08b575405fa9",
+            "34060fe4-2bdc-448e-845b-f771e8663a1c",
+            6,
+            "Stats",
+            0,
+            "S_OK (0)",
+            0,
+            "QueryResourceConsumption",
+            "{\"QueryHash\":\"6d018e3398271d76\",\"ExecutionTime\":0.0167029,\"resource_usage\":{\"cache\":{\"shards\":{\"hot\":{\"hitbytes\":0,\"missbytes\":0,\"retrievebytes\":0},\"cold\":{\"hitbytes\":0,\"missbytes\":0,\"retrievebytes\":0},\"bypassbytes\":0}},\"cpu\":{\"user\":\"00:00:00.0071770\",\"kernel\":\"00:00:00.0077060\",\"total cpu\":\"00:00:00.0148830\",\"breakdown\":{\"query execution\":\"00:00:00.0103770\",\"query planning\":\"00:00:00.0045060\"}},\"memory\":{\"peak_per_node\":8502976},\"network\":{\"inter_cluster_total_bytes\":2563,\"cross_cluster_total_bytes\":0}},\"input_dataset_statistics\":{\"extents\":{\"total\":0,\"scanned\":0,\"scanned_min_datetime\":\"0001-01-01T00:00:00.0000000Z\",\"scanned_max_datetime\":\"0001-01-01T00:00:00.0000000Z\"},\"rows\":{\"total\":0,\"scanned\":0},\"rowstores\":{\"scanned_rows\":0,\"scanned_values_size\":0},\"shards\":{\"queries_generic\":0,\"queries_specialized\":0}},\"dataset_statistics\":[{\"table_row_count\":0,\"table_size\":0}],\"cross_cluster_resource_usage\":{}}"
+          ]
+        ]
+      },
+      "engine_elapsed_seconds": 0.0167029,
+      "output_statistics": [
+        {
+          "table_row_count": 0,
+          "table_size": 0
+        }
+      ],
+      "elapsed_seconds": 0.023598
+    },
+    {
+      "name": "real-hot-group-value_avg-context",
+      "repeat": 3,
+      "query_sha256": "ad45d1515e1a2dd321be5fe2613f8555b75b22bf6ac1beb62c03b450c8e2c9b2",
+      "fixture_sha256": "ba219b8fe0a40f53f6699a72185f62c5e9df81261b97c0069381070e9c5cedc1",
+      "cpu": "00:00:00.0021650",
+      "peak_memory": 8404672,
+      "intermediate_growth": null,
+      "status": "PASS",
+      "detail": "exact result multiset and declared schema",
+      "observed_schema": [
+        {
+          "ColumnName": "WindowStart",
+          "ColumnType": "datetime"
+        },
+        {
+          "ColumnName": "WindowEnd",
+          "ColumnType": "datetime"
+        },
+        {
+          "ColumnName": "Host",
+          "ColumnType": "string"
+        },
+        {
+          "ColumnName": "User",
+          "ColumnType": "dynamic"
+        },
+        {
+          "ColumnName": "ValueAvg",
+          "ColumnType": "real"
+        },
+        {
+          "ColumnName": "ContextComplete",
+          "ColumnType": "bool"
+        }
+      ],
+      "observed_rows": 0,
+      "engine_statistics": {
+        "FrameType": "DataTable",
+        "TableId": 2,
+        "TableKind": "QueryCompletionInformation",
+        "TableName": "QueryCompletionInformation",
+        "Columns": [
+          {
+            "ColumnName": "Timestamp",
+            "ColumnType": "datetime"
+          },
+          {
+            "ColumnName": "ClientRequestId",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "ActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "SubActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "ParentActivityId",
+            "ColumnType": "guid"
+          },
+          {
+            "ColumnName": "Level",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "LevelName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "StatusCode",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "StatusCodeName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "EventType",
+            "ColumnType": "int"
+          },
+          {
+            "ColumnName": "EventTypeName",
+            "ColumnType": "string"
+          },
+          {
+            "ColumnName": "Payload",
+            "ColumnType": "string"
+          }
+        ],
+        "Rows": [
+          [
+            "2026-11-16T19:06:37.6154515Z",
+            "unspecified;ff3bcbf4-c8c4-4465-95b6-909eab1b3389",
+            "98935992-aac9-40d7-b914-49b6e3a93582",
+            "c32176a7-8440-44cd-a025-dbea5e04ad46",
+            "414e559b-71dc-46df-948b-ec5ed1a0b086",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            4,
+            "QueryInfo",
+            "{\"Count\":1,\"Text\":\"Query completed successfully\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.6154552Z",
+            "unspecified;ff3bcbf4-c8c4-4465-95b6-909eab1b3389",
+            "98935992-aac9-40d7-b914-49b6e3a93582",
+            "c32176a7-8440-44cd-a025-dbea5e04ad46",
+            "414e559b-71dc-46df-948b-ec5ed1a0b086",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            5,
+            "WorkloadGroup",
+            "{\"Count\":1,\"Text\":\"default\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.6154584Z",
+            "unspecified;ff3bcbf4-c8c4-4465-95b6-909eab1b3389",
+            "98935992-aac9-40d7-b914-49b6e3a93582",
+            "c32176a7-8440-44cd-a025-dbea5e04ad46",
+            "414e559b-71dc-46df-948b-ec5ed1a0b086",
+            4,
+            "Info",
+            0,
+            "S_OK (0)",
+            6,
+            "EffectiveRequestOptions",
+            "{\"Count\":1,\"Text\":\"{\\\"DataScope\\\":\\\"All\\\",\\\"QueryConsistency\\\":\\\"strongconsistency\\\",\\\"MaxMemoryConsumptionPerIterator\\\":5368709120,\\\"MaxMemoryConsumptionPerQueryPerNode\\\":12884901888,\\\"QueryFanoutNodesPercent\\\":100,\\\"QueryFanoutThreadsPercent\\\":100}\"}"
+          ],
+          [
+            "2026-11-16T19:06:37.6154688Z",
+            "unspecified;ff3bcbf4-c8c4-4465-95b6-909eab1b3389",
+            "98935992-aac9-40d7-b914-49b6e3a93582",
+            "c32176a7-8440-44cd-a025-dbea5e04ad46",
+            "414e559b-71dc-46df-948b-ec5ed1a0b086",
+            6,
+            "Stats",
+            0,
+            "S_OK (0)",
+            0,
+            "QueryResourceConsumption",
+            "{\"QueryHash\":\"6d018e3398271d76\",\"ExecutionTime\":0.0147174,\"resource_usage\":{\"cache\":{\"shards\":{\"hot\":{\"hitbytes\":0,\"missbytes\":0,\"retrievebytes\":0},\"cold\":{\"hitbytes\":0,\"missbytes\":0,\"retrievebytes\":0},\"bypassbytes\":0}},\"cpu\":{\"user\":\"00:00:00.0021650\",\"kernel\":\"00:00:00\",\"total cpu\":\"00:00:00.0021650\",\"breakdown\":{\"query execution\":\"00:00:00.0021650\",\"query planning\":\"00:00:00\"}},\"memory\":{\"peak_per_node\":8404672},\"network\":{\"inter_cluster_total_bytes\":2563,\"cross_cluster_total_bytes\":0}},\"input_dataset_statistics\":{\"extents\":{\"total\":0,\"scanned\":0,\"scanned_min_datetime\":\"0001-01-01T00:00:00.0000000Z\",\"scanned_max_datetime\":\"0001-01-01T00:00:00.0000000Z\"},\"rows\":{\"total\":0,\"scanned\":0},\"rowstores\":{\"scanned_rows\":0,\"scanned_values_size\":0},\"shards\":{\"queries_generic\":0,\"queries_specialized\":0}},\"dataset_statistics\":[{\"table_row_count\":0,\"table_size\":0}],\"cross_cluster_resource_usage\":{}}"
+          ]
+        ]
+      },
+      "engine_elapsed_seconds": 0.0147174,
+      "output_statistics": [
+        {
+          "table_row_count": 0,
+          "table_size": 0
+        }
+      ],
+      "elapsed_seconds": 0.022002
+    }
+  ],
+  "unobservable": [
+    "intermediate row growth (no public per-operator profile captured)",
+    "CPU/peak memory when absent from engine QueryCompletionInformation"
+  ],
+  "engine_version": {
+    "status": "PASS",
+    "response": {
+      "Tables": [
+        {
+          "TableName": "Table_0",
+          "Columns": [
+            {
+              "ColumnName": "BuildVersion",
+              "DataType": "String"
+            },
+            {
+              "ColumnName": "BuildTime",
+              "DataType": "DateTime"
+            },
+            {
+              "ColumnName": "ServiceType",
+              "DataType": "String"
+            },
+            {
+              "ColumnName": "ProductVersion",
+              "DataType": "String"
+            },
+            {
+              "ColumnName": "ServiceOffering",
+              "DataType": "String"
+            }
+          ],
+          "Rows": [
+            [
+              "1.0.9815.14081",
+              "2026-11-15T07:49:22Z",
+              "Engine",
+              "2026.11.15.0741-2645-8e3387b-master",
+              ""
+            ]
+          ]
+        }
+      ]
+    }
+  }
+}

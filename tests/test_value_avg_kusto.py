@@ -18,10 +18,12 @@ def test_average_preserves_fractional_comparisons_and_excludes_undefined_windows
         ]
     )
 
-    assert '_sigma_value = pack_array(gettype(["Amount"]), ["Amount"])' in query
+    assert 'MeasuredAmount = ["Amount"]' in query
+    assert "gettype(" not in query
+    assert "make_set" not in query and "assert(" not in query
     assert "ValueAvg = avgif(" in query
-    assert f"| where _sigma_numeric_count > 0 and ValueAvg {symbol} 2.5" in query
-    assert final_summary_projection(query).endswith('["Host"] = _sigma_group_0, ValueAvg')
+    assert f"| where isfinite(ValueAvg) and ValueAvg {symbol} 2.5" in query
+    assert final_summary_projection(query).endswith('["Host"] = GroupHost, ValueAvg')
 
 
 @pytest.mark.parametrize(
@@ -40,9 +42,9 @@ def test_average_consumes_available_scalar_child_metrics_once_at_window_end(kind
     parent = correlation_document("parent", "value_avg", ["child"], condition={"field": metric, "gte": 0})
     (query,) = convert_documents([parent, source_document(), child])
 
-    assert '_sigma_timestamp = todatetime(["WindowEnd"])' in query
-    assert f'pack_array(gettype(["{metric}"]), ["{metric}"])' in query
-    assert final_summary_projection(query).endswith('["Host"] = _sigma_group_0, ValueAvg')
+    assert 'todatetime(["WindowEnd"])' in query
+    assert f'Measured{metric} = ["{metric}"]' in query
+    assert final_summary_projection(query).endswith('["Host"] = GroupHost, ValueAvg')
 
 
 @pytest.mark.parametrize("child_generate", [False, True])
@@ -57,9 +59,12 @@ def test_average_exposes_metric_to_chained_consumers_and_preserves_generate(chil
     queries = convert_documents([source_document(), child, parent])
 
     assert len(queries) == 1 + child_generate + parent_generate
-    assert any(final_summary_projection(query).endswith('["Host"] = _sigma_group_0, ValueAvg') for query in queries) == parent_generate
-    assert final_summary_projection(queries[-1]).endswith('["Host"] = _sigma_group_0, ValueSum')
-    assert any('pack_array(gettype(["ValueAvg"]), ["ValueAvg"])' in query for query in queries)
+    assert (
+        any(final_summary_projection(query).endswith('["Host"] = GroupHost, ValueAvg') for query in queries)
+        == parent_generate
+    )
+    assert final_summary_projection(queries[-1]).endswith('["Host"] = GroupHost, ValueSum')
+    assert any('MeasuredValueAvg = ["ValueAvg"]' in query for query in queries)
 
 
 def test_average_honors_builtin_source_mapping():
@@ -83,24 +88,52 @@ def test_average_honors_builtin_source_mapping():
     ).convert(collection)
 
     assert "DeviceProcessEvents" in query
-    assert 'pack_array(gettype(["ProcessId"]), ["ProcessId"])' in query
+    assert 'MeasuredProcessId = ["ProcessId"]' in query
     assert "ValueAvg > 0.5" in query
 
 
-@pytest.mark.parametrize(("kind", "condition"), [
-    ("event_count", {"gte": 1}),
-    ("value_count", {"field": "ValueAvg", "gte": 1}),
-    ("value_sum", {"field": "ValueAvg", "gte": 0}),
-    ("value_avg", {"field": "ValueAvg", "gte": 0}),
-    ("temporal", {"gte": 1}),
-    ("temporal_ordered", {"gte": 1}),
-])
+@pytest.mark.parametrize(
+    ("kind", "condition"),
+    [
+        ("event_count", {"gte": 1}),
+        ("value_count", {"field": "ValueAvg", "gte": 1}),
+        ("value_sum", {"field": "ValueAvg", "gte": 0}),
+        ("value_avg", {"field": "ValueAvg", "gte": 0}),
+        ("temporal", {"gte": 1}),
+        ("temporal_ordered", {"gte": 1}),
+    ],
+)
 def test_average_child_composes_with_every_supported_consumer(kind, condition):
-    child = correlation_document("child", "value_avg", ["source-rule"],
-                                 condition={"field": "Amount", "gte": 0})
+    child = correlation_document("child", "value_avg", ["source-rule"], condition={"field": "Amount", "gte": 0})
     parent = correlation_document("parent", kind, ["child"], field=condition.get("field"), condition=condition)
 
     (query,) = convert_documents([source_document(), child, parent])
 
     assert "ValueAvg = avgif(" in query
-    assert '_sigma_timestamp = todatetime(["WindowEnd"])' in query
+    assert 'todatetime(["WindowEnd"])' in query
+
+
+@pytest.mark.parametrize("kind", ["int", "long", "real", "decimal"])
+def test_average_native_numeric_inputs_require_no_runtime_type_discovery(kind):
+    from tests.correlation_helpers import fixture_schema
+
+    (query,) = convert_documents(
+        [
+            source_document(),
+            correlation_document("average", "value_avg", ["source-rule"], condition={"field": "Amount", "gte": 0}),
+        ],
+        schema=fixture_schema(Amount=kind),
+    )
+    assert 'MeasuredAmount = ["Amount"]' in query
+    assert "gettype(" not in query and "countif(" not in query
+    assert "isfinite(ValueAvg)" in query
+
+
+def test_native_average_acceptance_queries_follow_public_conversion():
+    from pathlib import Path
+
+    from tests.fixtures.correlation.native_average import fixtures
+
+    directory = Path(__file__).parent / "fixtures" / "correlation"
+    for name, query in fixtures().items():
+        assert (directory / name).read_text() == query

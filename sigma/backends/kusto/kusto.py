@@ -1,7 +1,9 @@
 import json
 import re
 from copy import deepcopy
-from typing import ClassVar, Dict, Pattern, Tuple, Type, Union
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from typing import Callable, ClassVar, Dict, Pattern, Tuple, Type, Union
 
 from sigma.conditions import (
     ConditionAND,
@@ -61,7 +63,25 @@ class _CorrelationQuery(str):
         return instance
 
     def __add__(self, suffix):
-        return type(self)(self.definitions, self.body + suffix)
+        result = type(self)(self.definitions, self.body + suffix)
+        if hasattr(self, "context_artifact"):
+            result.context_artifact = self.context_artifact
+        return result
+
+
+@dataclass(frozen=True)
+class _PreparedCorrelationInput:
+    """Validated source relation and shared condition for a correlation strategy."""
+
+    rule: SigmaCorrelationRule
+    definitions: str
+    search: str
+    columns: dict
+    valid_rows: str
+    span: str
+    query_operator: str
+    threshold: int | float
+    allocate: Callable[[str], str]
 
 
 class KustoBackend(TextQueryBackend):
@@ -221,6 +241,148 @@ class KustoBackend(TextQueryBackend):
 
     # Override methods
 
+    def convert(self, rule_collection, output_format=None, correlation_method=None, callback=None):
+        # Resolve the ordinary collection once before planning so generation
+        # controls and every shared/multilevel consumer are visible together.
+        rule_collection.resolve_rule_references()
+        self._correlation_graph = self._prepare_correlation_graph(rule_collection, callback)
+        try:
+            self._correlation_reporting = self._reporting_options()
+            return super().convert(rule_collection, output_format, correlation_method, callback)
+        finally:
+            del self._correlation_graph
+            self.__dict__.pop("_correlation_reporting", None)
+
+    def _prepare_correlation_graph(self, rule_collection, callback=None):
+        """Collect source/consumer requirements without a second rule parser."""
+        consumers = {}
+        context = {}
+        for rule in rule_collection.rules:
+            inherited = set(rule.fields or [])
+            if isinstance(rule, SigmaCorrelationRule):
+                for reference in rule.referenced_rules:
+                    source = reference.rule
+                    consumers.setdefault(id(source), []).append((rule, reference))
+                    for field in context.get(id(source), ()):
+                        logical = next(
+                            (
+                                alias.alias
+                                for alias in rule.aliases
+                                if any(
+                                    name == field and alias_source.reference in (source.name, str(source.id))
+                                    for alias_source, name in alias.mapping.items()
+                                )
+                            ),
+                            field,
+                        )
+                        inherited.add(logical)
+            context[id(rule)] = inherited
+        existence = set()
+        for child in rule_collection.rules:
+            if (
+                not isinstance(child, SigmaCorrelationRule)
+                or child.type != SigmaCorrelationType.EVENT_COUNT
+                or child._output
+                or context[id(child)]
+                or callback is not None
+                or not consumers.get(id(child))
+            ):
+                continue
+            available = {"WindowStart", "WindowEnd", *(child.group_by or [])}
+            for consumer, reference in consumers[id(child)]:
+                # Context inherited from another source can also request this
+                # child's metric through a consumer alias.
+                required = [*(consumer.group_by or []), *context[id(consumer)]]
+                measured = getattr(consumer.condition, "fieldref", None)
+                required.extend(measured if isinstance(measured, list) else [measured] if measured else [])
+                for field in required:
+                    if field in consumer.aliases.aliases:
+                        alias = consumer.aliases.aliases[field]
+                        field = next(
+                            (
+                                name
+                                for source, name in alias.mapping.items()
+                                if source.reference in (reference.reference, child.name, str(child.id))
+                            ),
+                            field,
+                        )
+                    if field not in available:
+                        break
+                else:
+                    continue
+                break
+            else:
+                existence.add(id(child))
+        lookback, visiting = {}, set()
+
+        def required_history(rule):
+            if id(rule) in visiting:
+                raise SigmaConversionError(rule, rule.source, "Kusto correlation dependencies must be acyclic.")
+            if id(rule) not in lookback:
+                visiting.add(id(rule))
+                ancestors = [required_history(parent) for parent, _ in consumers.get(id(rule), ())]
+                own = rule.timespan.seconds if isinstance(rule, SigmaCorrelationRule) else 0
+                lookback[id(rule)] = own + max(ancestors, default=0)
+                visiting.remove(id(rule))
+            return lookback[id(rule)]
+
+        for rule in rule_collection.rules:
+            required_history(rule)
+        return {"consumers": consumers, "context": context, "existence_only": existence, "lookback": lookback}
+
+    def _reporting_options(self):
+        bounds = {}
+        comparable = {}
+        for bound in ("start", "end"):
+            name = "correlation_report_" + bound
+            value = self.backend_options.get(name)
+            if value is None:
+                continue
+            match = (
+                re.fullmatch(r"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})(?:\.(\d{1,7}))?(Z|[+-]\d{2}:\d{2})", value)
+                if isinstance(value, str)
+                else None
+            )
+            try:
+                if not match:
+                    raise ValueError()
+                fraction = (match[2] or "").ljust(7, "0")
+                parsed = datetime.fromisoformat(match[1] + "." + fraction[:6] + match[3]).astimezone(timezone.utc)
+                bounds[bound] = parsed.isoformat(timespec="seconds")[:-6] + "." + fraction + "Z"
+                comparable[bound] = (parsed, fraction[6])
+            except (ValueError, OverflowError):
+                raise SigmaConversionError(
+                    None,
+                    None,
+                    f"{name} must be an ISO 8601 datetime with timezone and at most seven fractional digits; "
+                    "for example '2026-01-01T10:00:00.0000001Z'.",
+                ) from None
+        if "start" in bounds and "end" in bounds and comparable["start"] >= comparable["end"]:
+            raise SigmaConversionError(
+                None, None, "correlation_report_start must be earlier than correlation_report_end."
+            )
+        return bounds
+
+    def _count_existence_threshold(self, rule):
+        if id(rule) not in getattr(self, "_correlation_graph", {}).get("existence_only", ()):
+            return None
+        condition = rule.condition
+        if condition is None or isinstance(condition, SigmaExtendedCorrelationCondition):
+            return None
+        count = condition.count
+        if count != int(count):
+            return None
+        if condition.op == SigmaCorrelationConditionOperator.GTE:
+            threshold = int(count)
+        elif condition.op == SigmaCorrelationConditionOperator.GT:
+            threshold = int(count) + 1
+        else:
+            return None
+        # Verified engine SEM0248 restricts prev() offsets to [1..1024].
+        # Threshold one needs no offset; larger unsupported thresholds use
+        # exact general counts instead of producing an invalid query.
+        return threshold if 0 < threshold <= 1025 else None
+
     def escape_and_quote_field(self, field_name):
         if re.fullmatch(r"[A-Za-z_][A-Za-z_0-9]*", field_name):
             return field_name
@@ -241,6 +403,7 @@ class KustoBackend(TextQueryBackend):
     def finalize_query(self, rule, query, index, state, output_format):
         # Pipeline state is reset for the next source rule. Keep the mapping used
         # for this search with its conversion state for later normalization.
+        state.processing_state["kusto_schema"] = deepcopy(self.last_processing_pipeline.vars.get("kusto_schema"))
         state.processing_state["kusto_field_mappings"] = deepcopy(
             self.last_processing_pipeline.vars.get("kusto_field_mappings")
         )
@@ -471,8 +634,11 @@ class KustoBackend(TextQueryBackend):
         return self._convert_count_rule(rule, [field])
 
     def _convert_count_rule(self, rule, counted_fields=None):
-        # Error rows remain internal to composition. A public query validates
-        # them once, without recursively evaluating child assertions at analysis.
+        limit = self.backend_options.get("correlation_context_limit", 1000)
+        if type(limit) is not int or not 1 <= limit <= 1048576:
+            raise SigmaConversionError(
+                rule, rule.source, "correlation_context_limit must be an integer from 1 through 1048576."
+            )
         timestamp_field = self.backend_options.get("correlation_timestamp_field")
         if not isinstance(timestamp_field, str) or not timestamp_field.strip():
             raise SigmaConversionError(
@@ -496,10 +662,6 @@ class KustoBackend(TextQueryBackend):
             for state in source.get_conversion_states() or []:
                 reserved.update(self._correlation_source_tables(state))
                 reserved.update(state.processing_state.get("kusto_source_fields", ()))
-        error = "_sigma_correlation_error"
-        while error in reserved:
-            error += "_"
-        reserved.add(error)
         children = [
             reference.rule for reference in rule.referenced_rules if isinstance(reference.rule, SigmaCorrelationRule)
         ]
@@ -510,135 +672,109 @@ class KustoBackend(TextQueryBackend):
                 or any(
                     state.processing_state.get("kusto_context_fields")
                     or state.processing_state.get("kusto_requested_fields")
-                    or state.processing_state.get("kusto_error_column")
                     for state in source.get_conversion_states() or []
                 )
                 for source in children
             )
         )
+        report_names = {}
+        report_definitions = ""
+        for bound, value in getattr(self, "_correlation_reporting", {}).items():
+            name = "Report" + bound.title()
+            while name in reserved:
+                name += "_"
+            reserved.add(name)
+            report_names[bound] = name
+            report_definitions += f"let {name} = datetime({value});\n"
+        self._correlation_report_names = report_names
+        self._correlation_report_lookback = (
+            getattr(self, "_correlation_graph", {}).get("lookback", {}).get(id(rule), rule.timespan.seconds)
+        )
         shared = {"reserved": reserved, "definitions": [], "bindings": {}, "enabled": enabled}
-        guards = {"column": error, "relations": [], "checks": [], "inherited": set(), "messages": set()}
         self._correlation_shared_children = shared
-        self._correlation_guard_state = guards
         try:
             queries = self._build_count_rule(rule, counted_fields)
-            prefix = "".join(shared["definitions"])
+            prefix = report_definitions + "".join(shared["definitions"])
             raw_queries = [prefix + query for query in queries]
-            checks = tuple(
-                dict.fromkeys(
-                    [
-                        *((prefix + check, error) for check in guards["checks"]),
-                        *sorted(guards["inherited"]),
-                    ]
-                )
-            )
             output = []
             for raw, state in zip(raw_queries, rule.get_conversion_states()):
-                public = raw
-                if checks:
-                    function = "_sigma_guarded_query"
-                    while any(name in reserved for name in (function, function + "_rows", function + "_failure")):
-                        function += "_"
-                    rows, failure = function + "_rows", function + "_failure"
-                    reserved.update((function, rows, failure))
-                    message = "Kusto correlation validation failed: " + "; ".join(
-                        [*sorted(guards["messages"]), "unrecognized error sentinel"]
-                    )
-                    check_definitions, calls = [], []
-                    for check, check_error in checks:
-                        check_function = "_sigma_validation_check"
-                        while check_function in reserved:
-                            check_function += "_"
-                        reserved.add(check_function)
-                        check_definitions.append(f"let {check_function} = () {{\n{check}\n}};\n")
-                        calls.append(f"({check_function}() | project {error} = tostring({check_error}))")
-                    public = (
-                        f"let {function} = () {{\n{raw}\n}};\n"
-                        + "".join(check_definitions)
-                        + f"let {rows} = materialize({function}());\n"
-                        f"let {failure} = toscalar(union {', '.join(calls)} | summarize countif(isnotempty({error})));\n"
-                        f"{rows}\n| where assert({failure} == 0, {json.dumps(message)})"
-                    )
+                artifact = state.processing_state.get("kusto_context_artifact")
+                if artifact:
+                    artifact = dict(artifact, query=prefix + artifact["query"])
+                    state.processing_state["kusto_context_artifact"] = artifact
+                report_conditions = []
+                if "start" in report_names:
+                    report_conditions.append(f"WindowEnd >= {report_names['start']}")
+                if "end" in report_names:
+                    report_conditions.append(f"WindowEnd < {report_names['end']}")
+                report_suffix = "\n| where " + " and ".join(report_conditions) if report_conditions else ""
+                public = raw + report_suffix
                 state.processing_state.update(
                     {
+                        "kusto_report_suffix": report_suffix,
                         "kusto_raw_query": raw,
                         "kusto_public_query": public,
-                        "kusto_error_column": error if checks else None,
-                        "kusto_guard_queries": tuple(check for check, _ in checks),
-                        "kusto_guard_error_columns": tuple(column for _, column in checks),
-                        "kusto_guard_messages": tuple(sorted(guards["messages"])),
                     }
                 )
+                if artifact:
+                    artifact["public_query"] = public
                 output.append(public)
             return output
         finally:
-            del self._correlation_shared_children, self._correlation_guard_state
-
-    def _register_correlation_guard(self, relation, violation, message):
-        column = self._correlation_guard_state["column"]
-        self._correlation_guard_state["messages"].add(message)
-        self._register_correlation_errors(f"{relation} | where {violation} | project {column} = {json.dumps(message)}")
-
-    def _register_correlation_errors(self, relation):
-        self._correlation_guard_state["relations"].append(relation)
-
-    def _collect_correlation_checks(self, queries):
-        relations = self._correlation_guard_state["relations"]
-        self._correlation_guard_state["relations"] = []
-        if relations:
-            errors = ", ".join(f"({relation})" for relation in relations)
-            for query in queries:
-                if not isinstance(query, _CorrelationQuery):
-                    raise SigmaConversionError(
-                        None, None, "Kusto correlation validation requires a generated declaration scope."
-                    )
-                self._correlation_guard_state["checks"].append(query.definitions + f"union {errors}")
-        return queries
+            del self._correlation_shared_children
+            del self._correlation_report_names, self._correlation_report_lookback
 
     @staticmethod
     def _child_raw_query(query, state, source):
-        raw, checked = state.get("kusto_raw_query"), state.get("kusto_public_query")
-        checks, error = state.get("kusto_guard_queries"), state.get("kusto_error_column")
-        messages = state.get("kusto_guard_messages")
-        columns = state.get("kusto_guard_error_columns")
-        valid = (
-            query == checked
-            and isinstance(raw, str)
-            and bool(raw)
-            and isinstance(checks, (tuple, list))
-            and all(isinstance(check, str) and check for check in checks)
-            and isinstance(columns, (tuple, list))
-            and len(columns) == len(checks)
-            and all(isinstance(column, str) and column for column in columns)
-            and isinstance(messages, (tuple, list))
-            and all(isinstance(message, str) and message for message in messages)
-            and (
-                (
-                    checks
-                    and isinstance(error, str)
-                    and bool(error)
-                    and bool(messages)
-                    and raw != checked
-                    and raw in checked
-                )
-                or (not checks and error is None and not messages and raw == checked)
-            )
+        """Replay appended callback edits against complete, unreported history."""
+        raw, public, suffix = (
+            state.get(key) for key in ("kusto_raw_query", "kusto_public_query", "kusto_report_suffix")
         )
-        # Callback-modified or incomplete metadata keeps the checked public
-        # query. Never bypass its validation or silently discard a source edit.
-        if valid:
-            return raw, tuple(zip(checks, columns)), messages
-        if isinstance(checked, str) and checked and query.startswith(checked):
-            return query, (), ()
-        if any(key.startswith("kusto_guard_") or key in ("kusto_raw_query", "kusto_public_query") for key in state):
+        if not (
+            isinstance(raw, str)
+            and raw
+            and isinstance(public, str)
+            and public
+            and isinstance(suffix, str)
+            and public == raw + suffix
+            and query.startswith(public)
+        ):
             raise SigmaConversionError(
                 source,
                 source.source,
-                f"Kusto child correlation {source.name or source.id or source.title!r} query and validation metadata "
-                "are inconsistent; preserve the checked public "
-                "query and its kusto_raw_query/kusto_public_query/guard metadata when using conversion callbacks.",
+                f"Kusto child correlation {source.name or source.id or source.title!r} query and provenance metadata "
+                "are inconsistent; preserve the generated public query and its "
+                "kusto_raw_query/kusto_public_query/kusto_report_suffix metadata when using conversion callbacks.",
             )
-        return query, (), ()
+        return raw + query[len(public) :]
+
+    @staticmethod
+    def _child_context_artifact(state, source):
+        """Require complete relationship provenance before accessing retained fields."""
+        artifact = state.get("kusto_context_artifact")
+        context = state.get("kusto_context_fields", ())
+        if not context and artifact is None:
+            return None
+        if not (
+            isinstance(context, (tuple, list))
+            and all(isinstance(field, str) and field for field in context)
+            and isinstance(artifact, dict)
+            and all(
+                isinstance(artifact.get(key), str) and artifact[key] for key in ("query", "id", "kind", "public_query")
+            )
+            and artifact["public_query"] == state.get("kusto_public_query")
+            and isinstance(artifact.get("fields"), dict)
+            and set(artifact["fields"]) == set(context)
+            and all(isinstance(value, str) and value for value in artifact["fields"].values())
+            and len(set([artifact["id"], artifact["kind"], *artifact["fields"].values()])) == len(context) + 2
+        ):
+            raise SigmaConversionError(
+                source,
+                source.source,
+                "Kusto child relational context metadata is inconsistent; preserve the generated public query "
+                "and complete kusto_context_artifact conversion state.",
+            )
+        return artifact
 
     @staticmethod
     def _name_allocator(reserved):
@@ -654,14 +790,23 @@ class KustoBackend(TextQueryBackend):
 
         return allocate
 
-    def _shared_child_source(self, reference_index, query_index, query):
+    @staticmethod
+    def _child_binding_label(source):
+        label = "".join(
+            part[:1].upper() + part[1:]
+            for part in re.findall(r"[A-Za-z0-9]+", str(source.name or source.id or source.title))
+        )
+        return label if label and not label[0].isdigit() else "ChildMatches"
+
+    def _shared_child_source(self, source, reference_index, query_index, query):
         shared = self._correlation_shared_children
-        key = (reference_index, query_index)
+        key = (reference_index, query_index, query)
         if key not in shared["bindings"]:
 
             allocate = self._name_allocator(shared["reserved"])
 
-            function, results = allocate("_sigma_shared_child"), allocate("_sigma_shared_results")
+            label = self._child_binding_label(source)
+            function, results = allocate(label), allocate(label + "Results")
             shared["definitions"].extend(
                 [
                     f"let {function} = () {{\n{query}\n}};\n",
@@ -682,20 +827,23 @@ class KustoBackend(TextQueryBackend):
         elif rule.type == SigmaCorrelationType.VALUE_AVG:
             metrics = ["ValueAvg"]
         elif counted_fields is None:
-            metrics = ["EventCount"]
+            metrics = [] if self._count_existence_threshold(rule) is not None else ["EventCount"]
         elif len(counted_fields) == 1:
             metrics = ["ValueCount"]
         else:
             metrics = [f"ValueCount_{field}" for field in counted_fields]
         if rule.timespan.seconds <= 0:
             raise SigmaConversionError(rule, rule.source, "Kusto correlations require a positive timespan.")
-        conflicting_fields = {"WindowStart", "WindowEnd", *metrics}.intersection(rule.group_by or [])
+        conflicting_fields = {"WindowStart", "WindowEnd", "ContextComplete", *metrics}.intersection(rule.group_by or [])
+        if rule.type == SigmaCorrelationType.EVENT_COUNT and "EventCount" in (rule.group_by or []):
+            conflicting_fields.add("EventCount")
         if conflicting_fields:
             raise SigmaConversionError(
                 rule,
                 rule.source,
                 f"Kusto {count_type} grouping fields conflict with result columns: "
-                + ", ".join(sorted(conflicting_fields)),
+                + ", ".join(sorted(conflicting_fields))
+                + ". Use an explicit correlation alias for the source field.",
             )
         if not rule.referenced_rules:
             raise SigmaConversionError(
@@ -733,35 +881,8 @@ class KustoBackend(TextQueryBackend):
                 f"for {count_type} correlations; for example correlation_timestamp_field='Timestamp'.",
             )
 
-        typed_groups = bool(rule.group_by)
-        self._correlation_typed_groups = typed_groups
-        try:
-            queries = self._convert_count(rule, timestamp_field, query_operator, counted_fields, metrics)
-        finally:
-            del self._correlation_typed_groups
-        if typed_groups:
-            restored = []
-            # Every normalized grouping column holds the same exact tuple identity;
-            # its unique lookup row contains all original boxed grouping values.
-            field, lookup, identity, _ = self._correlation_group_lookups[0]
-            quoted = self._quote_correlation_field(field)
-            originals = ", ".join(value for _, _, _, value in self._correlation_group_lookups)
-            replacements = ", ".join(
-                f"{self._quote_correlation_field(field)} = {value}[1]"
-                for field, _, _, value in self._correlation_group_lookups
-            )
-            for query in queries:
-                query += (
-                    f"\n| join kind=inner ({lookup} | project {quoted} = {identity}, {originals}) on {quoted}"
-                    f"\n| extend {replacements}\n| project-away {originals}"
-                )
-                query += "\n| project " + ", ".join(
-                    self._quote_correlation_field(field)
-                    for field in ["WindowStart", "WindowEnd", *(rule.group_by or []), *metrics]
-                )
-                restored.append(query)
-            queries = restored
-        queries = self._collect_correlation_checks(queries)
+        self._correlation_field_types = {}
+        queries = self._convert_count(rule, timestamp_field, query_operator, counted_fields, metrics)
         requested_context = list(rule.fields or [])
         for reference in rule.referenced_rules:
             source = reference.rule
@@ -785,7 +906,7 @@ class KustoBackend(TextQueryBackend):
 
                 requested_context.append(logical)
         context_fields = list(dict.fromkeys(requested_context))
-        conflicts = {"WindowStart", "WindowEnd", *metrics}.intersection(context_fields)
+        conflicts = {"WindowStart", "WindowEnd", "ContextComplete", *metrics}.intersection(context_fields)
         if conflicts:
             raise SigmaConversionError(
                 rule,
@@ -797,13 +918,13 @@ class KustoBackend(TextQueryBackend):
             )
         requested_fields = tuple(context_fields)
         context_fields = [field for field in context_fields if field not in (rule.group_by or [])]
-        context_column = None
         if context_fields:
-            queries, context_column = self._retain_context(rule, queries, context_fields, metrics)
-        queries = self._collect_correlation_checks(queries)
+            queries = self._retain_context(rule, queries, context_fields, metrics)
+        elif requested_fields:
+            queries = [query + "\n| extend ContextComplete = true" for query in queries]
         result_fields = {"WindowStart", "WindowEnd", *(rule.group_by or []), *metrics, *context_fields}
-        if context_column:
-            result_fields.add(context_column)
+        if requested_fields:
+            result_fields.add("ContextComplete")
         source_tables = set().union(
             *(
                 self._correlation_source_tables(state)
@@ -811,6 +932,26 @@ class KustoBackend(TextQueryBackend):
                 for state in reference.rule.get_conversion_states()
             )
         )
+        result_types = {
+            "WindowStart": "datetime",
+            "WindowEnd": "datetime",
+            **{field: self._correlation_field_types[field] for field in [*(rule.group_by or []), *context_fields]},
+        }
+        if requested_fields:
+            result_types["ContextComplete"] = "bool"
+        for metric in metrics:
+            if rule.type == SigmaCorrelationType.VALUE_AVG:
+                result_types[metric] = "real"
+            elif rule.type == SigmaCorrelationType.VALUE_SUM:
+                result_types[metric] = (
+                    "long"
+                    if self._correlation_field_types[counted_fields[0]] in ("int", "long")
+                    else self._correlation_field_types[counted_fields[0]]
+                )
+            elif rule.type == SigmaCorrelationType.VALUE_PERCENTILE:
+                result_types[metric] = self._correlation_field_types[counted_fields[0]]
+            else:
+                result_types[metric] = "long"
         # Summaries expose their result columns, independent of source tables
         # and the pipeline mappings that produced their underlying events.
         rule.set_conversion_states(
@@ -818,15 +959,16 @@ class KustoBackend(TextQueryBackend):
                 ConversionState(
                     processing_state={
                         "kusto_result_fields": result_fields.copy(),
+                        "kusto_result_types": result_types.copy(),
                         "kusto_source_fields": result_fields.copy(),
                         "kusto_result_timestamp": "WindowEnd",
                         "kusto_requested_fields": requested_fields,
                         "kusto_context_fields": tuple(context_fields),
-                        "kusto_context_rows": context_column,
+                        "kusto_context_artifact": getattr(query, "context_artifact", None),
                         "kusto_source_tables": source_tables.copy(),
                     }
                 )
-                for _ in queries
+                for query in queries
             ]
         )
         return queries
@@ -861,107 +1003,55 @@ class KustoBackend(TextQueryBackend):
                     return True
         return False
 
-    def _group_value_identities(self, search, columns, allocate):
-        source, row_id = allocate("_sigma_group_input"), allocate("_sigma_group_row")
-        tuple_value = allocate("_sigma_group_tuple")
-        groups = columns["groups"]
-        values = columns.get("values", []) if columns.get("identify_values") else []
-        valid_groups = " and ".join(f"isnotempty(tostring({group}[1]))" for group in groups)
-        definitions = (
-            f"let {source} = materialize({search}\n| where {valid_groups}\n"
-            f"| extend {tuple_value} = pack_array(\"array\", pack_array({', '.join(groups)}))\n"
-            f"| serialize {row_id} = row_number());\n"
-        )
-        expanded, component, boxed, expanded_id = [
-            allocate(name)
-            for name in (
-                "_sigma_group_components",
-                "_sigma_group_component",
-                "_sigma_group_box",
-                "_sigma_group_component_id",
-            )
-        ]
-        definitions += (
-            f"let {expanded} = materialize({source}\n"
-            f"| mv-expand with_itemindex={component} {boxed} = pack_array({', '.join([tuple_value, *values])})\n"
-            f"| where {component} == 0 or isnotempty(tostring({boxed}[1]))\n"
-            f"| serialize {expanded_id} = row_number());\n"
-        )
-        fragment, relation, identity = self._dynamic_value_identity(expanded, expanded_id, boxed, [component], allocate)
-        definitions += fragment
-        cached = allocate("_sigma_group_identity_cache")
-        definitions += f"let {cached} = materialize({expanded} | join kind=inner ({relation}) on {expanded_id}\n| project {row_id}, {component}, {identity});\n"
-        group_identity = allocate("_sigma_group_key")
-        normalized = f"{source}\n| join kind=inner ({cached} | where {component} == 0 | project {row_id}, {group_identity} = {identity}) on {row_id}\n"
-        replacements = [f"{group} = {group_identity}" for group in groups]
-        for index, value in enumerate(values, 1):
-            value_identity = allocate("_sigma_group_value_identity")
-            normalized += f"| join kind=leftouter ({cached} | where {component} == {index} | project {row_id}, {value_identity} = {identity}) on {row_id}\n"
-            replacements.append(f"{value} = {value_identity}")
-        normalized += "| extend " + ", ".join(replacements)
-        if values:
-            columns["values_preidentified"] = True
-        lookup = allocate("_sigma_group_lookup")
-        originals = [allocate("_sigma_group_original") for _ in groups]
-        aggregates = ", ".join(f"{original} = take_any({group})" for original, group in zip(originals, groups))
-        definitions += (
-            f"let {lookup} = materialize({source} | join kind=inner ({cached} | where {component} == 0) on {row_id}\n"
-            f"| summarize {aggregates} by {identity});\n"
-        )
-        lookups = [
-            (field, lookup, identity, original) for field, original in zip(self._correlation_group_by, originals)
-        ]
-        return definitions, normalized, lookups
-
     def _retain_context(self, rule, queries, context_fields, metrics):
         """Attach context from the same source matches without changing metric inputs."""
         reserved = set(context_fields) | set(rule.group_by or [])
         reserved.update(re.findall(r"[A-Za-z_][A-Za-z_0-9]*", "\n".join(queries)))
+        for reference in rule.referenced_rules:
+            for state in reference.rule.get_conversion_states():
+                reserved.update(state.processing_state.get("kusto_source_fields", ()))
+                reserved.update(self._correlation_source_tables(state))
 
         allocate = self._name_allocator(reserved)
 
         columns = {
-            "timestamp": allocate("_sigma_context_timestamp"),
-            "rule": allocate("_sigma_context_rule"),
-            "groups": [allocate("_sigma_context_group") for _ in (rule.group_by or [])],
+            "timestamp": allocate("ContextEventTime"),
+            "rule": allocate("ContextSourceRule"),
+            "groups": [
+                allocate("ContextGroup" + re.sub(r"[^A-Za-z0-9_]", "_", field)) for field in (rule.group_by or [])
+            ],
             "values": [],
-            "context": [allocate("_sigma_context_value") for _ in context_fields],
+            "context": [allocate("Context" + re.sub(r"[^A-Za-z0-9_]", "_", field)) for field in context_fields],
         }
+        if self._uses_context_groups(rule, context_fields):
+            columns["context_evidence"] = allocate("HasContextEvidence")
         self._correlation_group_by = rule.group_by or []
         self._correlation_counted_fields = []
         self._correlation_context_fields = context_fields
         self._correlation_columns = columns
-        self._correlation_typed_groups = bool(rule.group_by)
         try:
             definitions, search = self._count_search(rule, allocate)
         finally:
             del self._correlation_group_by, self._correlation_counted_fields
             del self._correlation_context_fields, self._correlation_columns
-            del self._correlation_typed_groups
         summary_function, summaries, matched = [
-            allocate(name) for name in ("_sigma_context_summary", "_sigma_context_summaries", "_sigma_context_matches")
+            allocate(name) for name in ("ContextSummary", "CorrelationMatches", "WindowSourceMatches")
         ]
         source_id, end, key = [
-            allocate(name) for name in ("_sigma_context_id", "_sigma_context_end", "_sigma_context_key")
+            allocate(name) for name in ("CorrelationMatchId", "CompletionTime", "SourceRelationshipId")
         ]
-        relationships, count = [allocate(name) for name in ("_sigma_context_rows", "_sigma_context_count")]
+        relationships = allocate("CompleteContextRelationships")
         groups, timestamp, values = columns["groups"], columns["timestamp"], columns["context"]
         # A constant joins the single ungrouped partition; grouping never uses context values.
-        join_key = allocate("_sigma_context_partition")
+        join_key = allocate("ContextPartition")
         group_projection = [
             f"{column} = {self._quote_correlation_field(field)}" for column, field in zip(groups, rule.group_by or [])
         ]
         left_projection = ", ".join([source_id, f"{end} = WindowEnd", *group_projection, f"{join_key} = 1"])
-        right_projection = ", ".join([timestamp, columns["rule"], *groups, *values, f"{join_key} = 1"])
+        evidence = [columns["context_evidence"]] if "context_evidence" in columns else []
+        right_projection = ", ".join([timestamp, columns["rule"], *groups, *values, *evidence, f"{join_key} = 1"])
         span = rule.timespan.spec if rule.timespan.unit in "smhd" else f"{rule.timespan.seconds}s"
         join_fields = ", ".join(groups or [join_key])
-        typed_groups = bool(rule.group_by)
-        if typed_groups:
-            group_projection = [
-                f"{column} = pack_array(gettype({self._quote_correlation_field(field)}), {self._quote_correlation_field(field)})"
-                for column, field in zip(groups, rule.group_by or [])
-            ]
-            left_projection = ", ".join([source_id, f"{end} = WindowEnd", *group_projection, f"{join_key} = 1"])
         output = []
         for query in queries:
             prefix = (
@@ -969,27 +1059,17 @@ class KustoBackend(TextQueryBackend):
                 f"{definitions}let {summaries} = materialize({summary_function}()\n"
                 f"| serialize {source_id} = row_number());\n"
             )
-            if typed_groups:
-                combined, normalized = allocate("_sigma_context_combined"), allocate("_sigma_context_normalized")
-                prefix += f"let {combined} = union ({summaries} | project {left_projection}), ({search} | project {right_projection});\n"
-                self._correlation_group_by = rule.group_by or []
-                try:
-                    fragment, shared_search, _ = self._group_value_identities(combined, columns, allocate)
-                finally:
-                    del self._correlation_group_by
-                prefix += fragment + f"let {normalized} = materialize({shared_search});\n"
-                # Drop sparse source columns so the join exposes the right-hand timestamp and context.
-                normalized_left_projection = ", ".join([source_id, end, *groups, join_key])
-                left = f"{normalized} | where isnotnull({source_id}) | project {normalized_left_projection}"
-                right = f"{normalized} | where isnull({source_id}) | project {right_projection}"
-            else:
-                left = f"{summaries} | project {left_projection}"
-                right = f"{search}\n| project {right_projection}"
+            left = f"{summaries} | project {left_projection}"
+            right = f"{search}\n| project {right_projection}"
+            relationship_key = (
+                f"\n| serialize {key} = row_number()"
+                if rule.type == SigmaCorrelationType.TEMPORAL_ORDERED and len(rule.referenced_rules) > 2
+                else ""
+            )
             prefix += (
                 f"let {matched} = materialize(\n{left}\n"
                 f"| join kind=inner (\n{right}\n) on {join_fields}\n"
-                f"| where {timestamp} between (({end} - {span}) .. {end})\n"
-                f"| serialize {key} = row_number());\n"
+                f"| where {timestamp} between (({end} - {span}) .. {end}){relationship_key});\n"
             )
             if rule.type == SigmaCorrelationType.TEMPORAL_ORDERED:
                 membership, matched = self._ordered_context_membership(
@@ -1000,11 +1080,13 @@ class KustoBackend(TextQueryBackend):
                 presence = {}
                 aggregates = []
                 for reference in rule.referenced_rules:
-                    column = allocate("_sigma_context_present")
+                    column = allocate(
+                        "Has" + re.sub(r"[^A-Za-z0-9_]", "_", str(reference.rule.name or reference.rule.id))
+                    )
                     identity = json.dumps(str(reference.rule.name or reference.rule.id), ensure_ascii=False)
                     presence[reference.reference] = column
                     aggregates.append(f"{column} = countif({columns['rule']} == {identity}) > 0")
-                eligible = allocate("_sigma_context_eligible")
+                eligible = allocate("BooleanParticipants")
                 evidence = self._boolean_context_expression(rule, rule.condition.parsed, presence, columns["rule"])[1]
                 prefix += (
                     f"let {eligible} = materialize({matched}\n"
@@ -1015,93 +1097,145 @@ class KustoBackend(TextQueryBackend):
             else:
                 context_matches = matched
 
+            # Complete native scalar relationship rows are a separate internal relation.
+            # The display limit applies only to the public per-field collections.
+            relationship_fields = ", ".join([source_id, *values])
+            relationship_source = context_matches
+            if "context_evidence" in columns:
+                relationship_source += f"\n| where {columns['context_evidence']}"
             prefix += (
-                f"let {relationships} = materialize({context_matches}\n"
-                f"| summarize {relationships} = make_list(pack_array(pack_array({', '.join(values)})), 1048576), "
-                f"{count} = count() by {source_id});\n"
+                f"let {relationships} = materialize({relationship_source}\n"
+                f"| project {relationship_fields}\n| distinct *);\n"
             )
+            artifact_prefix = prefix
             collections = []
+            limit = self.backend_options.get("correlation_context_limit", 1000)
             for field, value in zip(context_fields, values):
                 binding, collection, amount = [
-                    allocate(name)
-                    for name in ("_sigma_context_distinct", "_sigma_context_collection", "_sigma_context_amount")
+                    allocate(re.sub(r"[^A-Za-z0-9_]", "_", name))
+                    for name in ("ValuesFor" + field, "Displayed" + field, "Distinct" + field + "Count")
                 ]
-                identity_definitions, identity_relation, identity = self._dynamic_value_identity(
-                    context_matches, key, value, [source_id], allocate
-                )
-                prefix += identity_definitions
                 prefix += (
-                    f"let {binding} = {context_matches}\n| join kind=inner ({identity_relation}) on {key}\n"
-                    f"| summarize {value} = take_any({value}) by {source_id}, {identity}\n"
-                    f"| summarize {collection} = make_list_if(pack_array({value}[1]), isnotnull({value}[1]), 1048576), "
-                    f"{amount} = countif(isnotnull({value}[1])) by {source_id};\n"
+                    f"let {binding} = {relationships}\n| where isnotnull({value})\n"
+                    f"| summarize by {source_id}, {value}\n"
+                    f"| summarize {collection} = make_list({value}, {limit}), {amount} = count() by {source_id};\n"
                 )
                 collections.append((binding, collection, amount, field))
-            self._register_correlation_guard(
-                relationships,
-                f"{count} != array_length({relationships})",
-                "Kusto retained context collection limit exceeded",
-            )
-            result = (
-                f"{summaries}\n| join kind=leftouter ({relationships}) on {source_id}\n"
-                f"| extend {relationships} = coalesce({relationships}, dynamic([]))\n"
-            )
+            result = f"{summaries}\n"
             for binding, collection, amount, field in collections:
-                self._register_correlation_guard(
-                    binding,
-                    f"{amount} != array_length({collection})",
-                    "Kusto retained context collection limit exceeded",
-                )
                 result += (
                     f"| join kind=leftouter ({binding}) on {source_id}\n"
                     f"| extend {self._quote_correlation_field(field)} = coalesce({collection}, dynamic([]))\n"
                 )
-            public = ["WindowStart", "WindowEnd", *(rule.group_by or []), *context_fields]
-            result += "| project " + ", ".join(
-                self._quote_correlation_field(field) for field in [*public, *metrics, relationships]
+            complete = " and ".join(f"coalesce({amount}, 0) <= {limit}" for _, _, amount, _ in collections)
+            public = ["WindowStart", "WindowEnd", *(rule.group_by or []), *context_fields, *metrics, "ContextComplete"]
+            result += f"| extend ContextComplete = {complete}\n| project " + ", ".join(
+                self._quote_correlation_field(field) for field in public
             )
-            output.append(_CorrelationQuery(prefix, result))
-        return output, relationships
+            generated = _CorrelationQuery(prefix, result)
+            # Both branches share one materialized match-ID assignment. Evidence
+            # rows retain observed tuples, including nulls, without a list cap.
+            row_kind = allocate("ContextRowKind")
+            generated.context_artifact = {
+                "query": artifact_prefix + f'union ({summaries} | extend {row_kind} = "Summary"), '
+                f"({summaries} | join kind=inner ({relationships}) on {source_id} "
+                f'| extend {row_kind} = "ContextEvidence")',
+                "kind": row_kind,
+                "id": source_id,
+                "fields": dict(zip(context_fields, values)),
+            }
+            output.append(generated)
+        return output
 
     def _ordered_context_membership(self, rule, matches, columns, source_id, completion, key, allocate):
-        """Union source rows from every full sequence for each qualifying completion.
+        """Find all sequence participants with scalar prefix/suffix reachability.
 
-        Unlike detection-only prefix pruning, evidence traversal keeps every
-        alternative. Row identities preserve repeated matches and relationships
-        without putting sequence alternatives into a bounded collection.
+        Candidates already lie in one successful completion's inclusive window.
+        The earliest reachable prefix end and latest reachable suffix start are
+        the least restrictive witnesses on either side of a candidate. Joining
+        those scalar witnesses never enumerates combinations of alternatives.
         """
         timestamp, rule_column = columns["timestamp"], columns["rule"]
-        previous = allocate("_sigma_context_previous")
-        paths = []
-        row_ids = []
-        definitions = ""
-        for index, reference in enumerate(rule.referenced_rules):
-            path = allocate("_sigma_context_path")
-            row_id = allocate("_sigma_context_step")
-            step_time = allocate("_sigma_context_step_time")
-            identity = reference.rule.name or str(reference.rule.id)
-            candidates = (
-                f"{matches}\n| where {rule_column} == {json.dumps(identity, ensure_ascii=False)}\n"
-                f"| project {source_id}, {completion}, {row_id} = {key}, {step_time} = {timestamp}"
+        # Successful summaries guarantee a viable full sequence. Every final
+        # source row at the completion can replace its final witness, and the
+        # final suffix bound is therefore the completion itself. Structural
+        # child summaries preserve this guarantee even with no retained values.
+        if len(rule.referenced_rules) <= 2:
+            selected = allocate("OrderedSourceRelationships")
+            predicates = []
+            for index, reference in enumerate(rule.referenced_rules):
+                identity = json.dumps(str(reference.rule.name or reference.rule.id), ensure_ascii=False)
+                comparison = "==" if index == len(rule.referenced_rules) - 1 else "<"
+                predicates.append(f"({rule_column} == {identity} and {timestamp} {comparison} {completion})")
+            return (
+                f"// Successful one/two-step completions need only endpoint participant filters.\n"
+                f"let {selected} = materialize({matches}\n| where {' or '.join(predicates)});\n",
+                selected,
             )
-            if index == 0:
-                expression = candidates
+
+        candidates, labels = [], []
+        definitions = (
+            "// All candidates share one successful completion's inclusive window.\n"
+            "// Strict prefix/suffix witnesses retain every participating alternative.\n"
+        )
+        for reference in rule.referenced_rules:
+            identity = str(reference.rule.name or reference.rule.id)
+            label = re.sub(r"[^A-Za-z0-9_]", "_", identity)
+            relation = allocate("CandidatesFor" + label)
+            definitions += (
+                f"let {relation} = {matches}\n"
+                f"| where {rule_column} == {json.dumps(identity, ensure_ascii=False)}\n"
+                f"| project {source_id}, {completion}, {key}, {timestamp};\n"
+            )
+            labels.append(label)
+            candidates.append(relation)
+
+        # Every threshold relation contains at most one row per match ID.
+        earliest, latest = [], [None] * len(candidates)
+        for index in range(len(candidates) - 2):
+            relation, threshold = allocate("Earliest" + labels[index] + "Prefix"), allocate("PrefixEndTime")
+            expression = candidates[index]
+            if index:
+                prior, bound = earliest[-1]
+                expression += f"\n| join kind=inner ({prior}) on {source_id}" f"\n| where {timestamp} > {bound}"
+            definitions += (
+                f"let {relation} = materialize({expression}\n"
+                f"| summarize {threshold} = min({timestamp}) by {source_id});\n"
+            )
+            earliest.append((relation, threshold))
+
+        for index in range(len(candidates) - 2, 0, -1):
+            relation, threshold = allocate("Latest" + labels[index] + "Suffix"), allocate("SuffixStartTime")
+            expression = candidates[index]
+            if index == len(candidates) - 2:
+                expression += f"\n| where {timestamp} < {completion}"
             else:
-                expression = (
-                    f"{paths[-1]}\n| join kind=inner (\n{candidates}\n) on {source_id}\n"
-                    f"| where {step_time} > {previous}"
-                )
-            if index == len(rule.referenced_rules) - 1:
-                expression += f"\n| where {step_time} == {completion}"
-            row_ids.append(row_id)
-            projection = ", ".join([source_id, completion, *row_ids, f"{previous} = {step_time}"])
-            definitions += f"let {path} = {expression}\n| project {projection};\n"
-            paths.append(path)
-        participating = allocate("_sigma_context_participating")
-        selected = allocate("_sigma_context_selected")
-        alternatives = ", ".join(f"({paths[-1]} | project {source_id}, {key} = {row_id})" for row_id in row_ids)
+                following, bound = latest[index + 1]
+                expression += f"\n| join kind=inner ({following}) on {source_id}" f"\n| where {timestamp} < {bound}"
+            definitions += (
+                f"let {relation} = materialize({expression}\n"
+                f"| summarize {threshold} = max({timestamp}) by {source_id});\n"
+            )
+            latest[index] = (relation, threshold)
+
+        participants = []
+        for index, candidate in enumerate(candidates):
+            expression = candidate
+            if index and index < len(candidates) - 1:
+                prior, bound = earliest[index - 1]
+                expression += f"\n| join kind=inner ({prior}) on {source_id}" f"\n| where {timestamp} > {bound}"
+            if index == len(candidates) - 1:
+                expression += f"\n| where {timestamp} == {completion}"
+            elif index == len(candidates) - 2:
+                expression += f"\n| where {timestamp} < {completion}"
+            else:
+                following, bound = latest[index + 1]
+                expression += f"\n| join kind=inner ({following}) on {source_id}" f"\n| where {timestamp} < {bound}"
+            participants.append(f"({expression}\n| project {source_id}, {key})")
+        participating = allocate("OrderedParticipants")
+        selected = allocate("OrderedSourceRelationships")
         definitions += (
-            f"let {participating} = union {alternatives}\n| distinct {source_id}, {key};\n"
+            f"let {participating} = union {', '.join(participants)}\n| distinct {source_id}, {key};\n"
             f"let {selected} = materialize({matches}\n"
             f"| join kind=leftsemi ({participating}) on {source_id}, {key});\n"
         )
@@ -1165,6 +1299,9 @@ class KustoBackend(TextQueryBackend):
                     "chaining requires consistent child result schema and timestamp metadata for every search; "
                     "preserve kusto_result_fields and kusto_result_timestamp from child conversion."
                 )
+        if child:
+            for state in states:
+                KustoBackend._child_context_artifact(state.processing_state, source_rule)
         if not child and not all(
             isinstance(table := state.processing_state.get("query_table"), str) and table.strip() for state in states
         ):
@@ -1176,64 +1313,113 @@ class KustoBackend(TextQueryBackend):
 
     def _count_search(self, rule, allocate):
         definitions, searches = [], []
+        context_evidence = self._correlation_columns.get("context_evidence")
         for reference_index, reference in enumerate(rule.referenced_rules):
             source = reference.rule
             for query_index, (query, source_state) in enumerate(
                 zip(source.get_conversion_result(), source.get_conversion_states())
             ):
-                self._correlation_child_row = allocate("_sigma_child_context_row")
-                try:
-                    normalization = self.convert_correlation_search_field_normalization_expression(
-                        rule.aliases, reference, source_state
-                    )
-                finally:
-                    del self._correlation_child_row
+                preserves_context_presence = False
+                if isinstance(source, SigmaCorrelationRule):
+                    artifact = self._child_context_artifact(source_state.processing_state, source)
+                normalization = self.convert_correlation_search_field_normalization_expression(
+                    rule.aliases, reference, source_state
+                )
                 if isinstance(source, SigmaCorrelationRule):
                     state = source_state.processing_state
-                    query, child_checks, child_messages = self._child_raw_query(query, state, source)
-                    if child_checks:
-                        self._correlation_guard_state["messages"].update(child_messages)
-                        self._correlation_guard_state["inherited"].update(child_checks)
-                    shared = self._correlation_shared_children["enabled"]
-                    if shared:
-                        function, child_results = self._shared_child_source(reference_index, query_index, query)
-                        relation = f"{child_results}{normalization}"
-                    else:
-                        function = allocate(f"_sigma_child_{len(definitions)}")
-                        # Each function scopes the complete child query, including
-                        # its let bindings. Only returned summaries feed the parent.
-                        definitions.append(f"let {function} = () {{\n{query}\n}};\n")
-                        child_results = f"{function}()"
-                        relation = f"{child_results}{normalization}"
-                    if normalization.expands_context and not shared:
-                        child_results = allocate("_sigma_child_results")
-                        definitions.append(f"let {child_results} = materialize({function}());\n")
-                    filtered = child_results
-                    if normalization.expands_context:
-                        child_id = self._correlation_columns.get("child_match")
-                        if child_id:
-                            relation = (
-                                f"{filtered}\n| serialize {child_id} = row_number()\n"
-                                f'| extend {child_id} = strcat({json.dumps(function)}, "_", tostring({child_id}))'
-                                f"{normalization.expansion}{normalization}"
+                    original_query = query
+                    query = self._child_raw_query(query, state, source)
+                    artifact = state.get("kusto_context_artifact")
+                    if artifact:
+                        if original_query != state.get("kusto_public_query"):
+                            # A callback may narrow summaries. Pair eligible public
+                            # keys with complete evidence instead of its display arrays.
+                            key_fields = ["WindowEnd", *(source.group_by or [])]
+                            keys = ", ".join(self._quote_correlation_field(field) for field in key_fields)
+                            eligible = allocate("EligibleChildMatches")
+                            complete = allocate("CompleteChildContext")
+                            private = ", ".join([keys, artifact["id"], artifact["kind"], *artifact["fields"].values()])
+                            scalar_fields = ", ".join(
+                                self._quote_correlation_field(field)
+                                for field in sorted(state["kusto_result_fields"] - set(state["kusto_context_fields"]))
+                            )
+                            artifact_query = (
+                                f"let {eligible} = () {{\n{query}\n}};\n"
+                                f'let {complete} = () {{\n{artifact["query"]}\n}};\n'
+                                f"{eligible}() | project {scalar_fields}\n"
+                                f"| join kind=inner ({complete}() | project {private}) on {keys}"
                             )
                         else:
-                            relation = f"{filtered}{normalization.expansion}{normalization}"
-                    searches.append(
-                        f"({relation}\n| extend {normalization.rule_column} = "
-                        f"{json.dumps(str(source.name or source.id), ensure_ascii=False)})"
-                    )
-                else:
-                    searches.append(
-                        self.correlation_search_multi_rule_query_expression.format(
-                            rule=source,
-                            ruleid=self.convert_correlation_ruleid(
-                                source.name or source.id, str(self.correlation_search_multi_rule_query_expression)
-                            ),
-                            query=query,
-                            normalization=normalization,
+                            artifact_query = artifact["query"]
+                        function, child_results = self._shared_child_source(
+                            source, reference_index, query_index, artifact_query
                         )
-                    )
+                        kind = self._quote_correlation_field(artifact["kind"])
+                        selected = "ContextEvidence" if normalization.expands_context else "Summary"
+                        relation = f'{child_results}\n| where {kind} == "{selected}"'
+                        if normalization.preserve_empty_context or context_evidence and normalization.expands_context:
+                            identity = self._quote_correlation_field(artifact["id"])
+                            values = ", ".join(
+                                self._quote_correlation_field(value) for value in artifact["fields"].values()
+                            )
+                            # Empty evidence does not erase a positive child match.
+                            # A marker keeps its structural row out of retained tuples.
+                            # A true child can have no positive evidence (absence).
+                            # Keep its summary for temporal membership; mark only
+                            # real relationships so string-null defaults never
+                            # become fabricated retained tuples.
+                            marker = f", {context_evidence} = true" if context_evidence else ""
+                            preserves_context_presence = bool(context_evidence)
+                            relation = (
+                                f'{child_results} | where {kind} == "Summary"\n| project-away {values}\n'
+                                f'| join kind=leftouter ({child_results} | where {kind} == "ContextEvidence" '
+                                f"| project {identity}, {values}{marker}) on {identity}"
+                            )
+                        child_id = self._correlation_columns.get("child_match")
+                        if child_id:
+                            identity = self._quote_correlation_field(artifact["id"])
+                            relation += (
+                                f'\n| extend {child_id} = strcat({json.dumps(function)}, "_", tostring({identity}))'
+                            )
+                        relation += normalization
+                    else:
+                        shared = self._correlation_shared_children["enabled"]
+                        if shared:
+                            function, child_results = self._shared_child_source(
+                                source, reference_index, query_index, query
+                            )
+                        else:
+                            function = allocate(self._child_binding_label(source))
+                            definitions.append(f"let {function} = () {{\n{query}\n}};\n")
+                            child_results = f"{function}()"
+                        relation = f"{child_results}{normalization}"
+                    if self._correlation_columns.get("narrow_source"):
+                        searches.append(f"({relation})")
+                    else:
+                        searches.append(
+                            f"({relation}\n| extend {normalization.rule_column} = "
+                            f"{json.dumps(str(source.name or source.id), ensure_ascii=False)})"
+                        )
+                else:
+                    if self._correlation_columns.get("narrow_source"):
+                        searches.append(
+                            _CorrelationQueryExpression("({query}{normalization})").format(
+                                rule=source, ruleid=None, query=query, normalization=normalization
+                            )
+                        )
+                    else:
+                        searches.append(
+                            self.correlation_search_multi_rule_query_expression.format(
+                                rule=source,
+                                ruleid=self.convert_correlation_ruleid(
+                                    source.name or source.id, str(self.correlation_search_multi_rule_query_expression)
+                                ),
+                                query=query,
+                                normalization=normalization,
+                            )
+                        )
+                if context_evidence and not preserves_context_presence:
+                    searches[-1] = f"({searches[-1]}\n| extend {context_evidence} = true)"
         return "".join(definitions), "union " + self.correlation_search_multi_rule_query_expression_joiner.join(
             searches
         )
@@ -1290,53 +1476,58 @@ class KustoBackend(TextQueryBackend):
 
         allocate = self._name_allocator(source_fields)
 
+        event_count = rule.type == SigmaCorrelationType.EVENT_COUNT
+        value_count = rule.type == SigmaCorrelationType.VALUE_COUNT
+        presence_temporal = rule.type == SigmaCorrelationType.TEMPORAL
+        value_sum = rule.type == SigmaCorrelationType.VALUE_SUM
+        value_avg = rule.type == SigmaCorrelationType.VALUE_AVG
+        value_percentile = rule.type == SigmaCorrelationType.VALUE_PERCENTILE
         columns = {
-            "timestamp": allocate("_sigma_timestamp"),
-            "rule": allocate("_sigma_rule"),
-            "groups": [allocate(f"_sigma_group_{index}") for index in range(len(rule.group_by or []))],
-            "weight": allocate("_sigma_weight"),
-            "window_end": allocate("_sigma_window_end"),
-            "bin": allocate("_sigma_bin"),
-            "weights": allocate(
-                "_sigma_types" if temporal else "_sigma_weights" if counted_fields is None else "_sigma_values"
-            ),
+            "timestamp": allocate("EventTime"),
+            "rule": allocate("SourceRule"),
+            "groups": [
+                allocate("Group" + re.sub(r"[^A-Za-z0-9_]", "_" if ordered else "", field))
+                for field in (rule.group_by or [])
+            ],
         }
+        if event_count or value_count or presence_temporal and not self._uses_context_groups(rule):
+            columns["narrow_source"] = True
+        if value_sum or value_avg or value_percentile:
+            columns["narrow_source"] = True
+        if presence_temporal:
+            columns["include_source_rule"] = True
         numeric_context = rule.type in (
             SigmaCorrelationType.VALUE_SUM,
             SigmaCorrelationType.VALUE_AVG,
             SigmaCorrelationType.VALUE_PERCENTILE,
         ) and self._uses_context_groups(rule, [*(rule.group_by or []), *(counted_fields or [])])
         if counted_fields is None and not temporal or numeric_context:
-            columns["child_match"] = allocate("_sigma_child_match")
-        if rule.type == SigmaCorrelationType.VALUE_COUNT:
-            columns["identify_values"] = True
+            columns["child_match"] = allocate("ChildCorrelationMatch")
         if counted_fields is not None:
             columns["values"] = [
-                allocate("_sigma_value" if len(counted_fields) == 1 else f"_sigma_value_{index}")
-                for index in range(len(counted_fields))
+                allocate(("Counted" if value_count else "Measured") + re.sub(r"[^A-Za-z0-9_]", "", field))
+                for field in counted_fields
             ]
-        if rule.type == SigmaCorrelationType.VALUE_SUM:
-            columns["integer_sum"] = allocate("_sigma_integer_sum")
-            columns["real_sum"] = allocate("_sigma_real_sum")
-            columns["real_count"] = allocate("_sigma_real_count")
-        if rule.type == SigmaCorrelationType.VALUE_AVG:
-            columns["numeric_count"] = allocate("_sigma_numeric_count")
-        if ordered:
-            columns["sequence_start"] = allocate("_sigma_sequence_start")
-            columns["sequence_end"] = allocate("_sigma_sequence_end")
-            columns["steps"] = [allocate(f"_sigma_sequence_{index}") for index in range(len(rule.referenced_rules))]
         self._correlation_group_by = rule.group_by or []
         self._correlation_counted_fields = counted_fields or []
         self._correlation_columns = columns
         try:
             definitions, search = self._count_search(rule, allocate)
-            if getattr(self, "_correlation_typed_groups", False):
-                group_definitions, search, self._correlation_group_lookups = self._group_value_identities(
-                    search, columns, allocate
-                )
-                definitions += group_definitions
-            if "child_match" in columns and (numeric_context or getattr(self, "_correlation_typed_groups", False)):
-                source_matches = allocate("_sigma_parent_matches")
+            if rule.type in (
+                SigmaCorrelationType.VALUE_SUM,
+                SigmaCorrelationType.VALUE_AVG,
+                SigmaCorrelationType.VALUE_PERCENTILE,
+            ):
+                for field in counted_fields:
+                    if self._correlation_field_types[field] not in ("int", "long", "real", "decimal"):
+                        raise SigmaConversionError(
+                            rule,
+                            rule.source,
+                            f"Kusto measured field {field!r} requires a numeric scalar type; explicitly normalize "
+                            "numeric strings or other scalar values in the pipeline and update kusto_schema.",
+                        )
+            if "child_match" in columns and (numeric_context or self._uses_context_groups(rule)):
+                source_matches = allocate("ParentSourceMatches")
                 child_id = columns["child_match"]
                 definitions += f'let {source_matches} = materialize({search}\n| extend {child_id} = tostring(column_ifexists({json.dumps(child_id)}, "")));\n'
                 child_matches = f"{source_matches} | where isnotempty({child_id})"
@@ -1346,23 +1537,9 @@ class KustoBackend(TextQueryBackend):
                     # happened during expansion. Deduplicate only within each child
                     # and resulting group; direct observations retain multiplicity.
                     value = columns["values"][0]
-                    kind = allocate("_sigma_numeric_kind")
-                    precise = allocate("_sigma_numeric_decimal")
-                    real = allocate("_sigma_numeric_real")
-                    # Decimal preserves exact long/decimal distinctions; the real
-                    # key preserves doubles beyond decimal's range and precision.
-                    # Both keys plus runtime type identify numeric observations
-                    # without serializing values or traversing arbitrary dynamics.
-                    usable = (
-                        f'tostring({value}[0]) in ("int", "long", "real", "double", "decimal") '
-                        f"and isfinite(toreal({value}[1]))"
-                    )
-                    child_matches += (
-                        f' | extend {kind} = iff({usable}, tostring({value}[0]), ""), '
-                        f"{precise} = iff({usable}, todecimal({value}[1]), decimal(null)), "
-                        f"{real} = iff({usable}, toreal({value}[1]), real(null))"
-                    )
-                    keys.extend([kind, precise, real])
+                    scalar_value = allocate("RetainedNumericValue")
+                    child_matches += f" | extend {scalar_value} = {value}"
+                    keys.append(scalar_value)
                 search = (
                     f"union ({source_matches} | where isempty({child_id})), "
                     f"({child_matches} | summarize take_any(*) by {', '.join(keys)})"
@@ -1371,9 +1548,7 @@ class KustoBackend(TextQueryBackend):
             del self._correlation_group_by
             del self._correlation_counted_fields
             del self._correlation_columns
-        timestamp, weight, window_end, time_bin, weights = (
-            columns[name] for name in ("timestamp", "weight", "window_end", "bin", "weights")
-        )
+        timestamp = columns["timestamp"]
         groups = columns["groups"]
         if len(metrics) > 1:
             metrics = [self._quote_correlation_field(metric) for metric in metrics]
@@ -1381,163 +1556,412 @@ class KustoBackend(TextQueryBackend):
         # timespan literals do not accept those units.
         span = rule.timespan.spec if rule.timespan.unit in "smhd" else f"{rule.timespan.seconds}s"
         valid_rows = " and ".join([f"isnotnull({timestamp})", *(f"isnotempty({field})" for field in groups)])
-        weighted_fields = ", ".join([timestamp, *groups])
+        prepared = _PreparedCorrelationInput(
+            rule=rule,
+            definitions=definitions,
+            search=search,
+            columns=columns,
+            valid_rows=valid_rows,
+            span=span,
+            query_operator=query_operator,
+            threshold=threshold,
+            allocate=allocate,
+        )
+        if rule.type == SigmaCorrelationType.EVENT_COUNT:
+            existence_threshold = self._count_existence_threshold(rule)
+            if existence_threshold is not None:
+                return [self._convert_count_existence(prepared, existence_threshold)]
+            return [self._convert_event_count(prepared)]
+        if value_count:
+            return [self._convert_value_count(prepared, counted_fields, metrics)]
         if ordered:
             return [
                 _CorrelationQuery(definitions + query.definitions, query.body)
-                for query in self._convert_ordered_temporal(rule, search, columns, valid_rows, span, source_type_count)
+                for query in self._convert_ordered_temporal(prepared, source_type_count)
             ]
-        anchor_fields = ", ".join([*groups, f"{window_end} = {timestamp}", f"{time_bin} = bin({timestamp}, {span})"])
-        join_fields = ", ".join([*groups, time_bin])
-        summary_fields = ", ".join([window_end, *groups])
-        result_fields = self._correlation_result_projection(rule, groups, window_end, span, metrics)
-        if rule.type == SigmaCorrelationType.VALUE_PERCENTILE:
-            value = columns["values"][0]
-            partition = allocate("_sigma_partition")
-            rank = allocate("_sigma_rank")
-            population = allocate("_sigma_population")
-            numeric = allocate("_sigma_numeric")
-            precise = allocate("_sigma_precise")
-            ranked = allocate("_sigma_ranked")
-            selector = rule.condition.percentile
-            # Sort the complete observation stream, without capped arrays or an
-            # approximate aggregate. The decimal tie-break distinguishes longs
-            # that round to the same double; the real key covers double extremes
-            # outside decimal's range. Preserve the selected observation's type.
-            return [
-                _CorrelationQuery(
-                    f"{definitions}let {weights} = {search}\n| where {valid_rows};\n"
-                    f"let {ranked} = materialize(\n"
-                    f"{weights}\n| project {anchor_fields}\n| distinct *\n"
-                    f"| join kind=inner (\n{weights}\n"
-                    f"| extend {time_bin} = pack_array(bin({timestamp}, {span}), bin({timestamp}, {span}) + {span})\n"
-                    f"| mv-expand {time_bin} to typeof(datetime)\n) on {join_fields}\n"
-                    f"| where {timestamp} between (({window_end} - {span}) .. {window_end})\n"
-                    f'| where tostring({value}[0]) in ("int", "long", "real", "double", "decimal") '
-                    f"and isfinite(toreal({value}[1]))\n"
-                    f"| extend {partition} = tostring(pack_array({summary_fields})), "
-                    f"{numeric} = toreal({value}[1]), {precise} = todecimal({value}[1])\n"
-                    f"| sort by {partition} asc, {numeric} asc, {precise} asc\n"
-                    f"| serialize {rank} = row_number(1, {partition} != prev({partition}))\n);\n",
-                    f"{ranked}\n| join kind=inner (\n"
-                    f"{ranked} | summarize {population} = max({rank}) by {partition}\n) on {partition}\n"
-                    # Quotient/remainder avoids multiplying an arbitrarily large
-                    # population by 100, and keeps the ceil operand below 10000.
-                    f"| where {rank} == max_of(1, ({population} / 100) * {selector} + "
-                    f"tolong(ceiling(toreal(({population} % 100) * {selector}) / 100.0)))\n"
-                    f"| extend ValuePercentile = {value}[1]\n"
-                    f'| where (gettype(ValuePercentile) in ("int", "long") and '
-                    f"todecimal(ValuePercentile) {query_operator} decimal({threshold})) or "
-                    f'(gettype(ValuePercentile) in ("real", "double", "decimal") and '
-                    f"toreal(ValuePercentile) {query_operator} {threshold})\n"
-                    f"| project {result_fields}",
-                )
-            ]
-        after_summary = ""
-        summary_binding = ""
-        if temporal:
-            # One retained rule identity per timestamp/group is sufficient for
-            # exact type counts; repetitions never become additional types.
-            preaggregate = f"| summarize by {weighted_fields}, {columns['rule']}"
-            distinct_anchors = "| distinct *\n"
-            aggregates = [f"RuleCount = count_distinctif({columns['rule']}, isnotempty({columns['rule']}))"]
-        elif counted_fields is None:
-            preaggregate = f"| summarize {weight} = count() by {weighted_fields}"
-            distinct_anchors = ""
-            aggregates = [f"EventCount = sum({weight})"]
-        elif rule.type == SigmaCorrelationType.VALUE_SUM:
-            # All valid source matches remain in the stream, including repeated
-            # measured values and rows without a usable value. The latter still
-            # establish evaluation anchors.
-            preaggregate = ""
-            distinct_anchors = "| distinct *\n"
-            value = columns["values"][0]
-            value_type = f"tostring({value}[0])"
-            integer = f'{value_type} in ("int", "long")'
-            real = f'{value_type} in ("real", "double", "decimal") and isfinite(toreal({value}[1]))'
-            integer_sum = columns["integer_sum"]
-            real_sum = columns["real_sum"]
-            real_count = columns["real_count"]
-            aggregates = [
-                f"{integer_sum} = sumif(todecimal({value}[1]), {integer})",
-                f"{real_sum} = sumif(toreal({value}[1]), {real})",
-                f"{real_count} = countif({real})",
-            ]
-            # Native long sum silently wraps on overflow. Accumulate integers
-            # in decimal, check every anchored integer-only window before the
-            # rule comparison, then expose the supported signed-long result.
-            sums = allocate("_sigma_sums")
-            summary_binding = f"let {sums} = materialize(\n"
-            self._register_correlation_guard(
-                sums,
-                f"{real_count} == 0 and (isnull({integer_sum}) or "
-                f"{integer_sum} < decimal(-9223372036854775808) or "
-                f"{integer_sum} > decimal(9223372036854775807))",
-                "Kusto value_sum integer overflow",
-            )
-            after_summary = (
-                f"{sums}\n"
-                f"| extend ValueSum = iff({real_count} > 0, "
-                f"pack_array(toreal({integer_sum}) + {real_sum})[0], pack_array(tolong({integer_sum}))[0])\n"
-            )
-            comparisons = (
-                f"({real_count} == 0 and todecimal({integer_sum}) {query_operator} decimal({threshold})) "
-                f"or ({real_count} > 0 and toreal({integer_sum}) + {real_sum} {query_operator} {threshold})"
-            )
-        elif rule.type == SigmaCorrelationType.VALUE_AVG:
-            # Preserve every observation and every valid anchor, including
-            # anchors whose window contains no usable numeric observation.
-            preaggregate = ""
-            distinct_anchors = "| distinct *\n"
-            value = columns["values"][0]
-            numeric = (
-                f'tostring({value}[0]) in ("int", "long", "real", "double", "decimal") '
-                f"and isfinite(toreal({value}[1]))"
-            )
-            aggregates = [
-                f"ValueAvg = avgif(toreal({value}[1]), {numeric})",
-                f"{columns['numeric_count']} = countif({numeric})",
-            ]
-        else:
-            definitions += self._counted_value_identities(search, columns, valid_rows, allocate)
-            search = columns["identities"]
-            # Scalar identities retain empty-value rows as anchors. Each field
-            # is still counted independently across the entire window.
-            preaggregate = f"| summarize by {weighted_fields}, {', '.join(columns['values'])}"
-            distinct_anchors = "| distinct *\n"
-            aggregates = [
-                f"{metric} = count_distinctif({value}, isnotempty({value}))"
-                for metric, value in zip(metrics, columns["values"])
-            ]
-        if boolean:
-            references = {reference.reference: reference.rule for reference in rule.referenced_rules}
-            presence = {}
-            for reference, source in references.items():
-                identity = json.dumps(str(source.name or source.id), ensure_ascii=False)
-                column = allocate("_sigma_present")
-                aggregates.append(f"{column} = countif({columns['rule']} == {identity}) > 0")
-                presence[reference] = column
-            comparisons = self._boolean_temporal_expression(rule, rule.condition.parsed, presence)
-        elif rule.type != SigmaCorrelationType.VALUE_SUM:
-            comparisons = " and ".join(f"{metric} {query_operator} {threshold}" for metric in metrics)
-        if rule.type == SigmaCorrelationType.VALUE_AVG:
-            # Kusto avgif() returns NaN for no observations, which satisfies
-            # neq. Require an observation before applying any comparison.
-            comparisons = f"{columns['numeric_count']} > 0 and {comparisons}"
-        # Bins only prune candidate pairs; actual timestamps decide membership.
-        scope = f"{definitions}let {weights} = {search}\n" f"| where {valid_rows}\n{preaggregate};\n"
-        aggregate = (
-            f"{weights}\n| project {anchor_fields}\n{distinct_anchors}"
-            f"| join kind=inner (\n    {weights}\n"
-            f"    | extend {time_bin} = pack_array(bin({timestamp}, {span}), bin({timestamp}, {span}) + {span})\n"
-            f"    | mv-expand {time_bin} to typeof(datetime)\n) on {join_fields}\n"
-            f"| where {timestamp} between (({window_end} - {span}) .. {window_end})\n"
-            f"| summarize {', '.join(aggregates)} by {summary_fields}\n"
+        if presence_temporal:
+            return [self._convert_temporal_presence(prepared)]
+        if value_sum:
+            return [self._convert_value_sum(prepared, counted_fields[0])]
+        if value_avg:
+            return [self._convert_value_avg(prepared)]
+        if value_percentile:
+            return [self._convert_value_percentile(prepared, counted_fields[0])]
+
+    @staticmethod
+    def _scalar_neighbor_changed(field, kind, neighbor="prev"):
+        """Compare adjacent scalars with the same NaN identity as native grouping."""
+        previous = f"{neighbor}({field})"
+        expression = f"{field} != {previous}"
+        if kind == "real":
+            # Native summarize treats NaNs as one distinct scalar value.
+            expression = f"({expression} and not(isnan({field}) and isnan({previous})))"
+        return expression
+
+    def _convert_value_avg(self, prepared: _PreparedCorrelationInput):
+        """Average the actual current observations; expired values leave no residue."""
+        rule, columns, allocate = prepared.rule, prepared.columns, prepared.allocate
+        definitions = prepared.definitions
+        observations = allocate("AverageObservations")
+        event_time, groups, value = columns["timestamp"], columns["groups"], columns["values"][0]
+        window_end, time_bin = allocate("AverageWindowEnd"), allocate("AverageTimeBin")
+        anchors = ", ".join(
+            [*groups, f"{window_end} = {event_time}", f"{time_bin} = bin({event_time}, {prepared.span})"]
         )
-        if summary_binding:
-            scope += summary_binding + aggregate + ");\n"
-            aggregate = after_summary
-        return [_CorrelationQuery(scope, aggregate + f"| where {comparisons}\n| project {result_fields}")]
+        join_keys = ", ".join([*groups, time_bin])
+        summary_keys = ", ".join([window_end, *groups])
+        result = self._correlation_result_projection(rule, groups, window_end, prepared.span, ["ValueAvg"])
+        # Preserve every observation, including duplicates and unusable values.
+        # The anchor's own row guarantees exact-time membership even if every
+        # other candidate in its bin has already expired.
+        definitions += f"let {observations} = {prepared.search}\n| where {prepared.valid_rows};\n"
+        return _CorrelationQuery(
+            definitions,
+            f"{observations}\n| summarize by {anchors}\n"
+            f"| join kind=inner (\n{observations}\n"
+            f"| extend {time_bin} = pack_array(bin({event_time}, {prepared.span}), bin({event_time}, {prepared.span}) + {prepared.span})\n"
+            f"| mv-expand {time_bin} to typeof(datetime)\n) on {join_keys}\n"
+            f"| where {event_time} between (({window_end} - {prepared.span}) .. {window_end})\n"
+            f"| summarize ValueAvg = avgif(toreal({value}), isfinite(toreal({value}))) by {summary_keys}\n"
+            # Empty avgif returns NaN, which otherwise satisfies inequality.
+            f"| where isfinite(ValueAvg) and ValueAvg {prepared.query_operator} {prepared.threshold}\n| project {result}",
+        )
+
+    def _convert_value_percentile(self, prepared: _PreparedCorrelationInput, measured_field):
+        """Select an exact native observation at the inclusive nearest-rank position."""
+        rule, columns, allocate = prepared.rule, prepared.columns, prepared.allocate
+        definitions = prepared.definitions
+        observations = allocate("PercentileObservations")
+        candidates = allocate("PercentileWindowValues")
+        event_time, groups, value = columns["timestamp"], columns["groups"], columns["values"][0]
+        window_end, time_bin = allocate("PercentileWindowEnd"), allocate("PercentileTimeBin")
+        kind = self._correlation_field_types[measured_field]
+        usable = f"isnotnull({value})"
+        if kind == "real":
+            usable += f" and isfinite({value})"
+        keys = [*groups, window_end]
+        key_fields = ", ".join(keys)
+        joins = ", ".join([*groups, time_bin])
+        anchors = ", ".join(
+            [*groups, f"{window_end} = {event_time}", f"{time_bin} = bin({event_time}, {prepared.span})"]
+        )
+        definitions += f"let {observations} = {prepared.search}\n| where {prepared.valid_rows};\n"
+        # Original observations provide anchors even when their measurement is
+        # missing. Only usable observations participate in selection.
+        pairs = (
+            f"{observations}\n| project {anchors}\n| distinct *\n"
+            f"| join kind=inner (\n{observations}\n| where {usable}\n"
+            f"| extend {time_bin} = pack_array(bin({event_time}, {prepared.span}), bin({event_time}, {prepared.span}) + {prepared.span})\n"
+            f"| mv-expand {time_bin} to typeof(datetime)\n) on {joins}\n"
+            f"| where {event_time} between (({window_end} - {prepared.span}) .. {window_end})\n"
+            f"| project {key_fields}, {value}"
+        )
+        selector = rule.condition.percentile
+        if selector in (0, 100):
+            # At the endpoints, native extrema select the same observation
+            # without population counting, serialization, or sorting.
+            body = (
+                pairs
+                + f"\n| summarize ValuePercentile = {'min' if selector == 0 else 'max'}({value}) by {key_fields}\n"
+            )
+        else:
+            population, rank = allocate("PercentilePopulation"), allocate("PercentileRank")
+            # Reuse the exact candidate relation for counting and selection.
+            # Projecting it narrowly keeps the one materialization and sort small.
+            definitions += f"let {candidates} = materialize(\n{pairs}\n);\n"
+            changes = []
+            for logical, field in zip(rule.group_by or [], groups):
+                changed = self._scalar_neighbor_changed(field, self._correlation_field_types[logical])
+                changes.append(changed)
+            changes.append(f"{window_end} != prev({window_end})")
+            reset = " or ".join(changes)
+            order = ", ".join(f"{field} asc" for field in [*keys, value])
+            body = (
+                f"{candidates}\n| join kind=inner (\n"
+                f"{candidates} | summarize {population} = count() by {key_fields}\n) on {key_fields}\n"
+                f"| project {key_fields}, {value}, {population}\n"
+                f"| sort by {order}\n| serialize {rank} = row_number(1, {reset})\n"
+                # Quotient/remainder avoids multiplying an arbitrarily large
+                # population by the selector before dividing by 100.
+                f"| where {rank} == max_of(1, ({population} / 100) * {selector} + "
+                f"tolong(ceiling(toreal(({population} % 100) * {selector}) / 100.0)))\n"
+                f"| extend ValuePercentile = {value}\n"
+            )
+        comparison = f"ValuePercentile {prepared.query_operator} {prepared.threshold}"
+        if kind == "decimal":
+            comparison = f"ValuePercentile {prepared.query_operator} decimal({prepared.threshold})"
+        elif kind in ("int", "long") and prepared.threshold != int(prepared.threshold):
+            comparison = f"todecimal(ValuePercentile) {prepared.query_operator} decimal({prepared.threshold})"
+        projection = self._correlation_result_projection(rule, groups, window_end, prepared.span, ["ValuePercentile"])
+        return _CorrelationQuery(definitions, body + f"| where {comparison}\n| project {projection}")
+
+    def _convert_value_sum(self, prepared: _PreparedCorrelationInput, measured_field):
+        """Use exact integer boundaries and current-window native noninteger sums."""
+        rule, columns, allocate = prepared.rule, prepared.columns, prepared.allocate
+        definitions = prepared.definitions
+        sources = allocate("SumObservations")
+        event_time, groups, value = columns["timestamp"], columns["groups"], columns["values"][0]
+        kind = self._correlation_field_types[measured_field]
+        comparison = f"ValueSum {prepared.query_operator} {prepared.threshold}"
+        if kind == "decimal":
+            comparison = f"ValueSum {prepared.query_operator} decimal({prepared.threshold})"
+        elif kind in ("int", "long") and prepared.threshold != int(prepared.threshold):
+            comparison = f"todecimal(ValueSum) {prepared.query_operator} decimal({prepared.threshold})"
+        definitions += f"let {sources} = {prepared.search}\n| where {prepared.valid_rows};\n"
+        if kind in ("int", "long"):
+            arrivals = allocate("SumArrivals")
+            arrival_sum, boundary_time, boundary_order, delta = [
+                allocate(name) for name in ("ArrivalSum", "SumBoundaryTime", "SumBoundaryOrder", "SumDelta")
+            ]
+            keys = ", ".join([event_time, *groups])
+            definitions += f"let {arrivals} = {sources}\n| summarize {arrival_sum} = sum({value}) by {keys};\n"
+            retained = ", ".join(groups)
+            retained = retained + ", " if retained else ""
+            order = ", ".join(f"{field} asc" for field in [*groups, boundary_time, boundary_order])
+            changes = []
+            for logical, field in zip(rule.group_by or [], groups):
+                changed = self._scalar_neighbor_changed(field, self._correlation_field_types[logical])
+                changes.append(changed)
+            restart = ", " + " or ".join(changes) if changes else ""
+            body = (
+                f"union ({arrivals}\n| project {retained}{boundary_time} = {event_time}, "
+                f"{boundary_order} = 0, {delta} = {arrival_sum}),\n"
+                f"({arrivals}\n| project {retained}{boundary_time} = {event_time} + {prepared.span}, "
+                f"{boundary_order} = 1, {delta} = -{arrival_sum})\n"
+                "// Arrivals evaluate before equal-time expirations, including zero and missing values.\n"
+                f"| sort by {order}\n| extend ValueSum = row_cumsum({delta}{restart})\n"
+                f"| where {boundary_order} == 0\n"
+            )
+            end = boundary_time
+        else:
+            end, time_bin = allocate("SumWindowEnd"), allocate("SumTimeBin")
+            anchors = ", ".join([*groups, f"{end} = {event_time}", f"{time_bin} = bin({event_time}, {prepared.span})"])
+            join_keys = ", ".join([*groups, time_bin])
+            summary = ", ".join([end, *groups])
+            aggregate = f"sumif({value}, isfinite({value}))" if kind == "real" else f"sum({value})"
+            # Every source row remains on the right so its own anchor survives,
+            # even when no finite observation belongs to its exact window.
+            body = (
+                f"{sources}\n| project {anchors}\n| distinct *\n"
+                f"| join kind=inner (\n{sources}\n"
+                f"| extend {time_bin} = pack_array(bin({event_time}, {prepared.span}), bin({event_time}, {prepared.span}) + {prepared.span})\n"
+                f"| mv-expand {time_bin} to typeof(datetime)\n) on {join_keys}\n"
+                f"| where {event_time} between (({end} - {prepared.span}) .. {end})\n"
+                f"| summarize ValueSum = {aggregate} by {summary}\n"
+            )
+        projection = self._correlation_result_projection(rule, groups, end, prepared.span, ["ValueSum"])
+        return _CorrelationQuery(definitions, body + f"| where {comparison}\n| project {projection}")
+
+    def _convert_value_count(self, prepared: _PreparedCorrelationInput, counted_fields, metrics):
+        """Merge each scalar's active intervals, then count at original source anchors."""
+        rule, columns, allocate = prepared.rule, prepared.columns, prepared.allocate
+        definitions = prepared.definitions
+        matches = allocate("ValueCountSources")
+        event_time, groups = columns["timestamp"], columns["groups"]
+        boundary_time, boundary_order = [allocate(name) for name in ("ValueBoundaryTime", "ValueBoundaryOrder")]
+        deltas = [allocate(value + "Delta") for value in columns["values"]]
+        definitions += f"let {matches} = materialize({prepared.search}\n| where {prepared.valid_rows});\n"
+
+        branches = []
+
+        def boundary(source, time, order, active=None, amount=0):
+            projection = [*groups, f"{boundary_time} = {time}", f"{boundary_order} = {order}"]
+            projection.extend(f"{delta} = {amount if index == active else 0}" for index, delta in enumerate(deltas))
+            return f"({source}\n| project {', '.join(projection)})"
+
+        anchor_fields = ", ".join([*groups, event_time])
+        branches.append(boundary(f"{matches} | summarize by {anchor_fields}", event_time, 1))
+        group_kinds = [self._correlation_field_types[field] for field in rule.group_by or []]
+        for index, (field, value) in enumerate(zip(counted_fields, columns["values"])):
+            intervals = allocate(value + "Activity")
+            starts, ends = [allocate(value + suffix) for suffix in ("Starts", "Ends")]
+            keys = [*groups, value]
+            kinds = [*group_kinds, self._correlation_field_types[field]]
+            start = " or ".join(
+                [
+                    f"isnull(prev({event_time}))",
+                    *(self._scalar_neighbor_changed(key, kind) for key, kind in zip(keys, kinds)),
+                    f"{event_time} > prev({event_time}) + {prepared.span}",
+                ]
+            )
+            end = " or ".join(
+                [
+                    f"isnull(next({event_time}))",
+                    *(self._scalar_neighbor_changed(key, kind, "next") for key, kind in zip(keys, kinds)),
+                    f"next({event_time}) > {event_time} + {prepared.span}",
+                ]
+            )
+            definitions += (
+                f"let {intervals} = materialize({matches}\n| where isnotempty({value})\n"
+                f"| summarize by {', '.join([*keys, event_time])}\n"
+                f"| sort by {', '.join(f'{key} asc' for key in [*keys, event_time])}\n"
+                "// Repeated values whose inclusive active intervals overlap contribute only once.\n"
+                f"| extend {starts} = {start},\n    {ends} = {end});\n"
+            )
+            branches.append(boundary(f"{intervals} | where {starts}", event_time, 0, index, 1))
+            branches.append(boundary(f"{intervals} | where {ends}", f"{event_time} + {prepared.span}", 2, index, -1))
+        restart = " or ".join(self._scalar_neighbor_changed(group, kind) for group, kind in zip(groups, group_kinds))
+        accumulators = [
+            f"{metric} = row_cumsum({delta}" + (f", {restart})" if restart else ")")
+            for metric, delta in zip(metrics, deltas)
+        ]
+        comparisons = " and ".join(
+            (
+                f"todecimal({metric}) {prepared.query_operator} decimal({prepared.threshold})"
+                if prepared.threshold != int(prepared.threshold)
+                else f"{metric} {prepared.query_operator} {prepared.threshold}"
+            )
+            for metric in metrics
+        )
+        projection = self._correlation_result_projection(rule, groups, boundary_time, prepared.span, metrics)
+        body = (
+            "union " + ",\n".join(branches) + "\n"
+            "// All interval starts precede anchors; equal-time expirations follow them.\n"
+            f"| sort by {', '.join(f'{key} asc' for key in [*groups, boundary_time, boundary_order])}\n"
+            f"| extend {', '.join(accumulators)}\n"
+            f"| where {boundary_order} == 1\n| where {comparisons}\n| project {projection}"
+        )
+        return _CorrelationQuery(definitions, body)
+
+    def _convert_count_existence(self, prepared: _PreparedCorrelationInput, threshold):
+        """Keep a timestamp when its Nth-most-recent source match fits."""
+        rule, columns, allocate = prepared.rule, prepared.columns, prepared.allocate
+        definitions = prepared.definitions
+        event_time, groups = columns["timestamp"], columns["groups"]
+        body = f"{prepared.search}\n| where {prepared.valid_rows}\n"
+        if threshold > 1:
+            offset = threshold - 1
+            predecessor = allocate("ThresholdPredecessorTime")
+            same_group = []
+            for logical, group in zip(rule.group_by or [], groups):
+                equality = f"{group} == prev({group}, {offset})"
+                if self._correlation_field_types[logical] == "real":
+                    equality = f"({equality} or (isnan({group}) and isnan(prev({group}, {offset}))))"
+                same_group.append(equality)
+            body += (
+                "// Preserve individual source matches, including timestamp ties, before the threshold lookup.\n"
+                f"| sort by {', '.join(f'{field} asc' for field in [*groups, event_time])}\n"
+                f"| extend {predecessor} = prev({event_time}, {offset})\n"
+                f"| where {predecessor} >= {event_time} - {prepared.span}"
+                + (f" and {' and '.join(same_group)}" if same_group else "")
+                + "\n"
+            )
+        body += (
+            f"| distinct {', '.join([event_time, *groups])}\n"
+            f"| project {self._correlation_result_projection(rule, groups, event_time, prepared.span, [])}"
+        )
+        return _CorrelationQuery(definitions, body)
+
+    def _convert_temporal_presence(self, prepared: _PreparedCorrelationInput):
+        """Evaluate inclusive source presence once at each source-match timestamp."""
+        rule, columns, allocate = prepared.rule, prepared.columns, prepared.allocate
+        definitions = prepared.definitions
+        event_time, source_rule = columns["timestamp"], columns["rule"]
+        groups = columns["groups"]
+        sources = list({id(ref.rule): ref.rule for ref in rule.referenced_rules}.values())
+        membership, last_seen, presence = {}, {}, {}
+        for source in sources:
+            name = re.sub(r"[^A-Za-z_0-9]", "", source.name or source.title or str(source.id)) or "Source"
+            name = name[0].upper() + name[1:]
+            membership[id(source)] = allocate("Matches" + name)
+            last_seen[id(source)] = allocate("Last" + name + "Time")
+            presence[id(source)] = allocate("Has" + name)
+        group_start = allocate("NewCorrelationGroup")
+        scan_step = allocate("PresenceWindow")
+        changes = [f"isnull(prev({event_time}))"]
+        for logical, field in zip(rule.group_by or [], groups):
+            changed = self._scalar_neighbor_changed(field, self._correlation_field_types[logical])
+            changes.append(changed)
+        memberships = ", ".join(
+            f"{membership[id(source)]} = countif({source_rule} == "
+            f"{json.dumps(str(source.name or source.id), ensure_ascii=False)}) > 0"
+            for source in sources
+        )
+        declarations = ", ".join(f"{last_seen[id(source)]}:datetime" for source in sources)
+        updates = ",\n        ".join(
+            f"{last_seen[id(source)]} = iff({membership[id(source)]}, {event_time}, "
+            f"iff({group_start}, datetime(null), {scan_step}.{last_seen[id(source)]}))"
+            for source in sources
+        )
+        present = ", ".join(
+            f"{presence[id(source)]} = isnotnull({last_seen[id(source)]}) and "
+            f"{last_seen[id(source)]} >= {event_time} - {prepared.span}"
+            for source in sources
+        )
+        rule_count = " + ".join(f"tolong({presence[id(source)]})" for source in sources)
+        if isinstance(rule.condition, SigmaExtendedCorrelationCondition):
+            references = {ref.reference: presence[id(ref.rule)] for ref in rule.referenced_rules}
+            comparison = self._boolean_temporal_expression(rule, rule.condition.parsed, references)
+        elif prepared.threshold != int(prepared.threshold):
+            comparison = f"todecimal(RuleCount) {prepared.query_operator} decimal({prepared.threshold})"
+        else:
+            comparison = f"RuleCount {prepared.query_operator} {prepared.threshold}"
+        keys = ", ".join([*groups, event_time])
+        order = ", ".join(f"{field} asc" for field in [*groups, event_time])
+        projection = self._correlation_result_projection(rule, groups, event_time, prepared.span, ["RuleCount"])
+        body = (
+            f"{prepared.search}\n| where {prepared.valid_rows}\n"
+            "// Batch simultaneous source matches before updating inclusive trailing presence.\n"
+            f"| summarize {memberships} by {keys}\n"
+            f"| sort by {order}\n"
+            f"| extend {group_start} = {' or '.join(changes)}\n"
+            f"| scan declare ({declarations}) with (\n"
+            f"    step {scan_step}: true =>\n        {updates};\n)\n"
+            "// Only source-match timestamps evaluate; expiration never creates an anchor.\n"
+            f"| extend {present}\n"
+            f"| extend RuleCount = {rule_count}\n"
+            f"| where {comparison}\n| project {projection}"
+        )
+        return _CorrelationQuery(definitions, body)
+
+    def _convert_event_count(self, prepared: _PreparedCorrelationInput):
+        """Accumulate integer source-match weights at arrivals and expirations."""
+        rule, columns, allocate = prepared.rule, prepared.columns, prepared.allocate
+        definitions = prepared.definitions
+        arrivals = allocate("SourceMatchArrivals")
+        event_time = columns["timestamp"]
+        match_count = allocate("SourceMatchCount")
+        boundary_time = allocate("CountBoundaryTime")
+        boundary_order = allocate("CountBoundaryOrder")
+        delta = allocate("SourceMatchDelta")
+        groups = columns["groups"]
+        retained = ", ".join(groups)
+        retained = f"{retained}, " if retained else ""
+        order = ", ".join(f"{field} asc" for field in [*groups, boundary_time, boundary_order])
+        changes = []
+        for logical, field in zip(rule.group_by or [], groups):
+            changed = self._scalar_neighbor_changed(field, self._correlation_field_types[logical])
+            changes.append(changed)
+        restart = " or ".join(changes)
+        cumulative = f"row_cumsum({delta}" + (f", {restart})" if restart else ")")
+        comparison = f"EventCount {prepared.query_operator} {prepared.threshold}"
+        if prepared.threshold != int(prepared.threshold):
+            # Kusto equality can coerce a real literal to the long column type.
+            # Decimal comparison preserves fractional thresholds and exact longs.
+            comparison = f"todecimal(EventCount) {prepared.query_operator} decimal({prepared.threshold})"
+        projection = self._correlation_result_projection(rule, groups, boundary_time, prepared.span, ["EventCount"])
+        definitions += (
+            f"let {arrivals} = {prepared.search}\n| where {prepared.valid_rows}\n"
+            f"| summarize {match_count} = count() by {event_time}"
+            + (f", {', '.join(groups)}" if groups else "")
+            + ";\n"
+        )
+        # One arrival per group/timestamp is both its complete positive delta
+        # and its only evaluation anchor. Expirations at T follow that anchor,
+        # preserving the inclusive [T - span, T] endpoint without adding ticks.
+        body = (
+            f"union ({arrivals}\n| project {retained}{boundary_time} = {event_time}, "
+            f"{boundary_order} = 0, {delta} = {match_count}),\n"
+            f"({arrivals}\n| project {retained}{boundary_time} = {event_time} + {prepared.span}, "
+            f"{boundary_order} = 1, {delta} = -{match_count})\n"
+            "// Arrivals evaluate before equal-time expirations; expirations never create matches.\n"
+            f"| sort by {order}\n"
+            f"| extend EventCount = {cumulative}\n"
+            f"| where {boundary_order} == 0\n"
+            f"| where {comparison}\n"
+            f"| project {projection}"
+        )
+        return _CorrelationQuery(definitions, body)
 
     def _boolean_temporal_expression(self, rule, node, presence):
         """Translate the upstream parsed tree over window-wide presence columns."""
@@ -1577,169 +2001,79 @@ class KustoBackend(TextQueryBackend):
         )
         return truth, f"({truth} and {evidence})" if conjunction else evidence
 
-    def _dynamic_value_identity(self, source, row_id, value, groups, allocate):
-        """Return an exact runtime-typed dynamic equivalence relation.
-
-        ``value`` is boxed as [runtime type, dynamic value]. ``source`` must give
-        stable globally unique long row IDs. Null/empty values are retained.
-        """
-        names = [
-            "input",
-            "steps",
-            "relation",
-            "bound",
-            "iteration",
-            "stack",
-            "frame",
-            "type",
-            "path",
-            "leaf",
-            "terminal",
-            "finished",
-            "count",
-            "canonical",
-            "token",
-            "tokens",
-            "signature",
-            "identity",
-        ]
-        n = {name: allocate("_sigma_identity_" + name) for name in names}
-        stack, frame = n["stack"], n["frame"]
-        old = f"s.{stack}"
-        top = f"{old}[-1]"
-        # Path components are prefix-distinguished and self-delimiting. JSON is
-        # used for bag keys; runtime types are encoded separately for every leaf.
-        parent = f"array_slice({old}, 0, -2)"
-        updated = f"pack_array(bag_pack('v', {top}.v, 'p', {top}.p, 'i', tolong({top}.i) + 1, 'k', {top}.k))"
-        key = f"{top}.k[tolong({top}.i)]"
-        bag_child = f"pack_array(bag_pack('v', {top}.v[tostring({key})], 'p', strcat(tostring({top}.p), 'k', dynamic_to_json(pack_array({key}))), 'i', 0, 'k', bag_keys({top}.v[tostring({key})])))"
-        array_child = f"pack_array(bag_pack('v', {top}.v[tolong({top}.i)], 'p', strcat(tostring({top}.p), 'a', tostring({top}.i), ';'), 'i', 0, 'k', bag_keys({top}.v[tolong({top}.i)])))"
-        retained = ", ".join([row_id, *groups])
-        # Each tree edge is descended and unwound once. JSON length exceeds
-        # its node count, so this bound covers the whole walk without a depth
-        # cap. Include the last available step even when the range is exhausted;
-        # the final guard checks its bound and completion before returning IDs.
-        bound, iteration, typ = n["bound"], n["iteration"], n["type"]
-        definitions = (
-            f"let {n['input']} = materialize({source}\n"
-            f"| project {retained}, {n['leaf']} = {value}[1]\n"
-            f"| extend {bound} = 3 * strlen(dynamic_to_json({n['leaf']})) + 3);\n"
-            f"let {n['steps']} = materialize({n['input']}\n"
-            f"| mv-expand {iteration} = range(0, min_of({bound}, 1048575), 1) to typeof(long)\n"
-            f"| sort by {row_id} asc, {iteration} asc\n"
-            f"| scan declare ({stack}:dynamic = dynamic([])) with (step s: true => {stack} = case(\n"
-            f"    {iteration} == 0, pack_array(bag_pack('v', {n['leaf']}, 'p', '$', 'i', 0, 'k', bag_keys({n['leaf']}))),\n"
-            f"    array_length({old}) == 0, {old},\n"
-            f"    gettype({top}.v) == 'dictionary' and tolong({top}.i) < array_length({top}.k), array_concat({parent}, {updated}, {bag_child}),\n"
-            f"    gettype({top}.v) == 'array' and tolong({top}.i) < array_length({top}.v), array_concat({parent}, {updated}, {array_child}),\n"
-            f"    {parent});)\n"
-            f"| extend {frame} = {stack}[-1]\n"
-            f"| extend {typ} = gettype({frame}.v), {n['terminal']} = {iteration} == min_of({bound}, 1048575), {n['finished']} = array_length({stack}) == 0\n"
-            f"| where {n['terminal']} or (not({n['finished']}) and ({typ} !in ('array', 'dictionary') or ({typ} == 'array' and array_length({frame}.v) == 0) or ({typ} == 'dictionary' and array_length(bag_keys({frame}.v)) == 0)))\n"
-            f"| project {retained}, {n['path']} = tostring({frame}.p), {typ}, {n['leaf']} = {frame}.v, {n['terminal']}, {n['finished']}, {bound});\n"
-        )
-        # Serialize typed scalar leaves, never the original dynamic tree: JSON
-        # alone loses extended runtime types. Full signatures avoid the leaf-pair
-        # self-join whose repeated expansion overwhelms nested query planning.
-        # Native scalar JSON preserves adjacent double/long precision. Normalize
-        # equal signed zeros, NaNs and decimal scales before constructing tokens.
-        leaf = n["leaf"]
-        normalized = (
-            f"case({typ} == 'double' and toreal({leaf}) == 0.0, '0', "
-            f"{typ} == 'double' and isnan(toreal({leaf})), 'nan', "
-            f"{typ} == 'decimal', tostring(todecimal({leaf})), dynamic_to_json({leaf}))"
-        )
-        ordered = ", ".join(f"{column} asc" for column in [*groups, n["signature"], row_id])
-        same = " and ".join(f"{column} == s.{column}" for column in [*groups, n["signature"]])
-        # Keep guards in this one summary: branching to independent scalar
-        # checks earlier multiplies the source plan at every correlation level.
-        # A scan assigns the minimum row ID without another canonical self-join.
-        definitions += (
-            f"let {n['canonical']} = materialize({n['steps']}\n"
-            f"| extend {n['token']} = dynamic_to_json(pack_array({n['path']}, {typ}, {normalized}))\n"
-            f"| sort by {row_id} asc, {n['path']} asc\n"
-            f"| summarize {n['tokens']} = make_list_if({n['token']}, not({n['terminal']}), 1048576), {n['count']} = countif(not({n['terminal']})), {n['finished']} = countif({n['terminal']} and (not({n['finished']}) or {bound} > 1048575)) by {retained}\n"
-            f"| extend {n['signature']} = dynamic_to_json({n['tokens']}));\n"
-            f"let {n['relation']} = {n['canonical']}\n"
-            f"| sort by {ordered}\n"
-            f"| scan declare ({n['identity']}:long = 0) with (step s: true => {n['identity']} = iff({same}, s.{n['identity']}, {row_id});)\n"
-            f"| project {row_id}, {n['identity']};\n"
-        )
-        self._register_correlation_guard(
-            n["canonical"],
-            f"{n['count']} != array_length({n['tokens']}) or {n['finished']} != 0",
-            "Kusto dynamic identity traversal incomplete or exceeds range limit; signature leaf limit exceeded",
-        )
-        return definitions, n["relation"], n["identity"]
-
-    def _counted_value_identities(self, search, columns, valid_rows, allocate):
-        if columns.get("values_preidentified"):
-            identities = columns["identities"] = allocate("_sigma_value_identities")
-            return f"let {identities} = materialize({search}\n| where {valid_rows});\n"
-        # Materialize once so every field uses the same source-match IDs.
-        source = allocate("_sigma_value_input")
-        identities = columns["identities"] = allocate("_sigma_value_identities")
-        row_id = allocate("_sigma_value_id")
-        values, groups = columns["values"], columns["groups"]
-        retained = ", ".join([columns["timestamp"], *groups, *values])
-        definitions = (
-            f"let {source} = materialize({search}\n| where {valid_rows}\n"
-            f"| project {retained}\n| serialize {row_id} = row_number());\n"
-        )
-        joins, replacements = [], []
-        for value in values:
-            present = allocate("_sigma_present_values")
-            definitions += f"let {present} = {source} | where isnotempty(tostring({value}[1]));\n"
-            fragment, relation, identity = self._dynamic_value_identity(present, row_id, value, groups, allocate)
-            definitions += fragment
-            joins.append(f"| join kind=leftouter ({relation}) on {row_id}\n")
-            replacements.append(f"{value} = {identity}")
-        definitions += (
-            f"let {identities} = {source}\n"
-            + "".join(joins)
-            + f"| project {columns['timestamp']}, "
-            + ", ".join([*groups, *replacements])
-            + ";\n"
-        )
-        return definitions
-
-    def _convert_ordered_temporal(self, rule, search, columns, valid_rows, span, source_type_count):
-        timestamp, rule_column, types, start, end, time_bin = (
-            columns[name] for name in ("timestamp", "rule", "weights", "sequence_start", "sequence_end", "bin")
-        )
-        groups, steps = columns["groups"], columns["steps"]
+    def _convert_ordered_temporal(self, prepared: _PreparedCorrelationInput, source_type_count):
+        rule, columns, allocate = prepared.rule, prepared.columns, prepared.allocate
+        groups = columns["groups"]
         identities = [reference.rule.name or str(reference.rule.id) for reference in rule.referenced_rules]
-        retained_fields = ", ".join([timestamp, *groups, rule_column])
-        first_fields = ", ".join([f"{start} = {timestamp}", f"{end} = {timestamp}", *groups])
-        candidate_fields = ", ".join([timestamp, *groups, f"{time_bin} = bin({timestamp}, {span})"])
-        join_fields = ", ".join([*groups, time_bin])
-        summary_fields = ", ".join([f"{end} = {timestamp}", *groups])
+        labels = [
+            "".join(part[:1].upper() + part[1:] for part in re.findall(r"[A-Za-z0-9]+", identity)) or "Source"
+            for identity in identities
+        ]
+        timestamp = columns["timestamp"]
+        complete = allocate("CompleteNow")
+        new_group = allocate("NewCorrelationGroup")
+        state = allocate("SequenceState")
+        memberships = {}
+        for identity, label in zip(identities, labels):
+            if identity not in memberships:
+                memberships[identity] = allocate(f"Has{label}")
+        aggregates = ", ".join(
+            f"{name} = countif({columns['rule']} == {json.dumps(identity, ensure_ascii=False)}) > 0"
+            for identity, name in memberships.items()
+        )
+        batch_fields = ", ".join([timestamp, *groups])
+        batch_summary = f"{aggregates} by {batch_fields}" if len(identities) > 1 else f"by {batch_fields}"
+        sequence = " -> ".join(json.dumps(identity, ensure_ascii=False) for identity in identities)
         query = (
-            f"let {types} = {search}\n| where {valid_rows}\n| summarize by {retained_fields};\n"
-            f"let {steps[0]} = {types}\n"
-            f"| where {rule_column} == {json.dumps(identities[0], ensure_ascii=False)}\n"
-            f"| project {first_fields};\n"
+            f"// Strict sequence: {sequence}. Total inclusive span: {prepared.span}.\n"
+            f"{prepared.search}\n| where {prepared.valid_rows}\n"
+            "// Batch equal timestamps: simultaneous source matches cannot advance strict sequence positions.\n"
+            f"| summarize {batch_summary}\n"
         )
-        for index, identity in enumerate(identities[1:], 1):
-            # Each prefix ending at one timestamp needs only its latest viable
-            # start. Any earlier start has the same future ordering constraints
-            # and a tighter expiry, so cannot enable an additional completion.
+        if len(identities) > 1:
+            prefixes = [allocate(f"Latest{'Then'.join(labels[:index])}Start") for index in range(1, len(identities))]
+            first_source = rule.referenced_rules[0].rule
+            if len(identities) == 2 and self._count_existence_threshold(first_source) is not None:
+                prefixes[0] = allocate(f"Last{labels[0].removesuffix('s')}Time")
+            group_changes = []
+            for field, group in zip(rule.group_by or [], groups):
+                changed = self._scalar_neighbor_changed(group, self._correlation_field_types[field])
+                group_changes.append(changed)
+            reset = " or ".join([f"isnull(prev({timestamp}))", *group_changes])
             query += (
-                f"let {steps[index]} = {steps[index - 1]}\n"
-                f"| extend {time_bin} = pack_array(bin({start}, {span}), bin({start}, {span}) + {span})\n"
-                f"| mv-expand {time_bin} to typeof(datetime)\n"
-                f"| join kind=inner (\n"
-                f"    {types}\n"
-                f"    | where {rule_column} == {json.dumps(identity, ensure_ascii=False)}\n"
-                f"    | project {candidate_fields}\n"
-                f") on {join_fields}\n"
-                f"| where {timestamp} > {end} and {timestamp} <= {start} + {span}\n"
-                f"| summarize {start} = max({start}) by {summary_fields};\n"
+                f"| sort by {', '.join(f'{field} asc' for field in [*groups, timestamp])}\n"
+                f"| extend {new_group} = {reset}\n"
+                "// Read preceding timestamp state for every assignment; preserve viable earlier prefixes.\n"
+                f"| scan declare ({', '.join(f'{prefix}:datetime = datetime(null)' for prefix in prefixes)}, "
+                f"{complete}:bool = false) with (\n"
+                f"    step {state}: true =>\n"
+                f"        {complete} = not({new_group}) and {memberships[identities[-1]]} "
+                f"and isnotnull({state}.{prefixes[-1]}) and {state}.{prefixes[-1]} >= {timestamp} - {prepared.span},\n"
             )
+            assignments = []
+            for index, prefix in enumerate(prefixes):
+                # For future detection, the latest start dominates earlier
+                # starts with the same processed timestamp boundary. A new
+                # first-step event never overwrites a longer viable prefix.
+                previous = f"{state}.{prefix}"
+                if index == 0:
+                    value = (
+                        f"iff({memberships[identities[0]]}, {timestamp}, iff({new_group}, datetime(null), {previous}))"
+                    )
+                else:
+                    predecessor = f"{state}.{prefixes[index - 1]}"
+                    advance = (
+                        f"{memberships[identities[index]]} and isnotnull({predecessor}) "
+                        f"and {predecessor} >= {timestamp} - {prepared.span} "
+                        f"and (isnull({previous}) or {predecessor} > {previous})"
+                    )
+                    value = f"iff({new_group}, datetime(null), iff({advance}, {predecessor}, {previous}))"
+                assignments.append(f"        {prefix} = {value}")
+            query += ",\n".join(assignments) + ";\n)\n" + f"| where {complete}\n"
         result_fields = self._correlation_result_projection(
-            rule, groups, end, span, [f"RuleCount = tolong({source_type_count})"]
+            rule, groups, timestamp, prepared.span, [f"RuleCount = tolong({source_type_count})"]
         )
-        return [_CorrelationQuery(query, f"{steps[-1]}\n| project {result_fields}")]
+        return [_CorrelationQuery("", query + f"| project {result_fields}")]
 
     def _correlation_result_projection(self, rule, groups, window_end, span, metrics):
         return ", ".join(
@@ -1815,12 +2149,78 @@ class KustoBackend(TextQueryBackend):
             )
         return next(iter(targets))
 
+    @staticmethod
+    def _correlation_scalar_type(source, state, field):
+        """Resolve the final source column; custom schemas describe post-transform types."""
+        metadata = state.processing_state
+        if isinstance(source, SigmaCorrelationRule):
+            kind = metadata.get("kusto_result_types", {}).get(field)
+        else:
+            schema = metadata.get("kusto_schema")
+            kind = schema.get_field_type(metadata.get("query_table"), field) if schema is not None else None
+            if kind is None and schema is not None:
+                # A pure field rename preserves the declared input type. Final-column
+                # declarations take precedence when the pipeline also transforms values.
+                candidates = {field}
+                mappings = [
+                    getattr(item.transformation, "mapping", {})
+                    for item in metadata.get("kusto_field_transformations", ())
+                ]
+                builtin = metadata.get("kusto_field_mappings")
+                if builtin is not None:
+                    mappings = [
+                        builtin.table_mappings.get(metadata.get("query_table"), {}),
+                        builtin.generic_mappings,
+                        *mappings,
+                    ]
+                for mapping in reversed(mappings):
+                    candidates.update(
+                        original
+                        for original, targets in mapping.items()
+                        if any(target in candidates for target in (targets if isinstance(targets, list) else [targets]))
+                    )
+                kinds = {schema.get_field_type(metadata.get("query_table"), name) for name in candidates}
+                kinds.discard(None)
+                if len(kinds) == 1:
+                    kind = kinds.pop()
+        kind = (
+            {"boolean": "bool", "double": "real", "float": "real", "int64": "long", "int32": "int"}.get(
+                str(kind).lower(), str(kind).lower()
+            )
+            if kind
+            else None
+        )
+        location = metadata.get("query_table", "child result")
+        if kind is None:
+            raise SigmaConversionError(
+                source,
+                source.source,
+                f"Kusto source {source.name or source.id!r}: cannot resolve type of field {field!r} in {location!r}. "
+                "Declare this relevant column in pipeline vars['kusto_schema'] using BaseSchema/TableSchema/FieldInfo; "
+                "the schema must describe its type after pipeline transformations.",
+            )
+        if kind not in {"bool", "int", "long", "real", "decimal", "string", "datetime", "timespan", "guid"}:
+            raise SigmaConversionError(
+                source,
+                source.source,
+                f"Kusto source {source.name or source.id!r}: field {field!r} in {location!r} has type {kind!r}. "
+                "Correlations require native scalar fields; explicitly extract or normalize arrays, property bags, "
+                "and mixed dynamic values in the pipeline and declare the resulting scalar type in kusto_schema.",
+            )
+        return kind
+
     def convert_correlation_search_field_normalization_expression(self, aliases, rule_reference, source_state=None):
         source_state = source_state or rule_reference.rule.get_conversion_states()[0]
         child = isinstance(rule_reference.rule, SigmaCorrelationRule)
 
         def map_field(field):
             if child:
+                if field == "ContextComplete":
+                    raise SigmaConversionError(
+                        rule_reference.rule,
+                        rule_reference.rule.source,
+                        "ContextComplete is display-only and cannot be consumed by a parent correlation; use retained scalar source fields instead.",
+                    )
                 returned_fields = source_state.processing_state["kusto_result_fields"]
                 if field not in returned_fields:
                     source = rule_reference.rule
@@ -1831,7 +2231,9 @@ class KustoBackend(TextQueryBackend):
                         f"{field!r}. Available fields: {', '.join(sorted(returned_fields))}.",
                     )
                 return field
-            return self._map_correlation_source_field(rule_reference.rule, source_state, field)
+            mapped = self._map_correlation_source_field(rule_reference.rule, source_state, field)
+            self._correlation_scalar_type(rule_reference.rule, source_state, mapped)
+            return mapped
 
         def map_alias(field):
             if field not in aliases.aliases:
@@ -1856,48 +2258,88 @@ class KustoBackend(TextQueryBackend):
             if child
             else map_field(self.backend_options["correlation_timestamp_field"])
         )
+        timestamp_type = self._correlation_scalar_type(rule_reference.rule, source_state, timestamp_field)
         columns = self._correlation_columns
         fields = [f"{columns['timestamp']} = todatetime({self._quote_correlation_field(timestamp_field)})"]
+        source_filter = ""
+        if not child:
+            names = getattr(self, "_correlation_report_names", {})
+            source_time = self._quote_correlation_field(timestamp_field)
+            if timestamp_type != "datetime":
+                source_time = f"todatetime({source_time})"
+            conditions = []
+            if "start" in names:
+                conditions.append(f"{source_time} >= {names['start']} - {self._correlation_report_lookback}s")
+            if "end" in names:
+                conditions.append(f"{source_time} < {names['end']}")
+            if conditions:
+                source_filter = "\n| where " + " and ".join(conditions)
         context_fields = source_state.processing_state.get("kusto_context_fields", ()) if child else ()
-        row_column = getattr(self, "_correlation_child_row", "_sigma_child_context_row")
         expanded = False
 
-        def boxed(field):
+        def record_type(logical, physical):
+            kind = self._correlation_scalar_type(rule_reference.rule, source_state, physical)
+            previous = self._correlation_field_types.setdefault(logical, kind)
+            if kind != previous:
+                source = rule_reference.rule
+                raise SigmaConversionError(
+                    source,
+                    source.source,
+                    f"Kusto correlation field {logical!r} has incompatible source types {previous!r} and {kind!r} "
+                    f"(source {source.name or source.id!r}, column {physical!r}). "
+                    "Explicitly normalize source fields to one scalar type in the pipeline and update kusto_schema.",
+                )
+            return kind
+
+        def native_scalar(field):
             nonlocal expanded
             if field in context_fields:
                 expanded = True
-                return f"{row_column}[{context_fields.index(field)}]"
-            quoted = self._quote_correlation_field(field)
-            return f"pack_array(gettype({quoted}), {quoted})"
+                artifact = source_state.processing_state.get("kusto_context_artifact")
+                if not artifact:
+                    raise SigmaConversionError(
+                        rule_reference.rule,
+                        rule_reference.rule.source,
+                        "Kusto retained child fields require complete relational context metadata; preserve conversion state.",
+                    )
+                return self._quote_correlation_field(artifact["fields"][field])
+            return self._quote_correlation_field(field)
 
         for index, field in enumerate(self._correlation_group_by):
             mapped_field = map_field(map_alias(field))
-            if getattr(self, "_correlation_typed_groups", False):
-                fields.append(f"{columns['groups'][index]} = {boxed(mapped_field)}")
-            else:
-                fields.append(f"{columns['groups'][index]} = tostring({self._quote_correlation_field(mapped_field)})")
+            record_type(field, mapped_field)
+            scalar = native_scalar(mapped_field)
+            fields.append(f"{columns['groups'][index]} = {scalar}")
         retained_group = expanded
         for index, counted_field in enumerate(self._correlation_counted_fields):
             mapped_field = map_field(map_alias(counted_field))
-            fields.append(f"{columns['values'][index]} = {boxed(mapped_field)}")
+            record_type(counted_field, mapped_field)
+            value = native_scalar(mapped_field)
+            fields.append(f"{columns['values'][index]} = {value}")
         for field, column in zip(getattr(self, "_correlation_context_fields", []), columns.get("context", [])):
             mapped_field = map_field(map_alias(field))
-            fields.append(f"{column} = {boxed(mapped_field)}")
-        result = _CorrelationNormalization("\n| extend " + ", ".join(fields), columns["rule"])
+            record_type(field, mapped_field)
+            scalar = native_scalar(mapped_field)
+            fields.append(f"{column} = {scalar}")
+        if (
+            columns.get("narrow_source")
+            and columns.get("child_match")
+            and child
+            and source_state.processing_state.get("kusto_context_artifact")
+        ):
+            fields.append(columns["child_match"])
+        if columns.get("narrow_source") and columns.get("include_source_rule"):
+            identity = json.dumps(str(rule_reference.rule.name or rule_reference.rule.id), ensure_ascii=False)
+            fields.append(f"{columns['rule']} = {identity}")
+        operator = "project" if columns.get("narrow_source") else "extend"
+        result = _CorrelationNormalization(source_filter + f"\n| {operator} " + ", ".join(fields), columns["rule"])
         result.expands_context = expanded
-        if expanded:
-            context_rows = self._quote_correlation_field(source_state.processing_state["kusto_context_rows"])
-            if (
-                self._correlation_counted_fields
-                and not retained_group
-                and not getattr(self, "_correlation_context_fields", [])
-            ):
-                # Empty retained measurements still establish a metric anchor.
-                # Retention and missing retained grouping keys must stay empty.
-                context_rows = f"iff(array_length({context_rows}) == 0, dynamic([null]), {context_rows})"
-            result.expansion = f"\n| mv-expand {row_column} = {context_rows}"
-        else:
-            result.expansion = ""
+        result.preserve_empty_context = bool(
+            expanded
+            and self._correlation_counted_fields
+            and not retained_group
+            and not getattr(self, "_correlation_context_fields", [])
+        )
         return result
 
     @staticmethod

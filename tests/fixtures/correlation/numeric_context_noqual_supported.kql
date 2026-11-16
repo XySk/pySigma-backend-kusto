@@ -1,0 +1,38 @@
+// Supported in-range child values produce no qualifying child or parent.
+let Events=datatable(Timestamp:datetime,Marker:string,Amount:long) [datetime(2026-01-01),"match",1000,datetime(2026-01-01),"match",1];
+let Actual=(){
+let Child = () {
+let SumObservations = union (Events
+| where Marker =~ "match"
+| project EventTime_1 = todatetime(["Timestamp"]), MeasuredAmount = ["Amount"])
+| where isnotnull(EventTime_1);
+let SumArrivals = SumObservations
+| summarize ArrivalSum = sum(MeasuredAmount) by EventTime_1;
+union (SumArrivals
+| project SumBoundaryTime = EventTime_1, SumBoundaryOrder = 0, SumDelta = ArrivalSum),
+(SumArrivals
+| project SumBoundaryTime = EventTime_1 + 5m, SumBoundaryOrder = 1, SumDelta = -ArrivalSum)
+// Arrivals evaluate before equal-time expirations, including zero and missing values.
+| sort by SumBoundaryTime asc, SumBoundaryOrder asc
+| extend ValueSum = row_cumsum(SumDelta)
+| where SumBoundaryOrder == 0
+| where ValueSum == 0
+| project WindowStart = SumBoundaryTime - 5m, WindowEnd = SumBoundaryTime, ValueSum
+};
+let SourceMatchArrivals = union (Child()
+| project EventTime = todatetime(["WindowEnd"]))
+| where isnotnull(EventTime)
+| summarize SourceMatchCount = count() by EventTime;
+union (SourceMatchArrivals
+| project CountBoundaryTime = EventTime, CountBoundaryOrder = 0, SourceMatchDelta = SourceMatchCount),
+(SourceMatchArrivals
+| project CountBoundaryTime = EventTime + 5m, CountBoundaryOrder = 1, SourceMatchDelta = -SourceMatchCount)
+// Arrivals evaluate before equal-time expirations; expirations never create matches.
+| sort by CountBoundaryTime asc, CountBoundaryOrder asc
+| extend EventCount = row_cumsum(SourceMatchDelta)
+| where CountBoundaryOrder == 0
+| where EventCount >= 999
+| project WindowStart = CountBoundaryTime - 5m, WindowEnd = CountBoundaryTime, EventCount
+};
+Actual()
+| project Unexpected=1

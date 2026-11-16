@@ -7,7 +7,7 @@ from tests.test_correlation_kusto import correlation_collection, multi_rule_coll
 
 
 def mapping_pipeline(mapping):
-    return ProcessingPipeline.from_dict(
+    pipeline = ProcessingPipeline.from_dict(
         {
             "transformations": [
                 {"type": "set_state", "key": "query_table", "val": "Events"},
@@ -15,6 +15,11 @@ def mapping_pipeline(mapping):
             ]
         }
     )
+
+    from tests.correlation_helpers import fixture_schema
+
+    pipeline.vars["kusto_schema"] = fixture_schema()
+    return pipeline
 
 
 def test_standard_mapping_resolves_fields_outside_detection_and_preserves_logical_names():
@@ -37,9 +42,9 @@ def test_standard_mapping_resolves_fields_outside_detection_and_preserves_logica
     assert '["Process Command"] =~ "suspicious.exe"' in query
     assert '["Process Image"] =~ "suspicious.exe"' in query
     assert query.count('todatetime(["Event Time"])') >= 2
-    assert query.count('pack_array(gettype(["Machine Name"]), ["Machine Name"])') >= 2
-    assert query.count('pack_array(gettype(["Actor Name"]), ["Actor Name"])') >= 2
-    assert '["Host"] = _sigma_group_0, ValueCount' in query
+    assert query.count('["Machine Name"]') >= 2
+    assert query.count('["Actor Name"]') >= 2
+    assert '["Host"] = GroupHost, ValueCount' in query
 
 
 def test_one_to_many_mapping_rejects_ambiguous_correlation_user_with_resolution_advice():
@@ -81,8 +86,8 @@ def test_source_specific_standard_mapping_and_aliases_use_each_sources_pipeline(
     (query,) = KustoBackend(processing_pipeline=pipeline, correlation_timestamp_field="Timestamp").convert(collection)
     assert 'todatetime(["Process Time"])' in query
     assert 'todatetime(["Network Time"])' in query
-    assert 'pack_array(gettype(["Process Actor"]), ["Process Actor"])' in query
-    assert 'pack_array(gettype(["Network Actor"]), ["Network Actor"])' in query
+    assert '["Process Actor"]' in query
+    assert '["Network Actor"]' in query
     assert "Port == 443" in query
 
 
@@ -98,7 +103,7 @@ def test_standard_mapping_sequence_resolves_explicitly_collapsed_one_to_many_tar
     (query,) = KustoBackend(processing_pipeline=pipeline, correlation_timestamp_field="Timestamp").convert(
         correlation_collection(value_count_correlation(field="User"))
     )
-    assert 'pack_array(gettype(["ResolvedUser"]), ["ResolvedUser"])' in query
+    assert '["ResolvedUser"]' in query
 
 
 def test_standard_mapping_of_detection_fields_is_used_for_correlations():
@@ -107,7 +112,7 @@ def test_standard_mapping_of_detection_fields_is_used_for_correlations():
         processing_pipeline=mapping_pipeline({"CommandLine": "MappedCommand"}), correlation_timestamp_field="Timestamp"
     ).convert(collection)
     assert 'MappedCommand =~ "suspicious.exe"' in query
-    assert 'pack_array(gettype(["MappedCommand"]), ["MappedCommand"])' in query
+    assert '["MappedCommand"]' in query
 
 
 def test_mapped_source_context_retains_requested_logical_names():
@@ -159,8 +164,8 @@ def test_standard_mapping_preserves_logical_child_group_fields():
     (query,) = KustoBackend(
         processing_pipeline=mapping_pipeline({"Host": "Machine Name"}), correlation_timestamp_field="Timestamp"
     ).convert(collection)
-    assert 'pack_array(gettype(["Machine Name"]), ["Machine Name"])' in query
-    assert 'todatetime(["WindowEnd"]), _sigma_group_0 = pack_array(gettype(["Host"]), ["Host"])' in query
+    assert '["Machine Name"]' in query
+    assert 'todatetime(["WindowEnd"]), GroupHost = ["Host"]' in query
 
 
 def test_ordinary_detection_still_supports_one_to_many_and_escapes_identifier_quotes():
@@ -201,7 +206,10 @@ def test_mapped_child_context_parent_fixture_is_generated_through_public_convers
         Path(__file__).with_name("fixtures").joinpath("correlation/standard_mappings_parent.kql").read_text() == query
     )
     assert 'todatetime(["WindowEnd"])' in query
-    assert "| mv-expand _sigma_child_context_row" in query
+    assert 'ContextUser = ["Process Actor"]' in query
+    assert 'ContextUser = ["Network Actor"]' in query
+    assert '| where ["ContextRowKind"] == "ContextEvidence"' in query
+    assert "by ChildCorrelationMatch, GroupHost, GroupUser" in query
 
 
 @pytest.mark.parametrize("physical", ["Field Space", 'Actor "Name"', "Target\\Name"])

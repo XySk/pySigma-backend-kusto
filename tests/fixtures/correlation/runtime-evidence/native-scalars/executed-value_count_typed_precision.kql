@@ -1,0 +1,125 @@
+let Scenario0=() { let Events=datatable(Value:real) [real(1.0),real(1.0000000000000002)] | extend Timestamp=datetime(2026-01-01T12:00:00Z),Marker="match";
+let _sigma_values = union (Events
+| where Marker =~ "match"
+| extend _sigma_timestamp = todatetime(["Timestamp"]), _sigma_value = ["Value"]
+| extend _sigma_rule = "source-rule")
+| where isnotnull(_sigma_timestamp)
+| summarize by _sigma_timestamp, _sigma_value;
+_sigma_values
+| project _sigma_window_end = _sigma_timestamp, _sigma_bin = bin(_sigma_timestamp, 5m)
+| distinct *
+| join kind=inner (
+    _sigma_values
+    | extend _sigma_bin = pack_array(bin(_sigma_timestamp, 5m), bin(_sigma_timestamp, 5m) + 5m)
+    | mv-expand _sigma_bin to typeof(datetime)
+) on _sigma_bin
+| where _sigma_timestamp between ((_sigma_window_end - 5m) .. _sigma_window_end)
+| summarize ValueCount = count_distinctif(_sigma_value, isnotempty(_sigma_value)) by _sigma_window_end
+| where ValueCount >= 0
+| project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ValueCount
+};
+let Scenario1=() { let Events=datatable(Value:long) [9223372036854775806,9223372036854775807] | extend Timestamp=datetime(2026-01-01T12:00:00Z),Marker="match";
+let _sigma_values = union (Events
+| where Marker =~ "match"
+| extend _sigma_timestamp = todatetime(["Timestamp"]), _sigma_value = ["Value"]
+| extend _sigma_rule = "source-rule")
+| where isnotnull(_sigma_timestamp)
+| summarize by _sigma_timestamp, _sigma_value;
+_sigma_values
+| project _sigma_window_end = _sigma_timestamp, _sigma_bin = bin(_sigma_timestamp, 5m)
+| distinct *
+| join kind=inner (
+    _sigma_values
+    | extend _sigma_bin = pack_array(bin(_sigma_timestamp, 5m), bin(_sigma_timestamp, 5m) + 5m)
+    | mv-expand _sigma_bin to typeof(datetime)
+) on _sigma_bin
+| where _sigma_timestamp between ((_sigma_window_end - 5m) .. _sigma_window_end)
+| summarize ValueCount = count_distinctif(_sigma_value, isnotempty(_sigma_value)) by _sigma_window_end
+| where ValueCount >= 0
+| project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ValueCount
+};
+let Scenario2=() { let Events=datatable(Value:decimal) [decimal(1.00),decimal(1.0)] | extend Timestamp=datetime(2026-01-01T12:00:00Z),Marker="match";
+let _sigma_values = union (Events
+| where Marker =~ "match"
+| extend _sigma_timestamp = todatetime(["Timestamp"]), _sigma_value = ["Value"]
+| extend _sigma_rule = "source-rule")
+| where isnotnull(_sigma_timestamp)
+| summarize by _sigma_timestamp, _sigma_value;
+_sigma_values
+| project _sigma_window_end = _sigma_timestamp, _sigma_bin = bin(_sigma_timestamp, 5m)
+| distinct *
+| join kind=inner (
+    _sigma_values
+    | extend _sigma_bin = pack_array(bin(_sigma_timestamp, 5m), bin(_sigma_timestamp, 5m) + 5m)
+    | mv-expand _sigma_bin to typeof(datetime)
+) on _sigma_bin
+| where _sigma_timestamp between ((_sigma_window_end - 5m) .. _sigma_window_end)
+| summarize ValueCount = count_distinctif(_sigma_value, isnotempty(_sigma_value)) by _sigma_window_end
+| where ValueCount >= 0
+| project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ValueCount
+};
+let Scenario3=() { let Events=datatable(Value:decimal) [decimal(0.00),decimal(-0.0)] | extend Timestamp=datetime(2026-01-01T12:00:00Z),Marker="match";
+let _sigma_values = union (Events
+| where Marker =~ "match"
+| extend _sigma_timestamp = todatetime(["Timestamp"]), _sigma_value = ["Value"]
+| extend _sigma_rule = "source-rule")
+| where isnotnull(_sigma_timestamp)
+| summarize by _sigma_timestamp, _sigma_value;
+_sigma_values
+| project _sigma_window_end = _sigma_timestamp, _sigma_bin = bin(_sigma_timestamp, 5m)
+| distinct *
+| join kind=inner (
+    _sigma_values
+    | extend _sigma_bin = pack_array(bin(_sigma_timestamp, 5m), bin(_sigma_timestamp, 5m) + 5m)
+    | mv-expand _sigma_bin to typeof(datetime)
+) on _sigma_bin
+| where _sigma_timestamp between ((_sigma_window_end - 5m) .. _sigma_window_end)
+| summarize ValueCount = count_distinctif(_sigma_value, isnotempty(_sigma_value)) by _sigma_window_end
+| where ValueCount >= 0
+| project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ValueCount
+};
+let Scenario4=() { let Events=datatable(Value:real) [real(0.0),real(-0.0)] | extend Timestamp=datetime(2026-01-01T12:00:00Z),Marker="match";
+let _sigma_values = union (Events
+| where Marker =~ "match"
+| extend _sigma_timestamp = todatetime(["Timestamp"]), _sigma_value = ["Value"]
+| extend _sigma_rule = "source-rule")
+| where isnotnull(_sigma_timestamp)
+| summarize by _sigma_timestamp, _sigma_value;
+_sigma_values
+| project _sigma_window_end = _sigma_timestamp, _sigma_bin = bin(_sigma_timestamp, 5m)
+| distinct *
+| join kind=inner (
+    _sigma_values
+    | extend _sigma_bin = pack_array(bin(_sigma_timestamp, 5m), bin(_sigma_timestamp, 5m) + 5m)
+    | mv-expand _sigma_bin to typeof(datetime)
+) on _sigma_bin
+| where _sigma_timestamp between ((_sigma_window_end - 5m) .. _sigma_window_end)
+| summarize ValueCount = count_distinctif(_sigma_value, isnotempty(_sigma_value)) by _sigma_window_end
+| where ValueCount >= 0
+| project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ValueCount
+};
+let Scenario5=() { let Events=datatable(Value:real) [real(nan),real(nan),real(+inf),real(-inf)] | extend Timestamp=datetime(2026-01-01T12:00:00Z),Marker="match";
+let _sigma_values = union (Events
+| where Marker =~ "match"
+| extend _sigma_timestamp = todatetime(["Timestamp"]), _sigma_value = ["Value"]
+| extend _sigma_rule = "source-rule")
+| where isnotnull(_sigma_timestamp)
+| summarize by _sigma_timestamp, _sigma_value;
+_sigma_values
+| project _sigma_window_end = _sigma_timestamp, _sigma_bin = bin(_sigma_timestamp, 5m)
+| distinct *
+| join kind=inner (
+    _sigma_values
+    | extend _sigma_bin = pack_array(bin(_sigma_timestamp, 5m), bin(_sigma_timestamp, 5m) + 5m)
+    | mv-expand _sigma_bin to typeof(datetime)
+) on _sigma_bin
+| where _sigma_timestamp between ((_sigma_window_end - 5m) .. _sigma_window_end)
+| summarize ValueCount = count_distinctif(_sigma_value, isnotempty(_sigma_value)) by _sigma_window_end
+| where ValueCount >= 0
+| project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ValueCount
+};
+let Actual=union (Scenario0() | project Case="adjacent-real",ValueCount), (Scenario1() | project Case="adjacent-long",ValueCount), (Scenario2() | project Case="decimal-scale",ValueCount), (Scenario3() | project Case="decimal-zero",ValueCount), (Scenario4() | project Case="real-zero",ValueCount), (Scenario5() | project Case="exceptional-real",ValueCount);
+let Expected=datatable(Case:string,ValueCount:long) ["adjacent-real",2, "adjacent-long",2, "decimal-scale",1, "decimal-zero",1, "real-zero",1, "exceptional-real",3];
+union (Actual | extend Delta=1),(Expected | extend Delta=-1)
+| summarize Delta=sum(Delta) by Case,ValueCount
+| where Delta!=0

@@ -1,0 +1,31 @@
+let Events=range GroupId from 0 to 99 step 1
+| extend Slots=range(0,99) | mv-expand Slot=Slots to typeof(long)
+| project Timestamp=datetime(2026-01-01T12:00:00Z)+Slot*1s,Host=tostring(GroupId),Amount=GroupId,Marker="match";
+let PercentileObservations = union (Events
+| where Marker =~ "match"
+| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"], MeasuredAmount = ["Amount"])
+| where isnotnull(EventTime_1) and isnotempty(GroupHost);
+let PercentileWindowValues = materialize(
+PercentileObservations
+| project GroupHost, PercentileWindowEnd = EventTime_1, PercentileTimeBin = bin(EventTime_1, 5m)
+| distinct *
+| join kind=inner (
+PercentileObservations
+| where isnotnull(MeasuredAmount)
+| extend PercentileTimeBin = pack_array(bin(EventTime_1, 5m), bin(EventTime_1, 5m) + 5m)
+| mv-expand PercentileTimeBin to typeof(datetime)
+) on GroupHost, PercentileTimeBin
+| where EventTime_1 between ((PercentileWindowEnd - 5m) .. PercentileWindowEnd)
+| project GroupHost, PercentileWindowEnd, MeasuredAmount
+);
+PercentileWindowValues
+| join kind=inner (
+PercentileWindowValues | summarize PercentilePopulation = count() by GroupHost, PercentileWindowEnd
+) on GroupHost, PercentileWindowEnd
+| project GroupHost, PercentileWindowEnd, MeasuredAmount, PercentilePopulation
+| sort by GroupHost asc, PercentileWindowEnd asc, MeasuredAmount asc
+| serialize PercentileRank = row_number(1, GroupHost != prev(GroupHost) or PercentileWindowEnd != prev(PercentileWindowEnd))
+| where PercentileRank == max_of(1, (PercentilePopulation / 100) * 50 + tolong(ceiling(toreal((PercentilePopulation % 100) * 50) / 100.0)))
+| extend ValuePercentile = MeasuredAmount
+| where ValuePercentile >= 90
+| project WindowStart = PercentileWindowEnd - 5m, WindowEnd = PercentileWindowEnd, ["Host"] = GroupHost, ValuePercentile

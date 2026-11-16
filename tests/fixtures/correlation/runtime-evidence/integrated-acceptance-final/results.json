@@ -1,0 +1,2346 @@
+{
+  "started_utc": "2026-11-16T19:45:02.255660+00:00",
+  "endpoint": "http://localhost:8080",
+  "database": "NetDefaultDB",
+  "request_options": {
+    "max_memory_consumption_per_query_per_node": 12884901888
+  },
+  "timeout_seconds": 60,
+  "manifest_sha256": "d2da8ac461cb3a053970f8993e0b110493367ecda43e608adc2a662c83d74ceb",
+  "fixtures": [
+    {
+      "name": "boolean_alternatives.kql",
+      "sha256": "0584a5eec7388a246e157eac4f3940f44070423a6f1777f650520b9877d16e9c",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.038
+    },
+    {
+      "name": "boolean_chained.kql",
+      "sha256": "2c2a6375114862b9358996c54845e26b7a72146bfeac7403c62c628edd7f7cd3",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.029
+    },
+    {
+      "name": "boolean_nested_not.kql",
+      "sha256": "e20a33bf08943dc815a6ceac6df3315dfd10eaa4ef31345b5f8b58568184ca70",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.031
+    },
+    {
+      "name": "boolean_precedence.kql",
+      "sha256": "8d568d9a51b5747f929d238e2c69aa07c797d50b38a8eb0734137430144deac3",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.033
+    },
+    {
+      "name": "boolean_presence.kql",
+      "sha256": "d4d6ee04b7caa0dc78764ef0d8e0b9a35bf746f12b184bd76012ed1ec0171aa5",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.033
+    },
+    {
+      "name": "chained_metrics.kql",
+      "sha256": "e5e01826769841f8d261d24d6ef6f5475479758f665340457bd66df2438391a8",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.032
+    },
+    {
+      "name": "chained_multilevel.kql",
+      "sha256": "b4085285db31e0abe581f486a8417722a3d80a0354c0dcf3e9e1472dd933231d",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.04
+    },
+    {
+      "name": "chained_ordered_event.kql",
+      "sha256": "c1fc6bba5a99e31b017e3815d3184f9b1274b0e12e25ce59b5fcde180a4155d3",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.051
+    },
+    {
+      "name": "chained_strict_order.kql",
+      "sha256": "edd4a749a38fbdd96bbd508c333ee90406d3405144908bc586e6f1ed46aec658",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.056
+    },
+    {
+      "name": "chained_value_temporal.kql",
+      "sha256": "3d5b732204a7be30d94d8d1dc693a905ed90a3f5e424891e918455ea7416b197",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.041
+    },
+    {
+      "name": "chained_zero_metric.kql",
+      "sha256": "5dac61dcdd33c4984d307e348d4a79573d5c0e9958d423d97587f9b8d58a1c4a",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.023
+    },
+    {
+      "name": "context_boolean_absence.kql",
+      "sha256": "cc3d61c9b37f80d565663f47a1a0c6e241b67dad0d2141335c8ea275f2922f89",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.133
+    },
+    {
+      "name": "context_boolean_alternatives.kql",
+      "sha256": "abac18c845dd05d1d2c7f80e294177491698a79fceaefdd2ebd0f8019d7cc706",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.142
+    },
+    {
+      "name": "context_boolean_child.kql",
+      "sha256": "7151e48c6ad651a33238ab361d905cd3299440b4dc4cd05924ea3a36163f19d2",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.111
+    },
+    {
+      "name": "context_boolean_nested.kql",
+      "sha256": "cebdb18c0d945d40c7ec53a2401a39d348f2a3d11433025c5441d579f6c4c69f",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.132
+    },
+    {
+      "name": "context_boolean_precedence.kql",
+      "sha256": "819374110a6e8607ecdf3a841754f93f15ff32f3ef51b0cc38514d9f5be5521a",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.135
+    },
+    {
+      "name": "context_boolean_shared.kql",
+      "sha256": "8a6de8dbfa0eae8697d835ac810539b6cf22b678497e70268306ed25d9aaac4e",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.134
+    },
+    {
+      "name": "context_event_count.kql",
+      "sha256": "810c57e93b7509239440cf5b4c8eac96d45e4f39b67a344f40aab6dafc3bb676",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.024
+    },
+    {
+      "name": "context_nested.kql",
+      "sha256": "7c4345c518981d51be063549d8895ca5f051cbb810e130e0344d435caac2c5e0",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.025
+    },
+    {
+      "name": "context_ordered_aliases.kql",
+      "sha256": "6245c3a545a53cccac7bb61478d6e1a5fb5034a195405409a755597f541ce022",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.34
+    },
+    {
+      "name": "context_ordered_alternatives.kql",
+      "sha256": "dfdad9e40a67e3b05b89fb0d012a3c4b091b2d92f9e373f4061d36aa8d8d75d1",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.343
+    },
+    {
+      "name": "context_ordered_repeated.kql",
+      "sha256": "06e31c54b05dea6abcbf2fe6ebff4db0c3b9b6d82ddc188a1e517e3b766d60ff",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.314
+    },
+    {
+      "name": "context_ordered_ungrouped.kql",
+      "sha256": "9d73bc263d3da85e897f883970bed523f3179b0886fe0cedb6890ae2aa0fece8",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.273
+    },
+    {
+      "name": "context_temporal.kql",
+      "sha256": "cfbfa6f3801408f8b7f27f63c448746c6985894ba0d15fec589abd2cf0fe6bfb",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.056
+    },
+    {
+      "name": "context_value_avg.kql",
+      "sha256": "3cea1b0bf715e6f719610b2d6bedbf4bcedd69eef0d4fcc4e7dad2ca0907bb3f",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.024
+    },
+    {
+      "name": "context_value_count.kql",
+      "sha256": "a53a4862523d422ed4a63f81a6d2422cc653b403a4891178cf405dd7b59c6981",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.027
+    },
+    {
+      "name": "context_value_percentile.kql",
+      "sha256": "251fac8cd709cf0bd01c21c39c89294a29b7eb753d20d21fa1e9389c6a5643ad",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.029
+    },
+    {
+      "name": "context_value_sum.kql",
+      "sha256": "d236248061abf0eef7f5e813c5f8e7fa62652bd10f034df3d381deff6dc6b4f2",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.021
+    },
+    {
+      "name": "count_context_mixed.kql",
+      "sha256": "d4d34edb259c9185e2176dcaa364a295bf09e5c9acbcd100a440c7207ba9686b",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.043
+    },
+    {
+      "name": "count_context_pairs.kql",
+      "sha256": "d0babc8d0588bd528894211cb3def89486744cfcb079636c74ab714e2fda7107",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.044
+    },
+    {
+      "name": "count_context_restricted.kql",
+      "sha256": "78a8239efd140feaa1232e89ea775b5c937fc39b2c643b644a4eebc7174b0506",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.083
+    },
+    {
+      "name": "count_context_typed.kql",
+      "sha256": "1aa8b07529bbe9a47f4fb4f1e5c167dd84bba39b702544b0eb86ad117a9ee538",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.04
+    },
+    {
+      "name": "count_context_ungrouped.kql",
+      "sha256": "60c1b6f434e54b37fb0fbbc2cc17e76cdf3dcd4f452b69165f594f1c98e709c7",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.084
+    },
+    {
+      "name": "count_context_values.kql",
+      "sha256": "8c85b5a1b7fab84dc9aded33f58616387715bcd55247de45d621ac4f883ccd9f",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.278
+    },
+    {
+      "name": "count_existence_duplicates.kql",
+      "sha256": "566b51b05e7cb474a8a627942778fa0209758cc5d3c8dec8c74228c4535f5794",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.1
+    },
+    {
+      "name": "count_existence_high_thresholds.kql",
+      "sha256": "b099cd4fb27407971d8114c03b8ad6c82bf095e26fc130a7106743b590b6887e",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.136
+    },
+    {
+      "name": "count_existence_inherited_metric.kql",
+      "sha256": "0bdf355c09cac50b83e0b235016da6702fc7f79622e8a62c27291cfc9feccae6",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.056
+    },
+    {
+      "name": "count_existence_one.kql",
+      "sha256": "a4399e5e8b7892b79c67c405f58724fee933ad7eafa7ab49c001c92d87077b78",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.069
+    },
+    {
+      "name": "count_existence_real_groups.kql",
+      "sha256": "cee1bb6c8a9198f02ce6cb11aabbfc0d4b9deabb4feea74e4d237188e503889d",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.089
+    },
+    {
+      "name": "count_existence_targeted_logon.kql",
+      "sha256": "2c486150b52ce58bbfd5efdc4e9016a8721c3dca6fbab4e447cc0196cd47bba1",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.063
+    },
+    {
+      "name": "count_existence_ten.kql",
+      "sha256": "4457a26d8ba044a1611652c52f42fa375e106fc8419ba61a7750df9e6aac764b",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.064
+    },
+    {
+      "name": "dependency_order_generate.kql",
+      "sha256": "8191c2d835fc0587ff7b1befd6714302068834809f67d39093d49515fe739251",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.044
+    },
+    {
+      "name": "dependency_order_suppressed.kql",
+      "sha256": "8191c2d835fc0587ff7b1befd6714302068834809f67d39093d49515fe739251",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.044
+    },
+    {
+      "name": "empty_child_value_avg_Amount_eq.kql",
+      "sha256": "a6e29432bf14941815cb85b5cd142255cbf1799cd645003c1b367888fc4e37b5",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.03
+    },
+    {
+      "name": "empty_child_value_avg_Amount_neq.kql",
+      "sha256": "bcd20307735f40093930020fa188197ab283bd029977704529d26372c1823473",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.025
+    },
+    {
+      "name": "empty_child_value_avg_ChildRuleCount_eq.kql",
+      "sha256": "d1aa10dada93dbc7cc89a2f7c9d24fb76ad97e90d63d456e8db21a98c68c5287",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.239
+    },
+    {
+      "name": "empty_child_value_avg_ChildRuleCount_neq.kql",
+      "sha256": "967943fdc8052156f3d3184e539c333d90ddb256a595670aab25d4baf9b31116",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.222
+    },
+    {
+      "name": "empty_child_value_avg_ungrouped_eq.kql",
+      "sha256": "b65bffa1a7a2e55cc19cafbe3e60cd57f4ee07b367f9e76204d77dc5f7d5b878",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.244
+    },
+    {
+      "name": "empty_child_value_avg_ungrouped_neq.kql",
+      "sha256": "728c350f983808644a73e362dfbd48ad0aa77af874a6121edb5dc776461291c4",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.236
+    },
+    {
+      "name": "empty_child_value_count_Amount_eq.kql",
+      "sha256": "61825dda4dbf48aed107fc6e858a50d291d7f053de3cdd9fc0e79e5b91ea1fdc",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.026
+    },
+    {
+      "name": "empty_child_value_count_ChildRuleCount_eq.kql",
+      "sha256": "4bbdfa0625a76b56838717e5f7f56c21275e39dabdec8b93327586ee1ed942c4",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.137
+    },
+    {
+      "name": "empty_child_value_count_ungrouped_eq.kql",
+      "sha256": "ed912a1a1c09192032ccc2e82fde63d5ddabb58accd2a6337971adba8b481118",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.138
+    },
+    {
+      "name": "empty_child_value_percentile_Amount_eq.kql",
+      "sha256": "88a90dd3616e990b5fcbdec18387bfae2ac2fb4c7aa720b364ee57e61f4f0057",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.086
+    },
+    {
+      "name": "empty_child_value_percentile_Amount_neq.kql",
+      "sha256": "f1af197300d5091dac5a3f538403d13f33ca21bc6a0fc1927d637a7f5de9e539",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.069
+    },
+    {
+      "name": "empty_child_value_percentile_ChildRuleCount_eq.kql",
+      "sha256": "30ee3de0150f465ffdde22383fdfaae0846ffc51ebc28a82c2d6c8cef6cab441",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.388
+    },
+    {
+      "name": "empty_child_value_percentile_ChildRuleCount_neq.kql",
+      "sha256": "6b9b055b95a503a1990cf2e3be2b591a29b249307a97d9c827807db500d26dac",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.366
+    },
+    {
+      "name": "empty_child_value_percentile_ungrouped_eq.kql",
+      "sha256": "a792043203c6b8df0e33ab0b5cc7d87598b68f12922f43c25ea6d76d24d98d6f",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.382
+    },
+    {
+      "name": "empty_child_value_percentile_ungrouped_neq.kql",
+      "sha256": "89b47f0c07e3a78e14b6ab1817b7d05535b9327c34ba72283876a63f09ba0171",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.365
+    },
+    {
+      "name": "empty_child_value_sum_Amount_eq.kql",
+      "sha256": "cd6ac160adbbc569ee9e015326d8792b7490ee189ed344e4544ae23528d189a8",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.05
+    },
+    {
+      "name": "empty_child_value_sum_ChildRuleCount_eq.kql",
+      "sha256": "e1d83d2730f74facf89b478d450ae490a04e86904958b5a0b2c782ec97b45bcb",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.291
+    },
+    {
+      "name": "empty_child_value_sum_ungrouped_eq.kql",
+      "sha256": "607a6d0428b3d976f7bc8981255351f9117c626493266df6a1f619f4374aa519",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.276
+    },
+    {
+      "name": "escaped_mixed_detection.kql",
+      "sha256": "f20ec4429fff4ea88aabb6b5b7d481ed4b9e569ce6a75ece552455b807eba261",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.009
+    },
+    {
+      "name": "event_count_chained_comparisons.kql",
+      "sha256": "acc2370fe0af48adc92658dd789ab465291af62ed0117426bb9062101de4efd1",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.029
+    },
+    {
+      "name": "event_count_chained_grouped.kql",
+      "sha256": "9a79439f5c1635efc5390f69f85702e08362aa7f7a3534c3a4bf45c3b7c7a91b",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.026
+    },
+    {
+      "name": "event_count_chained_metrics.kql",
+      "sha256": "868b5ae60cf464816120964f66a97a013628fb6f2e29ba9091a434485f246be1",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.017
+    },
+    {
+      "name": "event_count_comparisons.kql",
+      "sha256": "cb793e1749ea302218230b64cc1fda5dba98186a32d8d7e61ddc30759f530dfa",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.02
+    },
+    {
+      "name": "event_count_duplicate_sources.kql",
+      "sha256": "95eca5d941f85325277753bd382dd78bf8ec49ceb4668e3e500faba865b29d48",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.015
+    },
+    {
+      "name": "event_count_empty.kql",
+      "sha256": "1b1101b00016cc4bb1838583bb0e63673e27da89cd0e91013dc05cc638a426f3",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.009
+    },
+    {
+      "name": "event_count_fractional.kql",
+      "sha256": "3cae81b1298d1b5e3e4822276a6ec49e1cf8c76e4834e6c3f859a3aca6c633c8",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.02
+    },
+    {
+      "name": "event_count_grouped.kql",
+      "sha256": "c64f8f1d2f613c636857073940780236cb47e93ae01b73315eedfaf3562739de",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.012
+    },
+    {
+      "name": "event_count_real_groups.kql",
+      "sha256": "50102d573de6761437f7c1336a8db2e84a5db7ce7454fee04dccdff895329275",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.012
+    },
+    {
+      "name": "matrix_event_count__event_count.kql",
+      "sha256": "aa5792b8de70e470ac6cefac50a8ff7d837f3b5831765a5328d44ddd690baac9",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.048
+    },
+    {
+      "name": "matrix_event_count__temporal.kql",
+      "sha256": "d27f7a9515260d86ae8a392e125636c1f2027319a08a7c15e64e571c06fb1e4b",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.057
+    },
+    {
+      "name": "matrix_event_count__temporal_ordered.kql",
+      "sha256": "3a697f9d33704f12d89e72698c7cc96d01721816b078c184201791e2ad0ab902",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.039
+    },
+    {
+      "name": "matrix_event_count__value_avg.kql",
+      "sha256": "cbeca0c07016dfdd2dd5d6d66e4d6b3db7769d1e2ab92465354f98517623ea39",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.175
+    },
+    {
+      "name": "matrix_event_count__value_count.kql",
+      "sha256": "22819e26eff0cb788d1ba229e10b81e32ab05ba1226b1cf1dc56ec30e32d4705",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.103
+    },
+    {
+      "name": "matrix_event_count__value_percentile.kql",
+      "sha256": "ca0289a53cdc7b1d37e769666bb675ad36ed5a12d7c7ea49bf3db55c2e67db2e",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.372
+    },
+    {
+      "name": "matrix_event_count__value_sum.kql",
+      "sha256": "bb89045555a90dc14be4ccf22cb378a10f897aa489e30cd514b3ad0f3063cbc4",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.132
+    },
+    {
+      "name": "matrix_temporal__event_count.kql",
+      "sha256": "595b8478d263e727b0107e2dceb946de9081305f2b0252aa4f8186c84bcc5c99",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.116
+    },
+    {
+      "name": "matrix_temporal__temporal.kql",
+      "sha256": "aa48a9d4738596cec822aaaab136c19b9d13d0e3bbdab0736f385accfd338366",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.09
+    },
+    {
+      "name": "matrix_temporal__temporal_ordered.kql",
+      "sha256": "8616c734e09a4a212055ff8fb2c52121cf30668c896057b461f79b6945d30e38",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.074
+    },
+    {
+      "name": "matrix_temporal__value_avg.kql",
+      "sha256": "040d37c8e056156b59e51a3ca759ee62258b5b1b0d9e2834d434638bf21d2558",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.367
+    },
+    {
+      "name": "matrix_temporal__value_count.kql",
+      "sha256": "b7bdcef691f495569bf3a6ef3975000e813441f39b1691b8aca103a0ac7cdc86",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.275
+    },
+    {
+      "name": "matrix_temporal__value_percentile.kql",
+      "sha256": "fa0eeb4aaac994e425308eb757f941916829f9ca3cde1e4c35fde72bade2a676",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.743
+    },
+    {
+      "name": "matrix_temporal__value_sum.kql",
+      "sha256": "11f259798d7e9d093acf4b6a7fc6a98f5bb0f6ad5bebed2d69b2706c7fa779c1",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.363
+    },
+    {
+      "name": "matrix_temporal_ordered__event_count.kql",
+      "sha256": "02ea2eb07c64602e9a84d53a27f4aef6dd3311c0163d772b20f99432c9703bc2",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.043
+    },
+    {
+      "name": "matrix_temporal_ordered__temporal.kql",
+      "sha256": "c1577b0b0ae95219e41a660d0fb0eea405211fe1e0f3c150e4b4956227e2965e",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.048
+    },
+    {
+      "name": "matrix_temporal_ordered__temporal_ordered.kql",
+      "sha256": "688153692519310d9351f36d7cdd6312aa397ffffb26f37cffa4445c2ee52b87",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.028
+    },
+    {
+      "name": "matrix_temporal_ordered__value_avg.kql",
+      "sha256": "6bdb1abbef09174573887b1f20ac4a3c3eab589589b898a22017125756150802",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.077
+    },
+    {
+      "name": "matrix_temporal_ordered__value_count.kql",
+      "sha256": "2fed7d935138eb5087d60da8d8d9cebc4805640d077db3c3c19d6492681214ce",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.069
+    },
+    {
+      "name": "matrix_temporal_ordered__value_percentile.kql",
+      "sha256": "109c90594f84d295930c95e6ff24ebf660dc9c55bc3fcdeb93afdc40eb8d4dcd",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.168
+    },
+    {
+      "name": "matrix_temporal_ordered__value_sum.kql",
+      "sha256": "3e52e6a629b553c437333b9ad073c7ca13990eac0a867a2715910b395a6d489f",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.114
+    },
+    {
+      "name": "matrix_value_avg__event_count.kql",
+      "sha256": "d9a0b3fe00b19edb9727d20568abb736dffc25eddb3684c6e12be169a68c14f1",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.067
+    },
+    {
+      "name": "matrix_value_avg__temporal.kql",
+      "sha256": "f4ff31cf1e25690f03df51426725f30cc16b483e6c31ffcdbfe788d2bc41d7e2",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.069
+    },
+    {
+      "name": "matrix_value_avg__temporal_ordered.kql",
+      "sha256": "d35e9122fc23f9504e832f49ef3f5468a307b01ee63aaafb755a214abdba265b",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.041
+    },
+    {
+      "name": "matrix_value_avg__value_avg.kql",
+      "sha256": "59d4ba613fb911c63927909128c72afe0ecffb90c02f2536bda896b871b7f065",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.204
+    },
+    {
+      "name": "matrix_value_avg__value_count.kql",
+      "sha256": "90a9c538b69a488b1fadc698a0af30b8f849e721d3e895e2f9ece21ee0edfb01",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.14
+    },
+    {
+      "name": "matrix_value_avg__value_percentile.kql",
+      "sha256": "481bd1f590f94a2ff9a6454e6064160777d5598a4e7bf44122477250ab96df21",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.409
+    },
+    {
+      "name": "matrix_value_avg__value_sum.kql",
+      "sha256": "3bc618c7811007948fc98f6290f88ba24a343618d5ff98857cc8f819e54f1f91",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.162
+    },
+    {
+      "name": "matrix_value_count__event_count.kql",
+      "sha256": "f4818bb2abe4c838da53d2c98c578cbe3da26759a2b3ec240cf290dcff6490d2",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.103
+    },
+    {
+      "name": "matrix_value_count__temporal.kql",
+      "sha256": "e637167124265aab69548a8d8a6485734e0c3a09ce86c65d58da187a8b927268",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.081
+    },
+    {
+      "name": "matrix_value_count__temporal_ordered.kql",
+      "sha256": "24209e36143fc6ff8452454d2b646ce173ddf5cfd89d2da59dd42d2d51c363a4",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.057
+    },
+    {
+      "name": "matrix_value_count__value_avg.kql",
+      "sha256": "b610b0a8c8dedc9714ffa4b1706348b8771f92e838d7af087ee79515b0921a42",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.425
+    },
+    {
+      "name": "matrix_value_count__value_count.kql",
+      "sha256": "ed7c8cfb900f072d044182e1ae9cbd29283d81579a4933f33de903573a41b7a4",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.336
+    },
+    {
+      "name": "matrix_value_count__value_percentile.kql",
+      "sha256": "9b46e8df5cfb4ee9b1df1a9bf0eb518dd474424c12c63418d23fe55ed10fdfb3",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.795
+    },
+    {
+      "name": "matrix_value_count__value_sum.kql",
+      "sha256": "7e03eaf685687a51a9dd8caca18ee04ca366205c9e82129b58e47de69122b584",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.406
+    },
+    {
+      "name": "matrix_value_percentile__event_count.kql",
+      "sha256": "2e45c6652cf1f2d0ff507b4182058513be0b2dc80cfaca09adb6de3b6d2aa74a",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.095
+    },
+    {
+      "name": "matrix_value_percentile__temporal.kql",
+      "sha256": "ebe43b541ef4579de4b6b618df01f39ea40afbfc648666707fd9d949f70312af",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.081
+    },
+    {
+      "name": "matrix_value_percentile__temporal_ordered.kql",
+      "sha256": "f19568b9cf7a987254d4d9cad10f419fbfab43aecb3356cc9b3d391324e9a32f",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.058
+    },
+    {
+      "name": "matrix_value_percentile__value_avg.kql",
+      "sha256": "0c7077eb5e4d6abe20aca007b97ded48f5d86e05547eec0927cf2133707aaaeb",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.357
+    },
+    {
+      "name": "matrix_value_percentile__value_count.kql",
+      "sha256": "c2fe329f1c74c2d90976f29a9cfcea2c7f236d41a6cca72c242bd1dcc100f83f",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.233
+    },
+    {
+      "name": "matrix_value_percentile__value_percentile.kql",
+      "sha256": "7c302325c55535552a0edda73de8ee14774d303b34a74c2b33c90200642ec0ee",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.77
+    },
+    {
+      "name": "matrix_value_percentile__value_sum.kql",
+      "sha256": "fbfecaf7a9863a0db922e71de1ce45db577b86453e835bd7ebabb96023d24e21",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.368
+    },
+    {
+      "name": "matrix_value_sum__event_count.kql",
+      "sha256": "aa35ed03c256da7cb660f7a48eeddf1e68c09438381719c0bc87ffb6d5be2501",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.058
+    },
+    {
+      "name": "matrix_value_sum__temporal.kql",
+      "sha256": "ed82e0d22e5c5d0311082a61edeb996bae25e4d090334a846319bfd7225a2656",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.061
+    },
+    {
+      "name": "matrix_value_sum__temporal_ordered.kql",
+      "sha256": "8503c4815331cb174285e88251703440f1ba6045fa71cc8e874d9202341bd364",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.039
+    },
+    {
+      "name": "matrix_value_sum__value_avg.kql",
+      "sha256": "296f590a8ed51c711664e1c5ed110ee1ba2c8b6a7932eef313778f22d811ce3b",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.146
+    },
+    {
+      "name": "matrix_value_sum__value_count.kql",
+      "sha256": "fa4bcb92e10e4074bde93dca1e879afd7dc674c7d90025cd87e0908327b4caed",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.113
+    },
+    {
+      "name": "matrix_value_sum__value_percentile.kql",
+      "sha256": "19163487b67d0fdf3be9aaccef9492b0ce27c360d4b5ddb341b4187582db3000",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.353
+    },
+    {
+      "name": "matrix_value_sum__value_sum.kql",
+      "sha256": "386a883badc3e47bb1199660a645759ca12c09ba26776d52590cb62ff2e4e26a",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.157
+    },
+    {
+      "name": "numeric_context_boundaries.kql",
+      "sha256": "06428527a00175d3947ef4ba8e5f362dae075ae92d599af68b9bfdd7d50b18e4",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.558
+    },
+    {
+      "name": "numeric_context_metrics.kql",
+      "sha256": "5b13ae541ac49de5642df6da007c5bc2fb29a3ad4312c2ff9bae8ad2cf71bb3e",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.182
+    },
+    {
+      "name": "numeric_context_multiple_children.kql",
+      "sha256": "2ca6fa2072505692bdd61727b87aedd4781ed30d9364ddf20c8916f086fe86b3",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.929
+    },
+    {
+      "name": "numeric_context_nested.kql",
+      "sha256": "98b1ea15dc85d2be07af077dc1fcddd52875ac78df803de97aa370c8b1448ea1",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 36.573
+    },
+    {
+      "name": "numeric_context_noqual_supported.kql",
+      "sha256": "b609e69868d41288bec06ea3089345059aee70b2927743f41a800fbb7a2b59f8",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.016
+    },
+    {
+      "name": "numeric_context_real_boundaries.kql",
+      "sha256": "b764a2d6693b7c773ec855373b6b08a15cc0ab74e6d0d02186f4ad20c462f6fc",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.472
+    },
+    {
+      "name": "numeric_context_value_avg.kql",
+      "sha256": "bdef719d995e8da6859bcc9599adb1f5e339256f004631660314b1dc69dacb94",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.319
+    },
+    {
+      "name": "numeric_context_value_avg_empty.kql",
+      "sha256": "15506ed78740c2908808994b3fd465e1192c16d0bd34afc51db8e71c982ce213",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.496
+    },
+    {
+      "name": "numeric_context_value_avg_groups.kql",
+      "sha256": "9316f43301c06748de14ebdb4fe0030ff1bf58369fca08fddb5411061954709d",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.172
+    },
+    {
+      "name": "numeric_context_value_percentile.kql",
+      "sha256": "76f98ed70856b10c9af69be8a1fb130acfd79f8c2f267b1dfaba21be1c63631d",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.546
+    },
+    {
+      "name": "numeric_context_value_percentile_empty.kql",
+      "sha256": "b29ab366aa47b71abff7b3d585f55e16af46ab53a1facb6dc1a2a31cd72b47fe",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.851
+    },
+    {
+      "name": "numeric_context_value_percentile_groups.kql",
+      "sha256": "7c38398868b77160cb23379c79b510eadf28e1d26a454544337eb6190b121644",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.344
+    },
+    {
+      "name": "numeric_context_value_sum.kql",
+      "sha256": "3f132e84b6e6ee12e30164f9bb437333d4fb9edd620b550666ca67b78a362e36",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.302
+    },
+    {
+      "name": "numeric_context_value_sum_empty.kql",
+      "sha256": "e8348361c110bdd3e371f1336df2f59372962431b26f33ff012ef201e064e85f",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.411
+    },
+    {
+      "name": "numeric_context_value_sum_groups.kql",
+      "sha256": "3a9ee445fbebfa651c3b760843e125099b80da262785338cd0185a5dcb1dc4b8",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.192
+    },
+    {
+      "name": "ordered_state_grouped.kql",
+      "sha256": "e3b056097c377a4e380fb5120e45bf2596c18690d02fed51c967ae2a230faa60",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.039
+    },
+    {
+      "name": "ordered_state_real_groups.kql",
+      "sha256": "b239455ee82bcd3aa42563235c6e42588de147c1cdbfc949c0887d16f2a18b34",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.039
+    },
+    {
+      "name": "ordered_state_repeated.kql",
+      "sha256": "7a33351c4c309d4dcb418680a2cf4adbb2a13960856c5f74412afc7c8e1c3ba5",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.035
+    },
+    {
+      "name": "ordered_state_ungrouped.kql",
+      "sha256": "ebc8f2291aacf5ffb11e1ccbc39a7d68768005cc5920643e0ec7aab02ee2c8ec",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.028
+    },
+    {
+      "name": "participants_boolean_empty_child.kql",
+      "sha256": "bb9e2e4dcb25183ed48206c6844134913e4ba3dcd67af5d5a58db57c7d9bc7a6",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.823
+    },
+    {
+      "name": "participants_ordered_empty_child.kql",
+      "sha256": "e171154de23bcb2e6a4dd31f85db8ebf3a6ca9fd6b2cec78989de6249189a5ff",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.432
+    },
+    {
+      "name": "participants_real_groups.kql",
+      "sha256": "cdc62b18cf02b647bd886fe27e6e5434dd4d841b9c20ed9c57caa81fa08c528d",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.162
+    },
+    {
+      "name": "participants_repeated_long.kql",
+      "sha256": "39b2b6f9839c7fe1fe0b71336beaf62263701ae5adb59bbe95dd0e69436f56b0",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 1.32
+    },
+    {
+      "name": "participants_repeated_seven.kql",
+      "sha256": "5c4fd0657f5f38b51b7978d80481abc52a10b045a923f76e6cbf4e8fe710095a",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 3.702
+    },
+    {
+      "name": "participants_single.kql",
+      "sha256": "0c8759f215b727066086450794add19910e89dddc71f630fc8e2eb475e9cd3cc",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.024
+    },
+    {
+      "name": "presence_eq.kql",
+      "sha256": "1c973d3ef2c4a843d98397b29931d7aae6da89fe4ddc5eb25b073d0650d12822",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.032
+    },
+    {
+      "name": "presence_fractional_eq.kql",
+      "sha256": "bf2085f45230e231052082f2422d84212a8b3a3fbb37e9c5c7606b930af48db7",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.035
+    },
+    {
+      "name": "presence_fractional_neq.kql",
+      "sha256": "32b4885b87285b17bd78405e29fc02aa6710f5eb1059dbff4d71f3f59b2e4665",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.037
+    },
+    {
+      "name": "presence_gt.kql",
+      "sha256": "a63de141f1301c8bc1216d4bc96b9009e3c2230b10f94b436e1162558fec1d61",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.031
+    },
+    {
+      "name": "presence_gte.kql",
+      "sha256": "330f1dff87086c2c96f17eb517502504f72440438b6834b3d3617d8fa03764be",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.035
+    },
+    {
+      "name": "presence_lt.kql",
+      "sha256": "e3b61cec8dc93c01685b4b71f1857ceefa7227d1c611fabf5aa7974acb23ca58",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.03
+    },
+    {
+      "name": "presence_lte.kql",
+      "sha256": "83e130544b6d17e3dca01168ab8c2ddd0b9f350d80d957814d975902cc72735f",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.03
+    },
+    {
+      "name": "presence_mixed_alias.kql",
+      "sha256": "c40baa00853f2c4dd6e9fc7573fbe1d4d10d82238e6b6969ace09b6645ee99b4",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.036
+    },
+    {
+      "name": "presence_neq.kql",
+      "sha256": "c8fbd9f727fae3ad7acf5aee385e8a74ba872ac3b35ebd80cb25c6565aa9fca0",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.03
+    },
+    {
+      "name": "presence_omitted.kql",
+      "sha256": "5a951457406cc80e7f767a8d992a9e715f867b4d68a283c1c5e8e1034b78882e",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.034
+    },
+    {
+      "name": "presence_real_groups.kql",
+      "sha256": "30ab8d3f115fd3e192c2df64a788c4cba94c76892a6b0a2981a0eb18318f88c5",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.026
+    },
+    {
+      "name": "presence_scalar_child_context.kql",
+      "sha256": "8ea41579bf1d1633eec347a109f08e7c9bbc8a12eaa629960a038b0a835b01c0",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.064
+    },
+    {
+      "name": "presence_ungrouped.kql",
+      "sha256": "4b25a64efc4c5582f710177102cd882359525b8a9f44e152b5090ac3782242c5",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.032
+    },
+    {
+      "name": "relational_boolean_alternatives.kql",
+      "sha256": "abac18c845dd05d1d2c7f80e294177491698a79fceaefdd2ebd0f8019d7cc706",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.14
+    },
+    {
+      "name": "relational_boolean_multilevel.kql",
+      "sha256": "732261d520f4055b3302868d833ac2c6a5ec57bf9ae8dd0bb5fa9858d23b59c2",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.152
+    },
+    {
+      "name": "relational_callback_metric.kql",
+      "sha256": "0afcf80b6474c7573e7cf4b838c15bcfb7ed6c099f82a692f8c5bfbb054b6322",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.54
+    },
+    {
+      "name": "relational_complete_parent.kql",
+      "sha256": "42e81271e8a53d16321899a813ad4213ee2a276e6097f8ec70ac006f843a9883",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.131
+    },
+    {
+      "name": "relational_display_1000.kql",
+      "sha256": "d20b4ff1e1e99b490a0b5387c81a5097624caa712158328034819c507b09f07d",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.041
+    },
+    {
+      "name": "relational_display_1001.kql",
+      "sha256": "285bd8a28299513e98228cd3c765124af9fa1282f680c646a19ddfbd30461716",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.038
+    },
+    {
+      "name": "relational_display_999.kql",
+      "sha256": "63c91cfcee31d0b1a79d0b66b8c2e1e8e2c332ccf79cd5c17a0275176351b87b",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.036
+    },
+    {
+      "name": "relational_display_configured.kql",
+      "sha256": "683bc99d34a0ccc6421c795f0c436a04ac7387699851e20f23c73292a7ca0bfb",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.036
+    },
+    {
+      "name": "relational_event_count_dedup.kql",
+      "sha256": "3131560f131082a875dfc06509c3855a0d32d364891f3857ccd092c4b4ad4be6",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.181
+    },
+    {
+      "name": "relational_ordered_alternatives.kql",
+      "sha256": "dfdad9e40a67e3b05b89fb0d012a3c4b091b2d92f9e373f4061d36aa8d8d75d1",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.337
+    },
+    {
+      "name": "relational_ordered_multilevel.kql",
+      "sha256": "115e20f8e92bf5a21a3a169859be69f17f1d3743d3d395507493d5399f2993eb",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.095
+    },
+    {
+      "name": "relational_temporal_shared.kql",
+      "sha256": "1c691fb789abdcecd4f56e49ee1bb8e63af6babacc23efb76e756df8f0c2b634",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.1
+    },
+    {
+      "name": "relational_ungrouped_count.kql",
+      "sha256": "30183688175c75825d1ad1f46881908afb48dd870edc4830090714a66c705da5",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.106
+    },
+    {
+      "name": "relational_value_avg_dedup.kql",
+      "sha256": "dcd6e1e85f824a98b8c826f2b80a88d3a4d72db4ebfabedb8ed6a47dbd0fefcc",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.151
+    },
+    {
+      "name": "relational_value_avg_metric.kql",
+      "sha256": "9e068763a2ad69317cb0ed49ff71ffdcc8d1552020eb9f278c0cb190ab6c7b90",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.155
+    },
+    {
+      "name": "relational_value_percentile_dedup.kql",
+      "sha256": "2bbe36eaf1818f8042a6c2739f7f2a011cc2dcf90748ba73c8e07a6de49921da",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.351
+    },
+    {
+      "name": "relational_value_percentile_metric.kql",
+      "sha256": "fca2c6698df3218185fde873397a57b36943e5d166b120f2685f3fb7313ffbd8",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.347
+    },
+    {
+      "name": "relational_value_sum_dedup.kql",
+      "sha256": "9c7f717bbdaafa930f8561825ce15cf8f97d6db5fbfb645d737582ccd7fa78e9",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.202
+    },
+    {
+      "name": "relational_value_sum_metric.kql",
+      "sha256": "4c8e763bc460c4dceaf26e2c949954bdff77da5aed039e91ca05c3b7d2d49f6f",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.193
+    },
+    {
+      "name": "reporting_adjacent_ticks.kql",
+      "sha256": "9b039801bdfd317f18801883954094f6eaf0380c2241da83d753f9e924d4717b",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.014
+    },
+    {
+      "name": "reporting_context_callback.kql",
+      "sha256": "b95335ddd5cdfdf5e9e50c2e58895c0d51ec1abf3bd3902cc8d1c92613c240a7",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 3.554
+    },
+    {
+      "name": "reporting_early_existence.kql",
+      "sha256": "8ace08a6d351667c4bd3be78bfc10d0ab78c00d86b6c0a5f9557164b049860ef",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.034
+    },
+    {
+      "name": "reporting_early_general.kql",
+      "sha256": "585cbfb72c551f3afb4eb0bbf3c387f1cec6f4382d4baad7d14d00eb946d5b5e",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.056
+    },
+    {
+      "name": "reporting_name_collision.kql",
+      "sha256": "e7578954bed9998ea180fbfbf786e53ad01e444cf59996d2ca6c8cebd009f984",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.013
+    },
+    {
+      "name": "reporting_shared_multilevel.kql",
+      "sha256": "8b35d196b11b9ae26967cc9d7e2d29b8c1d9bcc4e19edcbdc46cfc8299b30ab4",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.032
+    },
+    {
+      "name": "reporting_shared_reversed.kql",
+      "sha256": "8b35d196b11b9ae26967cc9d7e2d29b8c1d9bcc4e19edcbdc46cfc8299b30ab4",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.036
+    },
+    {
+      "name": "reporting_string_timestamp.kql",
+      "sha256": "26efc3c6a50eda00cf2be01b326404118a7da62f28e662e2b0a129d77f4cb6d2",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.013
+    },
+    {
+      "name": "source_predicates_securityevent.kql",
+      "sha256": "e396f9177e43ddce18c9f0a93d6d19e7200c3afd3de6db94de73b011caf83391",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.02
+    },
+    {
+      "name": "standard_mappings.kql",
+      "sha256": "434495ea0a0976132eabf211e9d6e86d016f45411e6e98cd27be7c5486b0d9cb",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.021
+    },
+    {
+      "name": "standard_mappings_parent.kql",
+      "sha256": "fd7dab970893b97b3df7be6c7021e2e37ed1299a5e8b728e5a3415f9b928c815",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.064
+    },
+    {
+      "name": "temporal_comparisons.kql",
+      "sha256": "85f637705fc720b6690f406f8042f398db93b6567835391b21cf96e0a9a3412b",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.176
+    },
+    {
+      "name": "temporal_context_boolean.kql",
+      "sha256": "8a0dee6030dd67d426176f17a781a2ddca56bdcea8c9761b6c8049bbdc93f548",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.144
+    },
+    {
+      "name": "temporal_context_boolean_multilevel.kql",
+      "sha256": "732261d520f4055b3302868d833ac2c6a5ec57bf9ae8dd0bb5fa9858d23b59c2",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.161
+    },
+    {
+      "name": "temporal_context_multilevel.kql",
+      "sha256": "094008e380e1f9a92d730d68b9c2f8b27d38b08a1a27f2294ce2aa93d2b4b305",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.097
+    },
+    {
+      "name": "temporal_context_ordered.kql",
+      "sha256": "05a2ffdc1b76c54a6f08225d91351ecc9a7b4dc73963e99d6e34b36d7b658d03",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.079
+    },
+    {
+      "name": "temporal_context_ordered_multilevel.kql",
+      "sha256": "115e20f8e92bf5a21a3a169859be69f17f1d3743d3d395507493d5399f2993eb",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.095
+    },
+    {
+      "name": "temporal_context_shared.kql",
+      "sha256": "1c691fb789abdcecd4f56e49ee1bb8e63af6babacc23efb76e756df8f0c2b634",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.106
+    },
+    {
+      "name": "temporal_context_unordered.kql",
+      "sha256": "71c92caf16e23d838fcbab904076f0f620d5ed09aa6f155d1a854ee5165d89ae",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.087
+    },
+    {
+      "name": "temporal_grouped.kql",
+      "sha256": "7f59f73a8fca57c812a2802e2140a78766c7b5b9560fde05ecc75a760a87b3be",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.079
+    },
+    {
+      "name": "temporal_ordered_grouped.kql",
+      "sha256": "d0f79c753ea105f28293fc88c392b3194db81f82052d12c3fcf2dae583fb2974",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.051
+    },
+    {
+      "name": "temporal_ordered_ungrouped.kql",
+      "sha256": "6cdf33a75deb6c1197b36b605d8097bd8534a9b1dd0f73b1b5e5f7c05d1f3314",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.126
+    },
+    {
+      "name": "typed_grouped_context.kql",
+      "sha256": "2e73e99a38da62816340f4d91dde7ce32d39594942ad00da6e27b1dd71f5ce59",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.024
+    },
+    {
+      "name": "typed_grouped_context_parent.kql",
+      "sha256": "1c6f6028ae138b66dc76bf727197fd3156663268ecc14561974c25ef9649a1d3",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.045
+    },
+    {
+      "name": "typed_grouping_event_count.kql",
+      "sha256": "d43efd1ac8657edd57bc3649be61352b79451500c0a6104b12a3529ab885caee",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.013
+    },
+    {
+      "name": "typed_grouping_extended_chain.kql",
+      "sha256": "2b67e9c84bd4e9b6c5f7780031fdd3f13b7675d85203accecd7878d1554bef90",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.013
+    },
+    {
+      "name": "typed_grouping_mixed_chain.kql",
+      "sha256": "24b5533baecfd032d6925b64d83fae311a63b90993a284601b9e61d18481c46e",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.024
+    },
+    {
+      "name": "typed_grouping_temporal.kql",
+      "sha256": "9b12cbe1fab71de9b991b107ea4d8b80a9c4cf4589aa34a777ffefda292396ef",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.027
+    },
+    {
+      "name": "typed_grouping_temporal_ordered.kql",
+      "sha256": "9cc64ea85cfa92d05f0f0e6f7c66dc4bb7272a822040584b7edfab52cd381210",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.015
+    },
+    {
+      "name": "typed_grouping_value_avg.kql",
+      "sha256": "60dfaf4b176185524f9b32549d72908d48718cbf0043dd11afb097383cf575af",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.014
+    },
+    {
+      "name": "typed_grouping_value_count.kql",
+      "sha256": "779be21eb59ab3d2e2eec083c8ba4d9041ca175ce3c0b24c0e9a1f35eee1c690",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.016
+    },
+    {
+      "name": "typed_grouping_value_percentile.kql",
+      "sha256": "0f63d70cf8261c9ab77a8345897c626a8f9eccfcb73b4f973dc1c406d0792e69",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.022
+    },
+    {
+      "name": "typed_grouping_value_sum.kql",
+      "sha256": "af9c06ce872823b958869ef87a1cd00abd661e5ffdb65d7963e1a5c72f82cd5a",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.014
+    },
+    {
+      "name": "value_avg_chained.kql",
+      "sha256": "60d1e74860cc4b426a0e0fa6f3bdf6acde2052bd2f850bf9330b02c9de3e37ae",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.019
+    },
+    {
+      "name": "value_avg_comparisons.kql",
+      "sha256": "a86f6778d0f9cb3fe46fd28df8a03aa5becd25d0dda14de0520b4e4abbdfee7b",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.032
+    },
+    {
+      "name": "value_avg_decimal.kql",
+      "sha256": "402c4db40b3dd78c5077fda6a7529ed3cf3f37df76cf589eab86dc4a3dcfd29a",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.013
+    },
+    {
+      "name": "value_avg_duplicate_sources.kql",
+      "sha256": "cf4612db87d75ea946e18b794bdf88aa366c4250af002e9ae99c6df0adbedbfe",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.021
+    },
+    {
+      "name": "value_avg_expired_large.kql",
+      "sha256": "367abf77e31124b9319f489eb597677165d99293fccf68445d25b2a82143148d",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.013
+    },
+    {
+      "name": "value_avg_integer_bounds.kql",
+      "sha256": "58ccce14c5fc3e36ff8da751c63484431a93f1be251cc25020656fd2b601147e",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.012
+    },
+    {
+      "name": "value_avg_mapped.kql",
+      "sha256": "5c43f51800118a37bb54a40924a7567ff2b30964cd6c16ef17b167ac54663479",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.016
+    },
+    {
+      "name": "value_avg_normalized_strings.kql",
+      "sha256": "3d57fbd39fb2fc0a3ac30b95166d3b19ecead1ee866c9ed56c3f8797e2e1d970",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.013
+    },
+    {
+      "name": "value_avg_reals.kql",
+      "sha256": "8e27aa4183ba7d2bc9432f165e159fd6821134c9dd1204d488b54488f1ea4516",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.014
+    },
+    {
+      "name": "value_count_comparisons.kql",
+      "sha256": "78a0fcfef2b182722a463a592c7afc4ee35d74051b903c6ee5cc2089ed7c4ff6",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.039
+    },
+    {
+      "name": "value_count_fractional.kql",
+      "sha256": "37256d816f3c5bb131785356ac000819133884010572bf7a494487629abfeef7",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.031
+    },
+    {
+      "name": "value_count_grouped.kql",
+      "sha256": "ed94e8a0b29205d81f19d1268225add88281743c868027203892dbb282cb489c",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.027
+    },
+    {
+      "name": "value_count_grouped_counted_context.kql",
+      "sha256": "dbc2ddf726718424d68ac47c8074d4f79feccce1b84ddf3e93df9689599bea21",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.038
+    },
+    {
+      "name": "value_count_multi_field_comparisons.kql",
+      "sha256": "74929bb9212e7a386d5c4fb73b303e6f26f856066a590afcec570a0d7d44825c",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.059
+    },
+    {
+      "name": "value_count_multi_field_grouped.kql",
+      "sha256": "ac448a4975c66d1aa5bc227ec3c33ff3fa765aeb35ec64e670600352e11209d4",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.036
+    },
+    {
+      "name": "value_count_native_types.kql",
+      "sha256": "845c1ca5cc9c3548082d7dfb9a6c274536d390a0e6dad84a0e7f9a601f3c00c5",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.031
+    },
+    {
+      "name": "value_count_real_intervals.kql",
+      "sha256": "e6c9bcc44d49dae996f20a782bcaa22ece37d1538e49e7747ae8c622bff5b37b",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.024
+    },
+    {
+      "name": "value_count_typed.kql",
+      "sha256": "db7dcbf2f94c4c734320f71b9c2c3294a1b275982011f674145a3593bb5ca626",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.014
+    },
+    {
+      "name": "value_count_typed_chained.kql",
+      "sha256": "bcae18cafb7a5dad136764b031fb3b0f37a8b18654dd6192b769c841ec5423b4",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.039
+    },
+    {
+      "name": "value_count_typed_multi_field.kql",
+      "sha256": "851facb9e0d329617ecc398842137946286a10b22c601f167f657ba6c56d3088",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.019
+    },
+    {
+      "name": "value_count_typed_precision.kql",
+      "sha256": "9106fa00f04757af1187f8601fce61d2bcb8d97e02b41ade9cc8a29741539e87",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.032
+    },
+    {
+      "name": "value_percentile_aliases.kql",
+      "sha256": "c61ea508fa127242e37ee3a04dc75752b2ebef8042b4be2b036ff1b10e1990ab",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.022
+    },
+    {
+      "name": "value_percentile_chained.kql",
+      "sha256": "a35d8c8b065b95a7b4c624be5ccdd8bde305b72843f15b42c91454fa5ecdf978",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.029
+    },
+    {
+      "name": "value_percentile_comparisons.kql",
+      "sha256": "69006f201450c92b2aa4fc425b7ab2f58c5b033db63a56b45ca4a18cb80439d0",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.113
+    },
+    {
+      "name": "value_percentile_endpoints.kql",
+      "sha256": "a4760e002b0829074020694c57efaa3a8ebc8ef631dab49869dcd05fe02fe9b6",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.03
+    },
+    {
+      "name": "value_percentile_native_comparisons.kql",
+      "sha256": "2b326b98c81deefbf8c2628a19b5e3b6aeef44ed13b569f181658604a6bb43ff",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.143
+    },
+    {
+      "name": "value_percentile_native_decimal.kql",
+      "sha256": "051c233f3920714a3f8356c3e2ce7e850e427e48b98285fb82ef6b510f510fa3",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.015
+    },
+    {
+      "name": "value_percentile_native_int.kql",
+      "sha256": "40d2ee42ff809dd9290efb4f918d9ad033f9a0e5c86c1848111cd262cf1f5f1c",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.014
+    },
+    {
+      "name": "value_percentile_native_long.kql",
+      "sha256": "9a2a09537ac3bdec9d0d99c9cb529ff9ae6eaca7f8dacbf6b71dec8513f77899",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.018
+    },
+    {
+      "name": "value_percentile_native_mixed_context.kql",
+      "sha256": "f1fab941c84e2ac14d9457d2f1d49dbc78ab2d0608ab457550aad47b887290ba",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.407
+    },
+    {
+      "name": "value_percentile_native_real.kql",
+      "sha256": "60ccda8d5df48de1a129ef397f50b2e5e2d8cbee752211333dae77b4f5e4df47",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.014
+    },
+    {
+      "name": "value_percentile_native_real_groups.kql",
+      "sha256": "d0f550219cb587169a559c96ec8e74736350d4d94716e1a0c1fd7c331c5bc92d",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.018
+    },
+    {
+      "name": "value_percentile_native_ties.kql",
+      "sha256": "03495ea5135709f4416f6c696e951cb174374b01ed4da857fe7215270490f7e4",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.06
+    },
+    {
+      "name": "value_percentile_population.kql",
+      "sha256": "c43a71a735a73332f795faeae804f7504237e9bba1e0f7703df8b53d326e4402",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.027
+    },
+    {
+      "name": "value_sum_chained.kql",
+      "sha256": "86125837c74c9e42889f731bab33703b6070979b4037d6080bbdc705881b615e",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.02
+    },
+    {
+      "name": "value_sum_comparisons.kql",
+      "sha256": "62a3a79ef7d8d31ea28c744866b1e5004503325d350cdd4b622c6a74d95d3a39",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.03
+    },
+    {
+      "name": "value_sum_decimal_precision.kql",
+      "sha256": "b07ebf24ae4df35097e91888fc103697eeb2004ca3fe1c0e5f22a3d1214ab5f4",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.012
+    },
+    {
+      "name": "value_sum_duplicate_sources.kql",
+      "sha256": "6a00c0fa35682094a928da47cba24307a41027b242053fe8b3d0f468ddc86fdc",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.018
+    },
+    {
+      "name": "value_sum_fractional.kql",
+      "sha256": "c5616909d03bf8fd2f9d220e023fcb9253dbc1ae67cc3325c7f3efa6e9f91725",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.017
+    },
+    {
+      "name": "value_sum_int_promotion.kql",
+      "sha256": "136527b406edde3accc130cd8037eca9fe80040537d8298dddf2c316a949ce8d",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.014
+    },
+    {
+      "name": "value_sum_integer_bounds.kql",
+      "sha256": "d8509ac2a8babd85dd047d99caed331dd86e98a26040e4f18375b969a58f5c86",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.016
+    },
+    {
+      "name": "value_sum_real_expiration.kql",
+      "sha256": "707fd7c613aa50ea3d3cedec6b9a71f955d5fe04baecb84474fc6997379e60f2",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.014
+    },
+    {
+      "name": "value_sum_real_groups_long.kql",
+      "sha256": "825bf5793109022b691020ac49f9960d066b528b6dd9d24da5e63e16f65796ae",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.015
+    },
+    {
+      "name": "value_sum_real_groups_real.kql",
+      "sha256": "1d932c15249b519970f828b5a3603af53b5a34a848046a2f0d48857fb112e7b0",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.014
+    },
+    {
+      "name": "value_sum_reals.kql",
+      "sha256": "a1cedbfabb34bc26801aaffcca7e521b6ba0d9a8e7abe5ebc956a1fc25273eb0",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.017
+    }
+  ],
+  "status": "PASS",
+  "engine_version": {
+    "Tables": [
+      {
+        "TableName": "Table_0",
+        "Columns": [
+          {
+            "ColumnName": "BuildVersion",
+            "DataType": "String"
+          },
+          {
+            "ColumnName": "BuildTime",
+            "DataType": "DateTime"
+          },
+          {
+            "ColumnName": "ServiceType",
+            "DataType": "String"
+          },
+          {
+            "ColumnName": "ProductVersion",
+            "DataType": "String"
+          },
+          {
+            "ColumnName": "ServiceOffering",
+            "DataType": "String"
+          }
+        ],
+        "Rows": [
+          [
+            "1.0.9815.14081",
+            "2026-11-15T07:49:22Z",
+            "Engine",
+            "2026.11.15.0741-2645-8e3387b-master",
+            ""
+          ]
+        ]
+      }
+    ]
+  }
+}
