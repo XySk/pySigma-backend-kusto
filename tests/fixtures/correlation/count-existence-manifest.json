@@ -1,0 +1,25 @@
+{
+  "status": "PENDING",
+  "fixtures": [
+    {
+      "name": "count_existence_targeted_logon.kql",
+      "sha256": "e78693216178b2e3a0b7a9aeb371fee3690c6a01885167cf37b5fca3725069f7",
+      "expected_error": null
+    },
+    {
+      "name": "count_existence_one.kql",
+      "sha256": "07e59455a5f1048a8e19ec8c74ce33642505bec4bde03d0ce162e8da572b7eb4",
+      "expected_error": null
+    },
+    {
+      "name": "count_existence_duplicates.kql",
+      "sha256": "4cb44ea338aff4a996b7d343709c1e45121d8b34cf587b0edc32bedca30da5f5",
+      "expected_error": null
+    },
+    {
+      "name": "count_existence_ten.kql",
+      "sha256": "2f3e8a5f88889979275acf1739f657c974c7d16b6c48d833717bff0ecf130d1f",
+      "expected_error": null
+    }
+  ]
+}
