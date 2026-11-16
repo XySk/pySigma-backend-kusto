@@ -1,0 +1,43 @@
+{
+    "error": {
+        "code": "General_BadRequest",
+        "message": "Request is invalid and cannot be executed.",
+        "@type": "Kusto.Data.Exceptions.KustoBadRequestException",
+        "@message": "Request is invalid and cannot be processed: Semantic error: SEM0104: Operator source expression should be table or column",
+        "@failureCode": 400,
+        "@context": {
+            "timestamp": "2026-11-16T17:29:39.8025020Z",
+            "serviceAlias": null,
+            "clientRequestId": "unspecified;88909674-1f64-422f-a8b2-ef0a3a8ec81a",
+            "activityId": "2878b01b-2211-4645-8c11-8abcfd215f98",
+            "subActivityId": "d46aafdf-64fc-4b96-88f2-5b01c20fff01",
+            "activityType": "DN.FE.ExecuteQuery",
+            "parentActivityId": "ffbd7e4b-bf12-4702-a60c-1ea1af536c5f",
+            "activityStack": "(Activity stack: CRID=unspecified;88909674-1f64-422f-a8b2-ef0a3a8ec81a ARID=2878b01b-2211-4645-8c11-8abcfd215f98 > GW.Http.CallContext/2878b01b-2211-4645-8c11-8abcfd215f98 > GW.ExecuteQuery/ffbd7e4b-bf12-4702-a60c-1ea1af536c5f > DN.FE.ExecuteQuery/d46aafdf-64fc-4b96-88f2-5b01c20fff01)",
+            "serviceFarm": null
+        },
+        "@permanent": true,
+        "@database": "NetDefaultDB",
+        "innererror": {
+            "code": "SEM0104",
+            "message": "Operator source expression should be table or column",
+            "@type": "Kusto.Data.Exceptions.SemanticException",
+            "@message": "Semantic error: SEM0104: Operator source expression should be table or column",
+            "@failureCode": 400,
+            "@context": {
+                "timestamp": "2026-11-16T17:29:39.8012988Z",
+                "serviceAlias": null,
+                "clientRequestId": "unspecified;88909674-1f64-422f-a8b2-ef0a3a8ec81a",
+                "activityId": "2878b01b-2211-4645-8c11-8abcfd215f98",
+                "subActivityId": "d46aafdf-64fc-4b96-88f2-5b01c20fff01",
+                "activityType": "DN.FE.ExecuteQuery",
+                "parentActivityId": "ffbd7e4b-bf12-4702-a60c-1ea1af536c5f",
+                "activityStack": "(Activity stack: CRID=unspecified;88909674-1f64-422f-a8b2-ef0a3a8ec81a ARID=2878b01b-2211-4645-8c11-8abcfd215f98 > GW.Http.CallContext/2878b01b-2211-4645-8c11-8abcfd215f98 > GW.ExecuteQuery/ffbd7e4b-bf12-4702-a60c-1ea1af536c5f > DN.FE.ExecuteQuery/d46aafdf-64fc-4b96-88f2-5b01c20fff01)",
+                "serviceFarm": null
+            },
+            "@permanent": true,
+            "@errorCode": "SEM0104",
+            "@errorMessage": "Operator source expression should be table or column"
+        }
+    }
+}

@@ -1,5 +1,6 @@
 """Boolean context runtime fixtures; expected values are literal worked examples."""
 
+import json
 from pathlib import Path
 
 from tests.correlation_helpers import convert_documents, correlation_document, source_document
@@ -28,8 +29,11 @@ def fixture(expression, cases, *, chain=False):
     for case, markers, wanted in cases:
         for marker, user, server in markers:
             rows.append(f'datetime(2026-01-01T12:00:00Z), "{case}", "{marker}", dynamic({user}), "{server}"')
+        pairs = json.loads(wanted)
+        users = json.dumps(sorted({item[0][1] for item in pairs}))
+        servers = json.dumps(sorted({item[1][1] for item in pairs}))
         expected.append(
-            f'datetime(2026-01-01T12:00:00Z), "{case}", {len(set(m[0] for m in markers))}, dynamic({wanted})'
+            f'datetime(2026-01-01T12:00:00Z), "{case}", {len(set(m[0] for m in markers))}, dynamic({users}), dynamic({servers}), true'
         )
     return (
         """// Generated through standard collection parsing and KustoBackend.convert.
@@ -42,19 +46,15 @@ let Events=datatable(Timestamp:datetime, Case:string, Marker:string, User:dynami
         + """
 };
 let Observed=Actual()
-| mv-apply Pair=_sigma_context_rows on (summarize Pairs=make_list(tostring(Pair)))
-| extend Pairs=array_sort_asc(Pairs)
-| project WindowEnd, Case=tostring(Case), RuleCount, Pairs, UserCount=array_length(User), ServerCount=array_length(Server);
-let Expected=datatable(WindowEnd:datetime, Case:string, RuleCount:long, Pairs:dynamic) [
+| project WindowEnd, Case=tostring(Case), RuleCount, Users=tostring(array_sort_asc(User)), Servers=tostring(array_sort_asc(Server)), UserCount=array_length(User), ServerCount=array_length(Server), ContextComplete;
+let Expected=datatable(WindowEnd:datetime, Case:string, RuleCount:long, User:dynamic, Server:dynamic, ContextComplete:bool) [
 """
         + ",\n".join(expected)
         + """
 ]
-| extend UserCount=array_length(Pairs), ServerCount=array_length(Pairs)
-| mv-apply Pair=Pairs on (summarize Pairs=make_list(tostring(Pair)))
-| extend Pairs=array_sort_asc(Pairs);
+| project WindowEnd, Case, RuleCount, Users=tostring(array_sort_asc(User)), Servers=tostring(array_sort_asc(Server)), UserCount=array_length(User), ServerCount=array_length(Server), ContextComplete;
 union (Observed | extend Delta=1), (Expected | extend Delta=-1)
-| summarize Delta=sum(Delta) by WindowEnd, Case, RuleCount, Pairs=tostring(Pairs), UserCount, ServerCount
+| summarize Delta=sum(Delta) by WindowEnd, Case, RuleCount, Users, Servers, UserCount, ServerCount, ContextComplete
 | where Delta!=0
 """
     )

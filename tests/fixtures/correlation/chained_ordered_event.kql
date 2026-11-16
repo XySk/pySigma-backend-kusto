@@ -14,48 +14,43 @@ let Events=datatable(Timestamp:string, Case:string, Host:string, Marker:string) 
 | extend Timestamp=todatetime(Timestamp);
 let Actual = () {
 let _sigma_child_0 = () {
-let _sigma_types = union (Events
+// Strict sequence: "OA" -> "OB". Total inclusive span: 5m.
+union (Events
 | where Marker =~ "OA"
-| extend _sigma_timestamp = todatetime(["Timestamp"]), _sigma_group_0 = ["Case"], _sigma_group_1 = ["Host"]
-| extend _sigma_rule = "OA"),
+| extend EventTime_1 = todatetime(["Timestamp"]), GroupCase = ["Case"], GroupHost = ["Host"]
+| extend SourceRule = "OA"),
 (Events
 | where Marker =~ "OB"
-| extend _sigma_timestamp = todatetime(["Timestamp"]), _sigma_group_0 = ["Case"], _sigma_group_1 = ["Host"]
-| extend _sigma_rule = "OB")
-| where isnotnull(_sigma_timestamp) and isnotempty(_sigma_group_0) and isnotempty(_sigma_group_1)
-| summarize by _sigma_timestamp, _sigma_group_0, _sigma_group_1, _sigma_rule;
-let _sigma_sequence_0 = _sigma_types
-| where _sigma_rule == "OA"
-| project _sigma_sequence_start = _sigma_timestamp, _sigma_sequence_end = _sigma_timestamp, _sigma_group_0, _sigma_group_1;
-let _sigma_sequence_1 = _sigma_sequence_0
-| extend _sigma_bin = pack_array(bin(_sigma_sequence_start, 5m), bin(_sigma_sequence_start, 5m) + 5m)
-| mv-expand _sigma_bin to typeof(datetime)
-| join kind=inner (
-    _sigma_types
-    | where _sigma_rule == "OB"
-    | project _sigma_timestamp, _sigma_group_0, _sigma_group_1, _sigma_bin = bin(_sigma_timestamp, 5m)
-) on _sigma_group_0, _sigma_group_1, _sigma_bin
-| where _sigma_timestamp > _sigma_sequence_end and _sigma_timestamp <= _sigma_sequence_start + 5m
-| summarize _sigma_sequence_start = max(_sigma_sequence_start) by _sigma_sequence_end = _sigma_timestamp, _sigma_group_0, _sigma_group_1;
-_sigma_sequence_1
-| project WindowStart = _sigma_sequence_end - 5m, WindowEnd = _sigma_sequence_end, ["Case"] = _sigma_group_0, ["Host"] = _sigma_group_1, RuleCount = tolong(2)
+| extend EventTime_1 = todatetime(["Timestamp"]), GroupCase = ["Case"], GroupHost = ["Host"]
+| extend SourceRule = "OB")
+| where isnotnull(EventTime_1) and isnotempty(GroupCase) and isnotempty(GroupHost)
+// Batch equal timestamps: simultaneous source matches cannot advance strict sequence positions.
+| summarize HasOA = countif(SourceRule == "OA") > 0, HasOB = countif(SourceRule == "OB") > 0 by EventTime_1, GroupCase, GroupHost
+| sort by GroupCase asc, GroupHost asc, EventTime_1 asc
+| extend NewCorrelationGroup = isnull(prev(EventTime_1)) or GroupCase != prev(GroupCase) or GroupHost != prev(GroupHost)
+// Read preceding timestamp state for every assignment; preserve viable earlier prefixes.
+| scan declare (LatestOAStart:datetime = datetime(null), CompleteNow:bool = false) with (
+    step SequenceState: true =>
+        CompleteNow = not(NewCorrelationGroup) and HasOB and isnotnull(SequenceState.LatestOAStart) and SequenceState.LatestOAStart >= EventTime_1 - 5m,
+        LatestOAStart = iff(HasOA, EventTime_1, iff(NewCorrelationGroup, datetime(null), SequenceState.LatestOAStart));
+)
+| where CompleteNow
+| project WindowStart = EventTime_1 - 5m, WindowEnd = EventTime_1, ["Case"] = GroupCase, ["Host"] = GroupHost, RuleCount = tolong(2)
 };
-let _sigma_weights = union (_sigma_child_0()
-| extend _sigma_timestamp = todatetime(["WindowEnd"]), _sigma_group_0 = ["Case"], _sigma_group_1 = ["Host"]
-| extend _sigma_rule = "C")
-| where isnotnull(_sigma_timestamp) and isnotempty(_sigma_group_0) and isnotempty(_sigma_group_1)
-| summarize _sigma_weight = count() by _sigma_timestamp, _sigma_group_0, _sigma_group_1;
-_sigma_weights
-| project _sigma_group_0, _sigma_group_1, _sigma_window_end = _sigma_timestamp, _sigma_bin = bin(_sigma_timestamp, 5m)
-| join kind=inner (
-    _sigma_weights
-    | extend _sigma_bin = pack_array(bin(_sigma_timestamp, 5m), bin(_sigma_timestamp, 5m) + 5m)
-    | mv-expand _sigma_bin to typeof(datetime)
-) on _sigma_group_0, _sigma_group_1, _sigma_bin
-| where _sigma_timestamp between ((_sigma_window_end - 5m) .. _sigma_window_end)
-| summarize EventCount = sum(_sigma_weight) by _sigma_window_end, _sigma_group_0, _sigma_group_1
+let SourceMatchArrivals = union (_sigma_child_0()
+| project EventTime = todatetime(["WindowEnd"]), GroupCase = ["Case"], GroupHost = ["Host"])
+| where isnotnull(EventTime) and isnotempty(GroupCase) and isnotempty(GroupHost)
+| summarize SourceMatchCount = count() by EventTime, GroupCase, GroupHost;
+union (SourceMatchArrivals
+| project GroupCase, GroupHost, CountBoundaryTime = EventTime, CountBoundaryOrder = 0, SourceMatchDelta = SourceMatchCount),
+(SourceMatchArrivals
+| project GroupCase, GroupHost, CountBoundaryTime = EventTime + 5m, CountBoundaryOrder = 1, SourceMatchDelta = -SourceMatchCount)
+// Arrivals evaluate before equal-time expirations; expirations never create matches.
+| sort by GroupCase asc, GroupHost asc, CountBoundaryTime asc, CountBoundaryOrder asc
+| extend EventCount = row_cumsum(SourceMatchDelta, GroupCase != prev(GroupCase) or GroupHost != prev(GroupHost))
+| where CountBoundaryOrder == 0
 | where EventCount >= 2
-| project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ["Case"] = _sigma_group_0, ["Host"] = _sigma_group_1, EventCount
+| project WindowStart = CountBoundaryTime - 5m, WindowEnd = CountBoundaryTime, ["Case"] = GroupCase, ["Host"] = GroupHost, EventCount
 };
 let Expected = datatable(WindowStart:datetime, WindowEnd:datetime, Case:string, Host:string, EventCount:long) [
     datetime(2026-01-01T11:57:00Z), datetime(2026-01-01T12:02:00Z), "ordered-event", "host", 2

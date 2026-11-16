@@ -206,7 +206,10 @@ def test_mapped_child_context_parent_fixture_is_generated_through_public_convers
         Path(__file__).with_name("fixtures").joinpath("correlation/standard_mappings_parent.kql").read_text() == query
     )
     assert 'todatetime(["WindowEnd"])' in query
-    assert "| mv-expand _sigma_child_context_row" in query
+    assert '_sigma_context_value = ["Process Actor"]' in query
+    assert '_sigma_context_value = ["Network Actor"]' in query
+    assert '| where ["ContextRowKind"] == "ContextEvidence"' in query
+    assert "by ChildCorrelationMatch, GroupHost, GroupUser" in query
 
 
 @pytest.mark.parametrize("physical", ["Field Space", 'Actor "Name"', "Target\\Name"])
