@@ -90,6 +90,8 @@ tests use synthetic frames and are not engine evidence. Earlier focused fixture
 results and the runtime gaps documented in `../RUNTIME.md` remain separate from
 measurements of this baseline.
 
-Execution evidence for #35 is collected separately under
-`/tmp/kusto-spec34-baseline-measured`; until the final evidence index is committed,
-the presence of these frozen artifacts establishes preparation only.
+Execution evidence for #35 is published in [the baseline report](../BENCHMARK-BASELINE.md).
+All 64 workloads have at least three non-interrupted attempts; 28 plain workloads
+are verified, while all 36 context/chain workloads failed within the fixed
+deadlines. Original success/failure artifacts and explicit schema reassessment
+are preserved; preparation alone does not imply runtime correctness.

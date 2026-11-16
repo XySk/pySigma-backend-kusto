@@ -1,0 +1,3392 @@
+[
+  {
+    "path": "kusto-spec34-baseline-measured/container-inspect.json",
+    "bytes": 9699,
+    "sha256": "bc8883d60d68e31eae3e160dca6266d1e7583cd5d44bbf183e31abaef4ce4436",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/engine-version.request.json",
+    "bytes": 81,
+    "sha256": "1c2ed5cab6e58e1519978d8b9a3ba273679754b7167695e2b1dcad99dd3eb277",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/engine-version.response.json",
+    "bytes": 402,
+    "sha256": "7338dde20b69583c4555cb4cd0d34ee526430709e06cbb802820b55c0596323a",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/engine-version.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/results.json",
+    "bytes": 86106,
+    "sha256": "072b789456e5790f0f0f926efc27dd9e3e1a9ab2956f630247e786228f2e8444",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-event_count-context-1.request.json",
+    "bytes": 51335,
+    "sha256": "76fc3aa4afd3f2805583a60c52382ee7e9b03b2a6049cae2e4782140ff85d25b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-event_count-context-1.transport.json",
+    "bytes": 128,
+    "sha256": "1c54ef80e817820ed81330f536221b0ea7a60d5efeb27fee5fc64ac959b0f0c8",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-event_count-context-2.request.json",
+    "bytes": 51335,
+    "sha256": "76fc3aa4afd3f2805583a60c52382ee7e9b03b2a6049cae2e4782140ff85d25b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-event_count-context-2.response.json",
+    "bytes": 243,
+    "sha256": "16898ee3ae77027a62f4e67e20c208d7fe7b60aa41537a80e65cca82774118be",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-event_count-context-2.transport.json",
+    "bytes": 48,
+    "sha256": "572fdc936fd1fa001add8c16f9a75735db46c30350abdf9686a4f9d207399f24",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-event_count-context-3.request.json",
+    "bytes": 51335,
+    "sha256": "76fc3aa4afd3f2805583a60c52382ee7e9b03b2a6049cae2e4782140ff85d25b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-event_count-context-3.response.json",
+    "bytes": 243,
+    "sha256": "23d730886d0e1274c869d82c94916af1bf335a33784367c44d5fdc86bea0c96f",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-event_count-context-3.transport.json",
+    "bytes": 48,
+    "sha256": "572fdc936fd1fa001add8c16f9a75735db46c30350abdf9686a4f9d207399f24",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-event_count-plain-1.request.json",
+    "bytes": 15663,
+    "sha256": "d83d733838b77f2e0bfdae9d37697653d775f3944316d1d7b917edceb277c765",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-event_count-plain-1.response.json",
+    "bytes": 4362,
+    "sha256": "c6fd7b8f615fde4dd5ea26d83e7b7acf7f6405dc7c7b73db9c86a4aa80d9ea2f",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-event_count-plain-1.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-event_count-plain-2.request.json",
+    "bytes": 15663,
+    "sha256": "d83d733838b77f2e0bfdae9d37697653d775f3944316d1d7b917edceb277c765",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-event_count-plain-2.response.json",
+    "bytes": 4354,
+    "sha256": "e296cef6eebb2eab6427a71c8481e327ee38415e52bbbe965ddaadfa4acf503e",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-event_count-plain-2.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-event_count-plain-3.request.json",
+    "bytes": 15663,
+    "sha256": "d83d733838b77f2e0bfdae9d37697653d775f3944316d1d7b917edceb277c765",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-event_count-plain-3.response.json",
+    "bytes": 4354,
+    "sha256": "06ebbab76342de41d103f805c742d03aeb0774f2a76784d789840bab55dbd5fe",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-event_count-plain-3.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_avg-context-1.request.json",
+    "bytes": 50989,
+    "sha256": "858de7a47c8e4b00eeaf81917e8767a2ffc7a04dfe878309ace26613ec2c7e44",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_avg-context-1.response.json",
+    "bytes": 243,
+    "sha256": "ae1e337c34ef4400d841c61f5223860268d5b3f4acfbbe7406050e303e9cbfdc",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_avg-context-1.transport.json",
+    "bytes": 48,
+    "sha256": "572fdc936fd1fa001add8c16f9a75735db46c30350abdf9686a4f9d207399f24",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_avg-context-2.request.json",
+    "bytes": 50989,
+    "sha256": "858de7a47c8e4b00eeaf81917e8767a2ffc7a04dfe878309ace26613ec2c7e44",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_avg-context-2.response.json",
+    "bytes": 243,
+    "sha256": "0fa02459c1d23812ee3503b755f21f5acfea1d547e038ac334417f70d4399f71",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_avg-context-2.transport.json",
+    "bytes": 48,
+    "sha256": "572fdc936fd1fa001add8c16f9a75735db46c30350abdf9686a4f9d207399f24",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_avg-context-3.request.json",
+    "bytes": 50989,
+    "sha256": "858de7a47c8e4b00eeaf81917e8767a2ffc7a04dfe878309ace26613ec2c7e44",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_avg-context-3.transport.json",
+    "bytes": 128,
+    "sha256": "1c54ef80e817820ed81330f536221b0ea7a60d5efeb27fee5fc64ac959b0f0c8",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_avg-plain-1.request.json",
+    "bytes": 15326,
+    "sha256": "6dc8f7cc0ba4f74b05752d89fc3c7a22680a18000634a5a15414fb88d9e48c01",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_avg-plain-1.response.json",
+    "bytes": 4428,
+    "sha256": "380bb0f454a157bd1008eba5ef6e29f65995209f2bf8642f6df262de26995945",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_avg-plain-1.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_avg-plain-2.request.json",
+    "bytes": 15326,
+    "sha256": "6dc8f7cc0ba4f74b05752d89fc3c7a22680a18000634a5a15414fb88d9e48c01",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_avg-plain-2.response.json",
+    "bytes": 4428,
+    "sha256": "a5a7391853262dca848228316cda0e55d0c77e0439a8eab53cd6cd6bb7b1c0b2",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_avg-plain-2.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_avg-plain-3.request.json",
+    "bytes": 15326,
+    "sha256": "6dc8f7cc0ba4f74b05752d89fc3c7a22680a18000634a5a15414fb88d9e48c01",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_avg-plain-3.response.json",
+    "bytes": 4428,
+    "sha256": "66d3f1f3d704d724142f8487d19b2c790f279799ecbe422eb406d58170578fe7",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_avg-plain-3.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_count-context-1.request.json",
+    "bytes": 51777,
+    "sha256": "e6d196d819d2b57db270ee7c9b9d8659780e4801d0a72dae6008f4e1679d78fb",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_count-context-1.transport.json",
+    "bytes": 128,
+    "sha256": "1c54ef80e817820ed81330f536221b0ea7a60d5efeb27fee5fc64ac959b0f0c8",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_count-context-2.request.json",
+    "bytes": 51777,
+    "sha256": "e6d196d819d2b57db270ee7c9b9d8659780e4801d0a72dae6008f4e1679d78fb",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_count-context-2.transport.json",
+    "bytes": 128,
+    "sha256": "1c54ef80e817820ed81330f536221b0ea7a60d5efeb27fee5fc64ac959b0f0c8",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_count-context-3.request.json",
+    "bytes": 51777,
+    "sha256": "e6d196d819d2b57db270ee7c9b9d8659780e4801d0a72dae6008f4e1679d78fb",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_count-context-3.transport.json",
+    "bytes": 128,
+    "sha256": "1c54ef80e817820ed81330f536221b0ea7a60d5efeb27fee5fc64ac959b0f0c8",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_count-plain-1.request.json",
+    "bytes": 15941,
+    "sha256": "0da1dfa2f889683ccfcf4923c5e9e1e6c8b3841847394c753fe48c1c4c285e33",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_count-plain-1.response.json",
+    "bytes": 4305,
+    "sha256": "ee59f90abaec88d9dae4554166f0b99d087a1358b2eeb1a80ffee4fdb5a57832",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_count-plain-1.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_count-plain-2.request.json",
+    "bytes": 15941,
+    "sha256": "0da1dfa2f889683ccfcf4923c5e9e1e6c8b3841847394c753fe48c1c4c285e33",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_count-plain-2.response.json",
+    "bytes": 4298,
+    "sha256": "50757355afef8b7610bca180c31c81247f2b2c9f189e4e26a265e2006430bf0c",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_count-plain-2.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_count-plain-3.request.json",
+    "bytes": 15941,
+    "sha256": "0da1dfa2f889683ccfcf4923c5e9e1e6c8b3841847394c753fe48c1c4c285e33",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_count-plain-3.response.json",
+    "bytes": 4298,
+    "sha256": "e7e6262c8a5c9342a32629466b64521bc2436c648007c9b30c94e7adfb5d8c07",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_count-plain-3.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_percentile-context-1.request.json",
+    "bytes": 53115,
+    "sha256": "0859ed625f14dfca02f0d4d57b47677fd40f5bf67b1780dde814ed206652e688",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_percentile-context-1.transport.json",
+    "bytes": 128,
+    "sha256": "1c54ef80e817820ed81330f536221b0ea7a60d5efeb27fee5fc64ac959b0f0c8",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_percentile-context-2.request.json",
+    "bytes": 53115,
+    "sha256": "0859ed625f14dfca02f0d4d57b47677fd40f5bf67b1780dde814ed206652e688",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_percentile-plain-1.request.json",
+    "bytes": 16844,
+    "sha256": "a3d4652d43eb37b0f0ad987d1f2c813a111739184216584a06a2d80fd70f2240",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_percentile-plain-1.response.json",
+    "bytes": 4425,
+    "sha256": "e8e12eba955461be399657e0e177931c11b4282fe2bb2521792e3cc18f95de9c",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_percentile-plain-1.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_percentile-plain-2.request.json",
+    "bytes": 16844,
+    "sha256": "a3d4652d43eb37b0f0ad987d1f2c813a111739184216584a06a2d80fd70f2240",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_percentile-plain-2.response.json",
+    "bytes": 4417,
+    "sha256": "dc940cf8437cb70659baa57ab8817763369dd638849e7f2ce95d4475c178e516",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_percentile-plain-2.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_percentile-plain-3.request.json",
+    "bytes": 16844,
+    "sha256": "a3d4652d43eb37b0f0ad987d1f2c813a111739184216584a06a2d80fd70f2240",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_percentile-plain-3.response.json",
+    "bytes": 4424,
+    "sha256": "b9658492940969753efa0e0c69f32e853e9bd89814599903cdeb2d66810ffd11",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_percentile-plain-3.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_sum-context-1.request.json",
+    "bytes": 52962,
+    "sha256": "ef2ef67c7e48661db0fe69b8ac63b3adcac0bc58b495184be35e3390640367ed",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_sum-context-1.response.json",
+    "bytes": 243,
+    "sha256": "5715b84e74ced181cdeb65bbf2d2af8169af9ad5c274261b1ac1f33cb1040df6",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_sum-context-1.transport.json",
+    "bytes": 48,
+    "sha256": "572fdc936fd1fa001add8c16f9a75735db46c30350abdf9686a4f9d207399f24",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_sum-context-2.request.json",
+    "bytes": 52962,
+    "sha256": "ef2ef67c7e48661db0fe69b8ac63b3adcac0bc58b495184be35e3390640367ed",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_sum-context-2.response.json",
+    "bytes": 243,
+    "sha256": "e30fd6af4dfeddf282806d5b41f2b7092b1f58131a53347ad412f9e32a0b160f",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_sum-context-2.transport.json",
+    "bytes": 48,
+    "sha256": "572fdc936fd1fa001add8c16f9a75735db46c30350abdf9686a4f9d207399f24",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_sum-context-3.request.json",
+    "bytes": 52962,
+    "sha256": "ef2ef67c7e48661db0fe69b8ac63b3adcac0bc58b495184be35e3390640367ed",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_sum-context-3.transport.json",
+    "bytes": 128,
+    "sha256": "1c54ef80e817820ed81330f536221b0ea7a60d5efeb27fee5fc64ac959b0f0c8",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_sum-plain-1.request.json",
+    "bytes": 16915,
+    "sha256": "571dee72ff1c6813d0cb31d0ad51143652f0988397e9b4b13f3c148675137120",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_sum-plain-1.response.json",
+    "bytes": 4418,
+    "sha256": "19c07565a6b60cd262ac743a562c709ed6b9282ba4f886234039f0fbd26b04e2",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_sum-plain-1.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_sum-plain-2.request.json",
+    "bytes": 16915,
+    "sha256": "571dee72ff1c6813d0cb31d0ad51143652f0988397e9b4b13f3c148675137120",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_sum-plain-2.response.json",
+    "bytes": 4418,
+    "sha256": "53ffc9296a7079a00ffef02ba59932d6953b5fef1e41439d13434457e6921c7d",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_sum-plain-2.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_sum-plain-3.request.json",
+    "bytes": 16915,
+    "sha256": "571dee72ff1c6813d0cb31d0ad51143652f0988397e9b4b13f3c148675137120",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_sum-plain-3.response.json",
+    "bytes": 4418,
+    "sha256": "b3649ae879674772dd38ac4a82d519f421a0b3890fb1690c882704a1a5cb75f8",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-measured/sparse-value_sum-plain-3.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/container-inspect.json",
+    "bytes": 9699,
+    "sha256": "bc8883d60d68e31eae3e160dca6266d1e7583cd5d44bbf183e31abaef4ce4436",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-event_count-context-1.request.json",
+    "bytes": 52577,
+    "sha256": "3233099b0656a4f7f6d64f50957d515d8ae49bc87e56c8ecdfa12f19a301f0a2",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-event_count-context-1.transport.json",
+    "bytes": 128,
+    "sha256": "4b549c983f11309338b76fc4200b307f5cc13720c4adeffbcd8461a5f53088d4",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-event_count-context-2.request.json",
+    "bytes": 52577,
+    "sha256": "3233099b0656a4f7f6d64f50957d515d8ae49bc87e56c8ecdfa12f19a301f0a2",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-event_count-context-2.transport.json",
+    "bytes": 128,
+    "sha256": "4b549c983f11309338b76fc4200b307f5cc13720c4adeffbcd8461a5f53088d4",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-event_count-context-3.request.json",
+    "bytes": 52577,
+    "sha256": "3233099b0656a4f7f6d64f50957d515d8ae49bc87e56c8ecdfa12f19a301f0a2",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-event_count-context-3.transport.json",
+    "bytes": 128,
+    "sha256": "4b549c983f11309338b76fc4200b307f5cc13720c4adeffbcd8461a5f53088d4",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-event_count-plain-1.request.json",
+    "bytes": 16905,
+    "sha256": "63badb1745c6dace828fc0e0c5ecba900b7c0b5c340c7b977c705a92b6dac5e6",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-event_count-plain-1.response.json",
+    "bytes": 5532,
+    "sha256": "077244818063f79004e17a5e715a4f949a86debea1f121665297e042fd58598b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-event_count-plain-1.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-event_count-plain-2.request.json",
+    "bytes": 16905,
+    "sha256": "63badb1745c6dace828fc0e0c5ecba900b7c0b5c340c7b977c705a92b6dac5e6",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-event_count-plain-2.response.json",
+    "bytes": 5534,
+    "sha256": "e7c6f717af39e3e7ef1ba9e0ac5a0753bf50865fddd1457170abd67aae4b6fd4",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-event_count-plain-2.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-event_count-plain-3.request.json",
+    "bytes": 16905,
+    "sha256": "63badb1745c6dace828fc0e0c5ecba900b7c0b5c340c7b977c705a92b6dac5e6",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-event_count-plain-3.response.json",
+    "bytes": 5526,
+    "sha256": "7fe739e8cf7089fbd6db9adc629b21f85a78552dfaea2eb13340627c575008aa",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-event_count-plain-3.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-temporal-context-1.request.json",
+    "bytes": 53780,
+    "sha256": "c3337e2712dc372a4da3378d76871168aaf987cf0fdd0b1a9b7b006706237749",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-temporal-context-1.transport.json",
+    "bytes": 128,
+    "sha256": "1c54ef80e817820ed81330f536221b0ea7a60d5efeb27fee5fc64ac959b0f0c8",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-temporal-context-2.request.json",
+    "bytes": 53780,
+    "sha256": "c3337e2712dc372a4da3378d76871168aaf987cf0fdd0b1a9b7b006706237749",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-temporal-context-2.transport.json",
+    "bytes": 128,
+    "sha256": "1c54ef80e817820ed81330f536221b0ea7a60d5efeb27fee5fc64ac959b0f0c8",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-temporal-context-3.request.json",
+    "bytes": 53780,
+    "sha256": "c3337e2712dc372a4da3378d76871168aaf987cf0fdd0b1a9b7b006706237749",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-temporal-context-3.transport.json",
+    "bytes": 128,
+    "sha256": "1c54ef80e817820ed81330f536221b0ea7a60d5efeb27fee5fc64ac959b0f0c8",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-temporal-plain-1.request.json",
+    "bytes": 16983,
+    "sha256": "8ac04b848da7356fd4ae67e565ab9c9557fb2eeb143bad0165be6eb02f3867f1",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-temporal-plain-1.response.json",
+    "bytes": 5461,
+    "sha256": "e2f2bc6ebc0d5bc6bbd9971f7124f4fd7bde5964db3f83eadb8bc8d75cdfa8d3",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-temporal-plain-1.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-temporal-plain-2.request.json",
+    "bytes": 16983,
+    "sha256": "8ac04b848da7356fd4ae67e565ab9c9557fb2eeb143bad0165be6eb02f3867f1",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-temporal-plain-2.response.json",
+    "bytes": 5453,
+    "sha256": "48951a499e3f29bebfb77d4cf56bd7580d648a9f1b4c6ca2691ab57f6ca51de3",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-temporal-plain-2.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-temporal-plain-3.request.json",
+    "bytes": 16983,
+    "sha256": "8ac04b848da7356fd4ae67e565ab9c9557fb2eeb143bad0165be6eb02f3867f1",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-temporal-plain-3.response.json",
+    "bytes": 5452,
+    "sha256": "a08a560bcee83f04ec878b2c25da820170e1e066da38eb3e41f867aafb4e75a0",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-temporal-plain-3.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-temporal_ordered-context-1.request.json",
+    "bytes": 60987,
+    "sha256": "74d692db1db42ad4941cf37a30aa5b9339c92edb4b82214189948c888e62765c",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-temporal_ordered-context-1.response.json",
+    "bytes": 243,
+    "sha256": "1630b00dbe74140fb46ec3d8e7c6e8089fe36c40bb63124d0f9c549ebacc4658",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-temporal_ordered-context-1.transport.json",
+    "bytes": 48,
+    "sha256": "572fdc936fd1fa001add8c16f9a75735db46c30350abdf9686a4f9d207399f24",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-temporal_ordered-context-2.request.json",
+    "bytes": 60987,
+    "sha256": "74d692db1db42ad4941cf37a30aa5b9339c92edb4b82214189948c888e62765c",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-temporal_ordered-plain-1.request.json",
+    "bytes": 19260,
+    "sha256": "1fe89f26dd0e264e2dbb2e61e9a716a7b3291c09c361178090ca20a9f05f40e7",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-temporal_ordered-plain-1.response.json",
+    "bytes": 4691,
+    "sha256": "d5bd4b90ded3991eac483e5f27ce59289dd0601393b06f45cac336a7580f937d",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-temporal_ordered-plain-1.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-temporal_ordered-plain-2.request.json",
+    "bytes": 19260,
+    "sha256": "1fe89f26dd0e264e2dbb2e61e9a716a7b3291c09c361178090ca20a9f05f40e7",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-temporal_ordered-plain-2.response.json",
+    "bytes": 4690,
+    "sha256": "cbd94a90cd413758041ebcf9c7dc6fb9095500b501927597b0d506a25c6f10b3",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-temporal_ordered-plain-2.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-temporal_ordered-plain-3.request.json",
+    "bytes": 19260,
+    "sha256": "1fe89f26dd0e264e2dbb2e61e9a716a7b3291c09c361178090ca20a9f05f40e7",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-temporal_ordered-plain-3.response.json",
+    "bytes": 4683,
+    "sha256": "2829d8f47bf4a41778efa6cde41dc7f4af2d6e73a90a93d11d50080200f423d0",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-temporal_ordered-plain-3.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_avg-context-1.request.json",
+    "bytes": 52231,
+    "sha256": "7c6c6843ea1d34fdb354ce9c89bdcaeecbe866de729ab4f65dc7bf97b427b97f",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_avg-context-1.transport.json",
+    "bytes": 128,
+    "sha256": "1c54ef80e817820ed81330f536221b0ea7a60d5efeb27fee5fc64ac959b0f0c8",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_avg-context-2.request.json",
+    "bytes": 52231,
+    "sha256": "7c6c6843ea1d34fdb354ce9c89bdcaeecbe866de729ab4f65dc7bf97b427b97f",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_avg-context-2.transport.json",
+    "bytes": 128,
+    "sha256": "1c54ef80e817820ed81330f536221b0ea7a60d5efeb27fee5fc64ac959b0f0c8",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_avg-context-3.request.json",
+    "bytes": 52231,
+    "sha256": "7c6c6843ea1d34fdb354ce9c89bdcaeecbe866de729ab4f65dc7bf97b427b97f",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_avg-context-3.transport.json",
+    "bytes": 128,
+    "sha256": "1c54ef80e817820ed81330f536221b0ea7a60d5efeb27fee5fc64ac959b0f0c8",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_avg-plain-1.request.json",
+    "bytes": 16568,
+    "sha256": "b5b6eeb8e54d150ac3024d912940badf6948e5eb2f0c2b7e6c456dd47168686c",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_avg-plain-1.response.json",
+    "bytes": 5742,
+    "sha256": "3e49f4f8ae83f96315d318ac0fd4200fabc37f44359ddc668367491eaaf476ff",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_avg-plain-1.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_avg-plain-2.request.json",
+    "bytes": 16568,
+    "sha256": "b5b6eeb8e54d150ac3024d912940badf6948e5eb2f0c2b7e6c456dd47168686c",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_avg-plain-2.response.json",
+    "bytes": 5732,
+    "sha256": "7931c9e954cdaae8a616bd484732f69ef39ba7ebb123d59af3abad657c5a233e",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_avg-plain-2.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_avg-plain-3.request.json",
+    "bytes": 16568,
+    "sha256": "b5b6eeb8e54d150ac3024d912940badf6948e5eb2f0c2b7e6c456dd47168686c",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_avg-plain-3.response.json",
+    "bytes": 5734,
+    "sha256": "d4bca3b64769f97b87e29569a3d1792a0b7b6f2116675ddfad4609fc4e9059e8",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_avg-plain-3.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_count-context-1.request.json",
+    "bytes": 53019,
+    "sha256": "9cdde59770903e7c2c01ca71b81d8ec7e705500f4cbdc110ecc188392e94e3e3",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_count-context-1.transport.json",
+    "bytes": 128,
+    "sha256": "1c54ef80e817820ed81330f536221b0ea7a60d5efeb27fee5fc64ac959b0f0c8",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_count-context-2.request.json",
+    "bytes": 53019,
+    "sha256": "9cdde59770903e7c2c01ca71b81d8ec7e705500f4cbdc110ecc188392e94e3e3",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_count-context-2.response.json",
+    "bytes": 243,
+    "sha256": "38796dd35357586fd81b28ca156ab2f3d252bb58a987aad651025449218edcc4",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_count-context-2.transport.json",
+    "bytes": 48,
+    "sha256": "572fdc936fd1fa001add8c16f9a75735db46c30350abdf9686a4f9d207399f24",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_count-context-3.request.json",
+    "bytes": 53019,
+    "sha256": "9cdde59770903e7c2c01ca71b81d8ec7e705500f4cbdc110ecc188392e94e3e3",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_count-context-3.transport.json",
+    "bytes": 128,
+    "sha256": "1c54ef80e817820ed81330f536221b0ea7a60d5efeb27fee5fc64ac959b0f0c8",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_count-plain-1.request.json",
+    "bytes": 17183,
+    "sha256": "f2ccab9568bf98641dc1b3fd479a8ff347e4b9373f964ed6c70d38b3ce54ad0e",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_count-plain-1.response.json",
+    "bytes": 5533,
+    "sha256": "45047617f8c16850ffa042461eeac43dbddb5b6dfa4c36692a21bf7db87fdf38",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_count-plain-1.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_count-plain-2.request.json",
+    "bytes": 17183,
+    "sha256": "f2ccab9568bf98641dc1b3fd479a8ff347e4b9373f964ed6c70d38b3ce54ad0e",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_count-plain-2.response.json",
+    "bytes": 5524,
+    "sha256": "8d00fee6e7c6133d439b00803df132f6b8bd8f41221c748b6525546d5335baf5",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_count-plain-2.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_count-plain-3.request.json",
+    "bytes": 17183,
+    "sha256": "f2ccab9568bf98641dc1b3fd479a8ff347e4b9373f964ed6c70d38b3ce54ad0e",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_count-plain-3.response.json",
+    "bytes": 5525,
+    "sha256": "1cecc059de9c4aca0c41a7ac3e20019e4d03340861da09909e33beac8a3c6c2b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_count-plain-3.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_percentile-context-1.request.json",
+    "bytes": 54357,
+    "sha256": "69c7adc0031b1e17318d03d1b91a656998cef1f68598764dfc57369a47c71984",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_percentile-context-1.response.json",
+    "bytes": 243,
+    "sha256": "6da211b9d1d4165fbf8e7a41f324772250488e1148ea8dcc3573670ea2492927",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_percentile-context-1.transport.json",
+    "bytes": 48,
+    "sha256": "572fdc936fd1fa001add8c16f9a75735db46c30350abdf9686a4f9d207399f24",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_percentile-context-2.request.json",
+    "bytes": 54357,
+    "sha256": "69c7adc0031b1e17318d03d1b91a656998cef1f68598764dfc57369a47c71984",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_percentile-context-2.transport.json",
+    "bytes": 128,
+    "sha256": "1c54ef80e817820ed81330f536221b0ea7a60d5efeb27fee5fc64ac959b0f0c8",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_percentile-context-3.request.json",
+    "bytes": 54357,
+    "sha256": "69c7adc0031b1e17318d03d1b91a656998cef1f68598764dfc57369a47c71984",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_percentile-context-3.response.json",
+    "bytes": 243,
+    "sha256": "7f8eee96afab11964bba58af5302e0cedf1f5f162f89b19152094dc906cb9e71",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_percentile-context-3.transport.json",
+    "bytes": 48,
+    "sha256": "572fdc936fd1fa001add8c16f9a75735db46c30350abdf9686a4f9d207399f24",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_percentile-plain-1.request.json",
+    "bytes": 18086,
+    "sha256": "7248c5845c6c8a4cb704686f3b540b3510376acc9cb05844f32fa70f7606b440",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_percentile-plain-1.response.json",
+    "bytes": 5582,
+    "sha256": "d55644c3ab72dca87d15acd5ecf176141570a157c878956bf368f5173b3e1933",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_percentile-plain-1.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_percentile-plain-2.request.json",
+    "bytes": 18086,
+    "sha256": "7248c5845c6c8a4cb704686f3b540b3510376acc9cb05844f32fa70f7606b440",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_percentile-plain-2.response.json",
+    "bytes": 5582,
+    "sha256": "63e23c2169607435d8e1918d88a39b8099e277392de5476d9ff973477f6c5211",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_percentile-plain-2.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_percentile-plain-3.request.json",
+    "bytes": 18086,
+    "sha256": "7248c5845c6c8a4cb704686f3b540b3510376acc9cb05844f32fa70f7606b440",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_percentile-plain-3.response.json",
+    "bytes": 5582,
+    "sha256": "0f01f58b6e23b43d1f116ab828b61eee81d9007d5531e6b09ce6ca43d93ef442",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_percentile-plain-3.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_sum-context-1.request.json",
+    "bytes": 54204,
+    "sha256": "c69781ab1ee554d7447ae8cad43590ef9bbf9653606534febcbeeda0374316df",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_sum-context-1.transport.json",
+    "bytes": 128,
+    "sha256": "1c54ef80e817820ed81330f536221b0ea7a60d5efeb27fee5fc64ac959b0f0c8",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_sum-context-2.request.json",
+    "bytes": 54204,
+    "sha256": "c69781ab1ee554d7447ae8cad43590ef9bbf9653606534febcbeeda0374316df",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_sum-context-2.transport.json",
+    "bytes": 128,
+    "sha256": "1c54ef80e817820ed81330f536221b0ea7a60d5efeb27fee5fc64ac959b0f0c8",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_sum-context-3.request.json",
+    "bytes": 54204,
+    "sha256": "c69781ab1ee554d7447ae8cad43590ef9bbf9653606534febcbeeda0374316df",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_sum-context-3.transport.json",
+    "bytes": 128,
+    "sha256": "1c54ef80e817820ed81330f536221b0ea7a60d5efeb27fee5fc64ac959b0f0c8",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_sum-plain-1.request.json",
+    "bytes": 18157,
+    "sha256": "c95a85eed398e44cbd7c10902b0b0e892b6428e99249c531ae286fd67fc633ed",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_sum-plain-1.response.json",
+    "bytes": 5596,
+    "sha256": "408e044e0f9e7416ff9dbe745393d7f181be90d37b1027c62d48b5befd43c281",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_sum-plain-1.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_sum-plain-2.request.json",
+    "bytes": 18157,
+    "sha256": "c95a85eed398e44cbd7c10902b0b0e892b6428e99249c531ae286fd67fc633ed",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_sum-plain-2.response.json",
+    "bytes": 5596,
+    "sha256": "469892a115c5e0524b61fa5ba794e3507eac39e4fd3563073253387871702044",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_sum-plain-2.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_sum-plain-3.request.json",
+    "bytes": 18157,
+    "sha256": "c95a85eed398e44cbd7c10902b0b0e892b6428e99249c531ae286fd67fc633ed",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_sum-plain-3.response.json",
+    "bytes": 5596,
+    "sha256": "b0cf66337f3b9289a1f8415b31800ebdbda215aa21d08b811fd94595ebc780a9",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/dense-value_sum-plain-3.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/engine-version.request.json",
+    "bytes": 81,
+    "sha256": "1c2ed5cab6e58e1519978d8b9a3ba273679754b7167695e2b1dcad99dd3eb277",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/engine-version.response.json",
+    "bytes": 402,
+    "sha256": "7338dde20b69583c4555cb4cd0d34ee526430709e06cbb802820b55c0596323a",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/engine-version.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/results.json",
+    "bytes": 170719,
+    "sha256": "01f6cd2afab0eaecd98a6417c6b695782673694b10bae8dcea5512d2c0d811c9",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-mixed-multilevel-context-1.request.json",
+    "bytes": 282425,
+    "sha256": "b223db36df645ff57d0418438fd03b86df804f34a72c7eca1e43207b478b3a42",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-mixed-multilevel-context-1.transport.json",
+    "bytes": 128,
+    "sha256": "4b549c983f11309338b76fc4200b307f5cc13720c4adeffbcd8461a5f53088d4",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-mixed-multilevel-context-2.request.json",
+    "bytes": 282425,
+    "sha256": "b223db36df645ff57d0418438fd03b86df804f34a72c7eca1e43207b478b3a42",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-mixed-multilevel-context-2.response.json",
+    "bytes": 243,
+    "sha256": "a016e737846b5b362ec1fd3d2b357ec59f0552924132c1ffeb170d01797fd367",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-mixed-multilevel-context-2.transport.json",
+    "bytes": 48,
+    "sha256": "572fdc936fd1fa001add8c16f9a75735db46c30350abdf9686a4f9d207399f24",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-mixed-multilevel-context-3.request.json",
+    "bytes": 282425,
+    "sha256": "b223db36df645ff57d0418438fd03b86df804f34a72c7eca1e43207b478b3a42",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-mixed-multilevel-context-3.response.json",
+    "bytes": 243,
+    "sha256": "e6dd0dc32047adb669c09a7e21937494b715303d653c11915acab51fee15d263",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-mixed-multilevel-context-3.transport.json",
+    "bytes": 48,
+    "sha256": "572fdc936fd1fa001add8c16f9a75735db46c30350abdf9686a4f9d207399f24",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-mixed-multilevel-plain-1.request.json",
+    "bytes": 68694,
+    "sha256": "bb6bff220ec1a1e021e1e69b8134f57bc2745f183aac5652b0038b69c560c328",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-mixed-multilevel-plain-1.response.json",
+    "bytes": 243,
+    "sha256": "b7e0c0583c2d0c0a5e9f83bbb7f66fba00d56edc0afd4ae3a335d02d05980f81",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-mixed-multilevel-plain-1.transport.json",
+    "bytes": 48,
+    "sha256": "572fdc936fd1fa001add8c16f9a75735db46c30350abdf9686a4f9d207399f24",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-mixed-multilevel-plain-2.request.json",
+    "bytes": 68694,
+    "sha256": "bb6bff220ec1a1e021e1e69b8134f57bc2745f183aac5652b0038b69c560c328",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-mixed-multilevel-plain-2.response.json",
+    "bytes": 243,
+    "sha256": "badc1620853c1f3228fbeaef032ad53b26996abd4bfd61444a3028ed7d8ddd05",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-mixed-multilevel-plain-2.transport.json",
+    "bytes": 48,
+    "sha256": "572fdc936fd1fa001add8c16f9a75735db46c30350abdf9686a4f9d207399f24",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-mixed-multilevel-plain-3.request.json",
+    "bytes": 68694,
+    "sha256": "bb6bff220ec1a1e021e1e69b8134f57bc2745f183aac5652b0038b69c560c328",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-mixed-multilevel-plain-3.response.json",
+    "bytes": 243,
+    "sha256": "db7af355550bb8fd4c40decf3f2db4296f3e6da701dfe3b585aaf99c59257585",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-mixed-multilevel-plain-3.transport.json",
+    "bytes": 48,
+    "sha256": "572fdc936fd1fa001add8c16f9a75735db46c30350abdf9686a4f9d207399f24",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-temporal-context-1.request.json",
+    "bytes": 52538,
+    "sha256": "8b500552392cb5b1244ea48c61b69de8fcb7484444d70fdc1ee3dff2ddc6ea6c",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-temporal-context-1.transport.json",
+    "bytes": 128,
+    "sha256": "1c54ef80e817820ed81330f536221b0ea7a60d5efeb27fee5fc64ac959b0f0c8",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-temporal-context-2.request.json",
+    "bytes": 52538,
+    "sha256": "8b500552392cb5b1244ea48c61b69de8fcb7484444d70fdc1ee3dff2ddc6ea6c",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-temporal-context-2.transport.json",
+    "bytes": 128,
+    "sha256": "1c54ef80e817820ed81330f536221b0ea7a60d5efeb27fee5fc64ac959b0f0c8",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-temporal-context-3.request.json",
+    "bytes": 52538,
+    "sha256": "8b500552392cb5b1244ea48c61b69de8fcb7484444d70fdc1ee3dff2ddc6ea6c",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-temporal-context-3.transport.json",
+    "bytes": 128,
+    "sha256": "1c54ef80e817820ed81330f536221b0ea7a60d5efeb27fee5fc64ac959b0f0c8",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-temporal-plain-1.request.json",
+    "bytes": 15741,
+    "sha256": "addf85466af39d4f3f0a2627a9f4b2308363d41ad1452fea75c9f1b3d73f585d",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-temporal-plain-1.response.json",
+    "bytes": 4249,
+    "sha256": "bc7ab8ce315b52640df70821d5073786e55cf1db06452484d13138a689eced52",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-temporal-plain-1.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-temporal-plain-2.request.json",
+    "bytes": 15741,
+    "sha256": "addf85466af39d4f3f0a2627a9f4b2308363d41ad1452fea75c9f1b3d73f585d",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-temporal-plain-2.response.json",
+    "bytes": 4248,
+    "sha256": "8b8e37cdca9cfcb35fbb7eefe85fbc697a5553239d7105679def8de3fd5fc178",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-temporal-plain-2.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-temporal-plain-3.request.json",
+    "bytes": 15741,
+    "sha256": "addf85466af39d4f3f0a2627a9f4b2308363d41ad1452fea75c9f1b3d73f585d",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-temporal-plain-3.response.json",
+    "bytes": 4231,
+    "sha256": "5b0fafcaa7cfd6f6e884eca56286a0cb5308b442081e9cb0e4b2c3aa3fa782d9",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-temporal-plain-3.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-temporal_ordered-context-1.request.json",
+    "bytes": 59745,
+    "sha256": "c3da33e9681480b47c7f41c635ad272e5a175dfc23fcc5554cce3dc6e8416074",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-temporal_ordered-context-1.response.json",
+    "bytes": 243,
+    "sha256": "52323f447a2b57b6695db326bb0db52a3684d110858d274ee6c56f1db12f1bb7",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-temporal_ordered-context-1.transport.json",
+    "bytes": 48,
+    "sha256": "572fdc936fd1fa001add8c16f9a75735db46c30350abdf9686a4f9d207399f24",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-temporal_ordered-context-2.request.json",
+    "bytes": 59745,
+    "sha256": "c3da33e9681480b47c7f41c635ad272e5a175dfc23fcc5554cce3dc6e8416074",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-temporal_ordered-context-2.response.json",
+    "bytes": 243,
+    "sha256": "f478709af9a50b19c1b1cca6a43ce7a6fdbc196a7afee05622d42eedb92f062d",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-temporal_ordered-context-2.transport.json",
+    "bytes": 48,
+    "sha256": "572fdc936fd1fa001add8c16f9a75735db46c30350abdf9686a4f9d207399f24",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-temporal_ordered-context-3.request.json",
+    "bytes": 59745,
+    "sha256": "c3da33e9681480b47c7f41c635ad272e5a175dfc23fcc5554cce3dc6e8416074",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-temporal_ordered-context-3.response.json",
+    "bytes": 243,
+    "sha256": "bbdd63abb4a113b86179c9dbc9b7a1ea9fd902b03118fad0b43fc49178dfdab0",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-temporal_ordered-context-3.transport.json",
+    "bytes": 48,
+    "sha256": "572fdc936fd1fa001add8c16f9a75735db46c30350abdf9686a4f9d207399f24",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-temporal_ordered-plain-1.request.json",
+    "bytes": 18018,
+    "sha256": "14910d9d38f39bf5b6c06ee761334a238321eaa89a137dc80a24461b17682f94",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-temporal_ordered-plain-1.response.json",
+    "bytes": 4250,
+    "sha256": "bf1150b90a94524d9f78d26dd4635c3e039be93428e3a70bdf78736b4e806ef1",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-temporal_ordered-plain-1.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-temporal_ordered-plain-2.request.json",
+    "bytes": 18018,
+    "sha256": "14910d9d38f39bf5b6c06ee761334a238321eaa89a137dc80a24461b17682f94",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-temporal_ordered-plain-2.response.json",
+    "bytes": 4242,
+    "sha256": "7b8ba0d92055639e20023b74e7996e29736430464d542cb10540e03e96542a37",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-temporal_ordered-plain-2.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-temporal_ordered-plain-3.request.json",
+    "bytes": 18018,
+    "sha256": "14910d9d38f39bf5b6c06ee761334a238321eaa89a137dc80a24461b17682f94",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-temporal_ordered-plain-3.response.json",
+    "bytes": 4233,
+    "sha256": "e0afa76cd894f18d69b1a173285824a6f3ff9a02c8366cad1f627129eee9a41e",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-temporal_ordered-plain-3.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-value_percentile-context-1.request.json",
+    "bytes": 53115,
+    "sha256": "0859ed625f14dfca02f0d4d57b47677fd40f5bf67b1780dde814ed206652e688",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-value_percentile-context-1.response.json",
+    "bytes": 243,
+    "sha256": "37c712b2eeefb42aecc5266fb4c778c1f2f4d77453c4c924d533969bca37dbe6",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-value_percentile-context-1.transport.json",
+    "bytes": 48,
+    "sha256": "572fdc936fd1fa001add8c16f9a75735db46c30350abdf9686a4f9d207399f24",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-value_percentile-context-2.request.json",
+    "bytes": 53115,
+    "sha256": "0859ed625f14dfca02f0d4d57b47677fd40f5bf67b1780dde814ed206652e688",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-value_percentile-context-2.response.json",
+    "bytes": 243,
+    "sha256": "234f1f9bd4fec6c6163348d15b4efa2daa380e86b904628f30665283642ba9c9",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-value_percentile-context-2.transport.json",
+    "bytes": 48,
+    "sha256": "572fdc936fd1fa001add8c16f9a75735db46c30350abdf9686a4f9d207399f24",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-value_percentile-context-3.request.json",
+    "bytes": 53115,
+    "sha256": "0859ed625f14dfca02f0d4d57b47677fd40f5bf67b1780dde814ed206652e688",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-remaining/sparse-value_percentile-context-3.transport.json",
+    "bytes": 128,
+    "sha256": "1c54ef80e817820ed81330f536221b0ea7a60d5efeb27fee5fc64ac959b0f0c8",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/container-inspect.json",
+    "bytes": 9699,
+    "sha256": "bc8883d60d68e31eae3e160dca6266d1e7583cd5d44bbf183e31abaef4ce4436",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/engine-version.request.json",
+    "bytes": 81,
+    "sha256": "1c2ed5cab6e58e1519978d8b9a3ba273679754b7167695e2b1dcad99dd3eb277",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/engine-version.response.json",
+    "bytes": 402,
+    "sha256": "7338dde20b69583c4555cb4cd0d34ee526430709e06cbb802820b55c0596323a",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/engine-version.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-event_count-plain-1.request.json",
+    "bytes": 21095,
+    "sha256": "54a8c2b6bf01a192fa42f69d8c33ed4dafef7cf09809fc0b6451489d8a77ddd0",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-event_count-plain-1.response.json",
+    "bytes": 4244,
+    "sha256": "ae064d83180adde870d292bf646bd673e97092d7d5eb2add8d428b79483479c4",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-event_count-plain-1.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-event_count-plain-2.request.json",
+    "bytes": 21095,
+    "sha256": "54a8c2b6bf01a192fa42f69d8c33ed4dafef7cf09809fc0b6451489d8a77ddd0",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-event_count-plain-2.response.json",
+    "bytes": 4243,
+    "sha256": "f6dfd57691cc6c9a97bc5d9d4253e77880bbe17093ecbb0c1dee5586d455be45",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-event_count-plain-2.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-event_count-plain-3.request.json",
+    "bytes": 21095,
+    "sha256": "54a8c2b6bf01a192fa42f69d8c33ed4dafef7cf09809fc0b6451489d8a77ddd0",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-event_count-plain-3.response.json",
+    "bytes": 4252,
+    "sha256": "f5f8bb595d72e31fd2298612b99c6d9a97974ac4a45dda393d4b709a6d41a369",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-event_count-plain-3.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-temporal-plain-1.request.json",
+    "bytes": 21551,
+    "sha256": "ef8ee82663c930ae9235b5fcf096a4d08ef63bedcefedf32defa4e75a0d28992",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-temporal-plain-1.response.json",
+    "bytes": 6837,
+    "sha256": "a75da9612eb75b6263628384130ac7df30e09fab5a5b81d36fbeddcb518affea",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-temporal-plain-1.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-temporal-plain-2.request.json",
+    "bytes": 21551,
+    "sha256": "ef8ee82663c930ae9235b5fcf096a4d08ef63bedcefedf32defa4e75a0d28992",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-temporal-plain-2.response.json",
+    "bytes": 6838,
+    "sha256": "7d8dbac0d695fefc7b2ed5f1935034a9ac5e1cd309ce92520b0db32207b3274f",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-temporal-plain-2.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-temporal-plain-3.request.json",
+    "bytes": 21551,
+    "sha256": "ef8ee82663c930ae9235b5fcf096a4d08ef63bedcefedf32defa4e75a0d28992",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-temporal-plain-3.response.json",
+    "bytes": 6838,
+    "sha256": "77931c82f23b791d0d2c060052a89bb0ebf66b61204735d1a15154f2965ecbaa",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-temporal-plain-3.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-temporal_ordered-plain-1.request.json",
+    "bytes": 25052,
+    "sha256": "c84f13719ab4714d43907547f5e62154b8838f4332af3a52c3f0d6c21c6295e3",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-temporal_ordered-plain-1.response.json",
+    "bytes": 5462,
+    "sha256": "bb975036d8874a3f5c12f3db60c24cba2c00978531ebf9f5fda9cee3f9010dde",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-temporal_ordered-plain-1.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-temporal_ordered-plain-2.request.json",
+    "bytes": 25052,
+    "sha256": "c84f13719ab4714d43907547f5e62154b8838f4332af3a52c3f0d6c21c6295e3",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-temporal_ordered-plain-2.response.json",
+    "bytes": 5462,
+    "sha256": "4454a819c959f011dfb6c00bf0b027ec53b35a319eb33900b176166aa28a61a7",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-temporal_ordered-plain-2.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-temporal_ordered-plain-3.request.json",
+    "bytes": 25052,
+    "sha256": "c84f13719ab4714d43907547f5e62154b8838f4332af3a52c3f0d6c21c6295e3",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-temporal_ordered-plain-3.response.json",
+    "bytes": 5461,
+    "sha256": "1043d167ad1de48e5db67604f46ca1ac7f627f49f15efac9d1dd742602d26a6b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-temporal_ordered-plain-3.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-value_avg-plain-1.request.json",
+    "bytes": 20758,
+    "sha256": "47dd8858387c66617984351328e3499b55789dfde77d61e405b5c6a006e35cf1",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-value_avg-plain-1.response.json",
+    "bytes": 4240,
+    "sha256": "e44e4362e7547e06161ee7e4abcbcdce27d4a67eef204229bec6bbb3d4432879",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-value_avg-plain-1.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-value_avg-plain-2.request.json",
+    "bytes": 20758,
+    "sha256": "47dd8858387c66617984351328e3499b55789dfde77d61e405b5c6a006e35cf1",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-value_avg-plain-2.response.json",
+    "bytes": 4241,
+    "sha256": "5ecbf7d435af34fc50f66bef1f074957f2216fed3072b5c68427e9a45f3353ee",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-value_avg-plain-2.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-value_avg-plain-3.request.json",
+    "bytes": 20758,
+    "sha256": "47dd8858387c66617984351328e3499b55789dfde77d61e405b5c6a006e35cf1",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-value_avg-plain-3.response.json",
+    "bytes": 4247,
+    "sha256": "9034c46da207e4cb26cd54570545ed0d2200cc77f9833e0986aa4c318333ceb5",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-value_avg-plain-3.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-value_count-plain-1.request.json",
+    "bytes": 21373,
+    "sha256": "7ebe38e0879b4bb1975055d1fbfa9a2b5619533a03cf17bf98630100942b747a",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-value_count-plain-1.response.json",
+    "bytes": 4250,
+    "sha256": "19fdb00a8604bf464841ab888ecc32a4b75f77d575d190608cc973a86a96facd",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-value_count-plain-1.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-value_count-plain-2.request.json",
+    "bytes": 21373,
+    "sha256": "7ebe38e0879b4bb1975055d1fbfa9a2b5619533a03cf17bf98630100942b747a",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-value_count-plain-2.response.json",
+    "bytes": 4250,
+    "sha256": "74cf0e1f71d6ce1def9b44f0ea385023e0f75106300dfbb30f963059848ceefd",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-value_count-plain-2.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-value_count-plain-3.request.json",
+    "bytes": 21373,
+    "sha256": "7ebe38e0879b4bb1975055d1fbfa9a2b5619533a03cf17bf98630100942b747a",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-value_count-plain-3.response.json",
+    "bytes": 4250,
+    "sha256": "00d62f92655609813af7734964dee2b7a9d284400d6a29bb0d2bb04448dcd88f",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-value_count-plain-3.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-value_percentile-plain-1.request.json",
+    "bytes": 22280,
+    "sha256": "ae31abef878a5573d9ac8548f5e2a4797f44ba4e8f7880013bbc078a968b661b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-value_percentile-plain-1.response.json",
+    "bytes": 4258,
+    "sha256": "c801e09362fcba33fd57ca2abc0fb93bccb701b8043506d3b2784a70fa58a9c4",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-value_percentile-plain-1.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-value_percentile-plain-2.request.json",
+    "bytes": 22280,
+    "sha256": "ae31abef878a5573d9ac8548f5e2a4797f44ba4e8f7880013bbc078a968b661b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-value_percentile-plain-2.response.json",
+    "bytes": 4259,
+    "sha256": "ff5fd8527751311b0c8fc8734779e6bedafc67a9fd809060dc10453418af1ea8",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-value_percentile-plain-2.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-value_percentile-plain-3.request.json",
+    "bytes": 22280,
+    "sha256": "ae31abef878a5573d9ac8548f5e2a4797f44ba4e8f7880013bbc078a968b661b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-value_percentile-plain-3.response.json",
+    "bytes": 4258,
+    "sha256": "d657734321758aec6b44d2a7aa96f1b72ddee4cb71bd5a15452567e4786ceb20",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-value_percentile-plain-3.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-value_sum-plain-1.request.json",
+    "bytes": 22351,
+    "sha256": "386508045da36ff5af84ee59e5a7dcc203e21b5d4af42b0c40187422c96ffa6b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-value_sum-plain-1.response.json",
+    "bytes": 4252,
+    "sha256": "34e35166d49cf93bdf06bc29b269fc3a160e40824d7937d5d0b425c91d8090b3",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-value_sum-plain-1.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-value_sum-plain-2.request.json",
+    "bytes": 22351,
+    "sha256": "386508045da36ff5af84ee59e5a7dcc203e21b5d4af42b0c40187422c96ffa6b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-value_sum-plain-2.response.json",
+    "bytes": 4252,
+    "sha256": "b53788c016eeba1c04082561d6a5b1efbd64b1cea946fea4e9f3eb9c0e91997f",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-value_sum-plain-2.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-value_sum-plain-3.request.json",
+    "bytes": 22351,
+    "sha256": "386508045da36ff5af84ee59e5a7dcc203e21b5d4af42b0c40187422c96ffa6b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-value_sum-plain-3.response.json",
+    "bytes": 4251,
+    "sha256": "ee2e5471bb0d8222dc5453103def345474e5c088863fea34e0ccf263cacc2eef",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/hot-group-value_sum-plain-3.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-event_count-plain-1.request.json",
+    "bytes": 21315,
+    "sha256": "e8392a0ae9e2a16248fa1345dc288dd4e622313e15fdbd5690f564f5b2c66479",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-event_count-plain-1.response.json",
+    "bytes": 8881,
+    "sha256": "762f2d333b8d2ce4009d6d4ddeb2e037458588e9e8dda68f621759ceed4a21a9",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-event_count-plain-1.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-event_count-plain-2.request.json",
+    "bytes": 21315,
+    "sha256": "e8392a0ae9e2a16248fa1345dc288dd4e622313e15fdbd5690f564f5b2c66479",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-event_count-plain-2.response.json",
+    "bytes": 8888,
+    "sha256": "015e944cf6807cf82851e97f65dda0989bd279b68053910b09a560e741ed4806",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-event_count-plain-2.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-event_count-plain-3.request.json",
+    "bytes": 21315,
+    "sha256": "e8392a0ae9e2a16248fa1345dc288dd4e622313e15fdbd5690f564f5b2c66479",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-event_count-plain-3.response.json",
+    "bytes": 8880,
+    "sha256": "7ecfa6917954ebed66f55a38fc631433e1250d5fede8a795917c671b332a3d79",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-event_count-plain-3.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-temporal-plain-1.request.json",
+    "bytes": 21393,
+    "sha256": "6837997e24c9f3f82664e458a72299b8c16cd7bab6aa57c97fb930b9ef8adcd9",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-temporal-plain-1.response.json",
+    "bytes": 8225,
+    "sha256": "c01cd56e3641be07b35b2e136336918f6a478b361e13c9f5d25e0bf995e738e7",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-temporal-plain-1.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-temporal-plain-2.request.json",
+    "bytes": 21393,
+    "sha256": "6837997e24c9f3f82664e458a72299b8c16cd7bab6aa57c97fb930b9ef8adcd9",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-temporal-plain-2.response.json",
+    "bytes": 8217,
+    "sha256": "e93536ac1a8a593d880f99abc71b071e03e9ee17f357fb3c00ee1521d279889b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-temporal-plain-2.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-temporal-plain-3.request.json",
+    "bytes": 21393,
+    "sha256": "6837997e24c9f3f82664e458a72299b8c16cd7bab6aa57c97fb930b9ef8adcd9",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-temporal-plain-3.response.json",
+    "bytes": 8217,
+    "sha256": "d093b60fd8f5345f599e90e1afec493249f46cd9967fc7ae75e6bc1d9a8cbab4",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-temporal-plain-3.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-temporal_ordered-plain-1.request.json",
+    "bytes": 23670,
+    "sha256": "29df0a0f633b4a29fbdf01fe16066bc4004b0d38abae0977cbff244a6ad62d44",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-temporal_ordered-plain-1.response.json",
+    "bytes": 5575,
+    "sha256": "70b327f6884bbad8a69afaf33dc0e489417f5a492d141372f944c4643be1c092",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-temporal_ordered-plain-1.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-temporal_ordered-plain-2.request.json",
+    "bytes": 23670,
+    "sha256": "29df0a0f633b4a29fbdf01fe16066bc4004b0d38abae0977cbff244a6ad62d44",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-temporal_ordered-plain-2.response.json",
+    "bytes": 5568,
+    "sha256": "2ada10f060e1bd67b733b4f80818fd0a1a1cee64a02f0e306ed6af11ae08540c",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-temporal_ordered-plain-2.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-temporal_ordered-plain-3.request.json",
+    "bytes": 23670,
+    "sha256": "29df0a0f633b4a29fbdf01fe16066bc4004b0d38abae0977cbff244a6ad62d44",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-temporal_ordered-plain-3.response.json",
+    "bytes": 5576,
+    "sha256": "32deff894dc4adbdb0e02b1b794572419990fbbc6a242474898d2333fee2784c",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-temporal_ordered-plain-3.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-value_avg-plain-1.request.json",
+    "bytes": 20978,
+    "sha256": "9e25ab3505447229535a6767136f4624e7366bb9e1bd51dbcda842d17e27eebe",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-value_avg-plain-1.response.json",
+    "bytes": 9943,
+    "sha256": "48d5de26bc555dd60cb06b473ca38fa8f08d85f12c56a347878385c523d034b2",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-value_avg-plain-1.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-value_avg-plain-2.request.json",
+    "bytes": 20978,
+    "sha256": "9e25ab3505447229535a6767136f4624e7366bb9e1bd51dbcda842d17e27eebe",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-value_avg-plain-2.response.json",
+    "bytes": 9935,
+    "sha256": "5b01635689c56e1c2071e79ed2d85b92a0174f0a1e0ff59d2c48135009993997",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-value_avg-plain-2.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-value_avg-plain-3.request.json",
+    "bytes": 20978,
+    "sha256": "9e25ab3505447229535a6767136f4624e7366bb9e1bd51dbcda842d17e27eebe",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-value_avg-plain-3.response.json",
+    "bytes": 9936,
+    "sha256": "7d79f29f26615afcc79d03b15c90f16ba57e4b8eb3d01d7c10478a4cf82c284c",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-value_avg-plain-3.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-value_count-plain-1.request.json",
+    "bytes": 21593,
+    "sha256": "f08e549f2dff79e137eb68bde3d7b5ab5a62b0916d4035d5816ee50d5e96c669",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-value_count-plain-1.response.json",
+    "bytes": 8880,
+    "sha256": "f12afce0cc6b16d8b02f6fe0955e4533dd6acd52327e49eda0ad7225a59370cc",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-value_count-plain-1.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-value_count-plain-2.request.json",
+    "bytes": 21593,
+    "sha256": "f08e549f2dff79e137eb68bde3d7b5ab5a62b0916d4035d5816ee50d5e96c669",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-value_count-plain-2.response.json",
+    "bytes": 8888,
+    "sha256": "0e4ad28837ddaed061f04f5fbc2f977c3595f45a8156206768a1ffc9ab759944",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-value_count-plain-2.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-value_count-plain-3.request.json",
+    "bytes": 21593,
+    "sha256": "f08e549f2dff79e137eb68bde3d7b5ab5a62b0916d4035d5816ee50d5e96c669",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-value_count-plain-3.response.json",
+    "bytes": 8888,
+    "sha256": "62b5399996f5624699bad36dd1b45a944d9d8c30c04c019f082f5fa4bcc2d574",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-value_count-plain-3.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-value_percentile-plain-1.request.json",
+    "bytes": 22496,
+    "sha256": "b596a0bacc2112fe43ab69d127f5d20f7b7cc5b1113531b87ffec8f4b2138c66",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-value_percentile-plain-1.response.json",
+    "bytes": 9550,
+    "sha256": "86913f53d3a7c952aa81c809bf9ac81ff34c2646f8c89b5b223199443997f0c7",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-value_percentile-plain-1.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-value_percentile-plain-2.request.json",
+    "bytes": 22496,
+    "sha256": "b596a0bacc2112fe43ab69d127f5d20f7b7cc5b1113531b87ffec8f4b2138c66",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-value_percentile-plain-2.response.json",
+    "bytes": 9558,
+    "sha256": "3e3593e4ddf6a88a6688416ebe23b5a7f5e8192bdaa0ba2b9659c346f0f4146e",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-value_percentile-plain-2.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-value_percentile-plain-3.request.json",
+    "bytes": 22496,
+    "sha256": "b596a0bacc2112fe43ab69d127f5d20f7b7cc5b1113531b87ffec8f4b2138c66",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-value_percentile-plain-3.response.json",
+    "bytes": 9557,
+    "sha256": "3cca9357184407992f82d2557114d316b9ddf4b44a5b63ddf12258335ebf975c",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-value_percentile-plain-3.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-value_sum-plain-1.request.json",
+    "bytes": 22567,
+    "sha256": "93dd63508796dc0966cde127497e38850d76d309c037628e348ea121280c0725",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-value_sum-plain-1.response.json",
+    "bytes": 9611,
+    "sha256": "177ab2a6dc2b7427f10542a349e2f3f1a719834ba60cb634d0c645d8f4ba40b4",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-value_sum-plain-1.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-value_sum-plain-2.request.json",
+    "bytes": 22567,
+    "sha256": "93dd63508796dc0966cde127497e38850d76d309c037628e348ea121280c0725",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-value_sum-plain-2.response.json",
+    "bytes": 9611,
+    "sha256": "c4136ee1c39c652be58f1813ceb63893ecc9c45becb896256424d258d7378378",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-value_sum-plain-2.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-value_sum-plain-3.request.json",
+    "bytes": 22567,
+    "sha256": "93dd63508796dc0966cde127497e38850d76d309c037628e348ea121280c0725",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-value_sum-plain-3.response.json",
+    "bytes": 9611,
+    "sha256": "399f3d39882c6d0a61671589380558110e9c5f7821539dc17514ac654199770a",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/many-groups-value_sum-plain-3.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-fast/results.json",
+    "bytes": 238097,
+    "sha256": "160c9210b6d96dffedb11a788be243b20550ebbf91454cc44cdfe4b76bcf5681",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/container-inspect.json",
+    "bytes": 9699,
+    "sha256": "bc8883d60d68e31eae3e160dca6266d1e7583cd5d44bbf183e31abaef4ce4436",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/dense-mixed-multilevel-context-1.request.json",
+    "bytes": 283667,
+    "sha256": "7f3a5f14e683be6d3ba054d859070789ea9451ad3f1e9dbe0fcde75fe65c35af",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/dense-mixed-multilevel-context-1.transport.json",
+    "bytes": 128,
+    "sha256": "1c54ef80e817820ed81330f536221b0ea7a60d5efeb27fee5fc64ac959b0f0c8",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/dense-mixed-multilevel-context-2.request.json",
+    "bytes": 283667,
+    "sha256": "7f3a5f14e683be6d3ba054d859070789ea9451ad3f1e9dbe0fcde75fe65c35af",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/dense-mixed-multilevel-context-2.response.json",
+    "bytes": 243,
+    "sha256": "d1454c4b9d0bfd30849c1aea2c634de2835f8bb18d6642e8dfeb23894d19d65b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/dense-mixed-multilevel-context-2.transport.json",
+    "bytes": 48,
+    "sha256": "572fdc936fd1fa001add8c16f9a75735db46c30350abdf9686a4f9d207399f24",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/dense-mixed-multilevel-context-3.request.json",
+    "bytes": 283667,
+    "sha256": "7f3a5f14e683be6d3ba054d859070789ea9451ad3f1e9dbe0fcde75fe65c35af",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/dense-mixed-multilevel-context-3.response.json",
+    "bytes": 243,
+    "sha256": "b46528f658b231d4d0dad0f3dd51955bdc5d97e5f04f8caeb6fd7bee93f22dcb",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/dense-mixed-multilevel-context-3.transport.json",
+    "bytes": 48,
+    "sha256": "572fdc936fd1fa001add8c16f9a75735db46c30350abdf9686a4f9d207399f24",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/dense-mixed-multilevel-plain-1.request.json",
+    "bytes": 69936,
+    "sha256": "28f0fe34767d34b1b02ef623c69f9b8e5ef982f0852db8eaf8243d131e0e7bb7",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/dense-mixed-multilevel-plain-1.response.json",
+    "bytes": 243,
+    "sha256": "0857ebf259962aabc095e051d7abe30de9fd98d8860f9f19be8bf69f1ec50e9d",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/dense-mixed-multilevel-plain-1.transport.json",
+    "bytes": 48,
+    "sha256": "572fdc936fd1fa001add8c16f9a75735db46c30350abdf9686a4f9d207399f24",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/dense-mixed-multilevel-plain-2.request.json",
+    "bytes": 69936,
+    "sha256": "28f0fe34767d34b1b02ef623c69f9b8e5ef982f0852db8eaf8243d131e0e7bb7",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/dense-mixed-multilevel-plain-2.response.json",
+    "bytes": 243,
+    "sha256": "b85652e06015e2467616a0e906bcaab07ee99e567f1211632d68990ddbdc6b3b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/dense-mixed-multilevel-plain-2.transport.json",
+    "bytes": 48,
+    "sha256": "572fdc936fd1fa001add8c16f9a75735db46c30350abdf9686a4f9d207399f24",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/dense-mixed-multilevel-plain-3.request.json",
+    "bytes": 69936,
+    "sha256": "28f0fe34767d34b1b02ef623c69f9b8e5ef982f0852db8eaf8243d131e0e7bb7",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/dense-mixed-multilevel-plain-3.response.json",
+    "bytes": 243,
+    "sha256": "5be519020ba7f2c15e471b8c39c9860404480c72ab57758f15aa9d959d4c79dd",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/dense-mixed-multilevel-plain-3.transport.json",
+    "bytes": 48,
+    "sha256": "572fdc936fd1fa001add8c16f9a75735db46c30350abdf9686a4f9d207399f24",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/dense-temporal_ordered-context-1.request.json",
+    "bytes": 60987,
+    "sha256": "74d692db1db42ad4941cf37a30aa5b9339c92edb4b82214189948c888e62765c",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/dense-temporal_ordered-context-1.response.json",
+    "bytes": 243,
+    "sha256": "a338e5604a621ac12056073e8c7ac3f95cd7b8f8b55d3e12d66ec5932727dc83",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/dense-temporal_ordered-context-1.transport.json",
+    "bytes": 48,
+    "sha256": "572fdc936fd1fa001add8c16f9a75735db46c30350abdf9686a4f9d207399f24",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/dense-temporal_ordered-context-2.request.json",
+    "bytes": 60987,
+    "sha256": "74d692db1db42ad4941cf37a30aa5b9339c92edb4b82214189948c888e62765c",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/dense-temporal_ordered-context-2.response.json",
+    "bytes": 243,
+    "sha256": "5f670e485a0e8e761b70e2ef4ea7e7d0275cdcb9f65ad46012bf20587a57db02",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/dense-temporal_ordered-context-2.transport.json",
+    "bytes": 48,
+    "sha256": "572fdc936fd1fa001add8c16f9a75735db46c30350abdf9686a4f9d207399f24",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/dense-temporal_ordered-context-3.request.json",
+    "bytes": 60987,
+    "sha256": "74d692db1db42ad4941cf37a30aa5b9339c92edb4b82214189948c888e62765c",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/dense-temporal_ordered-context-3.response.json",
+    "bytes": 243,
+    "sha256": "4c8e63a8c94dced074b8414438e8758759ed87676fa700af95f696f84297cf07",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/dense-temporal_ordered-context-3.transport.json",
+    "bytes": 48,
+    "sha256": "572fdc936fd1fa001add8c16f9a75735db46c30350abdf9686a4f9d207399f24",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/engine-version.request.json",
+    "bytes": 81,
+    "sha256": "1c2ed5cab6e58e1519978d8b9a3ba273679754b7167695e2b1dcad99dd3eb277",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/engine-version.response.json",
+    "bytes": 402,
+    "sha256": "7338dde20b69583c4555cb4cd0d34ee526430709e06cbb802820b55c0596323a",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/engine-version.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/many-groups-event_count-context-1.request.json",
+    "bytes": 56987,
+    "sha256": "14876c29b30433b51fa6089292ecccd028e99c7b5db8ec13a4a7e5f9bdc9d2dd",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/many-groups-event_count-context-1.transport.json",
+    "bytes": 128,
+    "sha256": "1c54ef80e817820ed81330f536221b0ea7a60d5efeb27fee5fc64ac959b0f0c8",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/many-groups-event_count-context-2.request.json",
+    "bytes": 56987,
+    "sha256": "14876c29b30433b51fa6089292ecccd028e99c7b5db8ec13a4a7e5f9bdc9d2dd",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/many-groups-event_count-context-2.transport.json",
+    "bytes": 128,
+    "sha256": "1c54ef80e817820ed81330f536221b0ea7a60d5efeb27fee5fc64ac959b0f0c8",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/many-groups-event_count-context-3.request.json",
+    "bytes": 56987,
+    "sha256": "14876c29b30433b51fa6089292ecccd028e99c7b5db8ec13a4a7e5f9bdc9d2dd",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/many-groups-event_count-context-3.transport.json",
+    "bytes": 128,
+    "sha256": "4b549c983f11309338b76fc4200b307f5cc13720c4adeffbcd8461a5f53088d4",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/many-groups-value_avg-context-1.request.json",
+    "bytes": 56641,
+    "sha256": "230ed24643a34baffbe00b62e692c857e3e951dece2c886ac0d737568b1fd8fd",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/many-groups-value_avg-context-1.transport.json",
+    "bytes": 128,
+    "sha256": "1c54ef80e817820ed81330f536221b0ea7a60d5efeb27fee5fc64ac959b0f0c8",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/many-groups-value_avg-context-2.request.json",
+    "bytes": 56641,
+    "sha256": "230ed24643a34baffbe00b62e692c857e3e951dece2c886ac0d737568b1fd8fd",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/many-groups-value_avg-context-2.response.json",
+    "bytes": 243,
+    "sha256": "5a50c25f470ca30d6dd87b5c9db3db8163b27ae45cd498a6ca5b8bc5e0796f24",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/many-groups-value_avg-context-2.transport.json",
+    "bytes": 48,
+    "sha256": "572fdc936fd1fa001add8c16f9a75735db46c30350abdf9686a4f9d207399f24",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/many-groups-value_avg-context-3.request.json",
+    "bytes": 56641,
+    "sha256": "230ed24643a34baffbe00b62e692c857e3e951dece2c886ac0d737568b1fd8fd",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/many-groups-value_avg-context-3.transport.json",
+    "bytes": 128,
+    "sha256": "1c54ef80e817820ed81330f536221b0ea7a60d5efeb27fee5fc64ac959b0f0c8",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/many-groups-value_count-context-1.request.json",
+    "bytes": 57429,
+    "sha256": "525f9647fb6f42187fdba87a7c85f929ae0af0a6f050d3a8c747fcb333d361a9",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/many-groups-value_count-context-1.transport.json",
+    "bytes": 128,
+    "sha256": "1c54ef80e817820ed81330f536221b0ea7a60d5efeb27fee5fc64ac959b0f0c8",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/many-groups-value_count-context-2.request.json",
+    "bytes": 57429,
+    "sha256": "525f9647fb6f42187fdba87a7c85f929ae0af0a6f050d3a8c747fcb333d361a9",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/many-groups-value_count-context-2.transport.json",
+    "bytes": 128,
+    "sha256": "4b549c983f11309338b76fc4200b307f5cc13720c4adeffbcd8461a5f53088d4",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/many-groups-value_count-context-3.request.json",
+    "bytes": 57429,
+    "sha256": "525f9647fb6f42187fdba87a7c85f929ae0af0a6f050d3a8c747fcb333d361a9",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/many-groups-value_count-context-3.transport.json",
+    "bytes": 128,
+    "sha256": "4b549c983f11309338b76fc4200b307f5cc13720c4adeffbcd8461a5f53088d4",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/many-groups-value_sum-context-1.request.json",
+    "bytes": 58614,
+    "sha256": "d803ad97765db3c66580486ebb11f37564f0bd5263871aad95ffc1af62576b8a",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/many-groups-value_sum-context-1.transport.json",
+    "bytes": 128,
+    "sha256": "1c54ef80e817820ed81330f536221b0ea7a60d5efeb27fee5fc64ac959b0f0c8",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/many-groups-value_sum-context-2.request.json",
+    "bytes": 58614,
+    "sha256": "d803ad97765db3c66580486ebb11f37564f0bd5263871aad95ffc1af62576b8a",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/many-groups-value_sum-context-2.transport.json",
+    "bytes": 128,
+    "sha256": "1c54ef80e817820ed81330f536221b0ea7a60d5efeb27fee5fc64ac959b0f0c8",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/many-groups-value_sum-context-3.request.json",
+    "bytes": 58614,
+    "sha256": "d803ad97765db3c66580486ebb11f37564f0bd5263871aad95ffc1af62576b8a",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/many-groups-value_sum-context-3.transport.json",
+    "bytes": 128,
+    "sha256": "1c54ef80e817820ed81330f536221b0ea7a60d5efeb27fee5fc64ac959b0f0c8",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch1/results.json",
+    "bytes": 12219,
+    "sha256": "b1bbafc2314d1e43cd7eac348d26767c3eab0278ba1bbc1c6fb67a4b670bebdc",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/container-inspect.json",
+    "bytes": 9699,
+    "sha256": "bc8883d60d68e31eae3e160dca6266d1e7583cd5d44bbf183e31abaef4ce4436",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/engine-version.request.json",
+    "bytes": 81,
+    "sha256": "1c2ed5cab6e58e1519978d8b9a3ba273679754b7167695e2b1dcad99dd3eb277",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/engine-version.response.json",
+    "bytes": 402,
+    "sha256": "7338dde20b69583c4555cb4cd0d34ee526430709e06cbb802820b55c0596323a",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/engine-version.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/hot-group-event_count-context-1.request.json",
+    "bytes": 56771,
+    "sha256": "9bbcb91565f12d58b101256aef9ae08f00599ecb0d4bfd39da1f44cc972688e7",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/hot-group-event_count-context-1.response.json",
+    "bytes": 249,
+    "sha256": "ce9bc349ce42c142d427614b72fa78327518773c044dacef157c587a83891c18",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/hot-group-event_count-context-1.transport.json",
+    "bytes": 48,
+    "sha256": "0a128a0e67c88702a9a13d745258131159ad66c807917c9df03070ccc5ecb04b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/hot-group-event_count-context-2.request.json",
+    "bytes": 56771,
+    "sha256": "9bbcb91565f12d58b101256aef9ae08f00599ecb0d4bfd39da1f44cc972688e7",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/hot-group-event_count-context-2.response.json",
+    "bytes": 243,
+    "sha256": "6e9516e44c30e79551cd6e2e964508d40cf8e8674f46ea31f4365b6b7e08df82",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/hot-group-event_count-context-2.transport.json",
+    "bytes": 48,
+    "sha256": "572fdc936fd1fa001add8c16f9a75735db46c30350abdf9686a4f9d207399f24",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/hot-group-event_count-context-3.request.json",
+    "bytes": 56771,
+    "sha256": "9bbcb91565f12d58b101256aef9ae08f00599ecb0d4bfd39da1f44cc972688e7",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/hot-group-event_count-context-3.transport.json",
+    "bytes": 128,
+    "sha256": "4b549c983f11309338b76fc4200b307f5cc13720c4adeffbcd8461a5f53088d4",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/hot-group-value_count-context-1.request.json",
+    "bytes": 57213,
+    "sha256": "e3c99aec51c920080e34121ea432f000708c8eb5d62d6fe6374bb91b721d47a1",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/hot-group-value_count-context-1.transport.json",
+    "bytes": 128,
+    "sha256": "4b549c983f11309338b76fc4200b307f5cc13720c4adeffbcd8461a5f53088d4",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/hot-group-value_count-context-2.request.json",
+    "bytes": 57213,
+    "sha256": "e3c99aec51c920080e34121ea432f000708c8eb5d62d6fe6374bb91b721d47a1",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/hot-group-value_count-context-2.transport.json",
+    "bytes": 128,
+    "sha256": "1c54ef80e817820ed81330f536221b0ea7a60d5efeb27fee5fc64ac959b0f0c8",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/hot-group-value_count-context-3.request.json",
+    "bytes": 57213,
+    "sha256": "e3c99aec51c920080e34121ea432f000708c8eb5d62d6fe6374bb91b721d47a1",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/hot-group-value_count-context-3.transport.json",
+    "bytes": 128,
+    "sha256": "1c54ef80e817820ed81330f536221b0ea7a60d5efeb27fee5fc64ac959b0f0c8",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/many-groups-mixed-multilevel-context-1.request.json",
+    "bytes": 288077,
+    "sha256": "b6062892f81e982d684e9a58bf6b94576a928db95ea9b0c2ead791787f76970c",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/many-groups-mixed-multilevel-context-1.transport.json",
+    "bytes": 128,
+    "sha256": "4b549c983f11309338b76fc4200b307f5cc13720c4adeffbcd8461a5f53088d4",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/many-groups-mixed-multilevel-context-2.request.json",
+    "bytes": 288077,
+    "sha256": "b6062892f81e982d684e9a58bf6b94576a928db95ea9b0c2ead791787f76970c",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/many-groups-mixed-multilevel-context-2.transport.json",
+    "bytes": 128,
+    "sha256": "4b549c983f11309338b76fc4200b307f5cc13720c4adeffbcd8461a5f53088d4",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/many-groups-mixed-multilevel-context-3.request.json",
+    "bytes": 288077,
+    "sha256": "b6062892f81e982d684e9a58bf6b94576a928db95ea9b0c2ead791787f76970c",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/many-groups-mixed-multilevel-context-3.response.json",
+    "bytes": 243,
+    "sha256": "21ad141ad5a4cb77037864a8827a5a5c6db327e50fb943db7d62dd913cc08d5a",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/many-groups-mixed-multilevel-context-3.transport.json",
+    "bytes": 48,
+    "sha256": "572fdc936fd1fa001add8c16f9a75735db46c30350abdf9686a4f9d207399f24",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/many-groups-mixed-multilevel-plain-1.request.json",
+    "bytes": 74346,
+    "sha256": "b8c3b7dd079f9553184fb025bd7c290183f966ca0d330bea6dae4e6ea452212e",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/many-groups-mixed-multilevel-plain-1.response.json",
+    "bytes": 243,
+    "sha256": "88805749eb74444189d57054b2a0f88bb640170ad8e86de54d6809f9e3a10877",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/many-groups-mixed-multilevel-plain-1.transport.json",
+    "bytes": 48,
+    "sha256": "572fdc936fd1fa001add8c16f9a75735db46c30350abdf9686a4f9d207399f24",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/many-groups-mixed-multilevel-plain-2.request.json",
+    "bytes": 74346,
+    "sha256": "b8c3b7dd079f9553184fb025bd7c290183f966ca0d330bea6dae4e6ea452212e",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/many-groups-mixed-multilevel-plain-2.response.json",
+    "bytes": 243,
+    "sha256": "e992d533d0471b271314f4c36edb805c882ec912bfcfe06a48af457cc5fe755a",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/many-groups-mixed-multilevel-plain-2.transport.json",
+    "bytes": 48,
+    "sha256": "572fdc936fd1fa001add8c16f9a75735db46c30350abdf9686a4f9d207399f24",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/many-groups-mixed-multilevel-plain-3.request.json",
+    "bytes": 74346,
+    "sha256": "b8c3b7dd079f9553184fb025bd7c290183f966ca0d330bea6dae4e6ea452212e",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/many-groups-mixed-multilevel-plain-3.response.json",
+    "bytes": 243,
+    "sha256": "4ff4627ce60d26f3dc54b895992e56c429cf7612567bc99fb8d3b533eb61ae22",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/many-groups-mixed-multilevel-plain-3.transport.json",
+    "bytes": 48,
+    "sha256": "572fdc936fd1fa001add8c16f9a75735db46c30350abdf9686a4f9d207399f24",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/many-groups-temporal-context-1.request.json",
+    "bytes": 58190,
+    "sha256": "43c38fa63098ddbbb696a9fe03213ccdcceaae5bfd3fd15b641e3681cf9533c8",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/many-groups-temporal-context-1.response.json",
+    "bytes": 243,
+    "sha256": "d3cf126292cd328327d4221f16ebed15fce699562ed28c34a3b7412b413882ee",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/many-groups-temporal-context-1.transport.json",
+    "bytes": 48,
+    "sha256": "572fdc936fd1fa001add8c16f9a75735db46c30350abdf9686a4f9d207399f24",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/many-groups-temporal-context-2.request.json",
+    "bytes": 58190,
+    "sha256": "43c38fa63098ddbbb696a9fe03213ccdcceaae5bfd3fd15b641e3681cf9533c8",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/many-groups-temporal-context-2.transport.json",
+    "bytes": 128,
+    "sha256": "1c54ef80e817820ed81330f536221b0ea7a60d5efeb27fee5fc64ac959b0f0c8",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/many-groups-temporal-context-3.request.json",
+    "bytes": 58190,
+    "sha256": "43c38fa63098ddbbb696a9fe03213ccdcceaae5bfd3fd15b641e3681cf9533c8",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/many-groups-temporal-context-3.response.json",
+    "bytes": 243,
+    "sha256": "fcc8a1130747f2862e6c2677111fb6bcfdab63fa45221dd9a90428bda727b634",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/many-groups-temporal-context-3.transport.json",
+    "bytes": 48,
+    "sha256": "572fdc936fd1fa001add8c16f9a75735db46c30350abdf9686a4f9d207399f24",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/many-groups-temporal_ordered-context-1.request.json",
+    "bytes": 65397,
+    "sha256": "2c51d8a7651714b9d5625e7709f8f79617a4ac0ef698ff10d67329d8b4c3eba2",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/many-groups-temporal_ordered-context-1.response.json",
+    "bytes": 243,
+    "sha256": "d751ec776f1e7f75f080e186938e948a7ec60f233648d3a5cfdecc9d84de2e6f",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/many-groups-temporal_ordered-context-1.transport.json",
+    "bytes": 48,
+    "sha256": "572fdc936fd1fa001add8c16f9a75735db46c30350abdf9686a4f9d207399f24",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/many-groups-temporal_ordered-context-2.request.json",
+    "bytes": 65397,
+    "sha256": "2c51d8a7651714b9d5625e7709f8f79617a4ac0ef698ff10d67329d8b4c3eba2",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/many-groups-temporal_ordered-context-2.response.json",
+    "bytes": 243,
+    "sha256": "79b91f4fb6f213b305e054e2b41a07493f74a3d40196169e1bbf314bcf4df0f3",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/many-groups-temporal_ordered-context-2.transport.json",
+    "bytes": 48,
+    "sha256": "572fdc936fd1fa001add8c16f9a75735db46c30350abdf9686a4f9d207399f24",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/many-groups-temporal_ordered-context-3.request.json",
+    "bytes": 65397,
+    "sha256": "2c51d8a7651714b9d5625e7709f8f79617a4ac0ef698ff10d67329d8b4c3eba2",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/many-groups-temporal_ordered-context-3.response.json",
+    "bytes": 243,
+    "sha256": "bb32b2894697ecf95f7a9a78d34cba43d59cf89745da529502058f6da47613ca",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/many-groups-temporal_ordered-context-3.transport.json",
+    "bytes": 48,
+    "sha256": "572fdc936fd1fa001add8c16f9a75735db46c30350abdf9686a4f9d207399f24",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/many-groups-value_percentile-context-1.request.json",
+    "bytes": 58767,
+    "sha256": "8531d37ab738de1fd49c4fa8e315e18abc9997eac9853aa7663e25646817cc71",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/many-groups-value_percentile-context-1.transport.json",
+    "bytes": 128,
+    "sha256": "4b549c983f11309338b76fc4200b307f5cc13720c4adeffbcd8461a5f53088d4",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/many-groups-value_percentile-context-2.request.json",
+    "bytes": 58767,
+    "sha256": "8531d37ab738de1fd49c4fa8e315e18abc9997eac9853aa7663e25646817cc71",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/many-groups-value_percentile-context-2.transport.json",
+    "bytes": 128,
+    "sha256": "4b549c983f11309338b76fc4200b307f5cc13720c4adeffbcd8461a5f53088d4",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/many-groups-value_percentile-context-3.request.json",
+    "bytes": 58767,
+    "sha256": "8531d37ab738de1fd49c4fa8e315e18abc9997eac9853aa7663e25646817cc71",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/many-groups-value_percentile-context-3.transport.json",
+    "bytes": 128,
+    "sha256": "4b549c983f11309338b76fc4200b307f5cc13720c4adeffbcd8461a5f53088d4",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch2/results.json",
+    "bytes": 12169,
+    "sha256": "3fe0cf2438e3d5640defac359cc1d3cae73600bfc1bb94c9197c57a7a7d0e15e",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/container-inspect.json",
+    "bytes": 9699,
+    "sha256": "bc8883d60d68e31eae3e160dca6266d1e7583cd5d44bbf183e31abaef4ce4436",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/engine-version.request.json",
+    "bytes": 81,
+    "sha256": "1c2ed5cab6e58e1519978d8b9a3ba273679754b7167695e2b1dcad99dd3eb277",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/engine-version.response.json",
+    "bytes": 402,
+    "sha256": "7338dde20b69583c4555cb4cd0d34ee526430709e06cbb802820b55c0596323a",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/engine-version.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/hot-group-mixed-multilevel-context-1.request.json",
+    "bytes": 287877,
+    "sha256": "24aea7cfee97a3b3cd4046f09f8139cb859793813af58e6f62a33eee63d03a77",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/hot-group-mixed-multilevel-context-1.transport.json",
+    "bytes": 128,
+    "sha256": "4b549c983f11309338b76fc4200b307f5cc13720c4adeffbcd8461a5f53088d4",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/hot-group-mixed-multilevel-context-2.request.json",
+    "bytes": 287877,
+    "sha256": "24aea7cfee97a3b3cd4046f09f8139cb859793813af58e6f62a33eee63d03a77",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/hot-group-mixed-multilevel-context-2.transport.json",
+    "bytes": 128,
+    "sha256": "1c54ef80e817820ed81330f536221b0ea7a60d5efeb27fee5fc64ac959b0f0c8",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/hot-group-mixed-multilevel-context-3.request.json",
+    "bytes": 287877,
+    "sha256": "24aea7cfee97a3b3cd4046f09f8139cb859793813af58e6f62a33eee63d03a77",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/hot-group-mixed-multilevel-context-3.response.json",
+    "bytes": 243,
+    "sha256": "934adcfabaf0aca062be04662f5d32bd2598234fd5df01892b67a5438fd9db5a",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/hot-group-mixed-multilevel-context-3.transport.json",
+    "bytes": 48,
+    "sha256": "572fdc936fd1fa001add8c16f9a75735db46c30350abdf9686a4f9d207399f24",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/hot-group-mixed-multilevel-plain-1.request.json",
+    "bytes": 74134,
+    "sha256": "ddf229eb407d7ed0f7aa4e3bb3d08c9b7e42389150055efb8580cdfd6093e346",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/hot-group-mixed-multilevel-plain-1.response.json",
+    "bytes": 243,
+    "sha256": "724a5e53bc1167728ba561670962d2df4ba25483a9b7ffdaa1aaff86c9aa9070",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/hot-group-mixed-multilevel-plain-1.transport.json",
+    "bytes": 48,
+    "sha256": "572fdc936fd1fa001add8c16f9a75735db46c30350abdf9686a4f9d207399f24",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/hot-group-mixed-multilevel-plain-2.request.json",
+    "bytes": 74134,
+    "sha256": "ddf229eb407d7ed0f7aa4e3bb3d08c9b7e42389150055efb8580cdfd6093e346",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/hot-group-mixed-multilevel-plain-2.response.json",
+    "bytes": 243,
+    "sha256": "090ba7818cc28b3381478cd6c586e0bbd8ddc34156c73c8122e2a010de5d3e3f",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/hot-group-mixed-multilevel-plain-2.transport.json",
+    "bytes": 48,
+    "sha256": "572fdc936fd1fa001add8c16f9a75735db46c30350abdf9686a4f9d207399f24",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/hot-group-mixed-multilevel-plain-3.request.json",
+    "bytes": 74134,
+    "sha256": "ddf229eb407d7ed0f7aa4e3bb3d08c9b7e42389150055efb8580cdfd6093e346",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/hot-group-mixed-multilevel-plain-3.response.json",
+    "bytes": 243,
+    "sha256": "ceab99e13901c2abbc7f42e90bf35325f70f37f6654345cf6b5b3967d23592af",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/hot-group-mixed-multilevel-plain-3.transport.json",
+    "bytes": 48,
+    "sha256": "572fdc936fd1fa001add8c16f9a75735db46c30350abdf9686a4f9d207399f24",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/hot-group-temporal-context-1.request.json",
+    "bytes": 59101,
+    "sha256": "23be24446ac54cd4dc8473fb69c66b6d93a9d17de2388d6dd364386476aba08a",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/hot-group-temporal-context-1.response.json",
+    "bytes": 243,
+    "sha256": "5062752acabc2bfed7c596bf2b2c4842b9a6a3fe5a5a124503b97b99cdc28e5b",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/hot-group-temporal-context-1.transport.json",
+    "bytes": 48,
+    "sha256": "572fdc936fd1fa001add8c16f9a75735db46c30350abdf9686a4f9d207399f24",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/hot-group-temporal-context-2.request.json",
+    "bytes": 59101,
+    "sha256": "23be24446ac54cd4dc8473fb69c66b6d93a9d17de2388d6dd364386476aba08a",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/hot-group-temporal-context-2.response.json",
+    "bytes": 243,
+    "sha256": "5aaafd57de455da1ee945cf15cafe62afc3e0e9c77b44c1fcb1f17289377764c",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/hot-group-temporal-context-2.transport.json",
+    "bytes": 48,
+    "sha256": "572fdc936fd1fa001add8c16f9a75735db46c30350abdf9686a4f9d207399f24",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/hot-group-temporal-context-3.request.json",
+    "bytes": 59101,
+    "sha256": "23be24446ac54cd4dc8473fb69c66b6d93a9d17de2388d6dd364386476aba08a",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/hot-group-temporal-context-3.response.json",
+    "bytes": 243,
+    "sha256": "5680d34c8c9f2e5cf136e557eef2c56d41eea9512707c7617ded6749ad822c48",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/hot-group-temporal-context-3.transport.json",
+    "bytes": 48,
+    "sha256": "572fdc936fd1fa001add8c16f9a75735db46c30350abdf9686a4f9d207399f24",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/hot-group-temporal_ordered-context-1.request.json",
+    "bytes": 69474,
+    "sha256": "095cd39194d81eb94fdd18bedc4d52377247d0ef5c872d16faa058e5bbd35f06",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/hot-group-temporal_ordered-context-1.response.json",
+    "bytes": 243,
+    "sha256": "d1a5d61ba4feb45d3f65576a40b48163eb64879f1c342cb028c243b8cbae5724",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/hot-group-temporal_ordered-context-1.transport.json",
+    "bytes": 48,
+    "sha256": "572fdc936fd1fa001add8c16f9a75735db46c30350abdf9686a4f9d207399f24",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/hot-group-temporal_ordered-context-2.request.json",
+    "bytes": 69474,
+    "sha256": "095cd39194d81eb94fdd18bedc4d52377247d0ef5c872d16faa058e5bbd35f06",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/hot-group-temporal_ordered-context-2.response.json",
+    "bytes": 243,
+    "sha256": "0c65fcf64ebd231170b1d27bd2ad3067a9b16165330dc0feb464fe698452fea0",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/hot-group-temporal_ordered-context-2.transport.json",
+    "bytes": 48,
+    "sha256": "572fdc936fd1fa001add8c16f9a75735db46c30350abdf9686a4f9d207399f24",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/hot-group-temporal_ordered-context-3.request.json",
+    "bytes": 69474,
+    "sha256": "095cd39194d81eb94fdd18bedc4d52377247d0ef5c872d16faa058e5bbd35f06",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/hot-group-temporal_ordered-context-3.response.json",
+    "bytes": 243,
+    "sha256": "a9f2e68135f97260dcd1c71a1ada0d4d6d300a24fd552e8193cdd1ff9c502433",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/hot-group-temporal_ordered-context-3.transport.json",
+    "bytes": 48,
+    "sha256": "572fdc936fd1fa001add8c16f9a75735db46c30350abdf9686a4f9d207399f24",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/hot-group-value_avg-context-1.request.json",
+    "bytes": 56425,
+    "sha256": "be6eda5ea0c1489effde5a90c14748df684bb291f2252227eb6d90b3d2e94262",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/hot-group-value_avg-context-1.transport.json",
+    "bytes": 128,
+    "sha256": "4b549c983f11309338b76fc4200b307f5cc13720c4adeffbcd8461a5f53088d4",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/hot-group-value_avg-context-2.request.json",
+    "bytes": 56425,
+    "sha256": "be6eda5ea0c1489effde5a90c14748df684bb291f2252227eb6d90b3d2e94262",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/hot-group-value_avg-context-2.transport.json",
+    "bytes": 128,
+    "sha256": "4b549c983f11309338b76fc4200b307f5cc13720c4adeffbcd8461a5f53088d4",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/hot-group-value_avg-context-3.request.json",
+    "bytes": 56425,
+    "sha256": "be6eda5ea0c1489effde5a90c14748df684bb291f2252227eb6d90b3d2e94262",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/hot-group-value_avg-context-3.transport.json",
+    "bytes": 128,
+    "sha256": "1c54ef80e817820ed81330f536221b0ea7a60d5efeb27fee5fc64ac959b0f0c8",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/hot-group-value_percentile-context-1.request.json",
+    "bytes": 58559,
+    "sha256": "a855320489406c6d9f54bff26df110fa2a2df2cb991b040d2d5b816e7a930718",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/hot-group-value_percentile-context-1.transport.json",
+    "bytes": 128,
+    "sha256": "1c54ef80e817820ed81330f536221b0ea7a60d5efeb27fee5fc64ac959b0f0c8",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/hot-group-value_percentile-context-2.request.json",
+    "bytes": 58559,
+    "sha256": "a855320489406c6d9f54bff26df110fa2a2df2cb991b040d2d5b816e7a930718",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/hot-group-value_percentile-context-2.transport.json",
+    "bytes": 128,
+    "sha256": "1c54ef80e817820ed81330f536221b0ea7a60d5efeb27fee5fc64ac959b0f0c8",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/hot-group-value_percentile-context-3.request.json",
+    "bytes": 58559,
+    "sha256": "a855320489406c6d9f54bff26df110fa2a2df2cb991b040d2d5b816e7a930718",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/hot-group-value_percentile-context-3.transport.json",
+    "bytes": 128,
+    "sha256": "4b549c983f11309338b76fc4200b307f5cc13720c4adeffbcd8461a5f53088d4",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/hot-group-value_sum-context-1.request.json",
+    "bytes": 58406,
+    "sha256": "4fbdd181493facccb78bddf0ae23eb515c8114cc58d829e978170bdbaa538111",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/hot-group-value_sum-context-1.response.json",
+    "bytes": 243,
+    "sha256": "e74da0a6bfd175a0854034ef6b3ec3f3687747e1762fcfbb6fa51ee3b980afbb",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/hot-group-value_sum-context-1.transport.json",
+    "bytes": 48,
+    "sha256": "572fdc936fd1fa001add8c16f9a75735db46c30350abdf9686a4f9d207399f24",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/hot-group-value_sum-context-2.request.json",
+    "bytes": 58406,
+    "sha256": "4fbdd181493facccb78bddf0ae23eb515c8114cc58d829e978170bdbaa538111",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/hot-group-value_sum-context-2.transport.json",
+    "bytes": 128,
+    "sha256": "4b549c983f11309338b76fc4200b307f5cc13720c4adeffbcd8461a5f53088d4",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/hot-group-value_sum-context-3.request.json",
+    "bytes": 58406,
+    "sha256": "4fbdd181493facccb78bddf0ae23eb515c8114cc58d829e978170bdbaa538111",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/hot-group-value_sum-context-3.transport.json",
+    "bytes": 128,
+    "sha256": "4b549c983f11309338b76fc4200b307f5cc13720c4adeffbcd8461a5f53088d4",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-context-batch3/results.json",
+    "bytes": 12128,
+    "sha256": "9c14db285448629a638335b4f9d88917949dde6e8738a7474677f7ced407e245",
+    "diagnostic_only": false
+  },
+  {
+    "path": "kusto-spec34-baseline-smoke/engine-version.request.json",
+    "bytes": 81,
+    "sha256": "1c2ed5cab6e58e1519978d8b9a3ba273679754b7167695e2b1dcad99dd3eb277",
+    "diagnostic_only": true
+  },
+  {
+    "path": "kusto-spec34-baseline-smoke/engine-version.response.json",
+    "bytes": 402,
+    "sha256": "7338dde20b69583c4555cb4cd0d34ee526430709e06cbb802820b55c0596323a",
+    "diagnostic_only": true
+  },
+  {
+    "path": "kusto-spec34-baseline-smoke/engine-version.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": true
+  },
+  {
+    "path": "kusto-spec34-baseline-smoke/results.json",
+    "bytes": 11680,
+    "sha256": "0ed828da3c51c1c3e91bba296a75853dcb5f5e9db7376a2e158a77bba02f96c3",
+    "diagnostic_only": true
+  },
+  {
+    "path": "kusto-spec34-baseline-smoke/sparse-event_count-plain-1.request.json",
+    "bytes": 15630,
+    "sha256": "8f778e01f0770b6ad0f2ad08c6e2491cd4cdf969684b8215d7d5fa262050e491",
+    "diagnostic_only": true
+  },
+  {
+    "path": "kusto-spec34-baseline-smoke/sparse-event_count-plain-1.response.json",
+    "bytes": 4362,
+    "sha256": "2cf92107f30a2b6dcd21053da99ac6ca4272d888fa2198e433b227ab69090262",
+    "diagnostic_only": true
+  },
+  {
+    "path": "kusto-spec34-baseline-smoke/sparse-event_count-plain-1.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": true
+  },
+  {
+    "path": "kusto-spec34-baseline-smoke/sparse-value_percentile-plain-1.request.json",
+    "bytes": 16811,
+    "sha256": "c7d26b7eac59f59c0ba92311b5cd26a6f325258ff75f378a7be5709f22472a27",
+    "diagnostic_only": true
+  },
+  {
+    "path": "kusto-spec34-baseline-smoke/sparse-value_percentile-plain-1.response.json",
+    "bytes": 4425,
+    "sha256": "e1fffe61ca8f7c6728a8c9282154be1416be4af31c1b31b75242aecdd3d0b127",
+    "diagnostic_only": true
+  },
+  {
+    "path": "kusto-spec34-baseline-smoke/sparse-value_percentile-plain-1.transport.json",
+    "bytes": 48,
+    "sha256": "7dccf04808dcc85de0bd60de448cefa64f623a9fd37aa40f9ed1ad0caf12ee7b",
+    "diagnostic_only": true
+  }
+]
