@@ -1,0 +1,86 @@
+{
+  "status": "PENDING",
+  "scope": "available features only; ranges blocked by #31; partial ordered thresholds deferred",
+  "fixtures": [
+    {
+      "name": "context_value_avg.kql",
+      "sha256": "3cea1b0bf715e6f719610b2d6bedbf4bcedd69eef0d4fcc4e7dad2ca0907bb3f",
+      "expected_error": null
+    },
+    {
+      "name": "numeric_context_value_avg.kql",
+      "sha256": "129376412b2a135ae977dc866a1996042256f21d8e3f8e8d8738a94ab0526544",
+      "expected_error": null
+    },
+    {
+      "name": "numeric_context_value_avg_empty.kql",
+      "sha256": "7dc17af239aff1ffe32499495a2420f53bc013964988111edc31b976bb267369",
+      "expected_error": null
+    },
+    {
+      "name": "numeric_context_value_avg_groups.kql",
+      "sha256": "b035d86e6cdd20a1699ae7474f84c6fd05a3d56a2520458e3784d56bd8af18e3",
+      "expected_error": null
+    },
+    {
+      "name": "relational_value_avg_dedup.kql",
+      "sha256": "40821afa58ff34941fab0767c2fc23a2f6d80e5e1daf39b6905c0514a29dc3d1",
+      "expected_error": null
+    },
+    {
+      "name": "relational_value_avg_metric.kql",
+      "sha256": "0419ddd92fb7d83038d20311b1c3ef81ed310f5fca6690b58ee071bc4eb3e999",
+      "expected_error": null
+    },
+    {
+      "name": "typed_grouping_value_avg.kql",
+      "sha256": "60dfaf4b176185524f9b32549d72908d48718cbf0043dd11afb097383cf575af",
+      "expected_error": null
+    },
+    {
+      "name": "value_avg_chained.kql",
+      "sha256": "1c59e03ca6aac83ab9a917de5a8863f581d5b5a1a5f32305b26e812a473b8a08",
+      "expected_error": null
+    },
+    {
+      "name": "value_avg_comparisons.kql",
+      "sha256": "898ef44098549e70494cf2f44e239927303df60207971385dd1362ec37faf5d4",
+      "expected_error": null
+    },
+    {
+      "name": "value_avg_decimal.kql",
+      "sha256": "f6670caff332ead4cf4be920484294e381ee3140a695a2c1442dd4edc88fb183",
+      "expected_error": null
+    },
+    {
+      "name": "value_avg_duplicate_sources.kql",
+      "sha256": "ca56fc0d1cbfd95507dfe2b653b56b5c4d574fbd211eecd9415a6ba27976229d",
+      "expected_error": null
+    },
+    {
+      "name": "value_avg_expired_large.kql",
+      "sha256": "95acdc892b41178cec2a8e4be48e8bd38f0a13acfdfce1a77abf1b2795ca0fd3",
+      "expected_error": null
+    },
+    {
+      "name": "value_avg_integer_bounds.kql",
+      "sha256": "6277e6dde543895765c37ef1732d9ed9d7be1b4bfba253557e9ace6cf49caa5c",
+      "expected_error": null
+    },
+    {
+      "name": "value_avg_mapped.kql",
+      "sha256": "9d1c02a5007845784af7202b4021886a903cf0c64698e7a1ec7f51d1f733ed4f",
+      "expected_error": null
+    },
+    {
+      "name": "value_avg_normalized_strings.kql",
+      "sha256": "6d721a01979a9f7e23f14931231e5312b3a4e79b044cc96d4babdf9913314893",
+      "expected_error": null
+    },
+    {
+      "name": "value_avg_reals.kql",
+      "sha256": "9b48b0fe097150378f1e31e3754a6d4c52b92e1630d93ccf554d33a9a250ee1f",
+      "expected_error": null
+    }
+  ]
+}

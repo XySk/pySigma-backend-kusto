@@ -1,0 +1,167 @@
+{
+  "revision": "2a132794d6f5316888522ff771b7a6d56038177e",
+  "baseline_revision": "07525ee846878754bda7933eab0684895a156086",
+  "oracle": "independent direct inclusive-window enumeration",
+  "workloads": [
+    {
+      "name": "long-many-groups-value_avg-plain",
+      "fixture": "long-many-groups-value_avg-plain.json",
+      "fixture_sha256": "231937ca99e9d7e6f836d77fd73aeb036b5f541f61fef474efd08d5da7723bd2",
+      "query": "long-many-groups-value_avg-plain.kql",
+      "query_sha256": "3bad2abb8bed71b7e4aa49cd2ed7c5059c23665f139307a210080a2d2a12b241",
+      "query_bytes": 904,
+      "query_lines": 15,
+      "operators": {
+        "where": 4,
+        "project": 2,
+        "summarize": 2,
+        "join": 1,
+        "extend": 1,
+        "mv-expand": 1
+      },
+      "input_rows": 96,
+      "expected_rows": 96
+    },
+    {
+      "name": "long-many-groups-value_avg-context",
+      "fixture": "long-many-groups-value_avg-context.json",
+      "fixture_sha256": "eea5e03a785cfe1d606a241f16fc607b04dcc12eabcab5b7808fa48c28393e7f",
+      "query": "long-many-groups-value_avg-context.kql",
+      "query_sha256": "ccb062ef2262578f76d525ade65abc8d226ba0fc15df2c83b73648ffb176752b",
+      "query_bytes": 2283,
+      "query_lines": 41,
+      "operators": {
+        "where": 7,
+        "project": 6,
+        "summarize": 4,
+        "join": 3,
+        "extend": 5,
+        "mv-expand": 1,
+        "serialize": 1,
+        "distinct": 1
+      },
+      "input_rows": 96,
+      "expected_rows": 96
+    },
+    {
+      "name": "long-hot-group-value_avg-plain",
+      "fixture": "long-hot-group-value_avg-plain.json",
+      "fixture_sha256": "5771d699269e2ccc582a97f754bb2bb047a409994ea21b9bb424cd8d7a225622",
+      "query": "long-hot-group-value_avg-plain.kql",
+      "query_sha256": "8796e2dac87ccc8ce507441577d0cedbce09823704283e9eddb9f60540cc8650",
+      "query_bytes": 908,
+      "query_lines": 15,
+      "operators": {
+        "where": 4,
+        "project": 2,
+        "summarize": 2,
+        "join": 1,
+        "extend": 1,
+        "mv-expand": 1
+      },
+      "input_rows": 96,
+      "expected_rows": 0
+    },
+    {
+      "name": "long-hot-group-value_avg-context",
+      "fixture": "long-hot-group-value_avg-context.json",
+      "fixture_sha256": "76757a5202df73c4ce63e56299ae5c8b5b72c87e4ec18d932fe700a5af950716",
+      "query": "long-hot-group-value_avg-context.kql",
+      "query_sha256": "570e8e1306eceb27bae0e95b176a5bfc09784c2555a5b7f41123381281e67687",
+      "query_bytes": 2287,
+      "query_lines": 41,
+      "operators": {
+        "where": 7,
+        "project": 6,
+        "summarize": 4,
+        "join": 3,
+        "extend": 5,
+        "mv-expand": 1,
+        "serialize": 1,
+        "distinct": 1
+      },
+      "input_rows": 96,
+      "expected_rows": 0
+    },
+    {
+      "name": "real-many-groups-value_avg-plain",
+      "fixture": "real-many-groups-value_avg-plain.json",
+      "fixture_sha256": "236fffaa7ec1037e2a926bba3274970edeada0b8511f506e14f0adafd4af9cb5",
+      "query": "real-many-groups-value_avg-plain.kql",
+      "query_sha256": "509e213d74079d925e031dae2bbb489a7480e52a60a39d484e8d30a0c28564ba",
+      "query_bytes": 904,
+      "query_lines": 15,
+      "operators": {
+        "where": 4,
+        "project": 2,
+        "summarize": 2,
+        "join": 1,
+        "extend": 1,
+        "mv-expand": 1
+      },
+      "input_rows": 96,
+      "expected_rows": 0
+    },
+    {
+      "name": "real-many-groups-value_avg-context",
+      "fixture": "real-many-groups-value_avg-context.json",
+      "fixture_sha256": "7db519631532323d2c272bbd2ee45d45ebf3e2054a6ac5e1f6fa9d7108844bb8",
+      "query": "real-many-groups-value_avg-context.kql",
+      "query_sha256": "b295d5ed1c07e9ede7f988d7e5454a8d2273a199b9e429126936f6dd24a55549",
+      "query_bytes": 2283,
+      "query_lines": 41,
+      "operators": {
+        "where": 7,
+        "project": 6,
+        "summarize": 4,
+        "join": 3,
+        "extend": 5,
+        "mv-expand": 1,
+        "serialize": 1,
+        "distinct": 1
+      },
+      "input_rows": 96,
+      "expected_rows": 0
+    },
+    {
+      "name": "real-hot-group-value_avg-plain",
+      "fixture": "real-hot-group-value_avg-plain.json",
+      "fixture_sha256": "c53d1dff55d9955af271748a294e969e10e369c6a1e4b7b1b67349340ecb125b",
+      "query": "real-hot-group-value_avg-plain.kql",
+      "query_sha256": "4304443a1be853dec2a799e993fa9c94b5a04c3becabea8d7c85591746d95bc0",
+      "query_bytes": 908,
+      "query_lines": 15,
+      "operators": {
+        "where": 4,
+        "project": 2,
+        "summarize": 2,
+        "join": 1,
+        "extend": 1,
+        "mv-expand": 1
+      },
+      "input_rows": 96,
+      "expected_rows": 0
+    },
+    {
+      "name": "real-hot-group-value_avg-context",
+      "fixture": "real-hot-group-value_avg-context.json",
+      "fixture_sha256": "ba219b8fe0a40f53f6699a72185f62c5e9df81261b97c0069381070e9c5cedc1",
+      "query": "real-hot-group-value_avg-context.kql",
+      "query_sha256": "3e9d0a3becd594d96c943a5b379ecd89d0c9bd322eb6f20067ba3bd282528040",
+      "query_bytes": 2287,
+      "query_lines": 41,
+      "operators": {
+        "where": 7,
+        "project": 6,
+        "summarize": 4,
+        "join": 3,
+        "extend": 5,
+        "mv-expand": 1,
+        "serialize": 1,
+        "distinct": 1
+      },
+      "input_rows": 96,
+      "expected_rows": 0
+    }
+  ]
+}

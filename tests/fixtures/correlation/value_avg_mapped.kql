@@ -15,28 +15,24 @@ let Expected = datatable(WindowStart:datetime, WindowEnd:datetime, Machine:strin
     datetime(2026-01-01T12:00:00Z), datetime(2026-01-01T12:05:00Z), "h", 6.5
 ];
 let Actual = () {
-let _sigma_values = union (Events
+let AverageObservations = union (Events
 | where Marker =~ "match"
-| extend _sigma_timestamp = todatetime(["ProcessTime"]), _sigma_group_0 = ["Computer"], _sigma_value = pack_array(gettype(["Size"]), ["Size"])
-| extend _sigma_rule = "a"),
+| project EventTime_1 = todatetime(["ProcessTime"]), GroupMachine = ["Computer"], MeasuredMeasurement = ["Size"]),
 (NetworkEvents
 | where Marker =~ "match"
-| extend _sigma_timestamp = todatetime(["NetworkTime"]), _sigma_group_0 = ["Server"], _sigma_value = pack_array(gettype(["Length"]), ["Length"])
-| extend _sigma_rule = "b")
-| where isnotnull(_sigma_timestamp) and isnotempty(_sigma_group_0)
-;
-_sigma_values
-| project _sigma_group_0, _sigma_window_end = _sigma_timestamp, _sigma_bin = bin(_sigma_timestamp, 5m)
-| distinct *
+| project EventTime_1 = todatetime(["NetworkTime"]), GroupMachine = ["Server"], MeasuredMeasurement = ["Length"])
+| where isnotnull(EventTime_1) and isnotempty(GroupMachine);
+AverageObservations
+| summarize by GroupMachine, AverageWindowEnd = EventTime_1, AverageTimeBin = bin(EventTime_1, 5m)
 | join kind=inner (
-    _sigma_values
-    | extend _sigma_bin = pack_array(bin(_sigma_timestamp, 5m), bin(_sigma_timestamp, 5m) + 5m)
-    | mv-expand _sigma_bin to typeof(datetime)
-) on _sigma_group_0, _sigma_bin
-| where _sigma_timestamp between ((_sigma_window_end - 5m) .. _sigma_window_end)
-| summarize ValueAvg = avgif(toreal(_sigma_value[1]), tostring(_sigma_value[0]) in ("int", "long", "real", "double", "decimal") and isfinite(toreal(_sigma_value[1]))), _sigma_numeric_count = countif(tostring(_sigma_value[0]) in ("int", "long", "real", "double", "decimal") and isfinite(toreal(_sigma_value[1]))) by _sigma_window_end, _sigma_group_0
-| where _sigma_numeric_count > 0 and ValueAvg >= 0
-| project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ["Machine"] = _sigma_group_0, ValueAvg
+AverageObservations
+| extend AverageTimeBin = pack_array(bin(EventTime_1, 5m), bin(EventTime_1, 5m) + 5m)
+| mv-expand AverageTimeBin to typeof(datetime)
+) on GroupMachine, AverageTimeBin
+| where EventTime_1 between ((AverageWindowEnd - 5m) .. AverageWindowEnd)
+| summarize ValueAvg = avgif(toreal(MeasuredMeasurement), isfinite(toreal(MeasuredMeasurement))) by AverageWindowEnd, GroupMachine
+| where isfinite(ValueAvg) and ValueAvg >= 0
+| project WindowStart = AverageWindowEnd - 5m, WindowEnd = AverageWindowEnd, ["Machine"] = GroupMachine, ValueAvg
 };
 union (Actual() | extend Machine=tostring(Machine) | extend Delta = 1), (Expected | extend Delta = -1)
 | summarize Delta = sum(Delta) by WindowStart, WindowEnd, Machine, ValueAvg

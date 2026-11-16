@@ -1903,6 +1903,7 @@ def fixtures():
     from tests.fixtures.correlation.empty_child_context import fixtures as empty_child_fixtures
     from tests.fixtures.correlation.event_count_sliding import fixtures as event_count_sliding_fixtures
     from tests.fixtures.correlation.integrated import matrix_fixtures
+    from tests.fixtures.correlation.native_average import fixtures as native_average_fixtures
     from tests.fixtures.correlation.native_sum import fixtures as native_sum_fixtures
     from tests.fixtures.correlation.numeric_context import fixtures as numeric_context_fixtures
     from tests.fixtures.correlation.ordered_context import fixtures as ordered_context_fixtures
@@ -1922,6 +1923,7 @@ def fixtures():
         "standard_mappings.kql": standard_mapping_fixture(),
         "standard_mappings_parent.kql": standard_mapping_fixture(parent=True),
         **average_fixtures(check, HEADER),
+        **native_average_fixtures(),
         **boolean_fixtures(),
         **boolean_context_fixtures(),
         **context_fixtures(),

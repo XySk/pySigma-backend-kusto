@@ -1,0 +1,10 @@
+{
+  "name": "real-many-groups-value_avg-plain",
+  "schema": {
+    "WindowStart": "datetime",
+    "WindowEnd": "datetime",
+    "Host": "string",
+    "ValueAvg": "real"
+  },
+  "expected": []
+}

@@ -1548,7 +1548,8 @@ class KustoBackend(TextQueryBackend):
         value_count = rule.type == SigmaCorrelationType.VALUE_COUNT
         presence_temporal = rule.type == SigmaCorrelationType.TEMPORAL
         value_sum = rule.type == SigmaCorrelationType.VALUE_SUM
-        readable = temporal or event_count or value_count or value_sum
+        value_avg = rule.type == SigmaCorrelationType.VALUE_AVG
+        readable = temporal or event_count or value_count or value_sum or value_avg
         columns = {
             "timestamp": allocate("EventTime" if readable else "_sigma_timestamp"),
             "rule": allocate("SourceRule" if readable else "_sigma_rule"),
@@ -1569,7 +1570,7 @@ class KustoBackend(TextQueryBackend):
         }
         if event_count or value_count or presence_temporal and not self._uses_context_groups(rule):
             columns["narrow_source"] = True
-        if value_sum:
+        if value_sum or value_avg:
             columns["narrow_source"] = True
             columns["native_values"] = True
         if presence_temporal:
@@ -1590,14 +1591,12 @@ class KustoBackend(TextQueryBackend):
                     if value_count
                     else (
                         "Measured" + re.sub(r"[^A-Za-z0-9_]", "", field)
-                        if value_sum
+                        if value_sum or value_avg
                         else "_sigma_value" if len(counted_fields) == 1 else f"_sigma_value_{index}"
                     )
                 )
                 for index, field in enumerate(counted_fields)
             ]
-        if rule.type == SigmaCorrelationType.VALUE_AVG:
-            columns["numeric_count"] = allocate("_sigma_numeric_count")
         self._correlation_group_by = rule.group_by or []
         self._correlation_counted_fields = counted_fields or []
         self._correlation_columns = columns
@@ -1650,7 +1649,6 @@ class KustoBackend(TextQueryBackend):
         # timespan literals do not accept those units.
         span = rule.timespan.spec if rule.timespan.unit in "smhd" else f"{rule.timespan.seconds}s"
         valid_rows = " and ".join([f"isnotnull({timestamp})", *(f"isnotempty({field})" for field in groups)])
-        weighted_fields = ", ".join([timestamp, *groups])
         if rule.type == SigmaCorrelationType.EVENT_COUNT:
             existence_threshold = self._count_existence_threshold(rule)
             if existence_threshold is not None:
@@ -1708,6 +1706,12 @@ class KustoBackend(TextQueryBackend):
                     allocate,
                 )
             ]
+        if value_avg:
+            return [
+                self._convert_value_avg(
+                    rule, definitions, search, columns, valid_rows, span, query_operator, threshold, allocate
+                )
+            ]
         anchor_fields = ", ".join([*groups, f"{window_end} = {timestamp}", f"{time_bin} = bin({timestamp}, {span})"])
         join_fields = ", ".join([*groups, time_bin])
         summary_fields = ", ".join([window_end, *groups])
@@ -1754,46 +1758,33 @@ class KustoBackend(TextQueryBackend):
                     f"| project {result_fields}",
                 )
             ]
-        after_summary = ""
-        summary_binding = ""
-        if counted_fields is None:
-            preaggregate = f"| summarize {weight} = count() by {weighted_fields}"
-            distinct_anchors = ""
-            aggregates = [f"EventCount = sum({weight})"]
-        elif rule.type == SigmaCorrelationType.VALUE_AVG:
-            # Preserve every observation and every valid anchor, including
-            # anchors whose window contains no usable numeric observation.
-            preaggregate = ""
-            distinct_anchors = "| distinct *\n"
-            value = columns["values"][0]
-            numeric = (
-                f'tostring({value}[0]) in ("int", "long", "real", "double", "decimal") '
-                f"and isfinite(toreal({value}[1]))"
-            )
-            aggregates = [
-                f"ValueAvg = avgif(toreal({value}[1]), {numeric})",
-                f"{columns['numeric_count']} = countif({numeric})",
-            ]
-        if rule.type != SigmaCorrelationType.VALUE_SUM:
-            comparisons = " and ".join(f"{metric} {query_operator} {threshold}" for metric in metrics)
-        if rule.type == SigmaCorrelationType.VALUE_AVG:
-            # Kusto avgif() returns NaN for no observations, which satisfies
-            # neq. Require an observation before applying any comparison.
-            comparisons = f"{columns['numeric_count']} > 0 and {comparisons}"
-        # Bins only prune candidate pairs; actual timestamps decide membership.
-        scope = f"{definitions}let {weights} = {search}\n" f"| where {valid_rows}\n{preaggregate};\n"
-        aggregate = (
-            f"{weights}\n| project {anchor_fields}\n{distinct_anchors}"
-            f"| join kind=inner (\n    {weights}\n"
-            f"    | extend {time_bin} = pack_array(bin({timestamp}, {span}), bin({timestamp}, {span}) + {span})\n"
-            f"    | mv-expand {time_bin} to typeof(datetime)\n) on {join_fields}\n"
-            f"| where {timestamp} between (({window_end} - {span}) .. {window_end})\n"
-            f"| summarize {', '.join(aggregates)} by {summary_fields}\n"
+
+    def _convert_value_avg(
+        self, rule, definitions, search, columns, valid_rows, span, query_operator, threshold, allocate
+    ):
+        """Average the actual current observations; expired values leave no residue."""
+        observations = allocate("AverageObservations")
+        event_time, groups, value = columns["timestamp"], columns["groups"], columns["values"][0]
+        window_end, time_bin = allocate("AverageWindowEnd"), allocate("AverageTimeBin")
+        anchors = ", ".join([*groups, f"{window_end} = {event_time}", f"{time_bin} = bin({event_time}, {span})"])
+        join_keys = ", ".join([*groups, time_bin])
+        summary_keys = ", ".join([window_end, *groups])
+        result = self._correlation_result_projection(rule, groups, window_end, span, ["ValueAvg"])
+        # Preserve every observation, including duplicates and unusable values.
+        # The anchor's own row guarantees exact-time membership even if every
+        # other candidate in its bin has already expired.
+        definitions += f"let {observations} = {search}\n| where {valid_rows};\n"
+        return _CorrelationQuery(
+            definitions,
+            f"{observations}\n| summarize by {anchors}\n"
+            f"| join kind=inner (\n{observations}\n"
+            f"| extend {time_bin} = pack_array(bin({event_time}, {span}), bin({event_time}, {span}) + {span})\n"
+            f"| mv-expand {time_bin} to typeof(datetime)\n) on {join_keys}\n"
+            f"| where {event_time} between (({window_end} - {span}) .. {window_end})\n"
+            f"| summarize ValueAvg = avgif(toreal({value}), isfinite(toreal({value}))) by {summary_keys}\n"
+            # Empty avgif returns NaN, which otherwise satisfies inequality.
+            f"| where isfinite(ValueAvg) and ValueAvg {query_operator} {threshold}\n| project {result}",
         )
-        if summary_binding:
-            scope += summary_binding + aggregate + ");\n"
-            aggregate = after_summary
-        return [_CorrelationQuery(scope, aggregate + f"| where {comparisons}\n| project {result_fields}")]
 
     def _convert_value_sum(
         self, rule, definitions, search, columns, valid_rows, span, query_operator, threshold, measured_field, allocate

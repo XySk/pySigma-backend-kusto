@@ -1,0 +1,100 @@
+let Events=datatable(Timestamp:datetime,Host:string,Marker:string,User:string,Amount:dynamic) [
+ datetime(2026-01-01T12:00:00Z),"h","match","Alice",dynamic(10),
+ datetime(2026-01-01T12:00:00Z),"h","match","Alice",dynamic(10),
+ datetime(2026-01-01T12:00:00Z),"h","match","Alice",dynamic(20),
+ datetime(2026-01-01T12:00:00Z),"h","match","Bob",dynamic(100),
+ datetime(2026-01-01T12:00:00Z),"h2","match","Alice",dynamic(10),
+ datetime(2026-01-01T12:00:00Z),"d","direct","Alice",dynamic(5)
+] | where Host == "h" and User == "Alice"
+// Normalize Events scalar fixture inputs explicitly.
+| extend Amount=iff(gettype(Amount) in ("int","long","real","double","decimal"), tolong(Amount), long(null));
+let Actual=(){
+let _sigma_shared_child = () {
+let ContextSummary = () {
+let SourceMatchArrivals = union (Events
+| where Marker =~ "match"
+| project EventTime_1 = todatetime(["Timestamp"]))
+| where isnotnull(EventTime_1)
+| summarize SourceMatchCount = count() by EventTime_1;
+union (SourceMatchArrivals
+| project CountBoundaryTime = EventTime_1, CountBoundaryOrder = 0, SourceMatchDelta = SourceMatchCount),
+(SourceMatchArrivals
+| project CountBoundaryTime = EventTime_1 + 5m, CountBoundaryOrder = 1, SourceMatchDelta = -SourceMatchCount)
+// Arrivals evaluate before equal-time expirations; expirations never create matches.
+| sort by CountBoundaryTime asc, CountBoundaryOrder asc
+| extend EventCount = row_cumsum(SourceMatchDelta)
+| where CountBoundaryOrder == 0
+| where EventCount >= 1
+| project WindowStart = CountBoundaryTime - 5m, WindowEnd = CountBoundaryTime, EventCount
+};
+let CorrelationMatches = materialize(ContextSummary()
+| serialize CorrelationMatchId = row_number());
+let WindowSourceMatches = materialize(
+CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, ContextPartition = 1
+| join kind=inner (
+union (Events
+| where Marker =~ "match"
+| extend ContextEventTime = todatetime(["Timestamp"]), ContextAmount = ["Amount"]
+| extend ContextSourceRule = "source-rule")
+| project ContextEventTime, ContextSourceRule, ContextAmount, ContextPartition = 1
+) on ContextPartition
+| where ContextEventTime between ((CompletionTime - 5m) .. CompletionTime));
+let CompleteContextRelationships = materialize(WindowSourceMatches
+| project CorrelationMatchId, ContextAmount
+| distinct *);
+union (CorrelationMatches | extend ContextRowKind = "Summary"), (CorrelationMatches | join kind=inner (CompleteContextRelationships) on CorrelationMatchId | extend ContextRowKind = "ContextEvidence")
+};
+let _sigma_shared_results = materialize(_sigma_shared_child());
+let ContextSummary = () {
+let _sigma_parent_matches = materialize(union (_sigma_shared_results | where ["ContextRowKind"] == "Summary"
+| project-away ["ContextAmount"]
+| join kind=leftouter (_sigma_shared_results | where ["ContextRowKind"] == "ContextEvidence" | project ["CorrelationMatchId"], ["ContextAmount"]) on ["CorrelationMatchId"]
+| extend _sigma_child_match = strcat("_sigma_shared_child", "_", tostring(["CorrelationMatchId"]))
+| project EventTime = todatetime(["WindowEnd"]), MeasuredAmount = ["ContextAmount"], _sigma_child_match)
+| extend _sigma_child_match = tostring(column_ifexists("_sigma_child_match", "")));
+let AverageObservations = union (_sigma_parent_matches | where isempty(_sigma_child_match)), (_sigma_parent_matches | where isnotempty(_sigma_child_match) | extend RetainedNumericValue = MeasuredAmount | summarize take_any(*) by _sigma_child_match, RetainedNumericValue)
+| where isnotnull(EventTime);
+AverageObservations
+| summarize by AverageWindowEnd = EventTime, AverageTimeBin = bin(EventTime, 5m)
+| join kind=inner (
+AverageObservations
+| extend AverageTimeBin = pack_array(bin(EventTime, 5m), bin(EventTime, 5m) + 5m)
+| mv-expand AverageTimeBin to typeof(datetime)
+) on AverageTimeBin
+| where EventTime between ((AverageWindowEnd - 5m) .. AverageWindowEnd)
+| summarize ValueAvg = avgif(toreal(MeasuredAmount), isfinite(toreal(MeasuredAmount))) by AverageWindowEnd
+| where isfinite(ValueAvg) and ValueAvg >= -1
+| project WindowStart = AverageWindowEnd - 5m, WindowEnd = AverageWindowEnd, ValueAvg
+};
+let CorrelationMatches = materialize(ContextSummary()
+| serialize CorrelationMatchId_1 = row_number());
+let WindowSourceMatches = materialize(
+CorrelationMatches | project CorrelationMatchId_1, CompletionTime = WindowEnd, ContextPartition = 1
+| join kind=inner (
+union (_sigma_shared_results | where ["ContextRowKind"] == "Summary"
+| project-away ["ContextAmount"]
+| join kind=leftouter (_sigma_shared_results | where ["ContextRowKind"] == "ContextEvidence" | project ["CorrelationMatchId"], ["ContextAmount"], HasContextEvidence = true) on ["CorrelationMatchId"]
+| extend ContextEventTime = todatetime(["WindowEnd"]), ContextAmount_1 = tolong(pack_array(gettype(["ContextAmount"]), ["ContextAmount"])[1])
+| extend ContextSourceRule = "child")
+| project ContextEventTime, ContextSourceRule, ContextAmount_1, HasContextEvidence, ContextPartition = 1
+) on ContextPartition
+| where ContextEventTime between ((CompletionTime - 5m) .. CompletionTime));
+let CompleteContextRelationships = materialize(WindowSourceMatches
+| where HasContextEvidence
+| project CorrelationMatchId_1, ContextAmount_1
+| distinct *);
+let ValuesForAmount = CompleteContextRelationships
+| where isnotnull(ContextAmount_1)
+| summarize by CorrelationMatchId_1, ContextAmount_1
+| summarize DisplayedAmount = make_list(ContextAmount_1, 1000), DistinctAmountCount = count() by CorrelationMatchId_1;
+CorrelationMatches
+| join kind=leftouter (ValuesForAmount) on CorrelationMatchId_1
+| extend ["Amount"] = coalesce(DisplayedAmount, dynamic([]))
+| extend ContextComplete = coalesce(DistinctAmountCount, 0) <= 1000
+| project ["WindowStart"], ["WindowEnd"], ["Amount"], ["ValueAvg"], ["ContextComplete"]
+};
+let Observed=Actual() | project Metric=toreal(ValueAvg);
+let Expected=datatable(Metric:real) [real(15)];
+union (Observed | extend Delta=1), (Expected | extend Delta=-1)
+| summarize Delta=sum(Delta) by Metric
+| where Delta!=0
