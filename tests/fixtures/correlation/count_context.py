@@ -31,7 +31,10 @@ def fixture(kind="event_count", groups=("User", "Server"), mixed=False):
     projection = ", ".join(["WindowEnd", *groups, f"Metric={metric}"])
     schema = ", ".join(["WindowEnd:datetime", *(f"{g}:dynamic" for g in groups), "Metric:long"])
     if groups == ("User", "Server"):
-        rows = f'datetime(2026-01-01T12:00:00Z),dynamic("Alice"),dynamic("server1"),{3 if mixed else 2}, datetime(2026-01-01T12:00:00Z),dynamic("Bob"),dynamic("server2"),1'
+        # Two child summaries (or an additional direct match) still have one
+        # distinct User inside the group that already fixes that same User.
+        count = (3 if mixed else 2) if kind == "event_count" else 1
+        rows = f'datetime(2026-01-01T12:00:00Z),dynamic("Alice"),dynamic("server1"),{count}, datetime(2026-01-01T12:00:00Z),dynamic("Bob"),dynamic("server2"),1'
     elif groups == ("Server",):
         rows = (
             'datetime(2026-01-01T12:00:00Z),dynamic("server1"),1, datetime(2026-01-01T12:00:00Z),dynamic("server2"),1'

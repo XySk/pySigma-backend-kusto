@@ -17,10 +17,10 @@ def test_value_count_parent_counts_child_value_metric_as_one_exact_value_per_sum
 
     (query,) = convert_documents(documents)
 
-    assert '_sigma_timestamp = todatetime(["WindowEnd"])' in query
-    assert '_sigma_value = ["ValueCount"]' in query
-    assert summary_data_query(query).count("ValueCount = count_distinctif(_sigma_value, isnotempty(_sigma_value))") == 2
-    assert final_summary_projection(query).endswith('["Host"] = _sigma_group_0, ValueCount')
+    assert 'EventTime = todatetime(["WindowEnd"])' in query
+    assert 'CountedValueCount = ["ValueCount"]' in query
+    assert summary_data_query(query).count("ValueCount = row_cumsum(") == 2
+    assert final_summary_projection(query).endswith('["Host"] = GroupHost, ValueCount')
 
 
 def test_ordered_parent_scopes_complete_temporal_child_before_strict_window_end_sequence():
@@ -73,18 +73,19 @@ def test_all_supported_types_produce_and_consume_child_summaries(producer, consu
     parent = summary_data_query(query).split("\n};\n", 1)[1]
     timestamp, group, source = (
         ("EventTime", "GroupHost", "SourceRule")
-        if consumer in ("event_count", "temporal", "temporal_ordered")
+        if consumer in ("event_count", "value_count", "temporal", "temporal_ordered")
         else ("_sigma_timestamp", "_sigma_group_0", "_sigma_rule")
     )
     assert f'{timestamp} = todatetime(["WindowEnd"]), {group} = ["Host"]' in parent
-    if consumer != "event_count":
+    if consumer not in ("event_count", "value_count"):
         assert f'{source} = "child"' in parent
     consumer_metric = "RuleCount = tolong(1)" if consumer == "temporal_ordered" else METRICS[consumer]
     assert final_summary_projection(query).endswith(f", {consumer_metric}")
     if consumer in ("value_count", "value_sum", "value_percentile"):
         measured = f'["{METRICS[producer]}"]'
         expected_value = measured if consumer == "value_count" else f"pack_array(gettype({measured}), {measured})"
-        assert f"_sigma_value = {expected_value}" in parent
+        column = f"Counted{METRICS[producer]}" if consumer == "value_count" else "_sigma_value"
+        assert f"{column} = {expected_value}" in parent
     if consumer == "event_count":
         assert "SourceMatchCount = count()" in parent
         assert "row_cumsum(SourceMatchDelta" in parent
@@ -118,9 +119,11 @@ def test_child_window_fields_group_and_actual_metric_can_all_be_aliased_without_
     (query,) = convert_documents([source_document(), child, parent], mappings=mappings)
 
     parent_query = query.split("\n};\n", 1)[1]
-    assert '_sigma_timestamp = todatetime(["WindowEnd"])' in parent_query
-    for column, field in enumerate(["WindowStart", "WindowEnd", METRICS[producer], "Host"]):
-        assert f'_sigma_value_{column} = ["{field}"]' in parent_query
+    assert 'EventTime = todatetime(["WindowEnd"])' in parent_query
+    for column, field in zip(
+        ["ChildStart", "ChildEnd", "ChildMetric", "Host"], ["WindowStart", "WindowEnd", METRICS[producer], "Host"]
+    ):
+        assert f'Counted{column} = ["{field}"]' in parent_query
     assert "Wrong" not in query
     assert 'todatetime(["PhysicalTime"])' in query
     assert '["PhysicalHost"]' in query
@@ -141,12 +144,12 @@ def test_value_parent_counts_child_metric_and_host_independently_with_and(operat
 
     (query,) = convert_documents(documents)
 
-    assert '_sigma_value_0 = ["EventCount"], _sigma_value_1 = ["Host"]' in query
-    assert '["ValueCount_EventCount"] = count_distinctif(_sigma_value_0, isnotempty(_sigma_value_0))' in query
-    assert '["ValueCount_Host"] = count_distinctif(_sigma_value_1, isnotempty(_sigma_value_1))' in query
+    assert 'CountedEventCount = ["EventCount"], CountedHost = ["Host"]' in query
+    assert '["ValueCount_EventCount"] = row_cumsum(CountedEventCountDelta' in query
+    assert '["ValueCount_Host"] = row_cumsum(CountedHostDelta' in query
     assert f'| where ["ValueCount_EventCount"] {query_operator} 2 and ["ValueCount_Host"] {query_operator} 2\n' in query
     assert final_summary_projection(query).endswith(
-        '["Case"] = _sigma_group_0, ["ValueCount_EventCount"], ["ValueCount_Host"]'
+        '["Case"] = GroupCase, ["ValueCount_EventCount"], ["ValueCount_Host"]'
     )
 
 
@@ -159,9 +162,9 @@ def test_multifield_child_exposes_each_metric_for_counting_without_an_invented_v
 
     (query,) = convert_documents(documents)
 
-    assert '_sigma_value_0 = ["ValueCount_User"], _sigma_value_1 = ["ValueCount_Target"]' in query
+    assert 'CountedValueCount_User = ["ValueCount_User"], CountedValueCount_Target = ["ValueCount_Target"]' in query
     assert final_summary_projection(query).endswith(
-        '["Host"] = _sigma_group_0, ["ValueCount_ValueCount_User"], ["ValueCount_ValueCount_Target"]'
+        '["Host"] = GroupHost, ["ValueCount_ValueCount_User"], ["ValueCount_ValueCount_Target"]'
     )
 
 
@@ -285,7 +288,7 @@ def test_multilevel_mixed_sources_keep_result_names_and_scope_bindings_separate_
 
     assert len(summary_projections(query)) == 3
     assert summary_projections(query)[0].endswith(', ["Case"] = GroupCase, ["Host"] = GroupHost, EventCount')
-    assert summary_projections(query)[1].endswith(', ["Tenant"] = _sigma_group_0, ValueCount')
+    assert summary_projections(query)[1].endswith(', ["Tenant"] = GroupTenant, ValueCount')
     assert "union (_sigma_child_0()" in query
     assert "_sigma_correlation_error" not in summary_data_query(query)
     assert "assert(" not in query
