@@ -4,7 +4,7 @@ let Events=datatable(Amount:dynamic) [dynamic("10"),dynamic(null),dynamic("bad")
 // Normalize Events scalar fixture inputs explicitly.
 | extend Amount=iff(gettype(Amount) in ("int","long","real","double","decimal"), toreal(Amount), real(null));
 let Actual=(){
-let _sigma_shared_child = () {
+let Child = () {
 let ContextSummary = () {
 let SourceMatchArrivals = union (Events
 | where Marker =~ "match"
@@ -39,15 +39,15 @@ let CompleteContextRelationships = materialize(WindowSourceMatches
 | distinct *);
 union (CorrelationMatches | extend ContextRowKind = "Summary"), (CorrelationMatches | join kind=inner (CompleteContextRelationships) on CorrelationMatchId | extend ContextRowKind = "ContextEvidence")
 };
-let _sigma_shared_results = materialize(_sigma_shared_child());
+let ChildResults = materialize(Child());
 let ContextSummary = () {
-let _sigma_parent_matches = materialize(union (_sigma_shared_results | where ["ContextRowKind"] == "Summary"
+let ParentSourceMatches = materialize(union (ChildResults | where ["ContextRowKind"] == "Summary"
 | project-away ["ContextAmount"]
-| join kind=leftouter (_sigma_shared_results | where ["ContextRowKind"] == "ContextEvidence" | project ["CorrelationMatchId"], ["ContextAmount"]) on ["CorrelationMatchId"]
-| extend _sigma_child_match = strcat("_sigma_shared_child", "_", tostring(["CorrelationMatchId"]))
-| project EventTime = todatetime(["WindowEnd"]), MeasuredAmount = ["ContextAmount"], _sigma_child_match)
-| extend _sigma_child_match = tostring(column_ifexists("_sigma_child_match", "")));
-let AverageObservations = union (_sigma_parent_matches | where isempty(_sigma_child_match)), (_sigma_parent_matches | where isnotempty(_sigma_child_match) | extend RetainedNumericValue = MeasuredAmount | summarize take_any(*) by _sigma_child_match, RetainedNumericValue)
+| join kind=leftouter (ChildResults | where ["ContextRowKind"] == "ContextEvidence" | project ["CorrelationMatchId"], ["ContextAmount"]) on ["CorrelationMatchId"]
+| extend ChildCorrelationMatch = strcat("Child", "_", tostring(["CorrelationMatchId"]))
+| project EventTime = todatetime(["WindowEnd"]), MeasuredAmount = ["ContextAmount"], ChildCorrelationMatch)
+| extend ChildCorrelationMatch = tostring(column_ifexists("ChildCorrelationMatch", "")));
+let AverageObservations = union (ParentSourceMatches | where isempty(ChildCorrelationMatch)), (ParentSourceMatches | where isnotempty(ChildCorrelationMatch) | extend RetainedNumericValue = MeasuredAmount | summarize take_any(*) by ChildCorrelationMatch, RetainedNumericValue)
 | where isnotnull(EventTime);
 AverageObservations
 | summarize by AverageWindowEnd = EventTime, AverageTimeBin = bin(EventTime, 5m)
@@ -66,10 +66,10 @@ let CorrelationMatches = materialize(ContextSummary()
 let WindowSourceMatches = materialize(
 CorrelationMatches | project CorrelationMatchId_1, CompletionTime = WindowEnd, ContextPartition = 1
 | join kind=inner (
-union (_sigma_shared_results | where ["ContextRowKind"] == "Summary"
+union (ChildResults | where ["ContextRowKind"] == "Summary"
 | project-away ["ContextAmount"]
-| join kind=leftouter (_sigma_shared_results | where ["ContextRowKind"] == "ContextEvidence" | project ["CorrelationMatchId"], ["ContextAmount"], HasContextEvidence = true) on ["CorrelationMatchId"]
-| extend ContextEventTime = todatetime(["WindowEnd"]), ContextAmount_1 = toreal(pack_array(gettype(["ContextAmount"]), ["ContextAmount"])[1])
+| join kind=leftouter (ChildResults | where ["ContextRowKind"] == "ContextEvidence" | project ["CorrelationMatchId"], ["ContextAmount"], HasContextEvidence = true) on ["CorrelationMatchId"]
+| extend ContextEventTime = todatetime(["WindowEnd"]), ContextAmount_1 = ["ContextAmount"]
 | extend ContextSourceRule = "child")
 | project ContextEventTime, ContextSourceRule, ContextAmount_1, HasContextEvidence, ContextPartition = 1
 ) on ContextPartition

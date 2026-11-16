@@ -1,7 +1,7 @@
 // Supported in-range child values produce no qualifying child or parent.
 let Events=datatable(Timestamp:datetime,Marker:string,Amount:long) [datetime(2026-01-01),"match",1000,datetime(2026-01-01),"match",1];
 let Actual=(){
-let _sigma_child_0 = () {
+let Child = () {
 let SumObservations = union (Events
 | where Marker =~ "match"
 | project EventTime_1 = todatetime(["Timestamp"]), MeasuredAmount = ["Amount"])
@@ -19,7 +19,7 @@ union (SumArrivals
 | where ValueSum == 0
 | project WindowStart = SumBoundaryTime - 5m, WindowEnd = SumBoundaryTime, ValueSum
 };
-let SourceMatchArrivals = union (_sigma_child_0()
+let SourceMatchArrivals = union (Child()
 | project EventTime = todatetime(["WindowEnd"]))
 | where isnotnull(EventTime)
 | summarize SourceMatchCount = count() by EventTime;

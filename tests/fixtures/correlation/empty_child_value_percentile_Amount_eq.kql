@@ -1,0 +1,89 @@
+let Events=datatable(Timestamp:datetime, Host:string, Marker:string, Amount:long) [datetime(2026-01-01), "h", "A", 42];
+let Actual=(){
+let Child = () {
+let ContextSummary = () {
+union (Events
+| where Marker =~ "A"
+| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "A"),
+(Events
+| where Marker =~ "B"
+| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "B")
+| where isnotnull(EventTime_1)
+// Batch simultaneous source matches before updating inclusive trailing presence.
+| summarize MatchesA = countif(SourceRule == "A") > 0, MatchesB = countif(SourceRule == "B") > 0 by EventTime_1
+| sort by EventTime_1 asc
+| extend NewCorrelationGroup = isnull(prev(EventTime_1))
+| scan declare (LastATime:datetime, LastBTime:datetime) with (
+    step PresenceWindow: true =>
+        LastATime = iff(MatchesA, EventTime_1, iff(NewCorrelationGroup, datetime(null), PresenceWindow.LastATime)),
+        LastBTime = iff(MatchesB, EventTime_1, iff(NewCorrelationGroup, datetime(null), PresenceWindow.LastBTime));
+)
+// Only source-match timestamps evaluate; expiration never creates an anchor.
+| extend HasA = isnotnull(LastATime) and LastATime >= EventTime_1 - 5m, HasB = isnotnull(LastBTime) and LastBTime >= EventTime_1 - 5m
+| extend RuleCount = tolong(HasA) + tolong(HasB)
+| where (not(HasA) or not(HasB))
+| project WindowStart = EventTime_1 - 5m, WindowEnd = EventTime_1, RuleCount
+};
+let CorrelationMatches = materialize(ContextSummary()
+| serialize CorrelationMatchId = row_number());
+let WindowSourceMatches = materialize(
+CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, ContextPartition = 1
+| join kind=inner (
+union (Events
+| where Marker =~ "A"
+| extend ContextEventTime = todatetime(["Timestamp"]), ContextAmount = ["Amount"]
+| extend ContextSourceRule = "A"),
+(Events
+| where Marker =~ "B"
+| extend ContextEventTime = todatetime(["Timestamp"]), ContextAmount = ["Amount"]
+| extend ContextSourceRule = "B")
+| project ContextEventTime, ContextSourceRule, ContextAmount, ContextPartition = 1
+) on ContextPartition
+| where ContextEventTime between ((CompletionTime - 5m) .. CompletionTime));
+let BooleanParticipants = materialize(WindowSourceMatches
+| join kind=inner (WindowSourceMatches | summarize HasA_1 = countif(ContextSourceRule == "A") > 0, HasB_1 = countif(ContextSourceRule == "B") > 0 by CorrelationMatchId) on CorrelationMatchId
+| where ((not(HasA_1) and (false)) or (not(HasB_1) and (false))));
+let CompleteContextRelationships = materialize(BooleanParticipants
+| project CorrelationMatchId, ContextAmount
+| distinct *);
+union (CorrelationMatches | extend ContextRowKind = "Summary"), (CorrelationMatches | join kind=inner (CompleteContextRelationships) on CorrelationMatchId | extend ContextRowKind = "ContextEvidence")
+};
+let ChildResults = materialize(Child());
+let ParentSourceMatches = materialize(union (ChildResults
+| where ["ContextRowKind"] == "ContextEvidence"
+| extend ChildCorrelationMatch = strcat("Child", "_", tostring(["CorrelationMatchId"]))
+| project EventTime = todatetime(["WindowEnd"]), GroupAmount = ["ContextAmount"], MeasuredAmount = ["ContextAmount"], ChildCorrelationMatch)
+| extend ChildCorrelationMatch = tostring(column_ifexists("ChildCorrelationMatch", "")));
+let PercentileObservations = union (ParentSourceMatches | where isempty(ChildCorrelationMatch)), (ParentSourceMatches | where isnotempty(ChildCorrelationMatch) | extend RetainedNumericValue = MeasuredAmount | summarize take_any(*) by ChildCorrelationMatch, GroupAmount, RetainedNumericValue)
+| where isnotnull(EventTime) and isnotempty(GroupAmount);
+let PercentileWindowValues = materialize(
+PercentileObservations
+| project GroupAmount, PercentileWindowEnd = EventTime, PercentileTimeBin = bin(EventTime, 5m)
+| distinct *
+| join kind=inner (
+PercentileObservations
+| where isnotnull(MeasuredAmount)
+| extend PercentileTimeBin = pack_array(bin(EventTime, 5m), bin(EventTime, 5m) + 5m)
+| mv-expand PercentileTimeBin to typeof(datetime)
+) on GroupAmount, PercentileTimeBin
+| where EventTime between ((PercentileWindowEnd - 5m) .. PercentileWindowEnd)
+| project GroupAmount, PercentileWindowEnd, MeasuredAmount
+);
+PercentileWindowValues
+| join kind=inner (
+PercentileWindowValues | summarize PercentilePopulation = count() by GroupAmount, PercentileWindowEnd
+) on GroupAmount, PercentileWindowEnd
+| project GroupAmount, PercentileWindowEnd, MeasuredAmount, PercentilePopulation
+| sort by GroupAmount asc, PercentileWindowEnd asc, MeasuredAmount asc
+| serialize PercentileRank = row_number(1, GroupAmount != prev(GroupAmount) or PercentileWindowEnd != prev(PercentileWindowEnd))
+| where PercentileRank == max_of(1, (PercentilePopulation / 100) * 50 + tolong(ceiling(toreal((PercentilePopulation % 100) * 50) / 100.0)))
+| extend ValuePercentile = MeasuredAmount
+| where ValuePercentile == 0
+| project WindowStart = PercentileWindowEnd - 5m, WindowEnd = PercentileWindowEnd, ["Amount"] = GroupAmount, ValuePercentile
+| extend ContextComplete = true
+};
+let Observed=Actual() | project WindowEnd, Metric=toreal(ValuePercentile), Values=long(0), ContextComplete;
+let Expected=datatable(WindowEnd:datetime, Metric:real, Values:long, ContextComplete:bool) [];
+union (Observed | extend Delta=1), (Expected | extend Delta=-1)
+| summarize Delta=sum(Delta) by WindowEnd, Metric, Values, ContextComplete
+| where Delta!=0

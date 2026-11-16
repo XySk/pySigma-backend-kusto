@@ -11,24 +11,15 @@ let Events = datatable(Timestamp:datetime, Case:string, Marker:string) [
 
 ];
 let Actual = () {
-let _sigma_child_0 = () {
-let SourceMatchArrivals = union (Events
+let Child = () {
+union (Events
 | where Marker =~ "A"
 | project EventTime_1 = todatetime(["Timestamp"]), GroupCase = ["Case"])
 | where isnotnull(EventTime_1) and isnotempty(GroupCase)
-| summarize SourceMatchCount = count() by EventTime_1, GroupCase;
-union (SourceMatchArrivals
-| project GroupCase, CountBoundaryTime = EventTime_1, CountBoundaryOrder = 0, SourceMatchDelta = SourceMatchCount),
-(SourceMatchArrivals
-| project GroupCase, CountBoundaryTime = EventTime_1 + 5m, CountBoundaryOrder = 1, SourceMatchDelta = -SourceMatchCount)
-// Arrivals evaluate before equal-time expirations; expirations never create matches.
-| sort by GroupCase asc, CountBoundaryTime asc, CountBoundaryOrder asc
-| extend EventCount = row_cumsum(SourceMatchDelta, GroupCase != prev(GroupCase))
-| where CountBoundaryOrder == 0
-| where EventCount >= 1
-| project WindowStart = CountBoundaryTime - 5m, WindowEnd = CountBoundaryTime, ["Case"] = GroupCase, EventCount
+| distinct EventTime_1, GroupCase
+| project WindowStart = EventTime_1 - 5m, WindowEnd = EventTime_1, ["Case"] = GroupCase
 };
-union (_sigma_child_0()
+union (Child()
 | project EventTime_1 = todatetime(["WindowEnd"]), GroupCase = ["Case"], SourceRule = "child"),
 (Events
 | where Marker =~ "B"

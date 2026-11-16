@@ -242,8 +242,46 @@ def inherited_metric_fixture():
     )
 
 
+def high_threshold_fixture():
+    """1025 uses the largest verified predecessor offset; larger counts fall back."""
+    queries = []
+    # Each tied batch is one source timestamp: the first account qualifies
+    # exactly at N, the second stays one observation short. Strictly later
+    # success consumes one child match, independent of descendant count.
+    for threshold in (1025, 1026, 10000):
+        optimized, general = convert_pair(documents(threshold))
+        data = (
+            f"let Events = union (range Match from 1 to {threshold} step 1\n"
+            '| project Timestamp=datetime(2026-01-01),User="enough",Marker="failure"),\n'
+            f"(range Match from 1 to {threshold-1} step 1\n"
+            '| project Timestamp=datetime(2026-01-01),User="short",Marker="failure"),\n'
+            "(datatable(Timestamp:datetime,User:string,Marker:string) [\n"
+            'datetime(2026-01-01T00:01:00),"enough","success",\n'
+            'datetime(2026-01-01T00:01:00),"short","success"]);\n'
+        )
+        fields = ["Threshold", "Plan", "WindowStart", "WindowEnd", "User", "RuleCount"]
+        expected = (
+            "let Expected=datatable(WindowStart:datetime,WindowEnd:datetime,User:string,RuleCount:long) [\n"
+            'datetime(2025-12-31T23:58:00),datetime(2026-01-01T00:01:00),"enough",2];\n'
+            'let BothExpected=union (Expected | extend Plan="optimized"),(Expected | extend Plan="general")'
+            f" | extend Threshold={threshold};\n"
+        )
+        queries.append(
+            f"let Threshold{threshold} = () {{\n"
+            + data
+            + f"let Optimized=(){{\n{optimized}\n}};\nlet General=(){{\n{general}\n}};\n"
+            + expected
+            + 'let Actual=union (Optimized() | extend Plan="optimized"),(General() | extend Plan="general")'
+            + f" | extend Threshold={threshold};\n"
+            + check("Actual", "BothExpected", fields)
+            + "};\n"
+        )
+    return HEADER + "".join(queries) + "union Threshold1025(), Threshold1026(), Threshold10000()\n"
+
+
 def fixtures():
     return {
+        "count_existence_high_thresholds.kql": high_threshold_fixture(),
         "count_existence_targeted_logon.kql": targeted_fixture(),
         "count_existence_one.kql": randomized_fixture(1),
         "count_existence_duplicates.kql": randomized_fixture(3, duplicate_searches=True),

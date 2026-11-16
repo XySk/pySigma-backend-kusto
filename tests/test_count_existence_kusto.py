@@ -140,10 +140,17 @@ def test_count_existence_fixtures_match_current_public_conversion():
         assert (directory / name).read_text() == query
 
 
-def test_predecessor_offset_outside_kusto_integer_range_keeps_general_plan():
-    (query,) = convert_documents(chain_documents({"gte": 2_147_483_649}))
-    assert "EventCount = row_cumsum(" in query
-    assert "ThresholdPredecessorTime" not in query
+def test_predecessor_offset_at_verified_engine_limit_remains_specialized():
+    (query,) = convert_documents(chain_documents({"gte": 1025}))
+    assert re.search(r"prev\(EventTime(?:_\d+)?, 1024\)", query)
+    assert "ThresholdPredecessorTime" in query
+
+
+def test_predecessor_offset_beyond_verified_engine_limit_keeps_general_plan():
+    for condition in ({"gte": 1026}, {"gt": 1025}, {"gte": 10000}, {"gte": 2_147_483_649}):
+        (query,) = convert_documents(chain_documents(condition))
+        assert "EventCount = row_cumsum(" in query
+        assert "ThresholdPredecessorTime" not in query
 
 
 def test_predecessor_real_group_comparison_preserves_native_nan_identity():

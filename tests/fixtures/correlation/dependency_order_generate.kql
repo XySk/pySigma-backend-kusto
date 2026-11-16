@@ -11,8 +11,8 @@ datetime(2026-01-01T12:02:00Z), "host", "direct",
 datetime(2026-01-01T12:07:00Z), "host", "direct"
 ];
 let Actual = () {
-let _sigma_child_0 = () {
-let _sigma_child_0 = () {
+let Middle = () {
+let Child = () {
 let SourceMatchArrivals = union (Events
 | where Marker =~ "match"
 | project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"])
@@ -29,25 +29,30 @@ union (SourceMatchArrivals
 | where EventCount >= 2
 | project WindowStart = CountBoundaryTime - 5m, WindowEnd = CountBoundaryTime, ["Host"] = GroupHost, EventCount
 };
-let _sigma_values = union (_sigma_child_0()
-| extend _sigma_timestamp = todatetime(["WindowEnd"]), _sigma_group_0 = ["Host"], _sigma_value = ["EventCount"]
-| extend _sigma_rule = "child")
-| where isnotnull(_sigma_timestamp) and isnotempty(_sigma_group_0)
-| summarize by _sigma_timestamp, _sigma_group_0, _sigma_value;
-_sigma_values
-| project _sigma_group_0, _sigma_window_end = _sigma_timestamp, _sigma_bin = bin(_sigma_timestamp, 5m)
-| distinct *
-| join kind=inner (
-    _sigma_values
-    | extend _sigma_bin = pack_array(bin(_sigma_timestamp, 5m), bin(_sigma_timestamp, 5m) + 5m)
-    | mv-expand _sigma_bin to typeof(datetime)
-) on _sigma_group_0, _sigma_bin
-| where _sigma_timestamp between ((_sigma_window_end - 5m) .. _sigma_window_end)
-| summarize ValueCount = count_distinctif(_sigma_value, isnotempty(_sigma_value)) by _sigma_window_end, _sigma_group_0
+let ValueCountSources = materialize(union (Child()
+| project EventTime = todatetime(["WindowEnd"]), GroupHost = ["Host"], CountedEventCount = ["EventCount"])
+| where isnotnull(EventTime) and isnotempty(GroupHost));
+let CountedEventCountActivity = materialize(ValueCountSources
+| where isnotempty(CountedEventCount)
+| summarize by GroupHost, CountedEventCount, EventTime
+| sort by GroupHost asc, CountedEventCount asc, EventTime asc
+// Repeated values whose inclusive active intervals overlap contribute only once.
+| extend CountedEventCountStarts = isnull(prev(EventTime)) or GroupHost != prev(GroupHost) or CountedEventCount != prev(CountedEventCount) or EventTime > prev(EventTime) + 5m,
+    CountedEventCountEnds = isnull(next(EventTime)) or GroupHost != next(GroupHost) or CountedEventCount != next(CountedEventCount) or next(EventTime) > EventTime + 5m);
+union (ValueCountSources | summarize by GroupHost, EventTime
+| project GroupHost, ValueBoundaryTime = EventTime, ValueBoundaryOrder = 1, CountedEventCountDelta = 0),
+(CountedEventCountActivity | where CountedEventCountStarts
+| project GroupHost, ValueBoundaryTime = EventTime, ValueBoundaryOrder = 0, CountedEventCountDelta = 1),
+(CountedEventCountActivity | where CountedEventCountEnds
+| project GroupHost, ValueBoundaryTime = EventTime + 5m, ValueBoundaryOrder = 2, CountedEventCountDelta = -1)
+// All interval starts precede anchors; equal-time expirations follow them.
+| sort by GroupHost asc, ValueBoundaryTime asc, ValueBoundaryOrder asc
+| extend ValueCount = row_cumsum(CountedEventCountDelta, GroupHost != prev(GroupHost))
+| where ValueBoundaryOrder == 1
 | where ValueCount >= 1
-| project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ["Host"] = _sigma_group_0, ValueCount
+| project WindowStart = ValueBoundaryTime - 5m, WindowEnd = ValueBoundaryTime, ["Host"] = GroupHost, ValueCount
 };
-let _sigma_child_1 = () {
+let Child = () {
 let SourceMatchArrivals = union (Events
 | where Marker =~ "match"
 | project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"])
@@ -64,9 +69,9 @@ union (SourceMatchArrivals
 | where EventCount >= 2
 | project WindowStart = CountBoundaryTime - 5m, WindowEnd = CountBoundaryTime, ["Host"] = GroupHost, EventCount
 };
-union (_sigma_child_0()
+union (Middle()
 | project EventTime_1 = todatetime(["WindowEnd"]), GroupHost = ["Host"], SourceRule = "middle"),
-(_sigma_child_1()
+(Child()
 | project EventTime_1 = todatetime(["WindowEnd"]), GroupHost = ["Host"], SourceRule = "child"),
 (NetworkEvents
 | where Marker =~ "direct"

@@ -35,7 +35,7 @@ def test_ordered_parent_scopes_complete_temporal_child_before_strict_window_end_
     (query,) = convert_documents(documents)
 
     assert "union (Events\n" in summary_data_query(query)
-    assert "union (_sigma_child_0()\n" in summary_data_query(query)
+    assert "union (Child()\n" in summary_data_query(query)
     assert 'todatetime(["WindowEnd"]), GroupHost = ["Host"]' in query
     assert 'todatetime(["Timestamp"]), GroupHost = ["Host"]' in query
     assert 'countif(SourceRule == "child") > 0' in query
@@ -300,7 +300,7 @@ def test_multilevel_mixed_sources_keep_result_names_and_scope_bindings_separate_
     assert len(summary_projections(query)) == 3
     assert summary_projections(query)[0].endswith(', ["Case"] = GroupCase, ["Host"] = GroupHost, EventCount')
     assert summary_projections(query)[1].endswith(', ["Tenant"] = GroupTenant, ValueCount')
-    assert "union (_sigma_child_0()" in query
+    assert "union (Child()" in query
     assert "_sigma_correlation_error" not in summary_data_query(query)
     assert "assert(" not in query
     assert "_sigma_identity" not in query
@@ -322,16 +322,16 @@ def test_multilevel_mixed_sources_keep_result_names_and_scope_bindings_separate_
 
 
 def test_chain_bindings_do_not_shadow_known_tables_in_direct_or_descendant_sources():
-    (query,) = convert_documents(multilevel_documents(), tables=("_sigma_child_0", "_sigma_types"))
+    (query,) = convert_documents(multilevel_documents(), tables=("Child", "Middle"))
 
-    # The outer function must avoid the raw table two correlation levels below,
-    # and the ordered parent's retained stream must avoid its direct table.
-    assert "let _sigma_child_0_1 = () {\n" in query
-    assert "union (_sigma_child_0_1()" in query
-    assert '(_sigma_child_0\n| where Marker =~ "match"' in query
-    assert '(_sigma_types\n| where Marker =~ "direct"' in query
-    assert "let _sigma_child_0 =" not in query
-    assert "let _sigma_types =" not in query
+    # Scoped child functions must avoid raw tables at every descendant level.
+    assert "let Child_1 = () {\n" in query
+    assert "let Middle_1 = () {\n" in query
+    assert "union (Child_1()" in query
+    assert '(Child\n| where Marker =~ "match"' in query
+    assert '(Middle\n| where Marker =~ "direct"' in query
+    assert "let Child =" not in query
+    assert "let Middle =" not in query
     assert "| where CompleteNow" in query
 
 
@@ -384,5 +384,5 @@ def test_shared_child_remains_available_to_each_parent_and_any_consumer_can_supp
     assert final_summary_projection(queries[-2]).endswith("EventCount")
     assert final_summary_projection(queries[-1]).endswith("ValueCount")
     for parent in queries[-2:]:
-        assert summary_data_query(parent).count("let _sigma_child_0 = () {") == 1
+        assert summary_data_query(parent).count("let Child = () {") == 1
         assert 'todatetime(["WindowEnd"])' in parent

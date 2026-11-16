@@ -3,7 +3,7 @@ let Events=datatable(Timestamp:datetime, Host:string, Marker:string, User:string
  datetime(2026-01-01T12:01:00Z), "h", "Finish", "finish", "finish-server"
 ];
 let Actual=() {
-let _sigma_shared_child = () {
+let AbsenceChild = () {
 let ContextSummary = () {
 union (Events
 | where Marker =~ "A"
@@ -59,9 +59,9 @@ let CompleteContextRelationships = materialize(BooleanParticipants
 | distinct *);
 union (CorrelationMatches | extend ContextRowKind = "Summary"), (CorrelationMatches | join kind=inner (CompleteContextRelationships) on CorrelationMatchId | extend ContextRowKind = "ContextEvidence")
 };
-let _sigma_shared_results = materialize(_sigma_shared_child());
+let AbsenceChildResults = materialize(AbsenceChild());
 let ContextSummary = () {
-union (_sigma_shared_results
+union (AbsenceChildResults
 | where ["ContextRowKind"] == "Summary"
 | project EventTime_1 = todatetime(["WindowEnd"]), GroupHost = ["Host"], SourceRule = "AbsenceChild"),
 (Events
@@ -88,10 +88,10 @@ let CorrelationMatches = materialize(ContextSummary()
 let WindowSourceMatches = materialize(
 CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, ContextGroupHost = ["Host"], ContextPartition = 1
 | join kind=inner (
-union (_sigma_shared_results | where ["ContextRowKind"] == "Summary"
+union (AbsenceChildResults | where ["ContextRowKind"] == "Summary"
 | project-away ["ContextUser"], ["ContextServer"]
-| join kind=leftouter (_sigma_shared_results | where ["ContextRowKind"] == "ContextEvidence" | project ["CorrelationMatchId"], ["ContextUser"], ["ContextServer"], HasContextEvidence = true) on ["CorrelationMatchId"]
-| extend ContextEventTime = todatetime(["WindowEnd"]), ContextGroupHost = ["Host"], ContextUser = tostring(pack_array(gettype(["ContextUser"]), ["ContextUser"])[1]), ContextServer = tostring(pack_array(gettype(["ContextServer"]), ["ContextServer"])[1])
+| join kind=leftouter (AbsenceChildResults | where ["ContextRowKind"] == "ContextEvidence" | project ["CorrelationMatchId"], ["ContextUser"], ["ContextServer"], HasContextEvidence = true) on ["CorrelationMatchId"]
+| extend ContextEventTime = todatetime(["WindowEnd"]), ContextGroupHost = ["Host"], ContextUser = ["ContextUser"], ContextServer = ["ContextServer"]
 | extend ContextSourceRule = "AbsenceChild"),
 ((Events
 | where Marker =~ "Finish"

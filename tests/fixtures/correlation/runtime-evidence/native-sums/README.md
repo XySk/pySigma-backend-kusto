@@ -63,9 +63,10 @@ No per-operator intermediate row counts were captured.
 | `real-hot-group-value_sum-plain` | 3566 → 825 | 0.027630 → 0.014174 | 0.020302 → 0.006555 | 0.009801 → 0.005993 | 4.22 → 4.05 |
 | `real-hot-group-value_sum-context` | 18841 → 2398 | 0.382830 → 0.019264 | 0.374572 → 0.012347 | 0.137054 → 0.011257 | 8.08 → 4.34 |
 
-Every measured workload reduced elapsed time and CPU. Many-group context cases
-used more peak memory (long about 5.88 → 7.95 MB; real about 6.27 → 8.02 MB), while
-other cases stayed similar or decreased. The populations are small, timings
+All eight measured elapsed medians decreased; seven total CPU medians decreased.
+Plain long hot-group CPU rose from 0.004181 to 0.004959 seconds. Peak memory
+increased for many-group context (long 5.88 → 7.95 MB; real 6.27 → 8.02 MB),
+and slightly for plain real many-group (4.50 → 4.51 MB). The populations are small, timings
 include substantial compilation/planning overhead, and the emulator was local.
 These results demonstrate these query shapes; they do not establish production
 capacity, large-window scaling, or every possible sum workload. Final integrated

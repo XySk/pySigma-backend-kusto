@@ -2,33 +2,38 @@
   "status": "PENDING",
   "fixtures": [
     {
+      "name": "count_existence_high_thresholds.kql",
+      "sha256": "b099cd4fb27407971d8114c03b8ad6c82bf095e26fc130a7106743b590b6887e",
+      "expected_error": null
+    },
+    {
       "name": "count_existence_targeted_logon.kql",
-      "sha256": "889fa3a3dfaccbc59c1ca8c1a26179782c7bc4a9146da58c186242f24b4100a1",
+      "sha256": "2c486150b52ce58bbfd5efdc4e9016a8721c3dca6fbab4e447cc0196cd47bba1",
       "expected_error": null
     },
     {
       "name": "count_existence_one.kql",
-      "sha256": "997b600de2532d44b15e2ac55cbc37c2938901287719e7278cfc1dac16e1b123",
+      "sha256": "a4399e5e8b7892b79c67c405f58724fee933ad7eafa7ab49c001c92d87077b78",
       "expected_error": null
     },
     {
       "name": "count_existence_duplicates.kql",
-      "sha256": "00e2f98b8ecb3512fd4f7afe903e2c7713b6f7e5f2990108acee848eeb529fb6",
+      "sha256": "566b51b05e7cb474a8a627942778fa0209758cc5d3c8dec8c74228c4535f5794",
       "expected_error": null
     },
     {
       "name": "count_existence_ten.kql",
-      "sha256": "aa940cc161a5e9540e2945d1b36ec750f640a135bb94559379dcec14cab43aa0",
+      "sha256": "4457a26d8ba044a1611652c52f42fa375e106fc8419ba61a7750df9e6aac764b",
       "expected_error": null
     },
     {
       "name": "count_existence_real_groups.kql",
-      "sha256": "48fe0318531bc7c4263bfb255a633a57cbd0c05d12a7f17033f53fa2133d17c1",
+      "sha256": "cee1bb6c8a9198f02ce6cb11aabbfc0d4b9deabb4feea74e4d237188e503889d",
       "expected_error": null
     },
     {
       "name": "count_existence_inherited_metric.kql",
-      "sha256": "5357fa1566236c6627814c327f37f73547fed16e9b2767e1b975aba0cf33ad7e",
+      "sha256": "0bdf355c09cac50b83e0b235016da6702fc7f79622e8a62c27291cfc9feccae6",
       "expected_error": null
     }
   ]

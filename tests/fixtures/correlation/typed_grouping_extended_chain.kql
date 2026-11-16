@@ -1,24 +1,15 @@
 let Events=datatable(User:guid) [guid(00000000-0000-0000-0000-000000000001)]
 | extend Timestamp=datetime(2026-01-01T12:00:00Z),Marker="match";
 let Actual=(){
-let _sigma_child_0 = () {
-let SourceMatchArrivals = union (Events
+let Child = () {
+union (Events
 | where Marker =~ "match"
 | project EventTime_1 = todatetime(["Timestamp"]), GroupUser = ["User"])
 | where isnotnull(EventTime_1) and isnotempty(GroupUser)
-| summarize SourceMatchCount = count() by EventTime_1, GroupUser;
-union (SourceMatchArrivals
-| project GroupUser, CountBoundaryTime = EventTime_1, CountBoundaryOrder = 0, SourceMatchDelta = SourceMatchCount),
-(SourceMatchArrivals
-| project GroupUser, CountBoundaryTime = EventTime_1 + 5m, CountBoundaryOrder = 1, SourceMatchDelta = -SourceMatchCount)
-// Arrivals evaluate before equal-time expirations; expirations never create matches.
-| sort by GroupUser asc, CountBoundaryTime asc, CountBoundaryOrder asc
-| extend EventCount = row_cumsum(SourceMatchDelta, GroupUser != prev(GroupUser))
-| where CountBoundaryOrder == 0
-| where EventCount >= 1
-| project WindowStart = CountBoundaryTime - 5m, WindowEnd = CountBoundaryTime, ["User"] = GroupUser, EventCount
+| distinct EventTime_1, GroupUser
+| project WindowStart = EventTime_1 - 5m, WindowEnd = EventTime_1, ["User"] = GroupUser
 };
-let SourceMatchArrivals = union (_sigma_child_0()
+let SourceMatchArrivals = union (Child()
 | project EventTime = todatetime(["WindowEnd"]), GroupActor = ["User"])
 | where isnotnull(EventTime) and isnotempty(GroupActor)
 | summarize SourceMatchCount = count() by EventTime, GroupActor;

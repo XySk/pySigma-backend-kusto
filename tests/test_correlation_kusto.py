@@ -1135,7 +1135,7 @@ def test_event_count_chain_honors_generation_of_child_and_detection_queries(
     if parent_generate:
         assert "| where EventCount >= 10\n" in queries[-2]
         assert "_sigma_child_0" not in queries[-2]
-    child_binding = "_sigma_child_0" if parent_generate else "ChildCorrelation"
+    child_binding = "ChildCorrelation"
     assert f"{child_binding}()" in queries[-1]
 
 

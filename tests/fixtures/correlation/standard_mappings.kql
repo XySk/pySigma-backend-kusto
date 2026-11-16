@@ -9,106 +9,62 @@ let NetworkEvents=datatable(['Network Time']:datetime, ['Network Host']:string, 
  datetime(2026-01-01T12:00:00Z), "h", "Bob", 20, "match"
 ];
 let Actual=() {
-let _sigma_guarded_query = () {
-let _sigma_context_summary = () {
-let _sigma_values = union (Events
+let ContextSummary = () {
+let SumObservations = union (Events
 | where ["Process Marker"] =~ "match"
-| extend _sigma_timestamp = todatetime(["Process Time"]), _sigma_group_0 = ["Process Host"], _sigma_value = pack_array(gettype(["Process Amount"]), ["Process Amount"])
-| extend _sigma_rule = "source-rule"),
+| project EventTime_1 = todatetime(["Process Time"]), GroupHost = ["Process Host"], MeasuredAmount = ["Process Amount"]),
 (Events
 | where ["Process Marker"] =~ "match"
-| extend _sigma_timestamp = todatetime(["Process Time"]), _sigma_group_0 = ["Process Host"], _sigma_value = pack_array(gettype(["Process Amount"]), ["Process Amount"])
-| extend _sigma_rule = "source-rule"),
+| project EventTime_1 = todatetime(["Process Time"]), GroupHost = ["Process Host"], MeasuredAmount = ["Process Amount"]),
 (NetworkEvents
 | where ["Network Marker"] =~ "match"
-| extend _sigma_timestamp = todatetime(["Network Time"]), _sigma_group_0 = ["Network Host"], _sigma_value = pack_array(gettype(["Network Amount"]), ["Network Amount"])
-| extend _sigma_rule = "network-rule")
-| where isnotnull(_sigma_timestamp) and isnotempty(_sigma_group_0)
-;
-let _sigma_sums = materialize(
-_sigma_values
-| project _sigma_group_0, _sigma_window_end = _sigma_timestamp, _sigma_bin = bin(_sigma_timestamp, 5m)
-| distinct *
-| join kind=inner (
-    _sigma_values
-    | extend _sigma_bin = pack_array(bin(_sigma_timestamp, 5m), bin(_sigma_timestamp, 5m) + 5m)
-    | mv-expand _sigma_bin to typeof(datetime)
-) on _sigma_group_0, _sigma_bin
-| where _sigma_timestamp between ((_sigma_window_end - 5m) .. _sigma_window_end)
-| summarize _sigma_integer_sum = sumif(todecimal(_sigma_value[1]), tostring(_sigma_value[0]) in ("int", "long")), _sigma_real_sum = sumif(toreal(_sigma_value[1]), tostring(_sigma_value[0]) in ("real", "double", "decimal") and isfinite(toreal(_sigma_value[1]))), _sigma_real_count = countif(tostring(_sigma_value[0]) in ("real", "double", "decimal") and isfinite(toreal(_sigma_value[1]))) by _sigma_window_end, _sigma_group_0
-);
-_sigma_sums
-| extend ValueSum = tolong(_sigma_integer_sum)
-| where (_sigma_real_count == 0 and todecimal(_sigma_integer_sum) >= decimal(0)) or (_sigma_real_count > 0 and toreal(_sigma_integer_sum) + _sigma_real_sum >= 0)
-| project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ["Host"] = _sigma_group_0, ValueSum
+| project EventTime_1 = todatetime(["Network Time"]), GroupHost = ["Network Host"], MeasuredAmount = ["Network Amount"])
+| where isnotnull(EventTime_1) and isnotempty(GroupHost);
+let SumArrivals = SumObservations
+| summarize ArrivalSum = sum(MeasuredAmount) by EventTime_1, GroupHost;
+union (SumArrivals
+| project GroupHost, SumBoundaryTime = EventTime_1, SumBoundaryOrder = 0, SumDelta = ArrivalSum),
+(SumArrivals
+| project GroupHost, SumBoundaryTime = EventTime_1 + 5m, SumBoundaryOrder = 1, SumDelta = -ArrivalSum)
+// Arrivals evaluate before equal-time expirations, including zero and missing values.
+| sort by GroupHost asc, SumBoundaryTime asc, SumBoundaryOrder asc
+| extend ValueSum = row_cumsum(SumDelta, GroupHost != prev(GroupHost))
+| where SumBoundaryOrder == 0
+| where ValueSum >= 0
+| project WindowStart = SumBoundaryTime - 5m, WindowEnd = SumBoundaryTime, ["Host"] = GroupHost, ValueSum
 };
-let _sigma_context_summaries = materialize(_sigma_context_summary()
-| serialize _sigma_context_id = row_number());
-let _sigma_context_matches = materialize(
-_sigma_context_summaries | project _sigma_context_id, _sigma_context_end = WindowEnd, _sigma_context_group = ["Host"], _sigma_context_partition = 1
+let CorrelationMatches = materialize(ContextSummary()
+| serialize CorrelationMatchId = row_number());
+let WindowSourceMatches = materialize(
+CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, ContextGroupHost = ["Host"], ContextPartition = 1
 | join kind=inner (
 union (Events
 | where ["Process Marker"] =~ "match"
-| extend _sigma_context_timestamp = todatetime(["Process Time"]), _sigma_context_group = ["Process Host"], _sigma_context_value = ["Process Actor"]
-| extend _sigma_context_rule = "source-rule"),
+| extend ContextEventTime = todatetime(["Process Time"]), ContextGroupHost = ["Process Host"], ContextUser = ["Process Actor"]
+| extend ContextSourceRule = "source-rule"),
 (Events
 | where ["Process Marker"] =~ "match"
-| extend _sigma_context_timestamp = todatetime(["Process Time"]), _sigma_context_group = ["Process Host"], _sigma_context_value = ["Process Actor"]
-| extend _sigma_context_rule = "source-rule"),
+| extend ContextEventTime = todatetime(["Process Time"]), ContextGroupHost = ["Process Host"], ContextUser = ["Process Actor"]
+| extend ContextSourceRule = "source-rule"),
 (NetworkEvents
 | where ["Network Marker"] =~ "match"
-| extend _sigma_context_timestamp = todatetime(["Network Time"]), _sigma_context_group = ["Network Host"], _sigma_context_value = ["Network Actor"]
-| extend _sigma_context_rule = "network-rule")
-| project _sigma_context_timestamp, _sigma_context_rule, _sigma_context_group, _sigma_context_value, _sigma_context_partition = 1
-) on _sigma_context_group
-| where _sigma_context_timestamp between ((_sigma_context_end - 5m) .. _sigma_context_end)
-| serialize _sigma_context_key = row_number());
-let _sigma_context_rows = materialize(_sigma_context_matches
-| project _sigma_context_id, _sigma_context_value
+| extend ContextEventTime = todatetime(["Network Time"]), ContextGroupHost = ["Network Host"], ContextUser = ["Network Actor"]
+| extend ContextSourceRule = "network-rule")
+| project ContextEventTime, ContextSourceRule, ContextGroupHost, ContextUser, ContextPartition = 1
+) on ContextGroupHost
+| where ContextEventTime between ((CompletionTime - 5m) .. CompletionTime));
+let CompleteContextRelationships = materialize(WindowSourceMatches
+| project CorrelationMatchId, ContextUser
 | distinct *);
-let ContextValues = _sigma_context_rows
-| where isnotnull(_sigma_context_value)
-| summarize by _sigma_context_id, _sigma_context_value
-| summarize DisplayedValues = make_list(_sigma_context_value, 1000), DistinctValueCount = count() by _sigma_context_id;
-_sigma_context_summaries
-| join kind=leftouter (ContextValues) on _sigma_context_id
-| extend ["User"] = coalesce(DisplayedValues, dynamic([]))
-| extend ContextComplete = coalesce(DistinctValueCount, 0) <= 1000
+let ValuesForUser = CompleteContextRelationships
+| where isnotnull(ContextUser)
+| summarize by CorrelationMatchId, ContextUser
+| summarize DisplayedUser = make_list(ContextUser, 1000), DistinctUserCount = count() by CorrelationMatchId;
+CorrelationMatches
+| join kind=leftouter (ValuesForUser) on CorrelationMatchId
+| extend ["User"] = coalesce(DisplayedUser, dynamic([]))
+| extend ContextComplete = coalesce(DistinctUserCount, 0) <= 1000
 | project ["WindowStart"], ["WindowEnd"], ["Host"], ["User"], ["ValueSum"], ["ContextComplete"]
-};
-let _sigma_validation_check = () {
-let _sigma_values = union (Events
-| where ["Process Marker"] =~ "match"
-| extend _sigma_timestamp = todatetime(["Process Time"]), _sigma_group_0 = ["Process Host"], _sigma_value = pack_array(gettype(["Process Amount"]), ["Process Amount"])
-| extend _sigma_rule = "source-rule"),
-(Events
-| where ["Process Marker"] =~ "match"
-| extend _sigma_timestamp = todatetime(["Process Time"]), _sigma_group_0 = ["Process Host"], _sigma_value = pack_array(gettype(["Process Amount"]), ["Process Amount"])
-| extend _sigma_rule = "source-rule"),
-(NetworkEvents
-| where ["Network Marker"] =~ "match"
-| extend _sigma_timestamp = todatetime(["Network Time"]), _sigma_group_0 = ["Network Host"], _sigma_value = pack_array(gettype(["Network Amount"]), ["Network Amount"])
-| extend _sigma_rule = "network-rule")
-| where isnotnull(_sigma_timestamp) and isnotempty(_sigma_group_0)
-;
-let _sigma_sums = materialize(
-_sigma_values
-| project _sigma_group_0, _sigma_window_end = _sigma_timestamp, _sigma_bin = bin(_sigma_timestamp, 5m)
-| distinct *
-| join kind=inner (
-    _sigma_values
-    | extend _sigma_bin = pack_array(bin(_sigma_timestamp, 5m), bin(_sigma_timestamp, 5m) + 5m)
-    | mv-expand _sigma_bin to typeof(datetime)
-) on _sigma_group_0, _sigma_bin
-| where _sigma_timestamp between ((_sigma_window_end - 5m) .. _sigma_window_end)
-| summarize _sigma_integer_sum = sumif(todecimal(_sigma_value[1]), tostring(_sigma_value[0]) in ("int", "long")), _sigma_real_sum = sumif(toreal(_sigma_value[1]), tostring(_sigma_value[0]) in ("real", "double", "decimal") and isfinite(toreal(_sigma_value[1]))), _sigma_real_count = countif(tostring(_sigma_value[0]) in ("real", "double", "decimal") and isfinite(toreal(_sigma_value[1]))) by _sigma_window_end, _sigma_group_0
-);
-union (_sigma_sums | where _sigma_real_count == 0 and (isnull(_sigma_integer_sum) or _sigma_integer_sum < decimal(-9223372036854775808) or _sigma_integer_sum > decimal(9223372036854775807)) | project _sigma_correlation_error = "Kusto value_sum integer overflow")
-};
-let _sigma_guarded_query_rows = materialize(_sigma_guarded_query());
-let _sigma_guarded_query_failure = toscalar(union (_sigma_validation_check() | project _sigma_correlation_error = tostring(_sigma_correlation_error)) | summarize countif(isnotempty(_sigma_correlation_error)));
-_sigma_guarded_query_rows
-| where assert(_sigma_guarded_query_failure == 0, "Kusto correlation validation failed: Kusto value_sum integer overflow; unrecognized error sentinel")
 };
 let Observed=Actual() | project WindowStart, WindowEnd, Host=tostring(Host), Metric=tostring(ValueSum),
  Users=array_length(User), Alice=set_has_element(User,"Alice"), Bob=set_has_element(User,"Bob");
