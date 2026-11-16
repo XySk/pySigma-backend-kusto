@@ -69,7 +69,10 @@ def test_all_supported_types_produce_and_consume_child_summaries(producer, consu
 
     assert len(summary_projections(query)) == 2
     producer_metric = "RuleCount = tolong(2)" if producer == "temporal_ordered" else METRICS[producer]
-    assert summary_projections(query)[0].endswith(f", {producer_metric}")
+    if producer == "event_count" and consumer in ("event_count", "temporal", "temporal_ordered"):
+        assert "EventCount" not in summary_projections(query)[0]
+    else:
+        assert summary_projections(query)[0].endswith(f", {producer_metric}")
     parent = summary_data_query(query).split("\n};\n", 1)[1]
     timestamp, group, source = (
         ("EventTime", "GroupHost", "SourceRule")

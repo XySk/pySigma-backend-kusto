@@ -1925,6 +1925,7 @@ def fixtures():
     from tests.fixtures.correlation.boolean_generate import fixtures as boolean_fixtures
     from tests.fixtures.correlation.context import fixtures as context_fixtures, nested_fixture
     from tests.fixtures.correlation.count_context import fixtures as count_context_fixtures
+    from tests.fixtures.correlation.count_existence import fixtures as count_existence_fixtures
     from tests.fixtures.correlation.empty_child_context import fixtures as empty_child_fixtures
     from tests.fixtures.correlation.event_count_sliding import fixtures as event_count_sliding_fixtures
     from tests.fixtures.correlation.integrated import matrix_fixtures
@@ -1949,6 +1950,7 @@ def fixtures():
         **boolean_context_fixtures(),
         **context_fixtures(),
         **count_context_fixtures(),
+        **count_existence_fixtures(),
         **ordered_context_fixtures(),
         **ordered_state_fixtures(),
         **numeric_context_fixtures(),

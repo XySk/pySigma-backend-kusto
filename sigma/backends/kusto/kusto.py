@@ -221,6 +221,97 @@ class KustoBackend(TextQueryBackend):
 
     # Override methods
 
+    def convert(self, rule_collection, output_format=None, correlation_method=None, callback=None):
+        # Resolve the ordinary collection once before planning so generation
+        # controls and every shared/multilevel consumer are visible together.
+        rule_collection.resolve_rule_references()
+        self._correlation_graph = self._prepare_correlation_graph(rule_collection, callback)
+        try:
+            return super().convert(rule_collection, output_format, correlation_method, callback)
+        finally:
+            del self._correlation_graph
+
+    def _prepare_correlation_graph(self, rule_collection, callback=None):
+        """Collect source/consumer requirements without a second rule parser."""
+        consumers = {}
+        context = {}
+        for rule in rule_collection.rules:
+            inherited = set(rule.fields or [])
+            if isinstance(rule, SigmaCorrelationRule):
+                for reference in rule.referenced_rules:
+                    source = reference.rule
+                    consumers.setdefault(id(source), []).append((rule, reference))
+                    for field in context.get(id(source), ()):
+                        logical = next(
+                            (
+                                alias.alias
+                                for alias in rule.aliases
+                                if any(
+                                    name == field and alias_source.reference in (source.name, str(source.id))
+                                    for alias_source, name in alias.mapping.items()
+                                )
+                            ),
+                            field,
+                        )
+                        inherited.add(logical)
+            context[id(rule)] = inherited
+        existence = set()
+        for child in rule_collection.rules:
+            if (
+                not isinstance(child, SigmaCorrelationRule)
+                or child.type != SigmaCorrelationType.EVENT_COUNT
+                or child._output
+                or context[id(child)]
+                or callback is not None
+                or not consumers.get(id(child))
+            ):
+                continue
+            available = {"WindowStart", "WindowEnd", *(child.group_by or [])}
+            for consumer, reference in consumers[id(child)]:
+                # Context inherited from another source can also request this
+                # child's metric through a consumer alias.
+                required = [*(consumer.group_by or []), *context[id(consumer)]]
+                measured = getattr(consumer.condition, "fieldref", None)
+                required.extend(measured if isinstance(measured, list) else [measured] if measured else [])
+                for field in required:
+                    if field in consumer.aliases.aliases:
+                        alias = consumer.aliases.aliases[field]
+                        field = next(
+                            (
+                                name
+                                for source, name in alias.mapping.items()
+                                if source.reference in (reference.reference, child.name, str(child.id))
+                            ),
+                            field,
+                        )
+                    if field not in available:
+                        break
+                else:
+                    continue
+                break
+            else:
+                existence.add(id(child))
+        return {"consumers": consumers, "context": context, "existence_only": existence}
+
+    def _count_existence_threshold(self, rule):
+        if id(rule) not in getattr(self, "_correlation_graph", {}).get("existence_only", ()):
+            return None
+        condition = rule.condition
+        if condition is None or isinstance(condition, SigmaExtendedCorrelationCondition):
+            return None
+        count = condition.count
+        if count != int(count):
+            return None
+        if condition.op == SigmaCorrelationConditionOperator.GTE:
+            threshold = int(count)
+        elif condition.op == SigmaCorrelationConditionOperator.GT:
+            threshold = int(count) + 1
+        else:
+            return None
+        # prev() takes a positive Kusto int offset. Larger thresholds retain
+        # the count plan rather than emitting an unrepresentable offset.
+        return threshold if 0 < threshold <= 2_147_483_648 else None
+
     def escape_and_quote_field(self, field_name):
         if re.fullmatch(r"[A-Za-z_][A-Za-z_0-9]*", field_name):
             return field_name
@@ -694,7 +785,7 @@ class KustoBackend(TextQueryBackend):
         elif rule.type == SigmaCorrelationType.VALUE_AVG:
             metrics = ["ValueAvg"]
         elif counted_fields is None:
-            metrics = ["EventCount"]
+            metrics = [] if self._count_existence_threshold(rule) is not None else ["EventCount"]
         elif len(counted_fields) == 1:
             metrics = ["ValueCount"]
         else:
@@ -702,6 +793,8 @@ class KustoBackend(TextQueryBackend):
         if rule.timespan.seconds <= 0:
             raise SigmaConversionError(rule, rule.source, "Kusto correlations require a positive timespan.")
         conflicting_fields = {"WindowStart", "WindowEnd", "ContextComplete", *metrics}.intersection(rule.group_by or [])
+        if rule.type == SigmaCorrelationType.EVENT_COUNT and "EventCount" in (rule.group_by or []):
+            conflicting_fields.add("EventCount")
         if conflicting_fields:
             raise SigmaConversionError(
                 rule,
@@ -1182,7 +1275,14 @@ class KustoBackend(TextQueryBackend):
                         if shared:
                             function, child_results = self._shared_child_source(reference_index, query_index, query)
                         else:
-                            function = allocate(f"_sigma_child_{len(definitions)}")
+                            if self._count_existence_threshold(source) is not None:
+                                source_name = str(source.name or source.id)
+                                label = "".join(
+                                    part[:1].upper() + part[1:] for part in re.findall(r"[A-Za-z0-9]+", source_name)
+                                )
+                                function = allocate(label if label and not label[0].isdigit() else "CountMatches")
+                            else:
+                                function = allocate(f"_sigma_child_{len(definitions)}")
                             definitions.append(f"let {function} = () {{\n{query}\n}};\n")
                             child_results = f"{function}()"
                         relation = f"{child_results}{normalization}"
@@ -1370,6 +1470,13 @@ class KustoBackend(TextQueryBackend):
         valid_rows = " and ".join([f"isnotnull({timestamp})", *(f"isnotempty({field})" for field in groups)])
         weighted_fields = ", ".join([timestamp, *groups])
         if rule.type == SigmaCorrelationType.EVENT_COUNT:
+            existence_threshold = self._count_existence_threshold(rule)
+            if existence_threshold is not None:
+                return [
+                    self._convert_count_existence(
+                        rule, definitions, search, columns, valid_rows, span, existence_threshold, allocate
+                    )
+                ]
             return [
                 self._convert_event_count(
                     rule, definitions, search, columns, valid_rows, span, query_operator, threshold, allocate
@@ -1620,6 +1727,33 @@ class KustoBackend(TextQueryBackend):
         )
         return _CorrelationQuery(definitions, body)
 
+    def _convert_count_existence(self, rule, definitions, search, columns, valid_rows, span, threshold, allocate):
+        """Keep a timestamp when its Nth-most-recent source match fits."""
+        event_time, groups = columns["timestamp"], columns["groups"]
+        body = f"{search}\n| where {valid_rows}\n"
+        if threshold > 1:
+            offset = threshold - 1
+            predecessor = allocate("ThresholdPredecessorTime")
+            same_group = []
+            for logical, group in zip(rule.group_by or [], groups):
+                equality = f"{group} == prev({group}, {offset})"
+                if self._correlation_field_types[logical] == "real":
+                    equality = f"({equality} or (isnan({group}) and isnan(prev({group}, {offset}))))"
+                same_group.append(equality)
+            body += (
+                "// Preserve individual source matches, including timestamp ties, before the threshold lookup.\n"
+                f"| sort by {', '.join(f'{field} asc' for field in [*groups, event_time])}\n"
+                f"| extend {predecessor} = prev({event_time}, {offset})\n"
+                f"| where {predecessor} >= {event_time} - {span}"
+                + (f" and {' and '.join(same_group)}" if same_group else "")
+                + "\n"
+            )
+        body += (
+            f"| distinct {', '.join([event_time, *groups])}\n"
+            f"| project {self._correlation_result_projection(rule, groups, event_time, span, [])}"
+        )
+        return _CorrelationQuery(definitions, body)
+
     def _convert_temporal_presence(
         self, rule, definitions, search, columns, valid_rows, span, query_operator, threshold, allocate
     ):
@@ -1804,6 +1938,9 @@ class KustoBackend(TextQueryBackend):
         )
         if len(identities) > 1:
             prefixes = [allocate(f"Latest{'Then'.join(labels[:index])}Start") for index in range(1, len(identities))]
+            first_source = rule.referenced_rules[0].rule
+            if len(identities) == 2 and self._count_existence_threshold(first_source) is not None:
+                prefixes[0] = allocate(f"Last{labels[0].removesuffix('s')}Time")
             group_changes = []
             for field, group in zip(rule.group_by or [], groups):
                 changed = f"{group} != prev({group})"

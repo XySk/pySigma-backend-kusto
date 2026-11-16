@@ -230,3 +230,5 @@ four distinct groups in two overlapping Alice windows across two computers;
 wrong EventID/process/group rows and Bob's incomplete group set do not qualify.
 Generate with `PYTHONPATH=. python tests/fixtures/correlation/source_predicates.py`.
 The targeted manifest is `source-predicates-manifest.json`.
+
+The [consumer-aware child-count fixtures](COUNT-EXISTENCE.md) cover the predecessor specialization, the targeted-account failed-logons-then-success example, and paired general-plan performance inputs.
