@@ -185,14 +185,14 @@ def real_groups_fixture():
  datetime(2026-01-01T00:01:00.0000001),"success"
 ] | extend Groups=dynamic(["NaN","inf","-inf","0.0"])
 | mv-expand GroupText=Groups to typeof(string)
-| extend Group=case(GroupText=="NaN",real(nan),GroupText=="inf",real(+inf),GroupText=="-inf",real(-inf),real(-0.0))
+| extend Group=case(GroupText=="NaN",real(nan),GroupText=="inf",real(+inf),GroupText=="-inf",real(-inf),iff(Timestamp==datetime(2026-01-01),real(+0.0),real(-0.0)))
 | project Timestamp,Marker,Group;
 """
     definitions = "".join(f"let {name}=() {{\n{query}\n}};\n" for name, query in queries)
     actual = (
         "let Actual=union "
         + ",".join(
-            f'({name}() | project Plan="{name}",WindowStart,WindowEnd,Group=tostring(Group),RuleCount)'
+            f'({name}() | project Plan="{name}",WindowStart,WindowEnd,Group=iff(Group==real(0),"0.0",tostring(Group)),RuleCount)'
             for name, _ in queries
         )
         + ";\n"

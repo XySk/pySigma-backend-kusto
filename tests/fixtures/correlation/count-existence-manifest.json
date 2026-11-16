@@ -23,7 +23,7 @@
     },
     {
       "name": "count_existence_real_groups.kql",
-      "sha256": "f63a956a0c6f43a2eecc16af515f28e91dbb7f8e1bfdca8de63a2e90b4f90596",
+      "sha256": "48fe0318531bc7c4263bfb255a633a57cbd0c05d12a7f17033f53fa2133d17c1",
       "expected_error": null
     },
     {

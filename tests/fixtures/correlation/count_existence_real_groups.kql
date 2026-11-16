@@ -10,7 +10,7 @@ let Events = datatable(Timestamp:datetime, Marker:string) [
  datetime(2026-01-01T00:01:00.0000001),"success"
 ] | extend Groups=dynamic(["NaN","inf","-inf","0.0"])
 | mv-expand GroupText=Groups to typeof(string)
-| extend Group=case(GroupText=="NaN",real(nan),GroupText=="inf",real(+inf),GroupText=="-inf",real(-inf),real(-0.0))
+| extend Group=case(GroupText=="NaN",real(nan),GroupText=="inf",real(+inf),GroupText=="-inf",real(-inf),iff(Timestamp==datetime(2026-01-01),real(+0.0),real(-0.0)))
 | project Timestamp,Marker,Group;
 let specialized_1=() {
 let FailedLogonBursts = () {
@@ -158,7 +158,7 @@ union (_sigma_child_0()
 | where CompleteNow
 | project WindowStart = EventTime_1 - 3m, WindowEnd = EventTime_1, ["Group"] = GroupGroup, RuleCount = tolong(2)
 };
-let Actual=union (specialized_1() | project Plan="specialized_1",WindowStart,WindowEnd,Group=tostring(Group),RuleCount),(general_1() | project Plan="general_1",WindowStart,WindowEnd,Group=tostring(Group),RuleCount),(specialized_3() | project Plan="specialized_3",WindowStart,WindowEnd,Group=tostring(Group),RuleCount),(general_3() | project Plan="general_3",WindowStart,WindowEnd,Group=tostring(Group),RuleCount);
+let Actual=union (specialized_1() | project Plan="specialized_1",WindowStart,WindowEnd,Group=iff(Group==real(0),"0.0",tostring(Group)),RuleCount),(general_1() | project Plan="general_1",WindowStart,WindowEnd,Group=iff(Group==real(0),"0.0",tostring(Group)),RuleCount),(specialized_3() | project Plan="specialized_3",WindowStart,WindowEnd,Group=iff(Group==real(0),"0.0",tostring(Group)),RuleCount),(general_3() | project Plan="general_3",WindowStart,WindowEnd,Group=iff(Group==real(0),"0.0",tostring(Group)),RuleCount);
 let Expected=datatable(Plan:string,WindowEnd:datetime) [
  "specialized_1",datetime(2026-01-01T00:01:00),
  "specialized_1",datetime(2026-01-01T00:01:00.0000001),
