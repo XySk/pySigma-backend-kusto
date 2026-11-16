@@ -82,12 +82,14 @@ def fixtures():
         datetime(2026-01-01T00:05:00.0000001Z),"all",2""",
     )
     mixed = [
-        source_document("raw", "A"), source_document("B", "B"),
+        source_document("raw", "A"),
+        source_document("B", "B"),
         correlation_document("child", "event_count", ["raw"], condition={"gte": 2}),
-        correlation_document("parent", "temporal", ["child", "B"], groups=("Actor",),
-                             aliases={"Actor": {"child": "Host", "B": "Device"}}),
+        correlation_document(
+            "parent", "temporal", ["child", "B"], groups=("Actor",), aliases={"Actor": {"child": "Host", "B": "Device"}}
+        ),
     ]
-    query, = convert_documents(mixed)
+    (query,) = convert_documents(mixed)
     result["presence_mixed_alias.kql"] = checked(
         query + "\n| project WindowEnd,Host=Actor,RuleCount",
         '''datetime(2026-01-01T00:00:00Z),"g","A",
@@ -97,7 +99,27 @@ def fixtures():
         'datetime(2026-01-01T00:06:00Z),"g",2',
     )
     result["presence_mixed_alias.kql"] = result["presence_mixed_alias.kql"].replace(
-        "];\nlet Actual", "] | extend Device=Host;\nlet Actual")
+        "];\nlet Actual", "] | extend Device=Host;\nlet Actual"
+    )
+    source = source_document("A", "A")
+    source["fields"] = ["User"]
+    (query,) = convert_documents(
+        [
+            source,
+            correlation_document("child", "event_count", ["A"], condition={"gte": 1}),
+            correlation_document("parent", "temporal", ["child"]),
+        ]
+    )
+    result["presence_scalar_child_context.kql"] = checked(
+        query
+        + '\n| extend Host=iff(ContextComplete, strcat(Host,"/",strcat_array(array_sort_asc(User),",")), "INCOMPLETE")',
+        '''datetime(2026-01-01T00:00:00Z),"g","A",
+        datetime(2026-01-01T00:01:00Z),"g","A"''',
+        """datetime(2026-01-01T00:00:00Z),"g/Alice",1,
+        datetime(2026-01-01T00:01:00Z),"g/Alice,Bob",1""",
+    ).replace(
+        "];\nlet Actual", ' ] | extend User=iff(Timestamp == datetime(2026-01-01T00:00:00Z),"Alice","Bob");\nlet Actual'
+    )
     return result
 
 

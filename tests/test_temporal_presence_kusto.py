@@ -35,3 +35,17 @@ def test_temporal_presence_worked_engine_fixtures_use_public_conversion():
     directory = Path(__file__).parent / "fixtures" / "correlation"
     for name, content in fixtures().items():
         assert (directory / name).read_text() == content
+
+
+def test_temporal_parent_accepts_child_context_with_scalar_grouping():
+    source = source_document("A", "A")
+    source["fields"] = ["User"]
+    documents = [
+        source,
+        correlation_document("child", "event_count", ["A"], condition={"gte": 1}),
+        correlation_document("parent", "temporal", ["child"]),
+    ]
+    (query,) = convert_documents(documents)
+    assert 'todatetime(["WindowEnd"])' in query
+    assert "RuleCount" in query
+    assert '["User"]' in query

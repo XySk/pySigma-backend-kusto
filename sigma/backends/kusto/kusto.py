@@ -1995,7 +1995,12 @@ class KustoBackend(TextQueryBackend):
             if mapped_field not in context_fields:
                 scalar = self._quote_correlation_field(mapped_field)
             fields.append(f"{column} = {scalar}")
-        if columns.get("narrow_source") and child and source_state.processing_state.get("kusto_context_artifact"):
+        if (
+            columns.get("narrow_source")
+            and columns.get("child_match")
+            and child
+            and source_state.processing_state.get("kusto_context_artifact")
+        ):
             fields.append(columns["child_match"])
         if columns.get("narrow_source") and columns.get("include_source_rule"):
             identity = json.dumps(str(rule_reference.rule.name or rule_reference.rule.id), ensure_ascii=False)
