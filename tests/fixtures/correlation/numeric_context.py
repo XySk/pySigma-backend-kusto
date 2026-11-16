@@ -161,16 +161,19 @@ union (Observed | extend Delta=1),(Expected | extend Delta=-1)
     )
 
 
-def noqualifying_overflow_fixture():
+def noqualifying_supported_fixture():
     child = correlation_document(
         "child", "value_sum", ["source-rule"], groups=(), condition={"field": "Amount", "eq": 0}
     )
     parent = correlation_document("parent", "event_count", ["child"], groups=(), condition={"gte": 999})
     (query,) = convert_documents([source_document(), child, parent])
     return (
-        "// Expected failure: Kusto value_sum integer overflow, despite no qualifying child or parent.\n"
+        "// Supported in-range child values produce no qualifying child or parent.\n"
         "let Events=datatable(Timestamp:datetime,Marker:string,Amount:long) ["
-        'datetime(2026-01-01),"match",9223372036854775807,datetime(2026-01-01),"match",1];\n' + query + "\n"
+        'datetime(2026-01-01),"match",1000,datetime(2026-01-01),"match",1];\n'
+        + "let Actual=(){\n"
+        + query
+        + "\n};\nActual()\n| project Unexpected=1\n"
     )
 
 
@@ -185,5 +188,5 @@ def fixtures():
     result["numeric_context_boundaries.kql"] = fixture("value_percentile", boundary=True)
     result["numeric_context_real_boundaries.kql"] = real_boundaries_fixture()
     result["numeric_context_multiple_children.kql"] = multiple_children_fixture()
-    result["numeric_context_noqual_overflow.kql"] = noqualifying_overflow_fixture()
+    result["numeric_context_noqual_supported.kql"] = noqualifying_supported_fixture()
     return result

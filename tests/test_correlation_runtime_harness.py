@@ -35,17 +35,13 @@ def test_missing_frames_duplicates_errors_and_nonempty_diagnostics_fail(payload)
     assert assess_response(payload)[0] is False
 
 
-def test_overflow_requires_explicit_engine_error_and_expected_message():
-    error = {"error": {"code": "SEM0080", "message": "Kusto value_sum integer overflow"}}
-    assert assess_response(error, expected_error="Kusto value_sum integer overflow")[0]
-    assert not assess_response(response(), expected_error="Kusto value_sum integer overflow")[0]
-    assert not assess_response(
-        {"error": {"message": "other failure"}}, expected_error="Kusto value_sum integer overflow"
-    )[0]
+def test_expected_engine_error_requires_explicit_failure_and_message():
+    error = {"error": {"code": "SEM0080", "message": "expected engine failure"}}
+    assert assess_response(error, expected_error="expected engine failure")[0]
+    assert not assess_response(response(), expected_error="expected engine failure")[0]
+    assert not assess_response({"error": {"message": "other failure"}}, expected_error="expected engine failure")[0]
     # A string in successful primary rows is not an engine error.
-    assert not assess_response(
-        response([["Kusto value_sum integer overflow"]]), expected_error="Kusto value_sum integer overflow"
-    )[0]
+    assert not assess_response(response([["expected engine failure"]]), expected_error="expected engine failure")[0]
 
 
 def test_transport_timeout_stops_before_second_fixture_and_preserves_failure(tmp_path, monkeypatch):

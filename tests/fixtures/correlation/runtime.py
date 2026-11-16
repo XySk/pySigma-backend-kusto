@@ -2,7 +2,7 @@
 
 Run explicitly with --manifest, --output, and connection options after freezing
 fixtures. A successful query must produce exactly one empty primary table and a
-single successful completion. Expected overflow errors are named per fixture.
+single successful completion. Engine errors fail supported numeric cases.
 """
 
 import argparse
@@ -14,11 +14,6 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-OVERFLOW_FIXTURES = {
-    "value_sum_overflow.kql": "Kusto value_sum integer overflow",
-    "value_sum_negative_overflow.kql": "Kusto value_sum integer overflow",
-    "numeric_context_noqual_overflow.kql": "Kusto value_sum integer overflow",
-}
 DEFAULT_OPTIONS = {"max_memory_consumption_per_query_per_node": 12884901888}
 
 
@@ -77,7 +72,7 @@ def manifest(directory):
             {
                 "name": path.name,
                 "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
-                "expected_error": OVERFLOW_FIXTURES.get(path.name),
+                "expected_error": None,
             }
             for path in sorted(directory.glob("*.kql"))
         ],

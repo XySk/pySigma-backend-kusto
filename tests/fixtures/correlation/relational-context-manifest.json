@@ -19,17 +19,17 @@
     },
     {
       "name": "empty_child_value_sum_Amount_eq.kql",
-      "sha256": "1cf20ae06fc63eb98bb9ac040ecade2ce2e08b0c4b916237c610c018b526db9c",
+      "sha256": "a09620174887f7f6e3559999b639dbd8dc0108b81f8ab90f6c1127d9dd7f2d18",
       "expected_error": null
     },
     {
       "name": "empty_child_value_sum_ChildRuleCount_eq.kql",
-      "sha256": "48fed69d7974430eeabc99634b58c95d64f195325fcafcb53ce7daae158ad5f0",
+      "sha256": "2842c8498bb06de68411a641fcd4a7213e484a3c23d18559e786474401d14dcf",
       "expected_error": null
     },
     {
       "name": "empty_child_value_sum_ungrouped_eq.kql",
-      "sha256": "d36aaba54ed70e3369931040af6e77358dc889a4f3d69a9d7c66110489c67054",
+      "sha256": "3bd13638e857119ca0c041dfa9e4e7c8ba168d90fab93cbadfa2e39783c9d5ec",
       "expected_error": null
     },
     {

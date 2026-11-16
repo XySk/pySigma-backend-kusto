@@ -829,3 +829,14 @@ integration gates. Other corpus files containing event-count children may remain
 stale until that regeneration; historical evidence applies only to archived hashes.
 
 The #46 scoped evidence above was executed before the #38 event-count integration; regenerated integrated query hashes require their own gate.
+
+## Spec 34 sum contract migration (#42)
+
+The overflow failures recorded above are historical evidence for the superseded
+contract. They are preserved here and in their original evidence directories;
+they are no longer current acceptance requirements. The prepared positive and
+negative overflow fixtures and the no-qualifying overflow fixture are retired.
+Their replacement cases use supported native numeric ranges, native decimal
+precision, int-to-long child metrics, and current-window real arithmetic after a
+large observation expires. The runtime runner no longer assigns expected
+overflow errors by filename; supported fixtures must complete successfully.
