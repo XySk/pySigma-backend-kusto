@@ -829,3 +829,24 @@ integration gates. Other corpus files containing event-count children may remain
 stale until that regeneration; historical evidence applies only to archived hashes.
 
 The #46 scoped evidence above was executed before the #38 event-count integration; regenerated integrated query hashes require their own gate.
+
+## Spec 34 sum contract migration (#42)
+
+The overflow failures recorded above are historical evidence for the superseded
+contract. They are preserved here and in their original evidence directories;
+they are no longer current acceptance requirements. The prepared positive and
+negative overflow fixtures and the no-qualifying overflow fixture are retired.
+Their replacement cases use supported native numeric ranges, native decimal
+precision, int-to-long child metrics, and current-window real arithmetic after a
+large observation expires. The runtime runner no longer assigns expected
+overflow errors by filename; supported fixtures must complete successfully.
+
+The new sum implementation passed 26 strict real-engine cases plus the
+supported-range integer replacement, and all 48 matched old/new benchmark
+samples. [Native sum evidence](runtime-evidence/native-sums/README.md) records
+exact frozen queries, engine responses/statistics, per-workload results and the
+retained initial fixture-normalization failure. Native int-to-long promotion,
+decimal precision, fractional integer equality/inequality, empty usable
+populations, real-group special values and large-observation expiration all
+passed. These measurements use small 96-row workloads; some many-group context
+peak-memory measurements increased despite lower elapsed time and CPU.

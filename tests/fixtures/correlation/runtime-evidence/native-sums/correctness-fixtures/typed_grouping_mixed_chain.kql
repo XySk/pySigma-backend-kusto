@@ -1,0 +1,62 @@
+let Events=datatable(Timestamp:datetime,Host:string,Marker:string) [datetime(2026-01-01T12:00:00Z),"h","match"];
+let NetworkEvents=datatable(Timestamp:datetime,Marker:string,User:long,Amount:long) [datetime(2026-01-01T12:00:00Z),"direct",1,3];
+let Actual=(){
+let _sigma_child_0 = () {
+let _sigma_child_0 = () {
+let SourceMatchArrivals = union (Events
+| where Marker =~ "match"
+| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"])
+| where isnotnull(EventTime_1) and isnotempty(GroupHost)
+| summarize SourceMatchCount = count() by EventTime_1, GroupHost;
+union (SourceMatchArrivals
+| project GroupHost, CountBoundaryTime = EventTime_1, CountBoundaryOrder = 0, SourceMatchDelta = SourceMatchCount),
+(SourceMatchArrivals
+| project GroupHost, CountBoundaryTime = EventTime_1 + 5m, CountBoundaryOrder = 1, SourceMatchDelta = -SourceMatchCount)
+// Arrivals evaluate before equal-time expirations; expirations never create matches.
+| sort by GroupHost asc, CountBoundaryTime asc, CountBoundaryOrder asc
+| extend EventCount = row_cumsum(SourceMatchDelta, GroupHost != prev(GroupHost))
+| where CountBoundaryOrder == 0
+| where EventCount >= 1
+| project WindowStart = CountBoundaryTime - 5m, WindowEnd = CountBoundaryTime, ["Host"] = GroupHost, EventCount
+};
+let SumObservations = union (_sigma_child_0()
+| project EventTime_1 = todatetime(["WindowEnd"]), GroupGroup = ["EventCount"], MeasuredAmount = ["EventCount"]),
+(NetworkEvents
+| where Marker =~ "direct"
+| project EventTime_1 = todatetime(["Timestamp"]), GroupGroup = ["User"], MeasuredAmount = ["Amount"])
+| where isnotnull(EventTime_1) and isnotempty(GroupGroup);
+let SumArrivals = SumObservations
+| summarize ArrivalSum = sum(MeasuredAmount) by EventTime_1, GroupGroup;
+union (SumArrivals
+| project GroupGroup, SumBoundaryTime = EventTime_1, SumBoundaryOrder = 0, SumDelta = ArrivalSum),
+(SumArrivals
+| project GroupGroup, SumBoundaryTime = EventTime_1 + 5m, SumBoundaryOrder = 1, SumDelta = -ArrivalSum)
+// Arrivals evaluate before equal-time expirations, including zero and missing values.
+| sort by GroupGroup asc, SumBoundaryTime asc, SumBoundaryOrder asc
+| extend ValueSum = row_cumsum(SumDelta, GroupGroup != prev(GroupGroup))
+| where SumBoundaryOrder == 0
+| where ValueSum >= 1
+| project WindowStart = SumBoundaryTime - 5m, WindowEnd = SumBoundaryTime, ["Group"] = GroupGroup, ValueSum
+};
+let SourceMatchArrivals = union (_sigma_child_0()
+| project EventTime = todatetime(["WindowEnd"]), GroupGroup = ["Group"])
+| where isnotnull(EventTime) and isnotempty(GroupGroup)
+| summarize SourceMatchCount = count() by EventTime, GroupGroup;
+union (SourceMatchArrivals
+| project GroupGroup, CountBoundaryTime = EventTime, CountBoundaryOrder = 0, SourceMatchDelta = SourceMatchCount),
+(SourceMatchArrivals
+| project GroupGroup, CountBoundaryTime = EventTime + 5m, CountBoundaryOrder = 1, SourceMatchDelta = -SourceMatchCount)
+// Arrivals evaluate before equal-time expirations; expirations never create matches.
+| sort by GroupGroup asc, CountBoundaryTime asc, CountBoundaryOrder asc
+| extend EventCount = row_cumsum(SourceMatchDelta, GroupGroup != prev(GroupGroup))
+| where CountBoundaryOrder == 0
+| where EventCount >= 1
+| project WindowStart = CountBoundaryTime - 5m, WindowEnd = CountBoundaryTime, ["Group"] = GroupGroup, EventCount
+};
+let Observed=Actual() | project WindowEnd,Kind=gettype(Group),Value=tostring(Group),EventCount;
+let Expected=datatable(WindowEnd:datetime,Kind:string,Value:string,EventCount:long) [
+ datetime(2026-01-01T12:00:00Z),"long","1",1
+];
+union (Observed | extend Delta=1),(Expected | extend Delta=-1)
+| summarize Delta=sum(Delta) by WindowEnd,Kind,Value,EventCount
+| where Delta!=0

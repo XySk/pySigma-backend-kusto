@@ -999,7 +999,9 @@ class KustoBackend(TextQueryBackend):
                 result_types[metric] = "real"
             elif rule.type == SigmaCorrelationType.VALUE_SUM:
                 result_types[metric] = (
-                    "long" if self._correlation_field_types[counted_fields[0]] in ("int", "long") else "real"
+                    "long"
+                    if self._correlation_field_types[counted_fields[0]] in ("int", "long")
+                    else self._correlation_field_types[counted_fields[0]]
                 )
             elif rule.type == SigmaCorrelationType.VALUE_PERCENTILE:
                 result_types[metric] = self._correlation_field_types[counted_fields[0]]
@@ -1060,16 +1062,24 @@ class KustoBackend(TextQueryBackend):
         """Attach context from the same source matches without changing metric inputs."""
         reserved = set(context_fields) | set(rule.group_by or [])
         reserved.update(re.findall(r"[A-Za-z_][A-Za-z_0-9]*", "\n".join(queries)))
+        for reference in rule.referenced_rules:
+            for state in reference.rule.get_conversion_states():
+                reserved.update(state.processing_state.get("kusto_source_fields", ()))
+                reserved.update(self._correlation_source_tables(state))
 
         allocate = self._name_allocator(reserved)
 
         columns = {
-            "timestamp": allocate("_sigma_context_timestamp"),
-            "rule": allocate("_sigma_context_rule"),
-            "groups": [allocate("_sigma_context_group") for _ in (rule.group_by or [])],
+            "timestamp": allocate("ContextEventTime"),
+            "rule": allocate("ContextSourceRule"),
+            "groups": [
+                allocate("ContextGroup" + re.sub(r"[^A-Za-z0-9_]", "_", field)) for field in (rule.group_by or [])
+            ],
             "values": [],
-            "context": [allocate("_sigma_context_value") for _ in context_fields],
+            "context": [allocate("Context" + re.sub(r"[^A-Za-z0-9_]", "_", field)) for field in context_fields],
         }
+        if self._uses_context_groups(rule, context_fields):
+            columns["context_evidence"] = allocate("HasContextEvidence")
         self._correlation_group_by = rule.group_by or []
         self._correlation_counted_fields = []
         self._correlation_context_fields = context_fields
@@ -1080,20 +1090,21 @@ class KustoBackend(TextQueryBackend):
             del self._correlation_group_by, self._correlation_counted_fields
             del self._correlation_context_fields, self._correlation_columns
         summary_function, summaries, matched = [
-            allocate(name) for name in ("_sigma_context_summary", "_sigma_context_summaries", "_sigma_context_matches")
+            allocate(name) for name in ("ContextSummary", "CorrelationMatches", "WindowSourceMatches")
         ]
         source_id, end, key = [
-            allocate(name) for name in ("_sigma_context_id", "_sigma_context_end", "_sigma_context_key")
+            allocate(name) for name in ("CorrelationMatchId", "CompletionTime", "SourceRelationshipId")
         ]
-        relationships, count = [allocate(name) for name in ("_sigma_context_rows", "_sigma_context_count")]
+        relationships = allocate("CompleteContextRelationships")
         groups, timestamp, values = columns["groups"], columns["timestamp"], columns["context"]
         # A constant joins the single ungrouped partition; grouping never uses context values.
-        join_key = allocate("_sigma_context_partition")
+        join_key = allocate("ContextPartition")
         group_projection = [
             f"{column} = {self._quote_correlation_field(field)}" for column, field in zip(groups, rule.group_by or [])
         ]
         left_projection = ", ".join([source_id, f"{end} = WindowEnd", *group_projection, f"{join_key} = 1"])
-        right_projection = ", ".join([timestamp, columns["rule"], *groups, *values, f"{join_key} = 1"])
+        evidence = [columns["context_evidence"]] if "context_evidence" in columns else []
+        right_projection = ", ".join([timestamp, columns["rule"], *groups, *values, *evidence, f"{join_key} = 1"])
         span = rule.timespan.spec if rule.timespan.unit in "smhd" else f"{rule.timespan.seconds}s"
         join_fields = ", ".join(groups or [join_key])
         output = []
@@ -1105,11 +1116,15 @@ class KustoBackend(TextQueryBackend):
             )
             left = f"{summaries} | project {left_projection}"
             right = f"{search}\n| project {right_projection}"
+            relationship_key = (
+                f"\n| serialize {key} = row_number()"
+                if rule.type == SigmaCorrelationType.TEMPORAL_ORDERED and len(rule.referenced_rules) > 2
+                else ""
+            )
             prefix += (
                 f"let {matched} = materialize(\n{left}\n"
                 f"| join kind=inner (\n{right}\n) on {join_fields}\n"
-                f"| where {timestamp} between (({end} - {span}) .. {end})\n"
-                f"| serialize {key} = row_number());\n"
+                f"| where {timestamp} between (({end} - {span}) .. {end}){relationship_key});\n"
             )
             if rule.type == SigmaCorrelationType.TEMPORAL_ORDERED:
                 membership, matched = self._ordered_context_membership(
@@ -1120,11 +1135,13 @@ class KustoBackend(TextQueryBackend):
                 presence = {}
                 aggregates = []
                 for reference in rule.referenced_rules:
-                    column = allocate("_sigma_context_present")
+                    column = allocate(
+                        "Has" + re.sub(r"[^A-Za-z0-9_]", "_", str(reference.rule.name or reference.rule.id))
+                    )
                     identity = json.dumps(str(reference.rule.name or reference.rule.id), ensure_ascii=False)
                     presence[reference.reference] = column
                     aggregates.append(f"{column} = countif({columns['rule']} == {identity}) > 0")
-                eligible = allocate("_sigma_context_eligible")
+                eligible = allocate("BooleanParticipants")
                 evidence = self._boolean_context_expression(rule, rule.condition.parsed, presence, columns["rule"])[1]
                 prefix += (
                     f"let {eligible} = materialize({matched}\n"
@@ -1138,8 +1155,11 @@ class KustoBackend(TextQueryBackend):
             # Complete native scalar relationship rows are a separate internal relation.
             # The display limit applies only to the public per-field collections.
             relationship_fields = ", ".join([source_id, *values])
+            relationship_source = context_matches
+            if "context_evidence" in columns:
+                relationship_source += f"\n| where {columns['context_evidence']}"
             prefix += (
-                f"let {relationships} = materialize({context_matches}\n"
+                f"let {relationships} = materialize({relationship_source}\n"
                 f"| project {relationship_fields}\n| distinct *);\n"
             )
             artifact_prefix = prefix
@@ -1147,7 +1167,8 @@ class KustoBackend(TextQueryBackend):
             limit = self.backend_options.get("correlation_context_limit", 1000)
             for field, value in zip(context_fields, values):
                 binding, collection, amount = [
-                    allocate(name) for name in ("ContextValues", "DisplayedValues", "DistinctValueCount")
+                    allocate(re.sub(r"[^A-Za-z0-9_]", "_", name))
+                    for name in ("ValuesFor" + field, "Displayed" + field, "Distinct" + field + "Count")
                 ]
                 prefix += (
                     f"let {binding} = {relationships}\n| where isnotnull({value})\n"
@@ -1182,44 +1203,94 @@ class KustoBackend(TextQueryBackend):
         return output, relationships
 
     def _ordered_context_membership(self, rule, matches, columns, source_id, completion, key, allocate):
-        """Union source rows from every full sequence for each qualifying completion.
+        """Find all sequence participants with scalar prefix/suffix reachability.
 
-        Unlike detection-only prefix pruning, evidence traversal keeps every
-        alternative. Row identities preserve repeated matches and relationships
-        without putting sequence alternatives into a bounded collection.
+        Candidates already lie in one successful completion's inclusive window.
+        The earliest reachable prefix end and latest reachable suffix start are
+        the least restrictive witnesses on either side of a candidate. Joining
+        those scalar witnesses never enumerates combinations of alternatives.
         """
         timestamp, rule_column = columns["timestamp"], columns["rule"]
-        previous = allocate("_sigma_context_previous")
-        paths = []
-        row_ids = []
-        definitions = ""
-        for index, reference in enumerate(rule.referenced_rules):
-            path = allocate("_sigma_context_path")
-            row_id = allocate("_sigma_context_step")
-            step_time = allocate("_sigma_context_step_time")
-            identity = reference.rule.name or str(reference.rule.id)
-            candidates = (
-                f"{matches}\n| where {rule_column} == {json.dumps(identity, ensure_ascii=False)}\n"
-                f"| project {source_id}, {completion}, {row_id} = {key}, {step_time} = {timestamp}"
+        # Successful summaries guarantee a viable full sequence. Every final
+        # source row at the completion can replace its final witness, and the
+        # final suffix bound is therefore the completion itself. Structural
+        # child summaries preserve this guarantee even with no retained values.
+        if len(rule.referenced_rules) <= 2:
+            selected = allocate("OrderedSourceRelationships")
+            predicates = []
+            for index, reference in enumerate(rule.referenced_rules):
+                identity = json.dumps(str(reference.rule.name or reference.rule.id), ensure_ascii=False)
+                comparison = "==" if index == len(rule.referenced_rules) - 1 else "<"
+                predicates.append(f"({rule_column} == {identity} and {timestamp} {comparison} {completion})")
+            return (
+                f"// Successful one/two-step completions need only endpoint participant filters.\n"
+                f"let {selected} = materialize({matches}\n| where {' or '.join(predicates)});\n",
+                selected,
             )
-            if index == 0:
-                expression = candidates
+
+        candidates, labels = [], []
+        definitions = (
+            "// All candidates share one successful completion's inclusive window.\n"
+            "// Strict prefix/suffix witnesses retain every participating alternative.\n"
+        )
+        for reference in rule.referenced_rules:
+            identity = str(reference.rule.name or reference.rule.id)
+            label = re.sub(r"[^A-Za-z0-9_]", "_", identity)
+            relation = allocate("CandidatesFor" + label)
+            definitions += (
+                f"let {relation} = {matches}\n"
+                f"| where {rule_column} == {json.dumps(identity, ensure_ascii=False)}\n"
+                f"| project {source_id}, {completion}, {key}, {timestamp};\n"
+            )
+            labels.append(label)
+            candidates.append(relation)
+
+        # Every threshold relation contains at most one row per match ID.
+        earliest, latest = [], [None] * len(candidates)
+        for index in range(len(candidates) - 2):
+            relation, threshold = allocate("Earliest" + labels[index] + "Prefix"), allocate("PrefixEndTime")
+            expression = candidates[index]
+            if index:
+                prior, bound = earliest[-1]
+                expression += f"\n| join kind=inner ({prior}) on {source_id}" f"\n| where {timestamp} > {bound}"
+            definitions += (
+                f"let {relation} = materialize({expression}\n"
+                f"| summarize {threshold} = min({timestamp}) by {source_id});\n"
+            )
+            earliest.append((relation, threshold))
+
+        for index in range(len(candidates) - 2, 0, -1):
+            relation, threshold = allocate("Latest" + labels[index] + "Suffix"), allocate("SuffixStartTime")
+            expression = candidates[index]
+            if index == len(candidates) - 2:
+                expression += f"\n| where {timestamp} < {completion}"
             else:
-                expression = (
-                    f"{paths[-1]}\n| join kind=inner (\n{candidates}\n) on {source_id}\n"
-                    f"| where {step_time} > {previous}"
-                )
-            if index == len(rule.referenced_rules) - 1:
-                expression += f"\n| where {step_time} == {completion}"
-            row_ids.append(row_id)
-            projection = ", ".join([source_id, completion, *row_ids, f"{previous} = {step_time}"])
-            definitions += f"let {path} = {expression}\n| project {projection};\n"
-            paths.append(path)
-        participating = allocate("_sigma_context_participating")
-        selected = allocate("_sigma_context_selected")
-        alternatives = ", ".join(f"({paths[-1]} | project {source_id}, {key} = {row_id})" for row_id in row_ids)
+                following, bound = latest[index + 1]
+                expression += f"\n| join kind=inner ({following}) on {source_id}" f"\n| where {timestamp} < {bound}"
+            definitions += (
+                f"let {relation} = materialize({expression}\n"
+                f"| summarize {threshold} = max({timestamp}) by {source_id});\n"
+            )
+            latest[index] = (relation, threshold)
+
+        participants = []
+        for index, candidate in enumerate(candidates):
+            expression = candidate
+            if index and index < len(candidates) - 1:
+                prior, bound = earliest[index - 1]
+                expression += f"\n| join kind=inner ({prior}) on {source_id}" f"\n| where {timestamp} > {bound}"
+            if index == len(candidates) - 1:
+                expression += f"\n| where {timestamp} == {completion}"
+            elif index == len(candidates) - 2:
+                expression += f"\n| where {timestamp} < {completion}"
+            else:
+                following, bound = latest[index + 1]
+                expression += f"\n| join kind=inner ({following}) on {source_id}" f"\n| where {timestamp} < {bound}"
+            participants.append(f"({expression}\n| project {source_id}, {key})")
+        participating = allocate("OrderedParticipants")
+        selected = allocate("OrderedSourceRelationships")
         definitions += (
-            f"let {participating} = union {alternatives}\n| distinct {source_id}, {key};\n"
+            f"let {participating} = union {', '.join(participants)}\n| distinct {source_id}, {key};\n"
             f"let {selected} = materialize({matches}\n"
             f"| join kind=leftsemi ({participating}) on {source_id}, {key});\n"
         )
@@ -1294,11 +1365,13 @@ class KustoBackend(TextQueryBackend):
 
     def _count_search(self, rule, allocate):
         definitions, searches = [], []
+        context_evidence = self._correlation_columns.get("context_evidence")
         for reference_index, reference in enumerate(rule.referenced_rules):
             source = reference.rule
             for query_index, (query, source_state) in enumerate(
                 zip(source.get_conversion_result(), source.get_conversion_states())
             ):
+                preserves_context_presence = False
                 self._correlation_child_row = allocate("_sigma_child_context_row")
                 try:
                     normalization = self.convert_correlation_search_field_normalization_expression(
@@ -1347,15 +1420,23 @@ class KustoBackend(TextQueryBackend):
                         kind = self._quote_correlation_field(artifact["kind"])
                         selected = "ContextEvidence" if normalization.expands_context else "Summary"
                         relation = f'{child_results}\n| where {kind} == "{selected}"'
-                        if normalization.preserve_empty_context:
+                        if normalization.preserve_empty_context or context_evidence and normalization.expands_context:
                             identity = self._quote_correlation_field(artifact["id"])
                             values = ", ".join(
                                 self._quote_correlation_field(value) for value in artifact["fields"].values()
                             )
+                            # Empty evidence does not erase a positive child match.
+                            # A marker keeps its structural row out of retained tuples.
+                            # A true child can have no positive evidence (absence).
+                            # Keep its summary for temporal membership; mark only
+                            # real relationships so string-null defaults never
+                            # become fabricated retained tuples.
+                            marker = f", {context_evidence} = true" if context_evidence else ""
+                            preserves_context_presence = bool(context_evidence)
                             relation = (
                                 f'{child_results} | where {kind} == "Summary"\n| project-away {values}\n'
                                 f'| join kind=leftouter ({child_results} | where {kind} == "ContextEvidence" '
-                                f"| project {identity}, {values}) on {identity}"
+                                f"| project {identity}, {values}{marker}) on {identity}"
                             )
                         child_id = self._correlation_columns.get("child_match")
                         if child_id:
@@ -1405,6 +1486,8 @@ class KustoBackend(TextQueryBackend):
                                 normalization=normalization,
                             )
                         )
+                if context_evidence and not preserves_context_presence:
+                    searches[-1] = f"({searches[-1]}\n| extend {context_evidence} = true)"
         return "".join(definitions), "union " + self.correlation_search_multi_rule_query_expression_joiner.join(
             searches
         )
@@ -1464,7 +1547,8 @@ class KustoBackend(TextQueryBackend):
         event_count = rule.type == SigmaCorrelationType.EVENT_COUNT
         value_count = rule.type == SigmaCorrelationType.VALUE_COUNT
         presence_temporal = rule.type == SigmaCorrelationType.TEMPORAL
-        readable = temporal or event_count or value_count
+        value_sum = rule.type == SigmaCorrelationType.VALUE_SUM
+        readable = temporal or event_count or value_count or value_sum
         columns = {
             "timestamp": allocate("EventTime" if readable else "_sigma_timestamp"),
             "rule": allocate("SourceRule" if readable else "_sigma_rule"),
@@ -1485,6 +1569,9 @@ class KustoBackend(TextQueryBackend):
         }
         if event_count or value_count or presence_temporal and not self._uses_context_groups(rule):
             columns["narrow_source"] = True
+        if value_sum:
+            columns["narrow_source"] = True
+            columns["native_values"] = True
         if presence_temporal:
             columns["include_source_rule"] = True
         numeric_context = rule.type in (
@@ -1501,14 +1588,14 @@ class KustoBackend(TextQueryBackend):
                 allocate(
                     "Counted" + re.sub(r"[^A-Za-z0-9_]", "", field)
                     if value_count
-                    else "_sigma_value" if len(counted_fields) == 1 else f"_sigma_value_{index}"
+                    else (
+                        "Measured" + re.sub(r"[^A-Za-z0-9_]", "", field)
+                        if value_sum
+                        else "_sigma_value" if len(counted_fields) == 1 else f"_sigma_value_{index}"
+                    )
                 )
                 for index, field in enumerate(counted_fields)
             ]
-        if rule.type == SigmaCorrelationType.VALUE_SUM:
-            columns["integer_sum"] = allocate("_sigma_integer_sum")
-            columns["real_sum"] = allocate("_sigma_real_sum")
-            columns["real_count"] = allocate("_sigma_real_count")
         if rule.type == SigmaCorrelationType.VALUE_AVG:
             columns["numeric_count"] = allocate("_sigma_numeric_count")
         self._correlation_group_by = rule.group_by or []
@@ -1542,7 +1629,8 @@ class KustoBackend(TextQueryBackend):
                     value = columns["values"][0]
                     scalar_value = allocate("RetainedNumericValue")
                     kind = self._correlation_field_types[counted_fields[0]]
-                    child_matches += f" | extend {scalar_value} = to{kind}({value}[1])"
+                    scalar = value if columns.get("native_values") else f"to{kind}({value}[1])"
+                    child_matches += f" | extend {scalar_value} = {scalar}"
                     keys.append(scalar_value)
                 search = (
                     f"union ({source_matches} | where isempty({child_id})), "
@@ -1605,6 +1693,21 @@ class KustoBackend(TextQueryBackend):
                     rule, definitions, search, columns, valid_rows, span, query_operator, threshold, allocate
                 )
             ]
+        if value_sum:
+            return [
+                self._convert_value_sum(
+                    rule,
+                    definitions,
+                    search,
+                    columns,
+                    valid_rows,
+                    span,
+                    query_operator,
+                    threshold,
+                    counted_fields[0],
+                    allocate,
+                )
+            ]
         anchor_fields = ", ".join([*groups, f"{window_end} = {timestamp}", f"{time_bin} = bin({timestamp}, {span})"])
         join_fields = ", ".join([*groups, time_bin])
         summary_fields = ", ".join([window_end, *groups])
@@ -1657,45 +1760,6 @@ class KustoBackend(TextQueryBackend):
             preaggregate = f"| summarize {weight} = count() by {weighted_fields}"
             distinct_anchors = ""
             aggregates = [f"EventCount = sum({weight})"]
-        elif rule.type == SigmaCorrelationType.VALUE_SUM:
-            # All valid source matches remain in the stream, including repeated
-            # measured values and rows without a usable value. The latter still
-            # establish evaluation anchors.
-            preaggregate = ""
-            distinct_anchors = "| distinct *\n"
-            value = columns["values"][0]
-            value_type = f"tostring({value}[0])"
-            integer = f'{value_type} in ("int", "long")'
-            real = f'{value_type} in ("real", "double", "decimal") and isfinite(toreal({value}[1]))'
-            integer_sum = columns["integer_sum"]
-            real_sum = columns["real_sum"]
-            real_count = columns["real_count"]
-            aggregates = [
-                f"{integer_sum} = sumif(todecimal({value}[1]), {integer})",
-                f"{real_sum} = sumif(toreal({value}[1]), {real})",
-                f"{real_count} = countif({real})",
-            ]
-            # Native long sum silently wraps on overflow. Accumulate integers
-            # in decimal, check every anchored integer-only window before the
-            # rule comparison, then expose the supported signed-long result.
-            sums = allocate("_sigma_sums")
-            summary_binding = f"let {sums} = materialize(\n"
-            self._register_correlation_guard(
-                sums,
-                f"{real_count} == 0 and (isnull({integer_sum}) or "
-                f"{integer_sum} < decimal(-9223372036854775808) or "
-                f"{integer_sum} > decimal(9223372036854775807))",
-                "Kusto value_sum integer overflow",
-            )
-            result_kind = self._correlation_field_types[counted_fields[0]]
-            metric_expression = (
-                f"tolong({integer_sum})" if result_kind in ("int", "long") else f"toreal({integer_sum}) + {real_sum}"
-            )
-            after_summary = f"{sums}\n| extend ValueSum = {metric_expression}\n"
-            comparisons = (
-                f"({real_count} == 0 and todecimal({integer_sum}) {query_operator} decimal({threshold})) "
-                f"or ({real_count} > 0 and toreal({integer_sum}) + {real_sum} {query_operator} {threshold})"
-            )
         elif rule.type == SigmaCorrelationType.VALUE_AVG:
             # Preserve every observation and every valid anchor, including
             # anchors whose window contains no usable numeric observation.
@@ -1730,6 +1794,65 @@ class KustoBackend(TextQueryBackend):
             scope += summary_binding + aggregate + ");\n"
             aggregate = after_summary
         return [_CorrelationQuery(scope, aggregate + f"| where {comparisons}\n| project {result_fields}")]
+
+    def _convert_value_sum(
+        self, rule, definitions, search, columns, valid_rows, span, query_operator, threshold, measured_field, allocate
+    ):
+        """Use exact integer boundaries and current-window native noninteger sums."""
+        sources = allocate("SumObservations")
+        event_time, groups, value = columns["timestamp"], columns["groups"], columns["values"][0]
+        kind = self._correlation_field_types[measured_field]
+        comparison = f"ValueSum {query_operator} {threshold}"
+        if kind == "decimal":
+            comparison = f"ValueSum {query_operator} decimal({threshold})"
+        elif kind in ("int", "long") and threshold != int(threshold):
+            comparison = f"todecimal(ValueSum) {query_operator} decimal({threshold})"
+        definitions += f"let {sources} = {search}\n| where {valid_rows};\n"
+        if kind in ("int", "long"):
+            arrivals = allocate("SumArrivals")
+            arrival_sum, boundary_time, boundary_order, delta = [
+                allocate(name) for name in ("ArrivalSum", "SumBoundaryTime", "SumBoundaryOrder", "SumDelta")
+            ]
+            keys = ", ".join([event_time, *groups])
+            definitions += f"let {arrivals} = {sources}\n| summarize {arrival_sum} = sum({value}) by {keys};\n"
+            retained = ", ".join(groups)
+            retained = retained + ", " if retained else ""
+            order = ", ".join(f"{field} asc" for field in [*groups, boundary_time, boundary_order])
+            changes = []
+            for logical, field in zip(rule.group_by or [], groups):
+                changed = f"{field} != prev({field})"
+                if self._correlation_field_types[logical] == "real":
+                    changed = f"({changed} and not(isnan({field}) and isnan(prev({field}))))"
+                changes.append(changed)
+            restart = ", " + " or ".join(changes) if changes else ""
+            body = (
+                f"union ({arrivals}\n| project {retained}{boundary_time} = {event_time}, "
+                f"{boundary_order} = 0, {delta} = {arrival_sum}),\n"
+                f"({arrivals}\n| project {retained}{boundary_time} = {event_time} + {span}, "
+                f"{boundary_order} = 1, {delta} = -{arrival_sum})\n"
+                "// Arrivals evaluate before equal-time expirations, including zero and missing values.\n"
+                f"| sort by {order}\n| extend ValueSum = row_cumsum({delta}{restart})\n"
+                f"| where {boundary_order} == 0\n"
+            )
+            end = boundary_time
+        else:
+            end, time_bin = allocate("SumWindowEnd"), allocate("SumTimeBin")
+            anchors = ", ".join([*groups, f"{end} = {event_time}", f"{time_bin} = bin({event_time}, {span})"])
+            join_keys = ", ".join([*groups, time_bin])
+            summary = ", ".join([end, *groups])
+            aggregate = f"sumif({value}, isfinite({value}))" if kind == "real" else f"sum({value})"
+            # Every source row remains on the right so its own anchor survives,
+            # even when no finite observation belongs to its exact window.
+            body = (
+                f"{sources}\n| project {anchors}\n| distinct *\n"
+                f"| join kind=inner (\n{sources}\n"
+                f"| extend {time_bin} = pack_array(bin({event_time}, {span}), bin({event_time}, {span}) + {span})\n"
+                f"| mv-expand {time_bin} to typeof(datetime)\n) on {join_keys}\n"
+                f"| where {event_time} between (({end} - {span}) .. {end})\n"
+                f"| summarize ValueSum = {aggregate} by {summary}\n"
+            )
+        projection = self._correlation_result_projection(rule, groups, end, span, ["ValueSum"])
+        return _CorrelationQuery(definitions, body + f"| where {comparison}\n| project {projection}")
 
     def _convert_value_count(
         self,
@@ -2296,7 +2419,7 @@ class KustoBackend(TextQueryBackend):
                 )
             return kind
 
-        def boxed(field):
+        def native_scalar(field):
             nonlocal expanded
             if field in context_fields:
                 expanded = True
@@ -2307,15 +2430,19 @@ class KustoBackend(TextQueryBackend):
                         rule_reference.rule.source,
                         "Kusto retained child fields require complete relational context metadata; preserve conversion state.",
                     )
-                scalar = self._quote_correlation_field(artifact["fields"][field])
-                return f"pack_array(gettype({scalar}), {scalar})"
-            quoted = self._quote_correlation_field(field)
-            return f"pack_array(gettype({quoted}), {quoted})"
+                return self._quote_correlation_field(artifact["fields"][field])
+            return self._quote_correlation_field(field)
+
+        def boxed(field):
+            scalar = native_scalar(field)
+            return f"pack_array(gettype({scalar}), {scalar})"
 
         for index, field in enumerate(self._correlation_group_by):
             mapped_field = map_field(map_alias(field))
             kind = record_type(field, mapped_field)
-            if mapped_field in context_fields:
+            if columns.get("native_values"):
+                scalar = native_scalar(mapped_field)
+            elif mapped_field in context_fields:
                 scalar = f"to{kind}({boxed(mapped_field)}[1])"
             else:
                 scalar = self._quote_correlation_field(mapped_field)
@@ -2324,7 +2451,9 @@ class KustoBackend(TextQueryBackend):
         for index, counted_field in enumerate(self._correlation_counted_fields):
             mapped_field = map_field(map_alias(counted_field))
             kind = record_type(counted_field, mapped_field)
-            if rule_reference.rule is not None and columns.get("identify_values"):
+            if columns.get("native_values"):
+                value = native_scalar(mapped_field)
+            elif rule_reference.rule is not None and columns.get("identify_values"):
                 value = (
                     f"to{kind}({boxed(mapped_field)}[1])"
                     if mapped_field in context_fields

@@ -61,8 +61,8 @@ def test_average_exposes_metric_to_chained_consumers_and_preserves_generate(chil
         any(final_summary_projection(query).endswith('["Host"] = _sigma_group_0, ValueAvg') for query in queries)
         == parent_generate
     )
-    assert final_summary_projection(queries[-1]).endswith('["Host"] = _sigma_group_0, ValueSum')
-    assert any('pack_array(gettype(["ValueAvg"]), ["ValueAvg"])' in query for query in queries)
+    assert final_summary_projection(queries[-1]).endswith('["Host"] = GroupHost, ValueSum')
+    assert any('MeasuredValueAvg = ["ValueAvg"]' in query for query in queries)
 
 
 def test_average_honors_builtin_source_mapping():

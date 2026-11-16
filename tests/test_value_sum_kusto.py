@@ -8,7 +8,7 @@ import yaml
 from sigma.backends.kusto import KustoBackend
 from sigma.collection import SigmaCollection
 from sigma.processing.pipeline import ProcessingPipeline
-from tests.correlation_helpers import convert_documents, correlation_document, source_document
+from tests.correlation_helpers import convert_documents, correlation_document, fixture_schema, source_document
 from tests.test_correlation_kusto import final_summary_projection, summary_data_query, summary_projections
 
 
@@ -31,11 +31,9 @@ def test_sum_compares_fractional_threshold_at_each_exact_window_end(operator, sy
 
     (query,) = convert_documents(documents)
 
-    assert '_sigma_value = pack_array(gettype(["Amount"]), ["Amount"])' in query
-    assert "| where _sigma_timestamp between ((_sigma_window_end - 5m) .. _sigma_window_end)" in query
+    assert 'MeasuredAmount = ["Amount"]' in query
     assert f"{symbol} decimal(2.5)" in query
-    assert f"{symbol} 2.5" in query
-    assert final_summary_projection(query).endswith('["Host"] = _sigma_group_0, ValueSum')
+    assert final_summary_projection(query).endswith('["Host"] = GroupHost, ValueSum')
 
 
 def test_sum_conversion_honors_public_correlation_callback():
@@ -68,45 +66,55 @@ def test_sum_conversion_honors_public_correlation_callback():
     assert query.endswith("| take 1")
 
 
-def test_sum_accepts_kusto_double_values_without_parsing_numeric_strings():
+@pytest.mark.parametrize("kind", ["int", "long", "real", "decimal"])
+def test_sum_uses_declared_native_arithmetic_without_overflow_assertions(kind):
     (query,) = convert_documents(
         [
             source_document(),
             correlation_document("sum", "value_sum", ["source-rule"], condition={"field": "Amount", "gte": 0}),
-        ]
+        ],
+        schema=fixture_schema(Amount=kind),
     )
+    assert 'MeasuredAmount = ["Amount"]' in query
+    assert "pack_array(gettype(" not in query
+    assert "assert(" not in query
+    assert "integer overflow" not in query
+    assert "todecimal(MeasuredAmount)" not in query
+    if kind in ("int", "long"):
+        assert "row_cumsum(" in query
+        assert "| join" not in query
+        assert "== 0" in query  # explicit arrival marker retains zero and negative sums
+    else:
+        assert "ValueSum = sum" in query
+        assert "row_cumsum(" not in query
+        if kind == "real":
+            assert "isfinite(MeasuredAmount)" in query
 
-    # Kusto gettype() calls real-valued observations "double".
-    assert 'in ("real", "double", "decimal") and isfinite(' in query
 
-
-def test_sum_rejects_integer_overflow_before_exposing_public_results():
-    (query,) = convert_documents(
-        [
-            source_document(),
-            correlation_document("sum", "value_sum", ["source-rule"], condition={"field": "Amount", "gte": 0}),
-        ]
+@pytest.mark.parametrize(("kind", "promoted"), [("int", "long"), ("decimal", "decimal")])
+def test_sum_child_exposes_native_promoted_result_type(kind, promoted):
+    docs = [
+        source_document(),
+        correlation_document("child", "value_sum", ["source-rule"], condition={"field": "Amount", "gte": 0}),
+        correlation_document("parent", "value_count", ["child"], field="ValueSum", condition={"gte": 1}),
+    ]
+    (query,) = convert_documents(docs, schema=fixture_schema(Amount=kind))
+    assert 'CountedValueSum = ["ValueSum"]' in query
+    # A mixed-source parent rejects an unpromoted int against the long child metric.
+    docs[-1] = correlation_document(
+        "parent",
+        "value_sum",
+        ["child", "source-rule"],
+        condition={"field": "Measurement", "gte": 0},
+        aliases={"Measurement": {"child": "ValueSum", "source-rule": "Amount"}},
     )
+    if promoted != kind:
+        from sigma.exceptions import SigmaConversionError
 
-    assert "sumif(todecimal(" in query
-    assert "decimal(-9223372036854775808)" in query
-    assert "decimal(9223372036854775807)" in query
-    assert '"Kusto value_sum integer overflow"' in query
-    # Overflow is checked independently of the qualifying-summary threshold,
-    # then the public result is gated on all validation errors being absent.
-    data_query = summary_data_query(query)
-    checks = query[len(data_query) :]
-    assert "_sigma_correlation_error" not in data_query
-    assert "todecimal(_sigma_integer_sum) >= decimal(0)" in data_query
-    assert "todecimal(_sigma_integer_sum) >= decimal(0)" not in checks
-    assert "| where assert(" not in data_query
-    assert "_sigma_sums | where _sigma_real_count == 0 and (isnull(_sigma_integer_sum)" in checks
-    assert '| project _sigma_correlation_error = "Kusto value_sum integer overflow"' in checks
-    assert "let _sigma_guarded_query_rows = materialize(_sigma_guarded_query());" in query
-    assert "toscalar(union (_sigma_validation_check()" in checks
-    assert "summarize countif(isnotempty(_sigma_correlation_error))" in checks
-    assert '| where assert(_sigma_guarded_query_failure == 0, "Kusto correlation validation failed:' in checks
-    assert query.endswith('Kusto value_sum integer overflow; unrecognized error sentinel")')
+        with pytest.raises(SigmaConversionError, match="incompatible source types"):
+            convert_documents(docs, schema=fixture_schema(Amount=kind))
+    else:
+        assert "ValueSum" in convert_documents(docs, schema=fixture_schema(Amount=kind))[0]
 
 
 @pytest.mark.parametrize("order", list(permutations(range(4))))
@@ -122,6 +130,15 @@ def test_sum_chain_converts_in_every_document_order(order):
     )
 
     assert len(summary_projections(query)) == 2
-    assert '_sigma_timestamp = todatetime(["WindowEnd"])' in query
-    assert '_sigma_value = pack_array(gettype(["ValueSum"]), ["ValueSum"])' in query
+    assert 'EventTime = todatetime(["WindowEnd"])' in query
+    assert 'MeasuredValueSum = ["ValueSum"]' in query
     assert summary_data_query(query).count("| extend ValueSum = ") == 2
+
+
+def test_supported_native_sum_runtime_fixtures_use_public_conversion():
+    from pathlib import Path
+
+    from tests.fixtures.correlation.native_sum import fixtures
+
+    for name, query in fixtures().items():
+        assert Path(__file__).with_name("fixtures").joinpath("correlation", name).read_text() == query

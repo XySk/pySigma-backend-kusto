@@ -134,7 +134,7 @@ def test_integer_numeric_metrics_are_returned_as_native_scalars(kind, metric):
             correlation_document("numeric", kind, ["source-rule"], groups=(), field="Amount", condition={"gte": 0}),
         ]
     )
-    assert f"{metric} = tolong(" in query
+    assert (f"{metric} = row_cumsum(" if kind == "value_sum" else f"{metric} = tolong(") in query
 
 
 def test_numeric_strings_require_explicit_numeric_normalization():

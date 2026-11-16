@@ -1,0 +1,219 @@
+let Events=datatable(Timestamp:datetime, Host:string, Marker:string, User:string, Server:string) [
+datetime(2026-01-01T12:00:00Z), "h", "a", "a0", "a0-server",
+datetime(2026-01-01T12:01:00Z), "h", "a", "a1", "a1-server",
+datetime(2026-01-01T12:02:00Z), "h", "b", "b2", "b2-server",
+datetime(2026-01-01T12:02:00Z), "h", "a", "tie", "tie-server",
+datetime(2026-01-01T12:03:00Z), "h", "c", "c3", "c3-server",
+datetime(2026-01-01T12:04:00Z), "h", "a", "a4", "a4-server",
+datetime(2026-01-01T12:05:00Z), "h", "b", "b5", "b5-server",
+datetime(2026-01-01T12:06:00Z), "h", "a", "a6", "a6-server",
+datetime(2026-01-01T12:07:00Z), "h", "c", "c7", "c7-server",
+datetime(2026-01-01T12:08:00Z), "h", "a", "a8", "a8-server",
+datetime(2026-01-01T12:09:00Z), "h", "b", "b9", "b9-server",
+datetime(2026-01-01T12:10:00Z), "h", "a", "a10", "a10-server"
+];
+let Actual=() {
+let ContextSummary = () {
+// Strict sequence: "a" -> "b" -> "a" -> "c" -> "a" -> "b" -> "a". Total inclusive span: 7m.
+union (Events
+| where Marker =~ "a"
+| extend EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"]
+| extend SourceRule = "a"),
+(Events
+| where Marker =~ "b"
+| extend EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"]
+| extend SourceRule = "b"),
+(Events
+| where Marker =~ "a"
+| extend EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"]
+| extend SourceRule = "a"),
+(Events
+| where Marker =~ "c"
+| extend EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"]
+| extend SourceRule = "c"),
+(Events
+| where Marker =~ "a"
+| extend EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"]
+| extend SourceRule = "a"),
+(Events
+| where Marker =~ "b"
+| extend EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"]
+| extend SourceRule = "b"),
+(Events
+| where Marker =~ "a"
+| extend EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"]
+| extend SourceRule = "a")
+| where isnotnull(EventTime_1) and isnotempty(GroupHost)
+// Batch equal timestamps: simultaneous source matches cannot advance strict sequence positions.
+| summarize HasA = countif(SourceRule == "a") > 0, HasB = countif(SourceRule == "b") > 0, HasC = countif(SourceRule == "c") > 0 by EventTime_1, GroupHost
+| sort by GroupHost asc, EventTime_1 asc
+| extend NewCorrelationGroup = isnull(prev(EventTime_1)) or GroupHost != prev(GroupHost)
+// Read preceding timestamp state for every assignment; preserve viable earlier prefixes.
+| scan declare (LatestAStart:datetime = datetime(null), LatestAThenBStart:datetime = datetime(null), LatestAThenBThenAStart:datetime = datetime(null), LatestAThenBThenAThenCStart:datetime = datetime(null), LatestAThenBThenAThenCThenAStart:datetime = datetime(null), LatestAThenBThenAThenCThenAThenBStart:datetime = datetime(null), CompleteNow:bool = false) with (
+    step SequenceState: true =>
+        CompleteNow = not(NewCorrelationGroup) and HasA and isnotnull(SequenceState.LatestAThenBThenAThenCThenAThenBStart) and SequenceState.LatestAThenBThenAThenCThenAThenBStart >= EventTime_1 - 7m,
+        LatestAStart = iff(HasA, EventTime_1, iff(NewCorrelationGroup, datetime(null), SequenceState.LatestAStart)),
+        LatestAThenBStart = iff(NewCorrelationGroup, datetime(null), iff(HasB and isnotnull(SequenceState.LatestAStart) and SequenceState.LatestAStart >= EventTime_1 - 7m and (isnull(SequenceState.LatestAThenBStart) or SequenceState.LatestAStart > SequenceState.LatestAThenBStart), SequenceState.LatestAStart, SequenceState.LatestAThenBStart)),
+        LatestAThenBThenAStart = iff(NewCorrelationGroup, datetime(null), iff(HasA and isnotnull(SequenceState.LatestAThenBStart) and SequenceState.LatestAThenBStart >= EventTime_1 - 7m and (isnull(SequenceState.LatestAThenBThenAStart) or SequenceState.LatestAThenBStart > SequenceState.LatestAThenBThenAStart), SequenceState.LatestAThenBStart, SequenceState.LatestAThenBThenAStart)),
+        LatestAThenBThenAThenCStart = iff(NewCorrelationGroup, datetime(null), iff(HasC and isnotnull(SequenceState.LatestAThenBThenAStart) and SequenceState.LatestAThenBThenAStart >= EventTime_1 - 7m and (isnull(SequenceState.LatestAThenBThenAThenCStart) or SequenceState.LatestAThenBThenAStart > SequenceState.LatestAThenBThenAThenCStart), SequenceState.LatestAThenBThenAStart, SequenceState.LatestAThenBThenAThenCStart)),
+        LatestAThenBThenAThenCThenAStart = iff(NewCorrelationGroup, datetime(null), iff(HasA and isnotnull(SequenceState.LatestAThenBThenAThenCStart) and SequenceState.LatestAThenBThenAThenCStart >= EventTime_1 - 7m and (isnull(SequenceState.LatestAThenBThenAThenCThenAStart) or SequenceState.LatestAThenBThenAThenCStart > SequenceState.LatestAThenBThenAThenCThenAStart), SequenceState.LatestAThenBThenAThenCStart, SequenceState.LatestAThenBThenAThenCThenAStart)),
+        LatestAThenBThenAThenCThenAThenBStart = iff(NewCorrelationGroup, datetime(null), iff(HasB and isnotnull(SequenceState.LatestAThenBThenAThenCThenAStart) and SequenceState.LatestAThenBThenAThenCThenAStart >= EventTime_1 - 7m and (isnull(SequenceState.LatestAThenBThenAThenCThenAThenBStart) or SequenceState.LatestAThenBThenAThenCThenAStart > SequenceState.LatestAThenBThenAThenCThenAThenBStart), SequenceState.LatestAThenBThenAThenCThenAStart, SequenceState.LatestAThenBThenAThenCThenAThenBStart));
+)
+| where CompleteNow
+| project WindowStart = EventTime_1 - 7m, WindowEnd = EventTime_1, ["Host"] = GroupHost, RuleCount = tolong(3)
+};
+let CorrelationMatches = materialize(ContextSummary()
+| serialize CorrelationMatchId = row_number());
+let WindowSourceMatches = materialize(
+CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, ContextGroupHost = ["Host"], ContextPartition = 1
+| join kind=inner (
+union (Events
+| where Marker =~ "a"
+| extend ContextEventTime = todatetime(["Timestamp"]), ContextGroupHost = ["Host"], ContextUser = ["User"], ContextServer = ["Server"]
+| extend ContextSourceRule = "a"),
+(Events
+| where Marker =~ "b"
+| extend ContextEventTime = todatetime(["Timestamp"]), ContextGroupHost = ["Host"], ContextUser = ["User"], ContextServer = ["Server"]
+| extend ContextSourceRule = "b"),
+(Events
+| where Marker =~ "a"
+| extend ContextEventTime = todatetime(["Timestamp"]), ContextGroupHost = ["Host"], ContextUser = ["User"], ContextServer = ["Server"]
+| extend ContextSourceRule = "a"),
+(Events
+| where Marker =~ "c"
+| extend ContextEventTime = todatetime(["Timestamp"]), ContextGroupHost = ["Host"], ContextUser = ["User"], ContextServer = ["Server"]
+| extend ContextSourceRule = "c"),
+(Events
+| where Marker =~ "a"
+| extend ContextEventTime = todatetime(["Timestamp"]), ContextGroupHost = ["Host"], ContextUser = ["User"], ContextServer = ["Server"]
+| extend ContextSourceRule = "a"),
+(Events
+| where Marker =~ "b"
+| extend ContextEventTime = todatetime(["Timestamp"]), ContextGroupHost = ["Host"], ContextUser = ["User"], ContextServer = ["Server"]
+| extend ContextSourceRule = "b"),
+(Events
+| where Marker =~ "a"
+| extend ContextEventTime = todatetime(["Timestamp"]), ContextGroupHost = ["Host"], ContextUser = ["User"], ContextServer = ["Server"]
+| extend ContextSourceRule = "a")
+| project ContextEventTime, ContextSourceRule, ContextGroupHost, ContextUser, ContextServer, ContextPartition = 1
+) on ContextGroupHost
+| where ContextEventTime between ((CompletionTime - 7m) .. CompletionTime)
+| serialize SourceRelationshipId = row_number());
+// All candidates share one successful completion's inclusive window.
+// Strict prefix/suffix witnesses retain every participating alternative.
+let CandidatesFora = WindowSourceMatches
+| where ContextSourceRule == "a"
+| project CorrelationMatchId, CompletionTime, SourceRelationshipId, ContextEventTime;
+let CandidatesForb = WindowSourceMatches
+| where ContextSourceRule == "b"
+| project CorrelationMatchId, CompletionTime, SourceRelationshipId, ContextEventTime;
+let CandidatesFora_1 = WindowSourceMatches
+| where ContextSourceRule == "a"
+| project CorrelationMatchId, CompletionTime, SourceRelationshipId, ContextEventTime;
+let CandidatesForc = WindowSourceMatches
+| where ContextSourceRule == "c"
+| project CorrelationMatchId, CompletionTime, SourceRelationshipId, ContextEventTime;
+let CandidatesFora_2 = WindowSourceMatches
+| where ContextSourceRule == "a"
+| project CorrelationMatchId, CompletionTime, SourceRelationshipId, ContextEventTime;
+let CandidatesForb_1 = WindowSourceMatches
+| where ContextSourceRule == "b"
+| project CorrelationMatchId, CompletionTime, SourceRelationshipId, ContextEventTime;
+let CandidatesFora_3 = WindowSourceMatches
+| where ContextSourceRule == "a"
+| project CorrelationMatchId, CompletionTime, SourceRelationshipId, ContextEventTime;
+let EarliestaPrefix = materialize(CandidatesFora
+| summarize PrefixEndTime = min(ContextEventTime) by CorrelationMatchId);
+let EarliestbPrefix = materialize(CandidatesForb
+| join kind=inner (EarliestaPrefix) on CorrelationMatchId
+| where ContextEventTime > PrefixEndTime
+| summarize PrefixEndTime_1 = min(ContextEventTime) by CorrelationMatchId);
+let EarliestaPrefix_1 = materialize(CandidatesFora_1
+| join kind=inner (EarliestbPrefix) on CorrelationMatchId
+| where ContextEventTime > PrefixEndTime_1
+| summarize PrefixEndTime_2 = min(ContextEventTime) by CorrelationMatchId);
+let EarliestcPrefix = materialize(CandidatesForc
+| join kind=inner (EarliestaPrefix_1) on CorrelationMatchId
+| where ContextEventTime > PrefixEndTime_2
+| summarize PrefixEndTime_3 = min(ContextEventTime) by CorrelationMatchId);
+let EarliestaPrefix_2 = materialize(CandidatesFora_2
+| join kind=inner (EarliestcPrefix) on CorrelationMatchId
+| where ContextEventTime > PrefixEndTime_3
+| summarize PrefixEndTime_4 = min(ContextEventTime) by CorrelationMatchId);
+let LatestbSuffix = materialize(CandidatesForb_1
+| where ContextEventTime < CompletionTime
+| summarize SuffixStartTime = max(ContextEventTime) by CorrelationMatchId);
+let LatestaSuffix = materialize(CandidatesFora_2
+| join kind=inner (LatestbSuffix) on CorrelationMatchId
+| where ContextEventTime < SuffixStartTime
+| summarize SuffixStartTime_1 = max(ContextEventTime) by CorrelationMatchId);
+let LatestcSuffix = materialize(CandidatesForc
+| join kind=inner (LatestaSuffix) on CorrelationMatchId
+| where ContextEventTime < SuffixStartTime_1
+| summarize SuffixStartTime_2 = max(ContextEventTime) by CorrelationMatchId);
+let LatestaSuffix_1 = materialize(CandidatesFora_1
+| join kind=inner (LatestcSuffix) on CorrelationMatchId
+| where ContextEventTime < SuffixStartTime_2
+| summarize SuffixStartTime_3 = max(ContextEventTime) by CorrelationMatchId);
+let LatestbSuffix_1 = materialize(CandidatesForb
+| join kind=inner (LatestaSuffix_1) on CorrelationMatchId
+| where ContextEventTime < SuffixStartTime_3
+| summarize SuffixStartTime_4 = max(ContextEventTime) by CorrelationMatchId);
+let OrderedParticipants = union (CandidatesFora
+| join kind=inner (LatestbSuffix_1) on CorrelationMatchId
+| where ContextEventTime < SuffixStartTime_4
+| project CorrelationMatchId, SourceRelationshipId), (CandidatesForb
+| join kind=inner (EarliestaPrefix) on CorrelationMatchId
+| where ContextEventTime > PrefixEndTime
+| join kind=inner (LatestaSuffix_1) on CorrelationMatchId
+| where ContextEventTime < SuffixStartTime_3
+| project CorrelationMatchId, SourceRelationshipId), (CandidatesFora_1
+| join kind=inner (EarliestbPrefix) on CorrelationMatchId
+| where ContextEventTime > PrefixEndTime_1
+| join kind=inner (LatestcSuffix) on CorrelationMatchId
+| where ContextEventTime < SuffixStartTime_2
+| project CorrelationMatchId, SourceRelationshipId), (CandidatesForc
+| join kind=inner (EarliestaPrefix_1) on CorrelationMatchId
+| where ContextEventTime > PrefixEndTime_2
+| join kind=inner (LatestaSuffix) on CorrelationMatchId
+| where ContextEventTime < SuffixStartTime_1
+| project CorrelationMatchId, SourceRelationshipId), (CandidatesFora_2
+| join kind=inner (EarliestcPrefix) on CorrelationMatchId
+| where ContextEventTime > PrefixEndTime_3
+| join kind=inner (LatestbSuffix) on CorrelationMatchId
+| where ContextEventTime < SuffixStartTime
+| project CorrelationMatchId, SourceRelationshipId), (CandidatesForb_1
+| join kind=inner (EarliestaPrefix_2) on CorrelationMatchId
+| where ContextEventTime > PrefixEndTime_4
+| where ContextEventTime < CompletionTime
+| project CorrelationMatchId, SourceRelationshipId), (CandidatesFora_3
+| where ContextEventTime == CompletionTime
+| project CorrelationMatchId, SourceRelationshipId)
+| distinct CorrelationMatchId, SourceRelationshipId;
+let OrderedSourceRelationships = materialize(WindowSourceMatches
+| join kind=leftsemi (OrderedParticipants) on CorrelationMatchId, SourceRelationshipId);
+let CompleteContextRelationships = materialize(OrderedSourceRelationships
+| project CorrelationMatchId, ContextUser, ContextServer
+| distinct *);
+let ValuesForUser = CompleteContextRelationships
+| where isnotnull(ContextUser)
+| summarize by CorrelationMatchId, ContextUser
+| summarize DisplayedUser = make_list(ContextUser, 1000), DistinctUserCount = count() by CorrelationMatchId;
+let ValuesForServer = CompleteContextRelationships
+| where isnotnull(ContextServer)
+| summarize by CorrelationMatchId, ContextServer
+| summarize DisplayedServer = make_list(ContextServer, 1000), DistinctServerCount = count() by CorrelationMatchId;
+CorrelationMatches
+| join kind=leftouter (ValuesForUser) on CorrelationMatchId
+| extend ["User"] = coalesce(DisplayedUser, dynamic([]))
+| join kind=leftouter (ValuesForServer) on CorrelationMatchId
+| extend ["Server"] = coalesce(DisplayedServer, dynamic([]))
+| extend ContextComplete = coalesce(DistinctUserCount, 0) <= 1000 and coalesce(DistinctServerCount, 0) <= 1000
+| project ["WindowStart"], ["WindowEnd"], ["Host"], ["User"], ["Server"], ["RuleCount"], ["ContextComplete"]
+};
+let Observed=Actual() | project WindowEnd, Users=tostring(array_sort_asc(User)), Servers=tostring(array_sort_asc(Server)), RuleCount, ContextComplete;
+let Expected=datatable(WindowEnd:datetime, Users:string, Servers:string, RuleCount:long, ContextComplete:bool) [
+datetime(2026-01-01T12:10:00Z), '["a10","a4","a6","a8","b5","b9","c7"]', '["a10-server","a4-server","a6-server","a8-server","b5-server","b9-server","c7-server"]', 3, true
+];
+union (Observed | extend Delta=1), (Expected | extend Delta=-1)
+| summarize Delta=sum(Delta) by WindowEnd, Users, Servers, RuleCount, ContextComplete | where Delta != 0
