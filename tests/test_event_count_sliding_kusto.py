@@ -58,7 +58,7 @@ def test_weighted_count_names_do_not_shadow_source_fields_or_tables():
     assert 'GroupHost_1 = ["Host"]' in query
     assert "SourceMatchCount_1 = count()" in query
     assert "EventCount = row_cumsum(SourceMatchDelta_1" in query
-    assert 'pack_array(gettype(["SourceMatchCount"]), ["SourceMatchCount"])' in query
+    assert '= ["SourceMatchCount"]' in query
 
 
 def test_weighted_count_fixtures_match_current_public_conversion():

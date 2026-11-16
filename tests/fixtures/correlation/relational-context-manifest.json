@@ -1,0 +1,136 @@
+{
+  "status": "PENDING",
+  "scope": "available features only; ranges blocked by #31; partial ordered thresholds deferred",
+  "fixtures": [
+    {
+      "name": "empty_child_value_count_Amount_eq.kql",
+      "sha256": "11da6181217cae06aefa44828ce707021ffe19e0960d84d4b36de7a269c90455",
+      "expected_error": null
+    },
+    {
+      "name": "empty_child_value_count_ChildRuleCount_eq.kql",
+      "sha256": "a4dac2d999a0cd92e9d0523a80177382bf4dbf9ebabf745d31f39cb906adc232",
+      "expected_error": null
+    },
+    {
+      "name": "empty_child_value_count_ungrouped_eq.kql",
+      "sha256": "c12bfe68d5269e63b2362d671f0cecca7dc2a984be7351a20fa31a528781d4f3",
+      "expected_error": null
+    },
+    {
+      "name": "empty_child_value_sum_Amount_eq.kql",
+      "sha256": "6bb3ad1f42462419e21e838563073799e4cf1cedc1cb84e24143d9fcb92d43c6",
+      "expected_error": null
+    },
+    {
+      "name": "empty_child_value_sum_ChildRuleCount_eq.kql",
+      "sha256": "35430e18009375701a396d925db5af86ec1eea6919c83e3996b3f08dc1d20073",
+      "expected_error": null
+    },
+    {
+      "name": "empty_child_value_sum_ungrouped_eq.kql",
+      "sha256": "6832f9c8a2f0fb73f554effffdf34bdf76014ab386de518a0f9d70049dfbac56",
+      "expected_error": null
+    },
+    {
+      "name": "escaped_mixed_detection.kql",
+      "sha256": "f20ec4429fff4ea88aabb6b5b7d481ed4b9e569ce6a75ece552455b807eba261",
+      "expected_error": null
+    },
+    {
+      "name": "relational_boolean_alternatives.kql",
+      "sha256": "826bf704ef4bcbe5a8f6c5403cdfadc2b8af1b0d8195209880e780a6ca3f8f7b",
+      "expected_error": null
+    },
+    {
+      "name": "relational_boolean_multilevel.kql",
+      "sha256": "702f9b8097ad19ac53bc9217873857a164e499c11fbab3b0b6f585caca8805bf",
+      "expected_error": null
+    },
+    {
+      "name": "relational_callback_metric.kql",
+      "sha256": "005974ce88f678ad86c199d60f3efaa5a9e5ec20bbf4d0df56da4d793ed0461c",
+      "expected_error": null
+    },
+    {
+      "name": "relational_complete_parent.kql",
+      "sha256": "3649ab8dc717d0fb5164484a5d083b50433d167f306390a2978796da4e848ccf",
+      "expected_error": null
+    },
+    {
+      "name": "relational_display_1000.kql",
+      "sha256": "bae1058e79bcd3bc5264ebe80c775167041896f70c60b7f5045e14d58c687817",
+      "expected_error": null
+    },
+    {
+      "name": "relational_display_1001.kql",
+      "sha256": "b36a90ff5766a581bf117b4ea98c101bfab9c1086bc4780b29cab1006e7a685a",
+      "expected_error": null
+    },
+    {
+      "name": "relational_display_999.kql",
+      "sha256": "2101d8e0bf73a49f68b2111473c2b8bb0a9fec2615f8ae9f2ec6da7451d794dc",
+      "expected_error": null
+    },
+    {
+      "name": "relational_display_configured.kql",
+      "sha256": "02f0d24ad0600276cc5d189a2adbae5995535497d6bbad970dc0d26298806536",
+      "expected_error": null
+    },
+    {
+      "name": "relational_event_count_dedup.kql",
+      "sha256": "cf248fc697bde45904a963b1e3858c62fed703160cf21d11a9cdb33837a4664b",
+      "expected_error": null
+    },
+    {
+      "name": "relational_ordered_alternatives.kql",
+      "sha256": "966a25e2e2ab98a2d4c26fb91d36f1c0ca685650615ea59ae3e2b05ab76d1db9",
+      "expected_error": null
+    },
+    {
+      "name": "relational_ordered_multilevel.kql",
+      "sha256": "a8f89d6eb6c65cad1f221e4f771df20bb4829ee80498dc0e2704dda62bc04dfa",
+      "expected_error": null
+    },
+    {
+      "name": "relational_temporal_shared.kql",
+      "sha256": "70393b9f1722f44c8b4816a0719a2ef970bc548afdc211226c79ca80895d4c3d",
+      "expected_error": null
+    },
+    {
+      "name": "relational_ungrouped_count.kql",
+      "sha256": "2fe35916a3883b32927e8ffcd69695b09e6ded91b69b43959fe97b129a5872fe",
+      "expected_error": null
+    },
+    {
+      "name": "relational_value_avg_dedup.kql",
+      "sha256": "29a9ed8ae23616bd839ba19f66f8b07941ce51bd8b319e302c5bc009a892fc8e",
+      "expected_error": null
+    },
+    {
+      "name": "relational_value_avg_metric.kql",
+      "sha256": "928ccc002e82419b09ae82610f57391036b425f9b63a6d4dbb1b63e52bc74aa0",
+      "expected_error": null
+    },
+    {
+      "name": "relational_value_percentile_dedup.kql",
+      "sha256": "60c7fae7391144bfac99fa019fc197754346356d310bac39968930a6e56ac8b7",
+      "expected_error": null
+    },
+    {
+      "name": "relational_value_percentile_metric.kql",
+      "sha256": "1238e924ac3343cbe52a58eefa25e634493a82c9a1e55b5e646a5a5cafc3cf3a",
+      "expected_error": null
+    },
+    {
+      "name": "relational_value_sum_dedup.kql",
+      "sha256": "b8b9680b03033f247724063468d5171c6bc7a8cba5f77ba929e21267d14acdf5",
+      "expected_error": null
+    },
+    {
+      "name": "relational_value_sum_metric.kql",
+      "sha256": "d7689bcd26f60b153e6619b14143a97c521bb0363fa12abce352fa6167466546",
+      "expected_error": null
+    }
+  ]
+}
