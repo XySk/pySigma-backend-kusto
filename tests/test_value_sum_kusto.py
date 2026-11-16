@@ -51,6 +51,9 @@ def test_sum_conversion_honors_public_correlation_callback():
     pipeline = ProcessingPipeline.from_dict(
         {"transformations": [{"type": "set_state", "key": "query_table", "val": "Events"}]}
     )
+    from tests.correlation_helpers import fixture_schema
+
+    pipeline.vars["kusto_schema"] = fixture_schema()
     seen = []
 
     def callback(rule, output_format, index, query, result):
@@ -92,16 +95,16 @@ def test_sum_rejects_integer_overflow_before_exposing_public_results():
     # Overflow is checked independently of the qualifying-summary threshold,
     # then the public result is gated on all validation errors being absent.
     data_query = summary_data_query(query)
-    checks = query[len(data_query):]
-    assert '_sigma_correlation_error' not in data_query
-    assert 'todecimal(_sigma_integer_sum) >= decimal(0)' in data_query
-    assert 'todecimal(_sigma_integer_sum) >= decimal(0)' not in checks
-    assert '| where assert(' not in data_query
-    assert '_sigma_sums | where _sigma_real_count == 0 and (isnull(_sigma_integer_sum)' in checks
+    checks = query[len(data_query) :]
+    assert "_sigma_correlation_error" not in data_query
+    assert "todecimal(_sigma_integer_sum) >= decimal(0)" in data_query
+    assert "todecimal(_sigma_integer_sum) >= decimal(0)" not in checks
+    assert "| where assert(" not in data_query
+    assert "_sigma_sums | where _sigma_real_count == 0 and (isnull(_sigma_integer_sum)" in checks
     assert '| project _sigma_correlation_error = "Kusto value_sum integer overflow"' in checks
-    assert 'let _sigma_guarded_query_rows = materialize(_sigma_guarded_query());' in query
-    assert 'toscalar(union (_sigma_validation_check()' in checks
-    assert 'summarize countif(isnotempty(_sigma_correlation_error))' in checks
+    assert "let _sigma_guarded_query_rows = materialize(_sigma_guarded_query());" in query
+    assert "toscalar(union (_sigma_validation_check()" in checks
+    assert "summarize countif(isnotempty(_sigma_correlation_error))" in checks
     assert '| where assert(_sigma_guarded_query_failure == 0, "Kusto correlation validation failed:' in checks
     assert query.endswith('Kusto value_sum integer overflow; unrecognized error sentinel")')
 
