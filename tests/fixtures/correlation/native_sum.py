@@ -107,4 +107,41 @@ def fixtures():
     result["value_sum_fractional.kql"] = (
         HEADER + data + expected + check("Actual", "Expected", ["Comparison", "WindowStart", "WindowEnd", "ValueSum"])
     )
+    for kind in ("long", "real"):
+        result[f"value_sum_real_groups_{kind}.kql"] = real_groups_fixture(kind)
     return result
+
+
+def real_groups_fixture(kind):
+    (query,) = convert_documents(
+        [
+            source_document(),
+            correlation_document(
+                "sum", "value_sum", ["source-rule"], groups=("Group",), condition={"field": "Amount", "gte": 0}
+            ),
+        ],
+        schema=fixture_schema(Group="real", Amount=kind),
+    )
+    data = f"""let Events=datatable(Timestamp:datetime,Group:real,Amount:{kind},Marker:string) [
+ datetime(2026-01-01T00:00:00),real(nan),2,"match",
+ datetime(2026-01-01T00:01:00),real(nan),3,"match",
+ datetime(2026-01-01T00:00:00),real(+inf),2,"match",
+ datetime(2026-01-01T00:01:00),real(+inf),3,"match",
+ datetime(2026-01-01T00:00:00),real(-inf),2,"match",
+ datetime(2026-01-01T00:01:00),real(-inf),3,"match",
+ datetime(2026-01-01T00:00:00),real(-0.0),2,"match",
+ datetime(2026-01-01T00:01:00),real(+0.0),3,"match"
+];
+"""
+    expected = """let Expected=datatable(WindowEnd:datetime,ValueSum:real) [
+ datetime(2026-01-01T00:00:00),2,datetime(2026-01-01T00:01:00),5
+]
+| extend Keys=dynamic(["NaN","inf","-inf","0.0"])
+| mv-expand Group=Keys to typeof(string)
+| project WindowEnd,ValueSum,Group;
+let Observed=Actual() | project WindowEnd,ValueSum=toreal(ValueSum),Group=tostring(Group);
+union (Expected | extend Delta=-1),(Observed | extend Delta=1)
+| summarize Delta=sum(Delta) by WindowEnd,ValueSum,Group
+| where Delta!=0
+"""
+    return HEADER + data + "let Actual=(){\n" + query + "\n};\n" + expected

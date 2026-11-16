@@ -1,0 +1,10 @@
+{
+  "source": "/tmp/ticket47-runtime/perf-final-integrated/container-inspect.json",
+  "note": "Snapshot from immediately preceding exclusive engine lane; root maintained same container for sum runs. Each run records query memory request separately.",
+  "container_id": "6a9e391a3161a3357ffd58aa7934fba14d55bfd885b54f8797654b62e42096be",
+  "image": "sha256:65e8298d9350856dec696e0e41327288e7bc105146768a1429fce62f3640acd8",
+  "memory": 12884901888,
+  "memory_swap": 12884901888,
+  "cpu_quota": 0,
+  "nano_cpus": 0
+}

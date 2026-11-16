@@ -2,7 +2,7 @@ let Events=datatable(Amount:dynamic) [dynamic("10"),dynamic(null),dynamic("bad")
 | union (print Amount=pack_array(real(nan))[0]), (print Amount=pack_array(real(+inf))[0]), (print Amount=pack_array(real(-inf))[0])
 | extend Timestamp=datetime(2026-01-01T12:00:00Z),Host="h",Marker="match",User="Alice"
 // Normalize Events scalar fixture inputs explicitly.
-| extend Amount=iff(gettype(Amount) in ("int","long","real","double","decimal"), tolong(Amount), long(null));
+| extend Amount=iff(gettype(Amount) in ("int","long","real","double","decimal"), toreal(Amount), real(null));
 let Actual=(){
 let _sigma_shared_child = () {
 let _sigma_context_summary = () {
@@ -50,18 +50,18 @@ let _sigma_parent_matches = materialize(union (_sigma_shared_results | where ["C
 | extend _sigma_child_match = tostring(column_ifexists("_sigma_child_match", "")));
 let SumObservations = union (_sigma_parent_matches | where isempty(_sigma_child_match)), (_sigma_parent_matches | where isnotempty(_sigma_child_match) | extend RetainedNumericValue = MeasuredAmount | summarize take_any(*) by _sigma_child_match, RetainedNumericValue)
 | where isnotnull(EventTime);
-let SumArrivals = SumObservations
-| summarize ArrivalSum = sum(MeasuredAmount) by EventTime;
-union (SumArrivals
-| project SumBoundaryTime = EventTime, SumBoundaryOrder = 0, SumDelta = ArrivalSum),
-(SumArrivals
-| project SumBoundaryTime = EventTime + 5m, SumBoundaryOrder = 1, SumDelta = -ArrivalSum)
-// Arrivals evaluate before equal-time expirations, including zero and missing values.
-| sort by SumBoundaryTime asc, SumBoundaryOrder asc
-| extend ValueSum = row_cumsum(SumDelta)
-| where SumBoundaryOrder == 0
+SumObservations
+| project SumWindowEnd = EventTime, SumTimeBin = bin(EventTime, 5m)
+| distinct *
+| join kind=inner (
+SumObservations
+| extend SumTimeBin = pack_array(bin(EventTime, 5m), bin(EventTime, 5m) + 5m)
+| mv-expand SumTimeBin to typeof(datetime)
+) on SumTimeBin
+| where EventTime between ((SumWindowEnd - 5m) .. SumWindowEnd)
+| summarize ValueSum = sumif(MeasuredAmount, isfinite(MeasuredAmount)) by SumWindowEnd
 | where ValueSum != -1
-| project WindowStart = SumBoundaryTime - 5m, WindowEnd = SumBoundaryTime, ValueSum
+| project WindowStart = SumWindowEnd - 5m, WindowEnd = SumWindowEnd, ValueSum
 };
 let _sigma_context_summaries = materialize(_sigma_context_summary()
 | serialize _sigma_context_id_1 = row_number());
@@ -70,7 +70,7 @@ _sigma_context_summaries | project _sigma_context_id_1, _sigma_context_end = Win
 | join kind=inner (
 union (_sigma_shared_results
 | where ["ContextRowKind"] == "ContextEvidence"
-| extend _sigma_context_timestamp = todatetime(["WindowEnd"]), _sigma_context_value_1 = tolong(pack_array(gettype(["_sigma_context_value"]), ["_sigma_context_value"])[1])
+| extend _sigma_context_timestamp = todatetime(["WindowEnd"]), _sigma_context_value_1 = toreal(pack_array(gettype(["_sigma_context_value"]), ["_sigma_context_value"])[1])
 | extend _sigma_context_rule = "child")
 | project _sigma_context_timestamp, _sigma_context_rule, _sigma_context_value_1, _sigma_context_partition = 1
 ) on _sigma_context_partition

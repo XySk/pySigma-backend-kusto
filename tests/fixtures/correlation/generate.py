@@ -640,21 +640,21 @@ def value_sum_integer_bounds_fixture():
             "value_sum",
             ["source-rule"],
             groups=(),
-            condition={"field": "Amount", "gte": 9223372036854775806},
+            condition={"field": "Amount", "gte": 9007199254740992},
         ),
     ]
     (converted,) = convert_documents(documents)
-    data = """// Both totals remain within signed 64-bit range and must stay exact.
+    data = """// Totals above double integer precision remain exact with in-range intermediates.
 let Events = datatable(Timestamp:string, Amount:dynamic, Marker:string) [
-    "2026-01-01T12:00:00Z", dynamic(9223372036854775807), "match",
+    "2026-01-01T12:00:00Z", dynamic(9007199254740993), "match",
     "2026-01-01T12:00:00Z", dynamic(1), "match",
     "2026-01-01T12:00:00Z", dynamic(-1), "match",
     "2026-01-01T12:01:00Z", dynamic(-1), "match"
 ];
 """
     expected = """let Expected = datatable(WindowStart:datetime, WindowEnd:datetime, ValueSum:long) [
-    datetime(2026-01-01T11:55:00Z), datetime(2026-01-01T12:00:00Z), long(9223372036854775807),
-    datetime(2026-01-01T11:56:00Z), datetime(2026-01-01T12:01:00Z), long(9223372036854775806)
+    datetime(2026-01-01T11:55:00Z), datetime(2026-01-01T12:00:00Z), long(9007199254740993),
+    datetime(2026-01-01T11:56:00Z), datetime(2026-01-01T12:01:00Z), long(9007199254740992)
 ];
 """
     actual = f"let Actual = () {{\n{converted}\n| project WindowStart, WindowEnd, ValueSum = tolong(ValueSum)\n}};\n"

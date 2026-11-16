@@ -1,0 +1,11 @@
+{
+  "name": "long-hot-group-value_sum-context",
+  "schema": {
+    "WindowStart": "datetime",
+    "WindowEnd": "datetime",
+    "Host": "string",
+    "ValueSum": "long",
+    "User": "dynamic"
+  },
+  "expected": []
+}

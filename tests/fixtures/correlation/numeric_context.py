@@ -20,7 +20,6 @@ DATA = """let Events=datatable(Timestamp:datetime,Host:string,Marker:string,User
 """
 
 
-@scalar_inputs()
 def fixture(kind, *, grouped=False, mixed=False, metric=False, nested=False, boundary=False, empty=False):
     docs = numeric_documents(kind, ("User",) if grouped else (), "EventCount" if metric else "Amount")
     docs[-1]["correlation"]["condition"]["gte"] = -1
@@ -49,7 +48,8 @@ def fixture(kind, *, grouped=False, mixed=False, metric=False, nested=False, bou
         # partition. Keep relationship/group/metric coverage in the other cases.
         docs[0]["fields"] = ["Amount"]
         docs[1]["correlation"]["group-by"] = []
-    (query,) = convert_documents(docs)
+    amount_type = "real" if empty else "long"
+    (query,) = convert_documents(docs, schema=fixture_schema(Amount=amount_type))
     metric_name = {"value_sum": "ValueSum", "value_avg": "ValueAvg", "value_percentile": "ValuePercentile"}[kind]
     groups = ["Actor"] if grouped else []
     if grouped:
@@ -104,7 +104,7 @@ def fixture(kind, *, grouped=False, mixed=False, metric=False, nested=False, bou
     if boundary:
         projection = f"Metric=tostring({metric_name})"
     keys = ", ".join([*groups, "Metric"])
-    return (
+    result = (
         data
         + "let Actual=(){\n"
         + query
@@ -114,6 +114,7 @@ def fixture(kind, *, grouped=False, mixed=False, metric=False, nested=False, bou
         + "union (Observed | extend Delta=1), (Expected | extend Delta=-1)\n"
         + f"| summarize Delta=sum(Delta) by {keys}\n| where Delta!=0\n"
     )
+    return scalar_inputs(Amount=amount_type)(lambda: result)()
 
 
 @scalar_inputs()

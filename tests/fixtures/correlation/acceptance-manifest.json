@@ -574,7 +574,7 @@
     },
     {
       "name": "numeric_context_value_sum_empty.kql",
-      "sha256": "10a7c04016c6837e4e230968f21f430efc432d6eb3a3f1522b83ece6fad60def",
+      "sha256": "24af7e3fb04b4fcae96a3b92978690ac5c46089f3c3cd41688c886ed0dc4f319",
       "expected_error": null
     },
     {
@@ -1014,12 +1014,22 @@
     },
     {
       "name": "value_sum_integer_bounds.kql",
-      "sha256": "4d32fd59eadb6eb83d32c3b1a5233268d7bf1d52203f1ec582992dd384dcefb5",
+      "sha256": "c3679d0776bad390889ab6444ee187d3200c570e1ee4f4662112e6d58e1c0e2c",
       "expected_error": null
     },
     {
       "name": "value_sum_real_expiration.kql",
       "sha256": "fb659b40b823ed05f23d0962cb9b455f02989cb871662c0c255cd4fc15726e6f",
+      "expected_error": null
+    },
+    {
+      "name": "value_sum_real_groups_long.kql",
+      "sha256": "39d97d2ae953138785c7c5b7455b6518e75e998b773fae148e758a23961cb9ea",
+      "expected_error": null
+    },
+    {
+      "name": "value_sum_real_groups_real.kql",
+      "sha256": "9f1b3358d89e83282da1f85a3446315a67a4686bdeae9e794f339e726b856f5e",
       "expected_error": null
     },
     {
