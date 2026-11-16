@@ -108,46 +108,35 @@ let EarliestaPrefix_1 = materialize(CandidatesFora_1
 | join kind=inner (EarliestbPrefix) on CorrelationMatchId
 | where ContextEventTime > PrefixEndTime_1
 | summarize PrefixEndTime_2 = min(ContextEventTime) by CorrelationMatchId);
-let EarliestcPrefix = materialize(CandidatesForc
-| join kind=inner (EarliestaPrefix_1) on CorrelationMatchId
-| where ContextEventTime > PrefixEndTime_2
-| summarize PrefixEndTime_3 = min(ContextEventTime) by CorrelationMatchId);
-let LatestaSuffix = materialize(CandidatesFora_2
-| where ContextEventTime == CompletionTime
-| summarize SuffixStartTime = max(ContextEventTime) by CorrelationMatchId);
 let LatestcSuffix = materialize(CandidatesForc
-| join kind=inner (LatestaSuffix) on CorrelationMatchId
+| where ContextEventTime < CompletionTime
+| summarize SuffixStartTime = max(ContextEventTime) by CorrelationMatchId);
+let LatestaSuffix = materialize(CandidatesFora_1
+| join kind=inner (LatestcSuffix) on CorrelationMatchId
 | where ContextEventTime < SuffixStartTime
 | summarize SuffixStartTime_1 = max(ContextEventTime) by CorrelationMatchId);
-let LatestaSuffix_1 = materialize(CandidatesFora_1
-| join kind=inner (LatestcSuffix) on CorrelationMatchId
+let LatestbSuffix = materialize(CandidatesForb
+| join kind=inner (LatestaSuffix) on CorrelationMatchId
 | where ContextEventTime < SuffixStartTime_1
 | summarize SuffixStartTime_2 = max(ContextEventTime) by CorrelationMatchId);
-let LatestbSuffix = materialize(CandidatesForb
-| join kind=inner (LatestaSuffix_1) on CorrelationMatchId
-| where ContextEventTime < SuffixStartTime_2
-| summarize SuffixStartTime_3 = max(ContextEventTime) by CorrelationMatchId);
 let OrderedParticipants = union (CandidatesFora
 | join kind=inner (LatestbSuffix) on CorrelationMatchId
-| where ContextEventTime < SuffixStartTime_3
+| where ContextEventTime < SuffixStartTime_2
 | project CorrelationMatchId, SourceRelationshipId), (CandidatesForb
 | join kind=inner (EarliestaPrefix) on CorrelationMatchId
 | where ContextEventTime > PrefixEndTime
-| join kind=inner (LatestaSuffix_1) on CorrelationMatchId
-| where ContextEventTime < SuffixStartTime_2
+| join kind=inner (LatestaSuffix) on CorrelationMatchId
+| where ContextEventTime < SuffixStartTime_1
 | project CorrelationMatchId, SourceRelationshipId), (CandidatesFora_1
 | join kind=inner (EarliestbPrefix) on CorrelationMatchId
 | where ContextEventTime > PrefixEndTime_1
 | join kind=inner (LatestcSuffix) on CorrelationMatchId
-| where ContextEventTime < SuffixStartTime_1
+| where ContextEventTime < SuffixStartTime
 | project CorrelationMatchId, SourceRelationshipId), (CandidatesForc
 | join kind=inner (EarliestaPrefix_1) on CorrelationMatchId
 | where ContextEventTime > PrefixEndTime_2
-| join kind=inner (LatestaSuffix) on CorrelationMatchId
-| where ContextEventTime < SuffixStartTime
+| where ContextEventTime < CompletionTime
 | project CorrelationMatchId, SourceRelationshipId), (CandidatesFora_2
-| join kind=inner (EarliestcPrefix) on CorrelationMatchId
-| where ContextEventTime > PrefixEndTime_3
 | where ContextEventTime == CompletionTime
 | project CorrelationMatchId, SourceRelationshipId)
 | distinct CorrelationMatchId, SourceRelationshipId;

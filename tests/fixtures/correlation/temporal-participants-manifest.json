@@ -1,25 +1,35 @@
 {
   "status": "PENDING",
-  "scope": "ordered participants: one step, repeated five/seven positions, native real groups; direct exhaustive independent tuple oracle",
+  "scope": "ordered/Boolean participants: repeated positions, native real groups, empty-evidence children; independent tuple/literal oracles",
   "fixtures": [
     {
       "name": "participants_single.kql",
-      "sha256": "7e77cf69e12a0afad7de8b1b12d6a362349e1aa1052157910013b70769a94d26",
+      "sha256": "dd7e45ffddb7f371d13ded6257f86db26f661f97dc9704d3446cd5dfbd24bd56",
       "expected_error": null
     },
     {
       "name": "participants_real_groups.kql",
-      "sha256": "25987c056c6c8328a2a3f608a89f89f028a4c3b87234cfb5f9b6c1f16a478fd5",
+      "sha256": "cdc62b18cf02b647bd886fe27e6e5434dd4d841b9c20ed9c57caa81fa08c528d",
+      "expected_error": null
+    },
+    {
+      "name": "participants_ordered_empty_child.kql",
+      "sha256": "6613311705337659b204ffb2509e5b260993ff604b688f4930d3683f9fcb7edb",
+      "expected_error": null
+    },
+    {
+      "name": "participants_boolean_empty_child.kql",
+      "sha256": "4b6434c14aac0bdf0cbd263fec8d4d6227db9ceeb556d4eb35e3e3cdcfa9f4e8",
       "expected_error": null
     },
     {
       "name": "participants_repeated_long.kql",
-      "sha256": "351cef59079121816d92e3b7b67f45e45ff953c3aadaa86d30015f7531e0a76a",
+      "sha256": "39b2b6f9839c7fe1fe0b71336beaf62263701ae5adb59bbe95dd0e69436f56b0",
       "expected_error": null
     },
     {
       "name": "participants_repeated_seven.kql",
-      "sha256": "a9a641d279fc8768cf953301b2d490c6bf09ac44b21be8779e18d237fd63f41b",
+      "sha256": "5c4fd0657f5f38b51b7978d80481abc52a10b045a923f76e6cbf4e8fe710095a",
       "expected_error": null
     }
   ]

@@ -889,6 +889,8 @@ class KustoBackend(TextQueryBackend):
             "values": [],
             "context": [allocate("Context" + re.sub(r"[^A-Za-z0-9_]", "_", field)) for field in context_fields],
         }
+        if self._uses_context_groups(rule, context_fields):
+            columns["context_evidence"] = allocate("HasContextEvidence")
         self._correlation_group_by = rule.group_by or []
         self._correlation_counted_fields = []
         self._correlation_context_fields = context_fields
@@ -912,7 +914,8 @@ class KustoBackend(TextQueryBackend):
             f"{column} = {self._quote_correlation_field(field)}" for column, field in zip(groups, rule.group_by or [])
         ]
         left_projection = ", ".join([source_id, f"{end} = WindowEnd", *group_projection, f"{join_key} = 1"])
-        right_projection = ", ".join([timestamp, columns["rule"], *groups, *values, f"{join_key} = 1"])
+        evidence = [columns["context_evidence"]] if "context_evidence" in columns else []
+        right_projection = ", ".join([timestamp, columns["rule"], *groups, *values, *evidence, f"{join_key} = 1"])
         span = rule.timespan.spec if rule.timespan.unit in "smhd" else f"{rule.timespan.seconds}s"
         join_fields = ", ".join(groups or [join_key])
         output = []
@@ -959,8 +962,11 @@ class KustoBackend(TextQueryBackend):
             # Complete native scalar relationship rows are a separate internal relation.
             # The display limit applies only to the public per-field collections.
             relationship_fields = ", ".join([source_id, *values])
+            relationship_source = context_matches
+            if "context_evidence" in columns:
+                relationship_source += f"\n| where {columns['context_evidence']}"
             prefix += (
-                f"let {relationships} = materialize({context_matches}\n"
+                f"let {relationships} = materialize({relationship_source}\n"
                 f"| project {relationship_fields}\n| distinct *);\n"
             )
             artifact_prefix = prefix
@@ -1012,6 +1018,23 @@ class KustoBackend(TextQueryBackend):
         those scalar witnesses never enumerates combinations of alternatives.
         """
         timestamp, rule_column = columns["timestamp"], columns["rule"]
+        # Successful summaries guarantee a viable full sequence. Every final
+        # source row at the completion can replace its final witness, and the
+        # final suffix bound is therefore the completion itself. Structural
+        # child summaries preserve this guarantee even with no retained values.
+        if len(rule.referenced_rules) <= 2:
+            selected = allocate("OrderedSourceRelationships")
+            predicates = []
+            for index, reference in enumerate(rule.referenced_rules):
+                identity = json.dumps(str(reference.rule.name or reference.rule.id), ensure_ascii=False)
+                comparison = "==" if index == len(rule.referenced_rules) - 1 else "<"
+                predicates.append(f"({rule_column} == {identity} and {timestamp} {comparison} {completion})")
+            return (
+                f"// Successful one/two-step completions need only endpoint participant filters.\n"
+                f"let {selected} = materialize({matches}\n| where {' or '.join(predicates)});\n",
+                selected,
+            )
+
         candidates, labels = [], []
         definitions = (
             "// All candidates share one successful completion's inclusive window.\n"
@@ -1031,7 +1054,7 @@ class KustoBackend(TextQueryBackend):
 
         # Every threshold relation contains at most one row per match ID.
         earliest, latest = [], [None] * len(candidates)
-        for index in range(len(candidates) - 1):
+        for index in range(len(candidates) - 2):
             relation, threshold = allocate("Earliest" + labels[index] + "Prefix"), allocate("PrefixEndTime")
             expression = candidates[index]
             if index:
@@ -1043,11 +1066,11 @@ class KustoBackend(TextQueryBackend):
             )
             earliest.append((relation, threshold))
 
-        for index in range(len(candidates) - 1, 0, -1):
+        for index in range(len(candidates) - 2, 0, -1):
             relation, threshold = allocate("Latest" + labels[index] + "Suffix"), allocate("SuffixStartTime")
             expression = candidates[index]
-            if index == len(candidates) - 1:
-                expression += f"\n| where {timestamp} == {completion}"
+            if index == len(candidates) - 2:
+                expression += f"\n| where {timestamp} < {completion}"
             else:
                 following, bound = latest[index + 1]
                 expression += f"\n| join kind=inner ({following}) on {source_id}" f"\n| where {timestamp} < {bound}"
@@ -1060,11 +1083,13 @@ class KustoBackend(TextQueryBackend):
         participants = []
         for index, candidate in enumerate(candidates):
             expression = candidate
-            if index:
+            if index and index < len(candidates) - 1:
                 prior, bound = earliest[index - 1]
                 expression += f"\n| join kind=inner ({prior}) on {source_id}" f"\n| where {timestamp} > {bound}"
             if index == len(candidates) - 1:
                 expression += f"\n| where {timestamp} == {completion}"
+            elif index == len(candidates) - 2:
+                expression += f"\n| where {timestamp} < {completion}"
             else:
                 following, bound = latest[index + 1]
                 expression += f"\n| join kind=inner ({following}) on {source_id}" f"\n| where {timestamp} < {bound}"
@@ -1147,11 +1172,13 @@ class KustoBackend(TextQueryBackend):
 
     def _count_search(self, rule, allocate):
         definitions, searches = [], []
+        context_evidence = self._correlation_columns.get("context_evidence")
         for reference_index, reference in enumerate(rule.referenced_rules):
             source = reference.rule
             for query_index, (query, source_state) in enumerate(
                 zip(source.get_conversion_result(), source.get_conversion_states())
             ):
+                preserves_context_presence = False
                 self._correlation_child_row = allocate("_sigma_child_context_row")
                 try:
                     normalization = self.convert_correlation_search_field_normalization_expression(
@@ -1200,15 +1227,23 @@ class KustoBackend(TextQueryBackend):
                         kind = self._quote_correlation_field(artifact["kind"])
                         selected = "ContextEvidence" if normalization.expands_context else "Summary"
                         relation = f'{child_results}\n| where {kind} == "{selected}"'
-                        if normalization.preserve_empty_context:
+                        if normalization.preserve_empty_context or context_evidence and normalization.expands_context:
                             identity = self._quote_correlation_field(artifact["id"])
                             values = ", ".join(
                                 self._quote_correlation_field(value) for value in artifact["fields"].values()
                             )
+                            # Empty evidence does not erase a positive child match.
+                            # A marker keeps its structural row out of retained tuples.
+                            # A true child can have no positive evidence (absence).
+                            # Keep its summary for temporal membership; mark only
+                            # real relationships so string-null defaults never
+                            # become fabricated retained tuples.
+                            marker = f", {context_evidence} = true" if context_evidence else ""
+                            preserves_context_presence = bool(context_evidence)
                             relation = (
                                 f'{child_results} | where {kind} == "Summary"\n| project-away {values}\n'
                                 f'| join kind=leftouter ({child_results} | where {kind} == "ContextEvidence" '
-                                f"| project {identity}, {values}) on {identity}"
+                                f"| project {identity}, {values}{marker}) on {identity}"
                             )
                         child_id = self._correlation_columns.get("child_match")
                         if child_id:
@@ -1251,6 +1286,8 @@ class KustoBackend(TextQueryBackend):
                                 normalization=normalization,
                             )
                         )
+                if context_evidence and not preserves_context_presence:
+                    searches[-1] = f"({searches[-1]}\n| extend {context_evidence} = true)"
         return "".join(definitions), "union " + self.correlation_search_multi_rule_query_expression_joiner.join(
             searches
         )

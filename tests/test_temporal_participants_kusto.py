@@ -9,7 +9,7 @@ def test_ordered_context_names_explain_sources_fields_and_reachability():
     ordered["fields"] = ["User", "Server"]
     (query,) = convert_documents([*sources, ordered])
     assert "ContextUser" in query and "ContextServer" in query and "ContextGroupHost" in query
-    assert "EarliestInitialFailure" in query and "LatestSuccess" in query
+    assert "EarliestInitialFailure" in query and "LatestRetry" in query
     assert "OrderedParticipants" in query
     assert "_sigma_context_" not in query
 
@@ -63,3 +63,21 @@ def test_context_helpers_reserve_declared_source_schema_names():
     )
     assert 'ContextEventTime_1 = todatetime(["Timestamp"])' in query
     assert "serialize CorrelationMatchId_1 = row_number()" in query
+
+
+def test_empty_child_context_keeps_match_presence_separate_from_values():
+    from tests.fixtures.correlation.temporal_participants import empty_child_fixture
+
+    for boolean in (False, True):
+        query = empty_child_fixture(boolean=boolean)
+        assert "HasContextEvidence" in query
+        assert "| where HasContextEvidence" in query
+
+
+def test_two_step_ordered_context_needs_only_successful_completion_filters():
+    summary = correlation_document("summary", "temporal_ordered", ["a", "b"])
+    summary["fields"] = ["User"]
+    (query,) = convert_documents([source_document("a", "a"), source_document("b", "b"), summary])
+    assert "PrefixEndTime" not in query and "SuffixStartTime" not in query
+    assert "ContextEventTime < CompletionTime" in query
+    assert "ContextEventTime == CompletionTime" in query

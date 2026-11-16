@@ -142,7 +142,11 @@ def fixtures():
     return {
         "participants_single.kql": correctness_fixture(["a"]),
         "participants_real_groups.kql": real_groups_fixture(),
+        "participants_ordered_empty_child.kql": empty_child_fixture(),
+        "participants_boolean_empty_child.kql": empty_child_fixture(boolean=True),
         "participants_real_groups.kql": real_groups_fixture(),
+        "participants_ordered_empty_child.kql": empty_child_fixture(),
+        "participants_boolean_empty_child.kql": empty_child_fixture(boolean=True),
         "participants_repeated_long.kql": correctness_fixture(["a", "b", "a", "c", "a"]),
         "participants_repeated_seven.kql": correctness_fixture(["a", "b", "a", "c", "a", "b", "a"]),
     }
@@ -219,4 +223,42 @@ let Expected=datatable(Group:string) ["nan", "inf", "-inf", "zero"]
 | extend WindowEnd=datetime(2026-01-01T12:00:02Z), Users='["a","b","c"]', RuleCount=long(3), ContextComplete=true;
 union (Observed | extend Delta=1), (Expected | extend Delta=-1)
 | summarize Delta=sum(Delta) by WindowEnd, Group, Users, RuleCount, ContextComplete | where Delta != 0
+"""
+
+
+def empty_child_fixture(*, boolean=False):
+    """An absence-only child has no values; its positive sibling still contributes."""
+    child = {
+        "title": "AbsenceChild",
+        "name": "AbsenceChild",
+        "fields": ["User", "Server"],
+        "correlation": {"type": "temporal", "condition": "not A or B and C", "group-by": ["Host"], "timespan": "5m"},
+    }
+    parent = correlation_document("parent", "temporal_ordered", ["AbsenceChild", "Finish"])
+    if boolean:
+        parent["correlation"]["type"] = "temporal"
+        parent["correlation"]["condition"] = "AbsenceChild and Finish"
+        parent["correlation"].pop("rules")
+    parent["fields"] = ["User", "Server"]
+    (query,) = convert_documents(
+        [
+            *(source_document(marker, marker) for marker in ("A", "B", "C")),
+            child,
+            source_document("Finish", "Finish"),
+            parent,
+        ]
+    )
+    return f"""let Events=datatable(Timestamp:datetime, Host:string, Marker:string, User:string, Server:string) [
+ datetime(2026-01-01T12:00:00Z), "h", "B", "incomplete", "bad-server",
+ datetime(2026-01-01T12:01:00Z), "h", "Finish", "finish", "finish-server"
+];
+let Actual=() {{
+{query}
+}};
+let Observed=Actual() | project WindowEnd, Users=tostring(array_sort_asc(User)), Servers=tostring(array_sort_asc(Server)), RuleCount, ContextComplete;
+let Expected=datatable(WindowEnd:datetime, Users:string, Servers:string, RuleCount:long, ContextComplete:bool) [
+ datetime(2026-01-01T12:01:00Z), '["finish"]', '["finish-server"]', 2, true
+];
+union (Observed | extend Delta=1), (Expected | extend Delta=-1)
+| summarize Delta=sum(Delta) by WindowEnd, Users, Servers, RuleCount, ContextComplete | where Delta != 0
 """

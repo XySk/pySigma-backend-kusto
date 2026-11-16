@@ -37,17 +37,9 @@ union (Events
 ) on ContextGroupHost
 | where ContextEventTime between ((CompletionTime - 7m) .. CompletionTime)
 | serialize SourceRelationshipId = row_number());
-// All candidates share one successful completion's inclusive window.
-// Strict prefix/suffix witnesses retain every participating alternative.
-let CandidatesFora = WindowSourceMatches
-| where ContextSourceRule == "a"
-| project CorrelationMatchId, CompletionTime, SourceRelationshipId, ContextEventTime;
-let OrderedParticipants = union (CandidatesFora
-| where ContextEventTime == CompletionTime
-| project CorrelationMatchId, SourceRelationshipId)
-| distinct CorrelationMatchId, SourceRelationshipId;
+// Successful one/two-step completions need only endpoint participant filters.
 let OrderedSourceRelationships = materialize(WindowSourceMatches
-| join kind=leftsemi (OrderedParticipants) on CorrelationMatchId, SourceRelationshipId);
+| where (ContextSourceRule == "a" and ContextEventTime == CompletionTime));
 let CompleteContextRelationships = materialize(OrderedSourceRelationships
 | project CorrelationMatchId, ContextUser, ContextServer
 | distinct *);
