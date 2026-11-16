@@ -1,0 +1,141 @@
+{
+  "started_utc": "2026-11-16T17:09:37.500638+00:00",
+  "endpoint": "http://localhost:8080",
+  "database": "NetDefaultDB",
+  "request_options": {
+    "max_memory_consumption_per_query_per_node": 12884901888
+  },
+  "timeout_seconds": 45,
+  "manifest_sha256": "8791598f9c995683d2a8855832ca8f11ebbebad5824161af0bce1640e7e2ceb8",
+  "fixtures": [
+    {
+      "name": "event_count_duplicate_sources.kql",
+      "sha256": "ce4be2e5c144899fb02a64e5bb6ba3de36d2c20dd3f7b6c0e2225cef240fa189",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.033
+    },
+    {
+      "name": "event_count_grouped.kql",
+      "sha256": "8ba348aeca8bd59c6dd74302739c63e6c79d7b95649a24bf142e5c34fcd5d37d",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.022
+    },
+    {
+      "name": "standard_mappings.kql",
+      "sha256": "df28cd7a67dbd37e8856d006feb3776b9b76940d6b44b52ed2c68d363fb2749d",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.422
+    },
+    {
+      "name": "typed_grouping_event_count.kql",
+      "sha256": "a92e409ee0ba26aaed07578e84991a9f72cbf1631a249ee57e57a8ad13866f19",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.023
+    },
+    {
+      "name": "typed_grouping_extended_chain.kql",
+      "sha256": "e313ca053afeae46a9d0d3ee29e615ba9eac14570892e9aaeea70f3c1885e876",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.175
+    },
+    {
+      "name": "typed_grouping_mixed_chain.kql",
+      "sha256": "9facfe2cc77005e26f568262a185ac7df84c93752bee2e4c35fbcba039377e54",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.098
+    },
+    {
+      "name": "typed_grouping_value_count.kql",
+      "sha256": "c340c283132f66d9faa018ebb4b5a976f96fc0970bc46503aed8205d43309e78",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.017
+    },
+    {
+      "name": "typed_grouping_value_percentile.kql",
+      "sha256": "05cf0b029b94ec95851a36927ed09b00d8c05ce904703d8b0312c1e1bf2a958f",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.025
+    },
+    {
+      "name": "typed_grouping_value_sum.kql",
+      "sha256": "2565a30982f04f7d02af5f6f54401a7e48f1c30cd711c02856c499f5b3430554",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.026
+    },
+    {
+      "name": "value_count_typed_precision.kql",
+      "sha256": "8139cb1f1fcba90338d2508f581b703626d5684d1da06e2f5804005db46c907d",
+      "expected_error": null,
+      "status": "PASS",
+      "detail": "empty multiset diagnostic",
+      "http_status": 200,
+      "seconds": 0.066
+    }
+  ],
+  "status": "PASS",
+  "engine_version": {
+    "Tables": [
+      {
+        "TableName": "Table_0",
+        "Columns": [
+          {
+            "ColumnName": "BuildVersion",
+            "DataType": "String"
+          },
+          {
+            "ColumnName": "BuildTime",
+            "DataType": "DateTime"
+          },
+          {
+            "ColumnName": "ServiceType",
+            "DataType": "String"
+          },
+          {
+            "ColumnName": "ProductVersion",
+            "DataType": "String"
+          },
+          {
+            "ColumnName": "ServiceOffering",
+            "DataType": "String"
+          }
+        ],
+        "Rows": [
+          [
+            "1.0.9815.14081",
+            "2026-11-15T07:49:22Z",
+            "Engine",
+            "2026.11.15.0741-2645-8e3387b-master",
+            ""
+          ]
+        ]
+      }
+    ]
+  }
+}

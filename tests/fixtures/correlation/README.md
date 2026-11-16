@@ -6,7 +6,7 @@ Legacy malformed-input datatables retain their raw values but visibly normalize 
 
 Obsolete arbitrary nested-identity fixtures now exercise native scalar behavior: `value_count_typed.kql` covers long values and null anchors; `value_count_typed_precision.kql` uses separate native real/long/decimal schemas for adjacent values, scale, signed zero, and nonfinite reals; `value_count_typed_chained.kql` combines compatible native child/direct long and datetime values. `typed_grouping_*.kql` cover native long/string tuples and a guid child alias. Mixed source types and unnormalized arrays/property bags are conversion-error cases in `test_scalar_contract_kusto.py`.
 
-Regenerated fixtures require new runtime evidence. Earlier evidence in `RUNTIME.md` remains historical and does not certify these new hashes. Representative #37 checks: `event_count_duplicate_sources.kql`, `typed_grouping_event_count.kql`, `typed_grouping_mixed_chain.kql`, `typed_grouping_extended_chain.kql`, `value_count_typed_precision.kql`, and `standard_mappings.kql`.
+Eleven representative native scalar/source-predicate checks passed on 2026-11-16; their exact hashes and responses are recorded in `RUNTIME.md`. Other regenerated fixtures require integrated runtime acceptance. Earlier evidence remains historical and does not certify these new hashes. Representative #37 checks: `event_count_duplicate_sources.kql`, `typed_grouping_event_count.kql`, `typed_grouping_mixed_chain.kql`, `typed_grouping_extended_chain.kql`, `value_count_typed_precision.kql`, and `standard_mappings.kql`.
 
 ## Deterministic correlation checks
 
