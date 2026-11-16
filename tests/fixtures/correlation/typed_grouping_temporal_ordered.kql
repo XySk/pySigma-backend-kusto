@@ -7,17 +7,15 @@ let Events=datatable(Timestamp:datetime,Host:string,Marker:string,User:long,Serv
  datetime(2026-01-01T12:00:00Z),"h","match",1,"",100
 ];
 let Actual=(){
-let _sigma_types = union (Events
+// Strict sequence: "source-rule". Total inclusive span: 5m.
+union (Events
 | where Marker =~ "match"
-| extend _sigma_timestamp = todatetime(["Timestamp"]), _sigma_group_0 = ["User"], _sigma_group_1 = ["Server"]
-| extend _sigma_rule = "source-rule")
-| where isnotnull(_sigma_timestamp) and isnotempty(_sigma_group_0) and isnotempty(_sigma_group_1)
-| summarize by _sigma_timestamp, _sigma_group_0, _sigma_group_1, _sigma_rule;
-let _sigma_sequence_0 = _sigma_types
-| where _sigma_rule == "source-rule"
-| project _sigma_sequence_start = _sigma_timestamp, _sigma_sequence_end = _sigma_timestamp, _sigma_group_0, _sigma_group_1;
-_sigma_sequence_0
-| project WindowStart = _sigma_sequence_end - 5m, WindowEnd = _sigma_sequence_end, ["User"] = _sigma_group_0, ["Server"] = _sigma_group_1, RuleCount = tolong(1)
+| extend EventTime_1 = todatetime(["Timestamp"]), GroupUser = ["User"], GroupServer = ["Server"]
+| extend SourceRule = "source-rule")
+| where isnotnull(EventTime_1) and isnotempty(GroupUser) and isnotempty(GroupServer)
+// Batch equal timestamps: simultaneous source matches cannot advance strict sequence positions.
+| summarize by EventTime_1, GroupUser, GroupServer
+| project WindowStart = EventTime_1 - 5m, WindowEnd = EventTime_1, ["User"] = GroupUser, ["Server"] = GroupServer, RuleCount = tolong(1)
 };
 let Observed=Actual() | project WindowEnd,Kind=gettype(User),Value=tostring(User),Server=tostring(Server),Metric=toreal(RuleCount);
 let Expected=datatable(WindowEnd:datetime,Kind:string,Value:string,Server:string,Metric:real) [

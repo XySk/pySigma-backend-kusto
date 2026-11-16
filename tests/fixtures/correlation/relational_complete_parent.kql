@@ -1,0 +1,90 @@
+let Events = range Index from 1 to 1001 step 1
+| project Timestamp=datetime(2026-01-01), Host="h", Marker="match", User=tostring(Index), Server=strcat("s", Index), Amount=Index;
+let Actual = () {
+let _sigma_shared_child = () {
+let _sigma_context_summary = () {
+let SourceMatchArrivals = union (Events
+| where Marker =~ "match"
+| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"])
+| where isnotnull(EventTime_1) and isnotempty(GroupHost)
+| summarize SourceMatchCount = count() by EventTime_1, GroupHost;
+union (SourceMatchArrivals
+| project GroupHost, CountBoundaryTime = EventTime_1, CountBoundaryOrder = 0, SourceMatchDelta = SourceMatchCount),
+(SourceMatchArrivals
+| project GroupHost, CountBoundaryTime = EventTime_1 + 5m, CountBoundaryOrder = 1, SourceMatchDelta = -SourceMatchCount)
+// Arrivals evaluate before equal-time expirations; expirations never create matches.
+| sort by GroupHost asc, CountBoundaryTime asc, CountBoundaryOrder asc
+| extend EventCount = row_cumsum(SourceMatchDelta, GroupHost != prev(GroupHost))
+| where CountBoundaryOrder == 0
+| where EventCount >= 1
+| project WindowStart = CountBoundaryTime - 5m, WindowEnd = CountBoundaryTime, ["Host"] = GroupHost, EventCount
+};
+let _sigma_context_summaries = materialize(_sigma_context_summary()
+| serialize _sigma_context_id = row_number());
+let _sigma_context_matches = materialize(
+_sigma_context_summaries | project _sigma_context_id, _sigma_context_end = WindowEnd, _sigma_context_group = ["Host"], _sigma_context_partition = 1
+| join kind=inner (
+union (Events
+| where Marker =~ "match"
+| extend _sigma_context_timestamp = todatetime(["Timestamp"]), _sigma_context_group = ["Host"], _sigma_context_value = ["User"], _sigma_context_value_1 = ["Server"], _sigma_context_value_2 = ["Amount"]
+| extend _sigma_context_rule = "source-rule")
+| project _sigma_context_timestamp, _sigma_context_rule, _sigma_context_group, _sigma_context_value, _sigma_context_value_1, _sigma_context_value_2, _sigma_context_partition = 1
+) on _sigma_context_group
+| where _sigma_context_timestamp between ((_sigma_context_end - 5m) .. _sigma_context_end)
+| serialize _sigma_context_key = row_number());
+let _sigma_context_rows = materialize(_sigma_context_matches
+| project _sigma_context_id, _sigma_context_value, _sigma_context_value_1, _sigma_context_value_2
+| distinct *);
+union (_sigma_context_summaries | extend ContextRowKind = "Summary"), (_sigma_context_summaries | join kind=inner (_sigma_context_rows) on _sigma_context_id | extend ContextRowKind = "ContextEvidence")
+};
+let _sigma_shared_results = materialize(_sigma_shared_child());
+let _sigma_context_summary = () {
+let _sigma_parent_matches = materialize(union (_sigma_shared_results
+| where ["ContextRowKind"] == "ContextEvidence"
+| extend ChildCorrelationMatch = strcat("_sigma_shared_child", "_", tostring(["_sigma_context_id"]))
+| project EventTime = todatetime(["WindowEnd"]), GroupUser = tostring(pack_array(gettype(["_sigma_context_value"]), ["_sigma_context_value"])[1]), GroupServer = tostring(pack_array(gettype(["_sigma_context_value_1"]), ["_sigma_context_value_1"])[1]), ChildCorrelationMatch)
+| extend ChildCorrelationMatch = tostring(column_ifexists("ChildCorrelationMatch", "")));
+let SourceMatchArrivals = union (_sigma_parent_matches | where isempty(ChildCorrelationMatch)), (_sigma_parent_matches | where isnotempty(ChildCorrelationMatch) | summarize take_any(*) by ChildCorrelationMatch, GroupUser, GroupServer)
+| where isnotnull(EventTime) and isnotempty(GroupUser) and isnotempty(GroupServer)
+| summarize SourceMatchCount = count() by EventTime, GroupUser, GroupServer;
+union (SourceMatchArrivals
+| project GroupUser, GroupServer, CountBoundaryTime = EventTime, CountBoundaryOrder = 0, SourceMatchDelta = SourceMatchCount),
+(SourceMatchArrivals
+| project GroupUser, GroupServer, CountBoundaryTime = EventTime + 5m, CountBoundaryOrder = 1, SourceMatchDelta = -SourceMatchCount)
+// Arrivals evaluate before equal-time expirations; expirations never create matches.
+| sort by GroupUser asc, GroupServer asc, CountBoundaryTime asc, CountBoundaryOrder asc
+| extend EventCount = row_cumsum(SourceMatchDelta, GroupUser != prev(GroupUser) or GroupServer != prev(GroupServer))
+| where CountBoundaryOrder == 0
+| where EventCount >= 1
+| project WindowStart = CountBoundaryTime - 5m, WindowEnd = CountBoundaryTime, ["User"] = GroupUser, ["Server"] = GroupServer, EventCount
+};
+let _sigma_context_summaries = materialize(_sigma_context_summary()
+| serialize _sigma_context_id_1 = row_number());
+let _sigma_context_matches = materialize(
+_sigma_context_summaries | project _sigma_context_id_1, _sigma_context_end = WindowEnd, _sigma_context_group = ["User"], _sigma_context_group_1 = ["Server"], _sigma_context_partition = 1
+| join kind=inner (
+union (_sigma_shared_results
+| where ["ContextRowKind"] == "ContextEvidence"
+| extend _sigma_context_timestamp = todatetime(["WindowEnd"]), _sigma_context_group = tostring(pack_array(gettype(["_sigma_context_value"]), ["_sigma_context_value"])[1]), _sigma_context_group_1 = tostring(pack_array(gettype(["_sigma_context_value_1"]), ["_sigma_context_value_1"])[1]), _sigma_context_value_2 = tolong(pack_array(gettype(["_sigma_context_value_2"]), ["_sigma_context_value_2"])[1])
+| extend _sigma_context_rule = "child")
+| project _sigma_context_timestamp, _sigma_context_rule, _sigma_context_group, _sigma_context_group_1, _sigma_context_value_2, _sigma_context_partition = 1
+) on _sigma_context_group, _sigma_context_group_1
+| where _sigma_context_timestamp between ((_sigma_context_end - 5m) .. _sigma_context_end)
+| serialize _sigma_context_key = row_number());
+let _sigma_context_rows = materialize(_sigma_context_matches
+| project _sigma_context_id_1, _sigma_context_value_2
+| distinct *);
+let ContextValues = _sigma_context_rows
+| where isnotnull(_sigma_context_value_2)
+| summarize by _sigma_context_id_1, _sigma_context_value_2
+| summarize DisplayedValues = make_list(_sigma_context_value_2, 2), DistinctValueCount = count() by _sigma_context_id_1;
+_sigma_context_summaries
+| join kind=leftouter (ContextValues) on _sigma_context_id_1
+| extend ["Amount"] = coalesce(DisplayedValues, dynamic([]))
+| extend ContextComplete = coalesce(DistinctValueCount, 0) <= 2
+| project ["WindowStart"], ["WindowEnd"], ["User"], ["Server"], ["Amount"], ["EventCount"], ["ContextComplete"]
+};
+let Observed=Actual() | project User,Server,EventCount;
+let Expected=range Index from 1 to 1001 step 1 | project User=tostring(Index),Server=strcat("s",Index),EventCount=long(1);
+union (Observed | extend Delta=1), (Expected | extend Delta=-1)
+| summarize Delta=sum(Delta) by User,Server,EventCount | where Delta != 0

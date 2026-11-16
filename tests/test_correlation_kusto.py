@@ -881,7 +881,10 @@ def test_event_count_preserves_columns_that_overlap_sliding_window_names():
     assert "let SourceMatchArrivals = union (" in query
     assert "| summarize SourceMatchCount = count() by EventTime_1, GroupUser;" in query
     assert "EventCount = row_cumsum(SourceMatchDelta, GroupUser != prev(GroupUser))" in query
-    assert 'pack_array(gettype(["_sigma_weight"]), ["_sigma_weight"])' in query
+    for index, field in enumerate(collection.rules[0].fields):
+        suffix = f"_{index}" if index else ""
+        assert f'_sigma_context_value{suffix} = ["{field}"]' in query
+        assert f'["{field}"] = coalesce(DisplayedValues{suffix}, dynamic([]))' in query
 
 
 def test_event_count_quotes_requested_group_names_in_result_summary():

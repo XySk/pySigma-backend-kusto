@@ -26,22 +26,20 @@ _sigma_sums
 | project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ValueSum
 };
 let _sigma_shared_results = materialize(_sigma_shared_child());
-let _sigma_weights = union (_sigma_shared_results
-| extend _sigma_timestamp = todatetime(["WindowEnd"])
-| extend _sigma_rule = "child")
-| where isnotnull(_sigma_timestamp)
-| summarize _sigma_weight = count() by _sigma_timestamp;
-_sigma_weights
-| project _sigma_window_end = _sigma_timestamp, _sigma_bin = bin(_sigma_timestamp, 5m)
-| join kind=inner (
-    _sigma_weights
-    | extend _sigma_bin = pack_array(bin(_sigma_timestamp, 5m), bin(_sigma_timestamp, 5m) + 5m)
-    | mv-expand _sigma_bin to typeof(datetime)
-) on _sigma_bin
-| where _sigma_timestamp between ((_sigma_window_end - 5m) .. _sigma_window_end)
-| summarize EventCount = sum(_sigma_weight) by _sigma_window_end
+let SourceMatchArrivals = union (_sigma_shared_results
+| project EventTime = todatetime(["WindowEnd"]))
+| where isnotnull(EventTime)
+| summarize SourceMatchCount = count() by EventTime;
+union (SourceMatchArrivals
+| project CountBoundaryTime = EventTime, CountBoundaryOrder = 0, SourceMatchDelta = SourceMatchCount),
+(SourceMatchArrivals
+| project CountBoundaryTime = EventTime + 5m, CountBoundaryOrder = 1, SourceMatchDelta = -SourceMatchCount)
+// Arrivals evaluate before equal-time expirations; expirations never create matches.
+| sort by CountBoundaryTime asc, CountBoundaryOrder asc
+| extend EventCount = row_cumsum(SourceMatchDelta)
+| where CountBoundaryOrder == 0
 | where EventCount >= 999
-| project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, EventCount
+| project WindowStart = CountBoundaryTime - 5m, WindowEnd = CountBoundaryTime, EventCount
 };
 let _sigma_validation_check_ = () {
 let _sigma_values = union (Events

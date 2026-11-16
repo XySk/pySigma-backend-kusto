@@ -1931,6 +1931,7 @@ def fixtures():
     from tests.fixtures.correlation.numeric_context import fixtures as numeric_context_fixtures
     from tests.fixtures.correlation.ordered_context import fixtures as ordered_context_fixtures
     from tests.fixtures.correlation.ordered_state import fixtures as ordered_state_fixtures
+    from tests.fixtures.correlation.relational_context import fixtures as relational_context_fixtures
     from tests.fixtures.correlation.standard_mappings import fixture as standard_mapping_fixture
     from tests.fixtures.correlation.temporal_context import fixtures as temporal_context_fixtures
     from tests.fixtures.correlation.typed_grouped_context import fixtures as typed_grouped_context_fixtures
@@ -1952,6 +1953,7 @@ def fixtures():
         **ordered_state_fixtures(),
         **numeric_context_fixtures(),
         **empty_child_fixtures(),
+        **relational_context_fixtures(),
         **temporal_context_fixtures(),
         "context_nested.kql": nested_fixture(),
         "event_count_grouped.kql": grouped_fixture(),
@@ -2000,4 +2002,11 @@ if __name__ == "__main__":
 
     from tests.fixtures.correlation.runtime import manifest
 
-    (DESTINATION / "acceptance-manifest.json").write_text(json.dumps(manifest(DESTINATION), indent=2) + "\n")
+    prepared = manifest(DESTINATION)
+    (DESTINATION / "acceptance-manifest.json").write_text(json.dumps(prepared, indent=2) + "\n")
+    from tests.fixtures.correlation.empty_child_context import fixtures as empty_child_fixtures
+    from tests.fixtures.correlation.relational_context import fixtures as relational_context_fixtures
+
+    scoped_names = set(relational_context_fixtures()) | set(empty_child_fixtures())
+    scoped = dict(prepared, fixtures=[entry for entry in prepared["fixtures"] if entry["name"] in scoped_names])
+    (DESTINATION / "relational-context-manifest.json").write_text(json.dumps(scoped, indent=2) + "\n")

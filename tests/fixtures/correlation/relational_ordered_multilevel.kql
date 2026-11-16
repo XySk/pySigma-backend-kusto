@@ -1,0 +1,144 @@
+// Generated with standard collection parsing; expected summaries are literal worked examples.
+let Events=datatable(Timestamp:datetime,Host:string,Marker:string,User:string,Server:string) [
+datetime(2026-01-01T12:00:00Z),"h","raw","Alice","s1",
+datetime(2026-01-01T12:00:00Z),"h","raw","Alice","s1",
+datetime(2026-01-01T12:00:00Z),"h","raw","Alice","s2",
+datetime(2026-01-01T12:00:00Z),"h","raw","Bob","b1",
+datetime(2026-01-01T12:01:00Z),"d","B","Alice","s3",
+datetime(2026-01-01T12:02:00Z),"d","B","Alice","s4"
+];
+let Actual=(){
+let _sigma_shared_child_1 = () {
+let _sigma_shared_child = () {
+let _sigma_context_summary = () {
+let SourceMatchArrivals = union (Events
+| where Marker =~ "raw"
+| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"])
+| where isnotnull(EventTime_1) and isnotempty(GroupHost)
+| summarize SourceMatchCount = count() by EventTime_1, GroupHost;
+union (SourceMatchArrivals
+| project GroupHost, CountBoundaryTime = EventTime_1, CountBoundaryOrder = 0, SourceMatchDelta = SourceMatchCount),
+(SourceMatchArrivals
+| project GroupHost, CountBoundaryTime = EventTime_1 + 5m, CountBoundaryOrder = 1, SourceMatchDelta = -SourceMatchCount)
+// Arrivals evaluate before equal-time expirations; expirations never create matches.
+| sort by GroupHost asc, CountBoundaryTime asc, CountBoundaryOrder asc
+| extend EventCount = row_cumsum(SourceMatchDelta, GroupHost != prev(GroupHost))
+| where CountBoundaryOrder == 0
+| where EventCount >= 1
+| project WindowStart = CountBoundaryTime - 5m, WindowEnd = CountBoundaryTime, ["Host"] = GroupHost, EventCount
+};
+let _sigma_context_summaries = materialize(_sigma_context_summary()
+| serialize _sigma_context_id = row_number());
+let _sigma_context_matches = materialize(
+_sigma_context_summaries | project _sigma_context_id, _sigma_context_end = WindowEnd, _sigma_context_group = ["Host"], _sigma_context_partition = 1
+| join kind=inner (
+union (Events
+| where Marker =~ "raw"
+| extend _sigma_context_timestamp = todatetime(["Timestamp"]), _sigma_context_group = ["Host"], _sigma_context_value = ["User"], _sigma_context_value_1 = ["Server"]
+| extend _sigma_context_rule = "raw")
+| project _sigma_context_timestamp, _sigma_context_rule, _sigma_context_group, _sigma_context_value, _sigma_context_value_1, _sigma_context_partition = 1
+) on _sigma_context_group
+| where _sigma_context_timestamp between ((_sigma_context_end - 5m) .. _sigma_context_end)
+| serialize _sigma_context_key = row_number());
+let _sigma_context_rows = materialize(_sigma_context_matches
+| project _sigma_context_id, _sigma_context_value, _sigma_context_value_1
+| distinct *);
+union (_sigma_context_summaries | extend ContextRowKind = "Summary"), (_sigma_context_summaries | join kind=inner (_sigma_context_rows) on _sigma_context_id | extend ContextRowKind = "ContextEvidence")
+};
+let _sigma_shared_results = materialize(_sigma_shared_child());
+let _sigma_context_summary = () {
+// Strict sequence: "child" -> "B". Total inclusive span: 5m.
+union (_sigma_shared_results
+| where ["ContextRowKind"] == "ContextEvidence"
+| extend EventTime_1 = todatetime(["WindowEnd"]), GroupUser = tostring(pack_array(gettype(["_sigma_context_value"]), ["_sigma_context_value"])[1])
+| extend SourceRule = "child"),
+(Events
+| where Marker =~ "B"
+| extend EventTime_1 = todatetime(["Timestamp"]), GroupUser = ["User"]
+| extend SourceRule = "B")
+| where isnotnull(EventTime_1) and isnotempty(GroupUser)
+// Batch equal timestamps: simultaneous source matches cannot advance strict sequence positions.
+| summarize HasChild = countif(SourceRule == "child") > 0, HasB = countif(SourceRule == "B") > 0 by EventTime_1, GroupUser
+| sort by GroupUser asc, EventTime_1 asc
+| extend NewCorrelationGroup = isnull(prev(EventTime_1)) or GroupUser != prev(GroupUser)
+// Read preceding timestamp state for every assignment; preserve viable earlier prefixes.
+| scan declare (LatestChildStart:datetime = datetime(null), CompleteNow:bool = false) with (
+    step SequenceState: true =>
+        CompleteNow = not(NewCorrelationGroup) and HasB and isnotnull(SequenceState.LatestChildStart) and SequenceState.LatestChildStart >= EventTime_1 - 5m,
+        LatestChildStart = iff(HasChild, EventTime_1, iff(NewCorrelationGroup, datetime(null), SequenceState.LatestChildStart));
+)
+| where CompleteNow
+| project WindowStart = EventTime_1 - 5m, WindowEnd = EventTime_1, ["User"] = GroupUser, RuleCount = tolong(2)
+};
+let _sigma_context_summaries = materialize(_sigma_context_summary()
+| serialize _sigma_context_id = row_number());
+let _sigma_context_matches = materialize(
+_sigma_context_summaries | project _sigma_context_id, _sigma_context_end = WindowEnd, _sigma_context_group = ["User"], _sigma_context_partition = 1
+| join kind=inner (
+union (_sigma_shared_results
+| where ["ContextRowKind"] == "ContextEvidence"
+| extend _sigma_context_timestamp = todatetime(["WindowEnd"]), _sigma_context_group = tostring(pack_array(gettype(["_sigma_context_value"]), ["_sigma_context_value"])[1]), _sigma_context_value_1 = tostring(pack_array(gettype(["_sigma_context_value_1"]), ["_sigma_context_value_1"])[1])
+| extend _sigma_context_rule = "child"),
+(Events
+| where Marker =~ "B"
+| extend _sigma_context_timestamp = todatetime(["Timestamp"]), _sigma_context_group = ["User"], _sigma_context_value_1 = ["Server"]
+| extend _sigma_context_rule = "B")
+| project _sigma_context_timestamp, _sigma_context_rule, _sigma_context_group, _sigma_context_value_1, _sigma_context_partition = 1
+) on _sigma_context_group
+| where _sigma_context_timestamp between ((_sigma_context_end - 5m) .. _sigma_context_end)
+| serialize _sigma_context_key = row_number());
+let _sigma_context_path = _sigma_context_matches
+| where _sigma_context_rule == "child"
+| project _sigma_context_id, _sigma_context_end, _sigma_context_step = _sigma_context_key, _sigma_context_step_time = _sigma_context_timestamp
+| project _sigma_context_id, _sigma_context_end, _sigma_context_step, _sigma_context_previous = _sigma_context_step_time;
+let _sigma_context_path_1 = _sigma_context_path
+| join kind=inner (
+_sigma_context_matches
+| where _sigma_context_rule == "B"
+| project _sigma_context_id, _sigma_context_end, _sigma_context_step_1 = _sigma_context_key, _sigma_context_step_time_1 = _sigma_context_timestamp
+) on _sigma_context_id
+| where _sigma_context_step_time_1 > _sigma_context_previous
+| where _sigma_context_step_time_1 == _sigma_context_end
+| project _sigma_context_id, _sigma_context_end, _sigma_context_step, _sigma_context_step_1, _sigma_context_previous = _sigma_context_step_time_1;
+let _sigma_context_participating = union (_sigma_context_path_1 | project _sigma_context_id, _sigma_context_key = _sigma_context_step), (_sigma_context_path_1 | project _sigma_context_id, _sigma_context_key = _sigma_context_step_1)
+| distinct _sigma_context_id, _sigma_context_key;
+let _sigma_context_selected = materialize(_sigma_context_matches
+| join kind=leftsemi (_sigma_context_participating) on _sigma_context_id, _sigma_context_key);
+let _sigma_context_rows = materialize(_sigma_context_selected
+| project _sigma_context_id, _sigma_context_value_1
+| distinct *);
+union (_sigma_context_summaries | extend ContextRowKind_1 = "Summary"), (_sigma_context_summaries | join kind=inner (_sigma_context_rows) on _sigma_context_id | extend ContextRowKind_1 = "ContextEvidence")
+};
+let _sigma_shared_results_1 = materialize(_sigma_shared_child_1());
+let _sigma_types = union (_sigma_shared_results_1
+| where ["ContextRowKind_1"] == "ContextEvidence"
+| extend _sigma_timestamp = todatetime(["WindowEnd"]), _sigma_group_0 = ["User"], _sigma_group_1 = tostring(pack_array(gettype(["_sigma_context_value_1"]), ["_sigma_context_value_1"])[1])
+| extend _sigma_rule = "middle")
+| where isnotnull(_sigma_timestamp) and isnotempty(_sigma_group_0) and isnotempty(_sigma_group_1)
+| summarize by _sigma_timestamp, _sigma_group_0, _sigma_group_1, _sigma_rule;
+_sigma_types
+| project _sigma_group_0, _sigma_group_1, _sigma_window_end = _sigma_timestamp, _sigma_bin = bin(_sigma_timestamp, 5m)
+| distinct *
+| join kind=inner (
+    _sigma_types
+    | extend _sigma_bin = pack_array(bin(_sigma_timestamp, 5m), bin(_sigma_timestamp, 5m) + 5m)
+    | mv-expand _sigma_bin to typeof(datetime)
+) on _sigma_group_0, _sigma_group_1, _sigma_bin
+| where _sigma_timestamp between ((_sigma_window_end - 5m) .. _sigma_window_end)
+| summarize RuleCount = count_distinctif(_sigma_rule, isnotempty(_sigma_rule)) by _sigma_window_end, _sigma_group_0, _sigma_group_1
+| where RuleCount >= 1
+| project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ["User"] = _sigma_group_0, ["Server"] = _sigma_group_1, RuleCount
+| extend ContextComplete = true
+};
+let Observed=Actual() | project WindowEnd, User=tostring(User), Server=tostring(Server), RuleCount;
+let Expected=datatable(WindowEnd:datetime, User:string, Server:string, RuleCount:long) [
+datetime(2026-01-01T12:01:00Z),"Alice","s1",1,
+datetime(2026-01-01T12:01:00Z),"Alice","s2",1,
+datetime(2026-01-01T12:01:00Z),"Alice","s3",1,
+datetime(2026-01-01T12:02:00Z),"Alice","s1",1,
+datetime(2026-01-01T12:02:00Z),"Alice","s2",1,
+datetime(2026-01-01T12:02:00Z),"Alice","s4",1
+];
+union (Observed | extend Delta=1), (Expected | extend Delta=-1)
+| summarize Delta=sum(Delta) by WindowEnd,User,Server,RuleCount
+| where Delta!=0

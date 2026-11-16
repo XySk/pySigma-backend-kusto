@@ -101,7 +101,9 @@ def fixture_schema(tables=("Events", "NetworkEvents"), **overrides):
     )
 
 
-def convert_documents(documents, *, mappings=None, tables=("Events", "NetworkEvents"), schema=None):
+def convert_documents(
+    documents, *, mappings=None, tables=("Events", "NetworkEvents"), schema=None, backend_options=None, callback=None
+):
     pipeline = ProcessingPipeline.from_dict(
         {
             "transformations": [
@@ -118,9 +120,9 @@ def convert_documents(documents, *, mappings=None, tables=("Events", "NetworkEve
     pipeline.vars["kusto_schema"] = schema or fixture_schema(tables)
     if mappings is not None:
         pipeline.vars["kusto_field_mappings"] = mappings
-    return KustoBackend(processing_pipeline=pipeline, correlation_timestamp_field="Timestamp").convert(
-        SigmaCollection.from_yaml(yaml.safe_dump_all(documents))
-    )
+    return KustoBackend(
+        processing_pipeline=pipeline, correlation_timestamp_field="Timestamp", **(backend_options or {})
+    ).convert(SigmaCollection.from_yaml(yaml.safe_dump_all(documents)), callback=callback)
 
 
 def numeric_documents(kind="value_sum", groups=(), field="Amount"):
