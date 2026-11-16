@@ -1,10 +1,15 @@
 {
   "status": "PENDING",
-  "scope": "ordered participants: one step and repeated five/seven positions; direct exhaustive independent tuple oracle",
+  "scope": "ordered participants: one step, repeated five/seven positions, native real groups; direct exhaustive independent tuple oracle",
   "fixtures": [
     {
       "name": "participants_single.kql",
       "sha256": "7e77cf69e12a0afad7de8b1b12d6a362349e1aa1052157910013b70769a94d26",
+      "expected_error": null
+    },
+    {
+      "name": "participants_real_groups.kql",
+      "sha256": "25987c056c6c8328a2a3f608a89f89f028a4c3b87234cfb5f9b6c1f16a478fd5",
       "expected_error": null
     },
     {

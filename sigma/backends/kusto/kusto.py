@@ -873,6 +873,10 @@ class KustoBackend(TextQueryBackend):
         """Attach context from the same source matches without changing metric inputs."""
         reserved = set(context_fields) | set(rule.group_by or [])
         reserved.update(re.findall(r"[A-Za-z_][A-Za-z_0-9]*", "\n".join(queries)))
+        for reference in rule.referenced_rules:
+            for state in reference.rule.get_conversion_states():
+                reserved.update(state.processing_state.get("kusto_source_fields", ()))
+                reserved.update(self._correlation_source_tables(state))
 
         allocate = self._name_allocator(reserved)
 
@@ -900,7 +904,7 @@ class KustoBackend(TextQueryBackend):
         source_id, end, key = [
             allocate(name) for name in ("CorrelationMatchId", "CompletionTime", "SourceRelationshipId")
         ]
-        relationships, count = [allocate(name) for name in ("CompleteContextRelationships", "ContextCount")]
+        relationships = allocate("CompleteContextRelationships")
         groups, timestamp, values = columns["groups"], columns["timestamp"], columns["context"]
         # A constant joins the single ungrouped partition; grouping never uses context values.
         join_key = allocate("ContextPartition")

@@ -141,6 +141,8 @@ union (Observed | extend Delta=1), (Expected | extend Delta=-1)
 def fixtures():
     return {
         "participants_single.kql": correctness_fixture(["a"]),
+        "participants_real_groups.kql": real_groups_fixture(),
+        "participants_real_groups.kql": real_groups_fixture(),
         "participants_repeated_long.kql": correctness_fixture(["a", "b", "a", "c", "a"]),
         "participants_repeated_seven.kql": correctness_fixture(["a", "b", "a", "c", "a", "b", "a"]),
     }
@@ -189,3 +191,32 @@ union (Observed | extend Delta=1), (Expected | extend Delta=-1)
         )
         (destination / (item["name"] + ".kql")).write_text(diagnostic)
     (destination / "manifest.json").write_text(json.dumps(manifest(destination), indent=2) + "\n")
+
+
+def real_groups_fixture():
+    """Literal evidence across native real groups, including NaN and signed zero."""
+    from tests.correlation_helpers import fixture_schema
+
+    summary = correlation_document("RealOrdered", "temporal_ordered", ["a", "b", "c"])
+    summary["fields"] = ["User"]
+    (query,) = convert_documents(
+        [*(source_document(marker, marker) for marker in ("a", "b", "c")), summary],
+        schema=fixture_schema(Host="real"),
+    )
+    data = ",\n".join(
+        f'datetime(2026-01-01T12:00:0{index}Z), real({"-0.0" if host == "0.0" and index == 0 else host}), "{marker}", "{marker}"'
+        for host in ("nan", "inf", "-inf", "0.0")
+        for index, marker in enumerate(("a", "b", "c"))
+    )
+    return f"""let Events=datatable(Timestamp:datetime, Host:real, Marker:string, User:string) [
+{data}
+];
+let Actual=() {{
+{query}
+}};
+let Observed=Actual() | project WindowEnd, Group=case(isnan(Host), "nan", Host == real(inf), "inf", Host == real(-inf), "-inf", "zero"), Users=tostring(array_sort_asc(User)), RuleCount, ContextComplete;
+let Expected=datatable(Group:string) ["nan", "inf", "-inf", "zero"]
+| extend WindowEnd=datetime(2026-01-01T12:00:02Z), Users='["a","b","c"]', RuleCount=long(3), ContextComplete=true;
+union (Observed | extend Delta=1), (Expected | extend Delta=-1)
+| summarize Delta=sum(Delta) by WindowEnd, Group, Users, RuleCount, ContextComplete | where Delta != 0
+"""

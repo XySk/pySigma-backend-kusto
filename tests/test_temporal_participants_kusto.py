@@ -50,3 +50,16 @@ def test_participant_runtime_fixtures_match_public_conversion():
     for name, query in fixtures().items():
         assert (directory / name).read_text() == query
         assert hashes[name] == hashlib.sha256(query.encode()).hexdigest()
+
+
+def test_context_helpers_reserve_declared_source_schema_names():
+    from tests.correlation_helpers import fixture_schema
+
+    summary = correlation_document("summary", "temporal_ordered", ["a"])
+    summary["fields"] = ["User"]
+    (query,) = convert_documents(
+        [source_document("a", "a"), summary],
+        schema=fixture_schema(ContextEventTime="datetime", CorrelationMatchId="long"),
+    )
+    assert 'ContextEventTime_1 = todatetime(["Timestamp"])' in query
+    assert "serialize CorrelationMatchId_1 = row_number()" in query
