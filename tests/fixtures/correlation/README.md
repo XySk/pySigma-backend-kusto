@@ -218,3 +218,13 @@ separating east and west. `typed_grouped_context_parent.kql` consumes those
 collections through a public parent conversion and expects only the four
 observed User/Server relationships, with each child counted once per group.
 Their literal expected rows are defined in `typed_grouped_context.py`.
+
+`source_predicates_securityevent.kql` reproduces privileged-group enumeration with
+an ordinary Sigma collection, a custom SecurityEvent table selection, standard
+field mappings, a source-specific correlation alias, explicit detection-value
+normalization, and Microsoft XDR processing. All four privileged-group names,
+EventID 4799, and CallerProcessId 0x0 remain required. Literal expected rows count
+four distinct groups in two overlapping Alice windows across two computers;
+wrong EventID/process/group rows and Bob's incomplete group set do not qualify.
+Generate with `PYTHONPATH=. python tests/fixtures/correlation/source_predicates.py`.
+The targeted manifest is `source-predicates-manifest.json`.

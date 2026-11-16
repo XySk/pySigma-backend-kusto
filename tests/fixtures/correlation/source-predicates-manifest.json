@@ -1,0 +1,9 @@
+{
+  "fixtures": [
+    {
+      "name": "source_predicates_securityevent.kql",
+      "sha256": "120494d80e695613471489b7effb949b069b43c6bd69ac003034d809ce010c10",
+      "expected_error": null
+    }
+  ]
+}

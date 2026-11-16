@@ -1,10 +1,13 @@
+from dataclasses import dataclass
 from typing import Optional
 
+from sigma.processing.condition_expressions import parse_condition_expression
 from sigma.processing.conditions import (
     DetectionItemProcessingItemAppliedCondition,
     ExcludeFieldCondition,
     IncludeFieldCondition,
     LogsourceCondition,
+    RuleProcessingCondition,
     RuleProcessingItemAppliedCondition,
     RuleProcessingStateCondition,
 )
@@ -18,7 +21,7 @@ from sigma.processing.transformations import (
 
 from ..kusto_common.errors import InvalidFieldTransformation
 from ..kusto_common.postprocessing import create_prepend_query_table_item
-from ..kusto_common.schema import create_schema
+from ..kusto_common.schema import FieldMappings, create_schema
 from ..kusto_common.transformations import (
     DynamicFieldMappingTransformation,
     GenericFieldMappingTransformation,
@@ -42,6 +45,14 @@ MICROSOFT_XDR_SCHEMA = create_schema(MicrosoftXDRSchema, MICROSOFT_XDR_TABLES)
 
 # Mapping from ParentImage to InitiatingProcessParentFileName. Must be used alongside of ParentImageValueTransformation
 parent_image_field_mapping = {"ParentImage": "InitiatingProcessParentFileName"}
+
+
+@dataclass
+class MicrosoftXDRTableCondition(RuleProcessingCondition):
+    """Apply XDR schema transformations only to recognized XDR tables."""
+
+    def match(self, rule):
+        return self._pipeline.state.get("query_table") in MICROSOFT_XDR_SCHEMA.tables
 
 
 ## Factory functions to create fresh ProcessingItems for each pipeline instance
@@ -277,11 +288,36 @@ def microsoft_xdr_pipeline(
     if transform_parent_image:
         pipeline_items[4:4] = _create_parent_image_items()
 
+    # Table selection has already run. Preserve custom-table predicates and
+    # values instead of treating every selected schema as Microsoft XDR.
+    for item in pipeline_items:
+        if item.identifier == "microsoft_xdr_set_query_table":
+            continue
+        if item.rule_condition_negation:
+            item.rule_conditions = {"xdr_table": MicrosoftXDRTableCondition(), "excluded": item.rule_conditions[0]}
+            item.rule_condition_expression = parse_condition_expression("xdr_table and not excluded")
+            item.rule_condition_expression.resolve(item.rule_conditions)
+            item.rule_condition_linking = None
+            item.rule_condition_negation = False
+        else:
+            item.rule_conditions.append(MicrosoftXDRTableCondition())
+
     return ProcessingPipeline(
         name="Generic Log Sources to Windows XDR tables and fields",
         priority=10,
         items=pipeline_items,
-        vars={"kusto_field_mappings": MICROSOFT_XDR_FIELD_MAPPINGS, "kusto_schema": MICROSOFT_XDR_SCHEMA},
+        vars={
+            "kusto_field_mappings": FieldMappings(
+                table_mappings={
+                    table: {
+                        **MICROSOFT_XDR_FIELD_MAPPINGS.generic_mappings,
+                        **MICROSOFT_XDR_FIELD_MAPPINGS.table_mappings.get(table, {}),
+                    }
+                    for table in MICROSOFT_XDR_SCHEMA.tables
+                }
+            ),
+            "kusto_schema": MICROSOFT_XDR_SCHEMA,
+        },
         allowed_backends=frozenset(["kusto"]),
         postprocessing_items=[create_prepend_query_table_item()],
     )
