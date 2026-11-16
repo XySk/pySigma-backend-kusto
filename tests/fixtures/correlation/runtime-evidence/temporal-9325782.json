@@ -1,0 +1,148 @@
+{
+  "source_kql_freeze": "87ad13250296cb7f41baaeda55f9fed3c8845714",
+  "integration_candidate": "9325782dea3b0123b6225330056ce99904d0a5cc",
+  "scope": "Seven temporal retained-context fixtures and three count fixtures changed by inherited requests; fail-fast manifest order.",
+  "container_memory_bytes": 12884901888,
+  "user_total_memory_ceiling_bytes": 17179869184,
+  "stage_complete": false,
+  "fixture_regeneration_and_frozen_hashes_verified": true,
+  "runtime_record": {
+    "started_utc": "2026-11-15T17:34:38.448480+00:00",
+    "endpoint": "http://localhost:8080",
+    "database": "NetDefaultDB",
+    "request_options": {
+      "max_memory_consumption_per_query_per_node": 12884901888
+    },
+    "timeout_seconds": 360,
+    "manifest_sha256": "e484f73ec883733d3339d7695efb15564f7e6a99414723ff87006a6c1c749cda",
+    "fixtures": [
+      {
+        "name": "count_context_restricted.kql",
+        "sha256": "f29816be0af4aa777090bda0e691ba3807a0599fa13cc7795083a5ba21d0c468",
+        "expected_error": null,
+        "status": "FAIL",
+        "detail": "HTTP 520: HTTP 520: response is not a v2 frame array",
+        "http_status": 520,
+        "seconds": 152.232
+      }
+    ],
+    "status": "FAIL",
+    "engine_version": {
+      "Tables": [
+        {
+          "TableName": "Table_0",
+          "Columns": [
+            {
+              "ColumnName": "BuildVersion",
+              "DataType": "String"
+            },
+            {
+              "ColumnName": "BuildTime",
+              "DataType": "DateTime"
+            },
+            {
+              "ColumnName": "ServiceType",
+              "DataType": "String"
+            },
+            {
+              "ColumnName": "ProductVersion",
+              "DataType": "String"
+            },
+            {
+              "ColumnName": "ServiceOffering",
+              "DataType": "String"
+            }
+          ],
+          "Rows": [
+            [
+              "1.0.9815.14081",
+              "2026-11-15T07:49:22Z",
+              "Engine",
+              "2026.11.15.0741-2645-8e3387b-master",
+              ""
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  "selected_fixtures": [
+    {
+      "name": "count_context_restricted.kql",
+      "sha256": "f29816be0af4aa777090bda0e691ba3807a0599fa13cc7795083a5ba21d0c468",
+      "expected_error": null,
+      "status": "FAIL"
+    },
+    {
+      "name": "count_context_ungrouped.kql",
+      "sha256": "be7510eb17bdedd793c433000978de796f6eacc1876f173a7d0ebc629e814452",
+      "expected_error": null,
+      "status": "NOT_RUN"
+    },
+    {
+      "name": "count_context_values.kql",
+      "sha256": "f3cc9238f8ebe05c1d8a01a43446c26f1a7e5f79b2921d0c528a33ba887299e5",
+      "expected_error": null,
+      "status": "NOT_RUN"
+    },
+    {
+      "name": "temporal_context_boolean.kql",
+      "sha256": "5163107b18a171919cad937eaf497aca991044e1c148b9d922e8256465bbdb85",
+      "expected_error": null,
+      "status": "NOT_RUN"
+    },
+    {
+      "name": "temporal_context_boolean_multilevel.kql",
+      "sha256": "5af6ccad32f5e434b80e5f418321af92d810b9952726eaf65711eccf790eabee",
+      "expected_error": null,
+      "status": "NOT_RUN"
+    },
+    {
+      "name": "temporal_context_multilevel.kql",
+      "sha256": "807882b83ad3ab7b53b09bb726017e3c24a257ad3ed6920b8a77c9c62a3c19f9",
+      "expected_error": null,
+      "status": "NOT_RUN"
+    },
+    {
+      "name": "temporal_context_ordered.kql",
+      "sha256": "0031dc74a4744d9414053b30eb4061c0694bc01b4e6fb2dd65de4030c348574f",
+      "expected_error": null,
+      "status": "NOT_RUN"
+    },
+    {
+      "name": "temporal_context_ordered_multilevel.kql",
+      "sha256": "f2cc09764f2494971f6e46c558ee03e34c6d3087f8d855bb045fda8613434d2c",
+      "expected_error": null,
+      "status": "NOT_RUN"
+    },
+    {
+      "name": "temporal_context_shared.kql",
+      "sha256": "bdbc85eac95936e4c0a4622c122fdc7e8a2712592262083e1478c83a138b4e1b",
+      "expected_error": null,
+      "status": "NOT_RUN"
+    },
+    {
+      "name": "temporal_context_unordered.kql",
+      "sha256": "4a5ae73106ccee5b19a275c152ce4bf3bf4196f769f3bd35446398cc60b0ef30",
+      "expected_error": null,
+      "status": "NOT_RUN"
+    }
+  ],
+  "failure_response": {
+    "error": {
+      "code": "Internal service error",
+      "message": "Request aborted due to an internal service error.",
+      "@context": {
+        "clientRequestId": "unspecified;2a2a3714-0ab8-4613-8ca0-dcd0cccba4e9",
+        "activityId": "045586f9-53cf-4bbe-a1d8-3f9372b92f68"
+      }
+    }
+  },
+  "artifact_sha256": {
+    "count_context_restricted.request.json": "1779e70dc0ab50e3fcda6513e42fec0cacefe56013233620f242a697f111d832",
+    "count_context_restricted.response.json": "732b59596c4cd2c7356a9069d14a8f707b62370151e7d7f60e0873f3212b3933",
+    "engine-version.response.json": "7338dde20b69583c4555cb4cd0d34ee526430709e06cbb802820b55c0596323a",
+    "results.json": "49652707a22e21800c1accd1bf07563062f9d7ac86b1085b564b348e93d439b0"
+  },
+  "diagnosis": "HTTP 520 Internal service error; response alone does not establish the underlying engine cause. No retry or further fixture execution."
+}

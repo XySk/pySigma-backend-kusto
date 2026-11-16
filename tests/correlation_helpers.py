@@ -18,10 +18,14 @@ def source_document(name="source-rule", marker="match", *, product="fixture"):
 
 def correlation_document(name, kind, rules, *, groups=("Host",), field=None, condition=None, span="5m", **kwargs):
     correlation = {"type": kind, "rules": rules, "timespan": span, "group-by": list(groups), **kwargs}
-    if condition is not None or kind in ("event_count", "value_count"):
+    if condition is not None or kind in ("event_count", "value_count", "value_sum", "value_percentile"):
         correlation["condition"] = dict(condition or {"gte": 2})
     if kind == "value_count":
         correlation["condition"]["field"] = field or "User"
+    elif kind in ("value_sum", "value_percentile"):
+        correlation["condition"]["field"] = field or correlation["condition"].get("field", "Amount")
+    if kind == "value_percentile":
+        correlation["condition"].setdefault("percentile", 50)
     return {"title": name, "name": name, "correlation": correlation}
 
 
@@ -44,3 +48,12 @@ def convert_documents(documents, *, mappings=None, tables=("Events", "NetworkEve
     return KustoBackend(processing_pipeline=pipeline, correlation_timestamp_field="Timestamp").convert(
         SigmaCollection.from_yaml(yaml.safe_dump_all(documents))
     )
+
+
+def numeric_documents(kind="value_sum", groups=(), field="Amount"):
+    source = source_document()
+    source["fields"] = ["User", "Amount"]
+    child = correlation_document("child", "event_count", ["source-rule"], condition={"gte": 1})
+    parent = correlation_document("parent", kind, ["child"], groups=groups,
+                                  condition={"field": field, "gte": 0})
+    return [source, child, parent]

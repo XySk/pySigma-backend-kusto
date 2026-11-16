@@ -1,0 +1,6 @@
+let Events=datatable(["Field Space"]:string) ["fixed", "a suffix", "ignored"];
+let Observed=Events | where ["Field Space"] in~ ("fixed") or ["Field Space"] endswith "suffix" | project Value=["Field Space"];
+let Expected=datatable(Value:string) ["fixed", "a suffix"];
+union (Observed | extend Delta=1), (Expected | extend Delta=-1)
+| summarize Delta=sum(Delta) by Value
+| where Delta!=0

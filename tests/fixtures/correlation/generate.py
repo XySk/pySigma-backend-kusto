@@ -102,6 +102,12 @@ def query(*, operator="gte", threshold=2, groups=(), duplicate_sources=False, co
 
 def check(actual, expected, fields):
     """An empty result means exact multiset equality, including result multiplicity."""
+    # Historical fixture groups are strings. Normalize only these diagnostic
+    # columns; typed grouping acceptance checks inspect runtime types separately.
+    string_groups = {"Case", "User", "Host", "Actor", "ChildCount", "Tenant"}
+    normalize = ", ".join(f"{field}=tostring({field})" for field in fields if field in string_groups)
+    if normalize:
+        actual += " | extend " + normalize
     return (
         f"union ({actual} | extend Delta = 1), ({expected} | extend Delta = -1)\n"
         f"| summarize Delta = sum(Delta) by {', '.join(fields)}\n"
@@ -228,6 +234,469 @@ let Events = datatable(Timestamp:string, Marker:string) [
         + expected
         + check("Actual", "Expected", ["Scenario", "WindowStart", "WindowEnd", "EventCount"])
     )
+
+
+def value_percentile_aliases_fixture():
+    first = chain_source("first", "a")
+    first["detection"]["again"] = {"Marker": "a"}
+    first["detection"]["condition"] = ["selection", "again"]
+    second = chain_source("second", "b", product="network")
+    rule = chain_correlation(
+        "percentile",
+        "value_percentile",
+        ["first", "second"],
+        groups=("Actor",),
+        condition={"field": "Measurement", "percentile": 50, "gte": 0},
+        aliases={"Actor": {"first": "Host", "second": "Account"}, "Measurement": {"first": "Low", "second": "High"}},
+    )
+    (q,) = convert_documents([first, second, rule])
+    data = """let Events = datatable(Timestamp:datetime, Host:string, Low:long, Marker:string) [
+datetime(2026-01-01T12:00:00Z), "alice", 1, "a"
+];
+let NetworkEvents = datatable(Timestamp:datetime, Account:string, High:long, Marker:string) [
+datetime(2026-01-01T12:00:00Z), "alice", 100, "b",
+datetime(2026-01-01T12:00:00Z), "alice", 200, "b",
+datetime(2026-01-01T12:01:00Z), "alice", 300, "b"
+];
+"""
+    # Both searches for first contribute: [1,1,100,200], then
+    # [1,1,100,200,300]. Their medians are 1 and 100 respectively.
+    expected = """let Expected = datatable(WindowStart:datetime, WindowEnd:datetime, Actor:string, ValuePercentile:long) [
+datetime(2026-01-01T11:55:00Z), datetime(2026-01-01T12:00:00Z), "alice", 1,
+datetime(2026-01-01T11:56:00Z), datetime(2026-01-01T12:01:00Z), "alice", 100
+];
+"""
+    return (
+        HEADER
+        + data
+        + "let Actual = () {\n"
+        + q
+        + "\n};\n"
+        + expected
+        + check(
+            "Actual() | project WindowStart, WindowEnd, Actor, ValuePercentile=tolong(ValuePercentile)",
+            "Expected",
+            ["WindowStart", "WindowEnd", "Actor", "ValuePercentile"],
+        )
+    )
+
+
+def value_percentile_population_fixture():
+    data = """let Events = range Amount from 1 to 101 step 1
+| extend Timestamp=datetime(2026-01-01T12:00:00Z), Marker="match";
+"""
+    functions, calls = [], []
+    for selector in (0, 1, 50, 99, 100):
+        rule = chain_correlation(
+            "percentile",
+            "value_percentile",
+            ["source-rule"],
+            groups=(),
+            condition={"field": "Amount", "percentile": selector, "gte": 0},
+        )
+        (q,) = convert_documents([chain_source(), rule])
+        functions.append(f"let p_{selector} = () {{\n{q}\n}};\n")
+        calls.append(f"(p_{selector}() | project Selector={selector}, Value=tolong(ValuePercentile))")
+    expected = """let Expected = datatable(Selector:long, Value:long) [0,1, 1,2, 50,51, 99,100, 100,101];
+"""
+    return (
+        HEADER
+        + data
+        + "".join(functions)
+        + "let Actual = union "
+        + ",\n".join(calls)
+        + ";\n"
+        + expected
+        + check("Actual", "Expected", ["Selector", "Value"])
+    )
+
+
+def value_percentile_comparisons_fixture():
+    data = """let BaseEvents = datatable(Timestamp:string, Host:string, Amount:dynamic, Marker:string) [
+"2026-01-01T12:00:00Z", "rank", dynamic(1), "match",
+"2026-01-01T12:00:00Z", "rank", dynamic(2), "match",
+"2026-01-01T12:00:00Z", "rank", dynamic(100), "match",
+"2026-01-01T12:00:00Z", "rank", dynamic(200), "match",
+"2026-01-01T12:05:00Z", "rank", dynamic("bad"), "match",
+"2026-01-01T12:05:00.0000001Z", "rank", dynamic(0), "match",
+"2026-01-01T12:00:00Z", "zero", dynamic(0), "match",
+"2026-01-01T12:00:00Z", "zero", dynamic(0), "match",
+"2026-01-01T12:00:00Z", "zero", dynamic(10), "match",
+"2026-01-01T12:01:00Z", "zero", dynamic(5), "match",
+"2026-01-01T12:02:00Z", "zero", dynamic(5), "match",
+"2026-01-01T12:00:00Z", "empty", dynamic("7"), "match",
+"2026-01-01T12:01:00Z", "empty", dynamic(null), "match",
+"2026-01-01T12:00:00Z", "real", dynamic(-1.5), "match",
+"2026-01-01T12:00:00Z", "real", dynamic(0), "match",
+"2026-01-01T12:00:00Z", "real", dynamic(2.5), "match",
+"2026-01-01T12:00:00Z", "real", dynamic(10), "match",
+"bad", "rank", dynamic(-100), "match",
+"2026-01-01T12:00:00Z", "", dynamic(-100), "match"
+];
+let Events = union BaseEvents,
+(print Timestamp="2026-01-01T12:00:00Z", Host="real", Amount=pack_array(real(nan))[0], Marker="match"),
+(print Timestamp="2026-01-01T12:00:00Z", Host="real", Amount=pack_array(real(+inf))[0], Marker="match"),
+(print Timestamp="2026-01-01T12:00:00Z", Host="real", Amount=pack_array(real(-inf))[0], Marker="match"),
+(print Timestamp="2026-01-01T12:00:00Z", Host="real", Amount=dynamic(true), Marker="match");
+"""
+    # Worked median summaries: four tied values select 2; a missing-value
+    # endpoint leaves that median unchanged. A tick later only zero remains.
+    summaries = [
+        ("11:55:00", "12:00:00", "rank", 2),
+        ("12:00:00", "12:05:00", "rank", 2),
+        ("12:00:00.0000001", "12:05:00.0000001", "rank", 0),
+        ("11:55:00", "12:00:00", "zero", 0),
+        ("11:56:00", "12:01:00", "zero", 0),
+        ("11:57:00", "12:02:00", "zero", 5),
+        ("11:55:00", "12:00:00", "real", 0),
+    ]
+    comparisons = {
+        "gt": lambda x: x > 2.5,
+        "gte": lambda x: x >= 2.5,
+        "lt": lambda x: x < 2.5,
+        "lte": lambda x: x <= 2.5,
+        "eq": lambda x: x == 2.5,
+        "neq": lambda x: x != 2.5,
+    }
+    functions, calls, rows = [], [], []
+    for op, predicate in comparisons.items():
+        rule = chain_correlation(
+            "percentile", "value_percentile", ["source-rule"], condition={"field": "Amount", "percentile": 50, op: 2.5}
+        )
+        (q,) = convert_documents([chain_source(), rule])
+        functions.append(f"let p_{op} = () {{\n{q}\n}};\n")
+        calls.append(
+            f'(p_{op}() | project Scenario="{op}", WindowStart, WindowEnd, Host, ValuePercentile=toreal(ValuePercentile))'
+        )
+        for start, end, host, value in summaries:
+            if predicate(value):
+                rows.append(f'"{op}", datetime(2026-01-01T{start}Z), datetime(2026-01-01T{end}Z), "{host}", {value}')
+    expected = (
+        "let Expected = datatable(Scenario:string, WindowStart:datetime, WindowEnd:datetime, Host:string, ValuePercentile:real) [\n"
+        + ",\n".join(rows)
+        + "\n];\n"
+    )
+    return (
+        HEADER
+        + data
+        + "".join(functions)
+        + "let Actual = union "
+        + ",\n".join(calls)
+        + ";\n"
+        + expected
+        + check("Actual", "Expected", ["Scenario", "WindowStart", "WindowEnd", "Host", "ValuePercentile"])
+    )
+
+
+def value_percentile_endpoints_fixture():
+    data = """let Events = datatable(Timestamp:datetime, Host:string, Amount:dynamic, Marker:string) [
+datetime(2026-01-01T12:00:00Z), "long", dynamic(9223372036854775807), "match",
+datetime(2026-01-01T12:00:00Z), "long", dynamic(9223372036854775806), "match",
+datetime(2026-01-01T12:00:00Z), "extreme", dynamic(1e300), "match",
+datetime(2026-01-01T12:00:00Z), "extreme", dynamic(-1e300), "match"
+];
+"""
+    functions, calls = [], []
+    for selector in (0, 50, 100):
+        rule = chain_correlation(
+            "percentile",
+            "value_percentile",
+            ["source-rule"],
+            condition={"field": "Amount", "percentile": selector, "neq": 0},
+        )
+        (q,) = convert_documents([chain_source(), rule])
+        functions.append(f"let p_{selector} = () {{\n{q}\n}};\n")
+        # String projection preserves the two adjacent signed-long values.
+        calls.append(f"(p_{selector}() | project Selector={selector}, Host, Value=tostring(ValuePercentile))")
+    expected = """let Expected = datatable(Selector:long, Host:string, Value:string) [
+0, "long", "9223372036854775806", 50, "long", "9223372036854775806", 100, "long", "9223372036854775807",
+0, "extreme", "-1e300", 50, "extreme", "-1e300", 100, "extreme", "1e300"
+];
+"""
+    return (
+        HEADER
+        + data
+        + "".join(functions)
+        + "let Actual = union "
+        + ",\n".join(calls)
+        + ";\n"
+        + expected
+        + check("Actual", "Expected", ["Selector", "Host", "Value"])
+    )
+
+
+def value_percentile_chained_fixture():
+    data = """let Events = datatable(Timestamp:datetime, Host:string, Amount:long, Marker:string) [
+datetime(2026-01-01T12:00:00Z), "alice", 1, "match",
+datetime(2026-01-01T12:00:00Z), "alice", 2, "match",
+datetime(2026-01-01T12:00:00Z), "alice", 100, "match",
+datetime(2026-01-01T12:00:00Z), "alice", 200, "match",
+datetime(2026-01-01T12:01:00Z), "alice", 100, "match"
+];
+"""
+    documents = [
+        chain_source(),
+        chain_correlation(
+            "child", "value_percentile", ["source-rule"], condition={"field": "Amount", "percentile": 50, "gte": 0}
+        ),
+        chain_correlation("sum", "value_sum", ["child"], condition={"field": "ValuePercentile", "gte": 0}),
+        chain_correlation(
+            "parent", "value_percentile", ["sum"], condition={"field": "ValueSum", "percentile": 100, "gte": 0}
+        ),
+    ]
+    (q,) = convert_documents(documents)
+    # Child medians are 2 then 100; sum summaries are 2 then 102;
+    # percentile consumes each sum once at its own WindowEnd.
+    expected = """let Expected = datatable(WindowStart:datetime, WindowEnd:datetime, Host:string, ValuePercentile:long) [
+datetime(2026-01-01T11:55:00Z), datetime(2026-01-01T12:00:00Z), "alice", 2,
+datetime(2026-01-01T11:56:00Z), datetime(2026-01-01T12:01:00Z), "alice", 102
+];
+"""
+    return (
+        HEADER
+        + data
+        + "let Actual = () {\n"
+        + q
+        + "\n};\n"
+        + expected
+        + check(
+            "Actual() | project WindowStart, WindowEnd, Host, ValuePercentile=tolong(ValuePercentile)",
+            "Expected",
+            ["WindowStart", "WindowEnd", "Host", "ValuePercentile"],
+        )
+    )
+
+
+def value_sum_comparisons_fixture():
+    # One result per distinct timestamp, with sums worked from source rows:
+    # mixed = 7, 7, 8, 1; empty = 0, 0. The one-tick-late anchor
+    # excludes both 12:00 amounts. Text and missing values still anchor.
+    data = """let Events = datatable(Timestamp:string, Host:string, Amount:dynamic, Marker:string) [
+    "2026-01-01T12:00:00Z", "mixed", dynamic(10), "match",
+    "2026-01-01T12:00:00Z", "mixed", dynamic(-3), "match",
+    "2026-01-01T12:01:00Z", "mixed", dynamic(0), "match",
+    "2026-01-01T12:05:00Z", "mixed", dynamic(1), "match",
+    "2026-01-01T12:05:00.0000001Z", "mixed", dynamic("bad"), "match",
+    "2026-01-01T12:00:00Z", "empty", dynamic("7"), "match",
+    "2026-01-01T12:01:00Z", "empty", dynamic(null), "match",
+    "2026-01-01T12:02:00Z", "mixed", dynamic(100), "other"
+];
+"""
+    scenarios = [("gt", 7), ("gte", 7), ("lt", 7), ("lte", 7), ("eq", 7), ("neq", 7), ("gt", 7.5)]
+    documents = [chain_source()]
+
+    def converted(operator, threshold):
+        correlation = chain_correlation(
+            "sum",
+            "value_sum",
+            ["source-rule"],
+            groups=("Host",),
+            condition={"field": "Amount", operator: threshold},
+        )
+        (q,) = convert_documents([*documents, correlation], tables=("Events", "NetworkEvents"))
+        return q
+
+    functions = "".join(
+        f"let sum_{op}_{str(threshold).replace('.', '_')} = () {{\n{converted(op, threshold)}\n}};\n"
+        for op, threshold in scenarios
+    )
+    actual = (
+        "let Actual = union\n"
+        + ",\n".join(
+            f'    (sum_{op}_{str(threshold).replace(".", "_")}() '
+            f'| project Scenario = "{op}_{str(threshold).replace(".", "_")}", '
+            "WindowStart, WindowEnd, Host, ValueSum = tolong(ValueSum))"
+            for op, threshold in scenarios
+        )
+        + ";\n"
+    )
+    expected = """let Expected = datatable(Scenario:string, WindowStart:datetime, WindowEnd:datetime, Host:string, ValueSum:long) [
+    "gt_7", datetime(2026-01-01T12:00:00Z), datetime(2026-01-01T12:05:00Z), "mixed", 8,
+    "gte_7", datetime(2026-01-01T11:55:00Z), datetime(2026-01-01T12:00:00Z), "mixed", 7,
+    "gte_7", datetime(2026-01-01T11:56:00Z), datetime(2026-01-01T12:01:00Z), "mixed", 7,
+    "gte_7", datetime(2026-01-01T12:00:00Z), datetime(2026-01-01T12:05:00Z), "mixed", 8,
+    "lt_7", datetime(2026-01-01T12:00:00.0000001Z), datetime(2026-01-01T12:05:00.0000001Z), "mixed", 1,
+    "lt_7", datetime(2026-01-01T11:55:00Z), datetime(2026-01-01T12:00:00Z), "empty", 0,
+    "lt_7", datetime(2026-01-01T11:56:00Z), datetime(2026-01-01T12:01:00Z), "empty", 0,
+    "lte_7", datetime(2026-01-01T11:55:00Z), datetime(2026-01-01T12:00:00Z), "mixed", 7,
+    "lte_7", datetime(2026-01-01T11:56:00Z), datetime(2026-01-01T12:01:00Z), "mixed", 7,
+    "lte_7", datetime(2026-01-01T12:00:00.0000001Z), datetime(2026-01-01T12:05:00.0000001Z), "mixed", 1,
+    "lte_7", datetime(2026-01-01T11:55:00Z), datetime(2026-01-01T12:00:00Z), "empty", 0,
+    "lte_7", datetime(2026-01-01T11:56:00Z), datetime(2026-01-01T12:01:00Z), "empty", 0,
+    "eq_7", datetime(2026-01-01T11:55:00Z), datetime(2026-01-01T12:00:00Z), "mixed", 7,
+    "eq_7", datetime(2026-01-01T11:56:00Z), datetime(2026-01-01T12:01:00Z), "mixed", 7,
+    "neq_7", datetime(2026-01-01T12:00:00Z), datetime(2026-01-01T12:05:00Z), "mixed", 8,
+    "neq_7", datetime(2026-01-01T12:00:00.0000001Z), datetime(2026-01-01T12:05:00.0000001Z), "mixed", 1,
+    "neq_7", datetime(2026-01-01T11:55:00Z), datetime(2026-01-01T12:00:00Z), "empty", 0,
+    "neq_7", datetime(2026-01-01T11:56:00Z), datetime(2026-01-01T12:01:00Z), "empty", 0,
+    "gt_7_5", datetime(2026-01-01T12:00:00Z), datetime(2026-01-01T12:05:00Z), "mixed", 8
+];
+"""
+    return (
+        HEADER
+        + data
+        + functions
+        + actual
+        + expected
+        + check("Actual", "Expected", ["Scenario", "WindowStart", "WindowEnd", "Host", "ValueSum"])
+    )
+
+
+def value_sum_chained_fixture():
+    documents = [
+        chain_source("child-source", "child"),
+        chain_source("direct-source", "direct"),
+        chain_correlation("child", "value_sum", ["child-source"], condition={"field": "Amount", "gte": 0}),
+        chain_correlation(
+            "parent",
+            "value_sum",
+            ["child", "direct-source"],
+            condition={"field": "Measured", "gte": 0},
+            aliases={"Measured": {"child": "ValueSum", "direct-source": "Amount"}},
+        ),
+    ]
+    (converted,) = convert_documents(documents)
+    data = """// Child summaries are 2 at 12:00 and 5 at 12:01.
+// The parent counts each child summary once and adds direct amount 4 at 12:01.
+let Events = datatable(Timestamp:string, Host:string, Amount:dynamic, Marker:string) [
+    "2026-01-01T12:00:00Z", "h", dynamic(2), "child",
+    "2026-01-01T12:01:00Z", "h", dynamic(3), "child",
+    "2026-01-01T12:01:00Z", "h", dynamic(4), "direct"
+];
+"""
+    expected = """let Expected = datatable(WindowStart:datetime, WindowEnd:datetime, Host:string, ValueSum:long) [
+    datetime(2026-01-01T11:55:00Z), datetime(2026-01-01T12:00:00Z), "h", 2,
+    datetime(2026-01-01T11:56:00Z), datetime(2026-01-01T12:01:00Z), "h", 11
+];
+"""
+    actual = (
+        f"let Actual = () {{\n{converted}\n| project WindowStart, WindowEnd, Host, ValueSum = tolong(ValueSum)\n}};\n"
+    )
+    return (
+        HEADER
+        + data
+        + actual
+        + expected
+        + check("Actual()", "Expected", ["WindowStart", "WindowEnd", "Host", "ValueSum"])
+    )
+
+
+def value_sum_reals_fixture():
+    documents = [
+        chain_source(),
+        chain_correlation(
+            "sum",
+            "value_sum",
+            ["source-rule"],
+            groups=(),
+            condition={"field": "Amount", "gte": -1},
+        ),
+    ]
+    (converted,) = convert_documents(documents)
+    data = """let Events = datatable(Timestamp:string, Amount:dynamic, Marker:string) [
+    "2026-01-01T12:00:00Z", dynamic(0.5), "match",
+    "2026-01-01T12:00:00Z", dynamic(real(nan)), "match",
+    "2026-01-01T12:00:00Z", dynamic(real(+inf)), "match",
+    "2026-01-01T12:00:00Z", dynamic(real(-inf)), "match",
+    "2026-01-01T12:01:00Z", dynamic(-1.25), "match",
+    "2026-01-01T12:01:00Z", dynamic("20"), "match",
+    "2026-01-01T12:01:00Z", dynamic(true), "match",
+    "2026-01-01T12:01:00Z", dynamic(null), "match",
+    "2026-01-01T12:02:00Z", dynamic(2), "match",
+    "2026-01-01T12:03:00Z", dynamic("20"), "other"
+];
+"""
+    expected = """let Expected = datatable(WindowStart:datetime, WindowEnd:datetime, ValueSum:real) [
+    datetime(2026-01-01T11:55:00Z), datetime(2026-01-01T12:00:00Z), 0.5,
+    datetime(2026-01-01T11:56:00Z), datetime(2026-01-01T12:01:00Z), -0.75,
+    datetime(2026-01-01T11:57:00Z), datetime(2026-01-01T12:02:00Z), 1.25
+];
+"""
+    actual = f"let Actual = () {{\n{converted}\n| project WindowStart, WindowEnd, ValueSum = toreal(ValueSum)\n}};\n"
+    return HEADER + data + actual + expected + check("Actual()", "Expected", ["WindowStart", "WindowEnd", "ValueSum"])
+
+
+def value_sum_integer_bounds_fixture():
+    documents = [
+        chain_source(),
+        chain_correlation(
+            "sum",
+            "value_sum",
+            ["source-rule"],
+            groups=(),
+            condition={"field": "Amount", "gte": 9223372036854775806},
+        ),
+    ]
+    (converted,) = convert_documents(documents)
+    data = """// Both totals remain within signed 64-bit range and must stay exact.
+let Events = datatable(Timestamp:string, Amount:dynamic, Marker:string) [
+    "2026-01-01T12:00:00Z", dynamic(9223372036854775807), "match",
+    "2026-01-01T12:00:00Z", dynamic(1), "match",
+    "2026-01-01T12:00:00Z", dynamic(-1), "match",
+    "2026-01-01T12:01:00Z", dynamic(-1), "match"
+];
+"""
+    expected = """let Expected = datatable(WindowStart:datetime, WindowEnd:datetime, ValueSum:long) [
+    datetime(2026-01-01T11:55:00Z), datetime(2026-01-01T12:00:00Z), long(9223372036854775807),
+    datetime(2026-01-01T11:56:00Z), datetime(2026-01-01T12:01:00Z), long(9223372036854775806)
+];
+"""
+    actual = f"let Actual = () {{\n{converted}\n| project WindowStart, WindowEnd, ValueSum = tolong(ValueSum)\n}};\n"
+    return HEADER + data + actual + expected + check("Actual()", "Expected", ["WindowStart", "WindowEnd", "ValueSum"])
+
+
+def value_sum_overflow_fixture(negative=False):
+    documents = [
+        chain_source(),
+        chain_correlation(
+            "sum",
+            "value_sum",
+            ["source-rule"],
+            groups=(),
+            condition={"field": "Amount", "gte": 0},
+        ),
+    ]
+    (converted,) = convert_documents(documents)
+    data = """// Expected: query fails with an integer overflow diagnostic at 12:01.
+// A successful result, including a wrapped or null metric, fails this check.
+let Events = datatable(Timestamp:string, Amount:dynamic, Marker:string) [
+    "2026-01-01T12:00:00Z", dynamic(9223372036854775807), "match",
+    "2026-01-01T12:01:00Z", dynamic(1), "match"
+];
+"""
+    if negative:
+        data = data.replace("dynamic(9223372036854775807)", "dynamic(-9223372036854775808)")
+        data = data.replace("dynamic(1)", "dynamic(-1)")
+    return data + converted + "\n"
+
+
+def value_sum_duplicate_sources_fixture():
+    sources = [chain_source("first"), chain_source("second")]
+    for source in sources:
+        source["detection"]["alternate"] = source["detection"]["selection"]
+        source["detection"]["condition"] = ["selection", "alternate"]
+    (converted,) = convert_documents(
+        [
+            *sources,
+            chain_correlation(
+                "sum", "value_sum", ["first", "second"], groups=(), condition={"field": "Amount", "gte": 0}
+            ),
+        ]
+    )
+    data = """// Each physical observation contributes through four matching searches.
+let Events = datatable(Timestamp:string, Amount:dynamic, Marker:string) [
+    "2026-01-01T12:00:00Z", dynamic(2), "match",
+    "2026-01-01T12:00:00Z", dynamic(2), "match",
+    "2026-01-01T12:01:00Z", dynamic(-1), "match"
+];
+"""
+    expected = """let Expected = datatable(WindowStart:datetime, WindowEnd:datetime, ValueSum:long) [
+    datetime(2026-01-01T11:55:00Z), datetime(2026-01-01T12:00:00Z), 16,
+    datetime(2026-01-01T11:56:00Z), datetime(2026-01-01T12:01:00Z), 12
+];
+"""
+    actual = f"let Actual = () {{\n{converted}\n| project WindowStart, WindowEnd, ValueSum = tolong(ValueSum)\n}};\n"
+    return HEADER + data + actual + expected + check("Actual()", "Expected", ["WindowStart", "WindowEnd", "ValueSum"])
 
 
 def value_count_grouped_fixture():
@@ -1294,6 +1763,7 @@ def typed_value_count_fixture():
 // Textual extended values are deliberately constructed without parsing JSON.
 let Extended = pack_array(datetime(2020-01-01), 1s, guid(00000000-0000-0000-0000-000000000001));
 let Text = pack_array(tostring(Extended[0]), tostring(Extended[1]), tostring(Extended[2]));
+let Deep = dynamic([[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[1]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]);
 let Events = union (datatable(Timestamp:string, Case:string, Value:dynamic, Marker:string) [
     "2026-01-01T12:00:00Z", "scalar", dynamic(1), "match",
     "2026-01-01T12:01:00Z", "scalar", dynamic("1"), "match",
@@ -1305,21 +1775,29 @@ let Events = union (datatable(Timestamp:string, Case:string, Value:dynamic, Mark
     "2026-01-01T12:02:00Z", "bag", dynamic({"a":2,"b":{"x":2,"y":3}}), "match",
     "2026-01-01T12:00:00Z", "containers", dynamic([]), "match",
     "2026-01-01T12:01:00Z", "containers", dynamic({}), "match",
-    "2026-01-01T12:00:00Z", "nan", dynamic(real(nan)), "match",
-    "2026-01-01T12:01:00Z", "nan", dynamic(real(nan)), "match",
     "2026-01-01T12:02:00Z", "nan", dynamic("NaN"), "match",
     "2026-01-01T12:00:00Z", "signed-zero", dynamic(real(0.0)), "match",
     "2026-01-01T12:01:00Z", "signed-zero", dynamic(real(-0.0)), "match",
     "2026-01-01T12:02:00Z", "signed-zero", dynamic("0"), "match",
-    "2026-01-01T12:00:00Z", "nested-nan", dynamic([real(nan)]), "match",
-    "2026-01-01T12:01:00Z", "nested-nan", dynamic([real(nan)]), "match",
     "2026-01-01T12:02:00Z", "nested-nan", dynamic(["NaN"]), "match",
     "invalid", "scalar", dynamic("ignored"), "match"
 ]),
+// Construct real NaNs at runtime: dynamic literals round-trip them as strings.
+(print Timestamp="2026-01-01T12:00:00Z", Case="nan", Value=pack_array(real(nan))[0], Marker="match"),
+(print Timestamp="2026-01-01T12:01:00Z", Case="nan", Value=pack_array(real(nan))[0], Marker="match"),
+(print Timestamp="2026-01-01T12:00:00Z", Case="nested-nan", Value=pack_array(real(nan)), Marker="match"),
+(print Timestamp="2026-01-01T12:01:00Z", Case="nested-nan", Value=pack_array(real(nan)), Marker="match"),
 (print Timestamp="2026-01-01T12:00:00Z", Case="array", Value=Extended, Marker="match"),
 (print Timestamp="2026-01-01T12:01:00Z", Case="array", Value=Text, Marker="match"),
 (print Timestamp="2026-01-01T12:00:00Z", Case="nested-bag", Value=bag_pack("a", Extended), Marker="match"),
-(print Timestamp="2026-01-01T12:01:00Z", Case="nested-bag", Value=bag_pack("a", Text), Marker="match");
+(print Timestamp="2026-01-01T12:01:00Z", Case="nested-bag", Value=bag_pack("a", Text), Marker="match"),
+(print Timestamp="2026-01-01T12:00:00Z", Case="mixed-positions", Value=pack_array(Extended[0], Text[0]), Marker="match"),
+(print Timestamp="2026-01-01T12:01:00Z", Case="mixed-positions", Value=pack_array(Text[0], Extended[0]), Marker="match"),
+(print Timestamp="2026-01-01T12:00:00Z", Case="array-order", Value=dynamic([1,2]), Marker="match"),
+(print Timestamp="2026-01-01T12:01:00Z", Case="array-order", Value=dynamic([2,1]), Marker="match"),
+(print Timestamp="2026-01-01T12:00:00Z", Case="deep", Value=Deep, Marker="match"),
+(print Timestamp="2026-01-01T12:01:00Z", Case="deep", Value=Deep, Marker="match"),
+(print Timestamp="2026-01-01T12:02:00Z", Case="deep", Value=pack_array(Deep), Marker="match");
 """
     expected = """let Expected = datatable(WindowStart:datetime, WindowEnd:datetime, Case:string, ValueCount:long) [
     datetime(2026-01-01T11:56:00Z), datetime(2026-01-01T12:01:00Z), "scalar", 2,
@@ -1332,7 +1810,56 @@ let Events = union (datatable(Timestamp:string, Case:string, Value:dynamic, Mark
     datetime(2026-01-01T11:56:00Z), datetime(2026-01-01T12:01:00Z), "nested-bag", 2,
     datetime(2026-01-01T11:57:00Z), datetime(2026-01-01T12:02:00Z), "nan", 2,
     datetime(2026-01-01T11:57:00Z), datetime(2026-01-01T12:02:00Z), "signed-zero", 2,
+    datetime(2026-01-01T11:56:00Z), datetime(2026-01-01T12:01:00Z), "mixed-positions", 2,
+    datetime(2026-01-01T11:56:00Z), datetime(2026-01-01T12:01:00Z), "array-order", 2,
+    datetime(2026-01-01T11:57:00Z), datetime(2026-01-01T12:02:00Z), "deep", 2,
     datetime(2026-01-01T11:57:00Z), datetime(2026-01-01T12:02:00Z), "nested-nan", 2
+];
+"""
+    return full_chain_fixture(documents, data, expected, ["WindowStart", "WindowEnd", "Case", "ValueCount"])
+
+
+def typed_precision_value_count_fixture():
+    documents = [
+        chain_source("E", "match"),
+        chain_correlation("C", "value_count", ["E"], groups=("Case",), field="Value", condition={"gte": 0}),
+    ]
+    data = """// Equal-looking scalars must keep their full precision and runtime type.
+// Reordered bags remain equal even with nested extended scalars and empty containers.
+let Deep = dynamic(""" + "[" * 65 + "0" + "]" * 65 + """);
+let Extended = pack_array(datetime(2020-01-01), 1s, guid(00000000-0000-0000-0000-000000000001));
+let Events = union
+(print Case="adjacent-double", Value=pack_array(real(1.0))[0]),
+(print Case="adjacent-double", Value=pack_array(real(1.0000000000000002))[0]),
+(print Case="adjacent-long", Value=pack_array(long(9223372036854775806))[0]),
+(print Case="adjacent-long", Value=pack_array(long(9223372036854775807))[0]),
+(print Case="decimal-scale", Value=pack_array(decimal(1.00))[0]),
+(print Case="decimal-scale", Value=pack_array(decimal(1.0))[0]),
+(print Case="decimal-zero", Value=pack_array(decimal(0.00))[0]),
+(print Case="decimal-zero", Value=pack_array(decimal(-0.0))[0]),
+(print Case="double-zero", Value=pack_array(real(0.0))[0]),
+(print Case="double-zero", Value=pack_array(real(-0.0))[0]),
+(print Case="exceptional-real", Value=pack_array(real(nan))[0]),
+(print Case="exceptional-real", Value=pack_array(real(nan))[0]),
+(print Case="exceptional-real", Value=pack_array(real(+inf))[0]),
+(print Case="exceptional-real", Value=pack_array(real(-inf))[0]),
+(print Case="nested-extended", Value=bag_pack("a", pack_array(Deep, Extended), "z", dynamic({}))),
+(print Case="nested-extended", Value=bag_pack("z", dynamic({}), "a", pack_array(Deep, Extended))),
+(print Case="nested-extended", Value=bag_pack("a", pack_array(Deep, pack_array(tostring(Extended[0]), Extended[1], Extended[2])), "z", dynamic({}))),
+(print Case="nested-precision", Value=bag_pack("a", pack_array(real(1.0), decimal(1.00)))),
+(print Case="nested-precision", Value=bag_pack("a", pack_array(real(1.0000000000000002), decimal(1.0)))),
+(print Case="nested-precision", Value=bag_pack("a", pack_array(real(1.0), decimal(1.0))))
+| extend Timestamp="2026-01-01T12:00:00Z", Marker="match";
+"""
+    expected = """let Expected = datatable(WindowStart:datetime, WindowEnd:datetime, Case:string, ValueCount:long) [
+    datetime(2026-01-01T11:55:00Z), datetime(2026-01-01T12:00:00Z), "adjacent-double", 2,
+    datetime(2026-01-01T11:55:00Z), datetime(2026-01-01T12:00:00Z), "adjacent-long", 2,
+    datetime(2026-01-01T11:55:00Z), datetime(2026-01-01T12:00:00Z), "decimal-scale", 1,
+    datetime(2026-01-01T11:55:00Z), datetime(2026-01-01T12:00:00Z), "decimal-zero", 1,
+    datetime(2026-01-01T11:55:00Z), datetime(2026-01-01T12:00:00Z), "double-zero", 1,
+    datetime(2026-01-01T11:55:00Z), datetime(2026-01-01T12:00:00Z), "exceptional-real", 3,
+    datetime(2026-01-01T11:55:00Z), datetime(2026-01-01T12:00:00Z), "nested-extended", 2,
+    datetime(2026-01-01T11:55:00Z), datetime(2026-01-01T12:00:00Z), "nested-precision", 2
 ];
 """
     return full_chain_fixture(documents, data, expected, ["WindowStart", "WindowEnd", "Case", "ValueCount"])
@@ -1378,12 +1905,14 @@ def typed_chained_value_count_fixture():
     ]
     data = """// The child returns metric long(0), which differs from direct string "0".
 // Two child datetime ends plus one direct string end are three distinct End values.
-let Events = datatable(Timestamp:string, Case:string, User:dynamic, End:dynamic, Marker:string) [
+let Events = union (datatable(Timestamp:string, Case:string, User:dynamic, End:dynamic, Marker:string) [
     "2026-01-01T12:00:00Z", "typed-chain", dynamic(null), dynamic(null), "E",
     "2026-01-01T12:01:00Z", "typed-chain", dynamic(""), dynamic(null), "E",
-    "2026-01-01T12:01:00Z", "typed-chain", dynamic("0"), dynamic("2026-01-01T12:00:00.0000000Z"), "D",
     "2026-01-01T12:02:00Z", "typed-chain", dynamic(null), dynamic(""), "D"
-];
+]),
+// Construct the text at runtime: dynamic literals promote ISO strings to datetime.
+(print Timestamp="2026-01-01T12:01:00Z", Case="typed-chain", User=pack_array("0")[0],
+    End=pack_array(tostring(datetime(2026-01-01T12:00:00Z)))[0], Marker="D");
 """
     expected = """let Expected = datatable(WindowStart:datetime, WindowEnd:datetime, Case:string, ValueCount_Metric:long, ValueCount_End:long) [
     datetime(2026-01-01T11:56:00Z), datetime(2026-01-01T12:01:00Z), "typed-chain", 2, 3,
@@ -1396,10 +1925,51 @@ let Events = datatable(Timestamp:string, Case:string, User:dynamic, End:dynamic,
 
 
 def fixtures():
+    from tests.fixtures.correlation.average import average_fixtures
+    from tests.fixtures.correlation.boolean_context import fixtures as boolean_context_fixtures
+    from tests.fixtures.correlation.boolean_generate import fixtures as boolean_fixtures
+    from tests.fixtures.correlation.context import fixtures as context_fixtures, nested_fixture
+    from tests.fixtures.correlation.count_context import fixtures as count_context_fixtures
+    from tests.fixtures.correlation.empty_child_context import fixtures as empty_child_fixtures
+    from tests.fixtures.correlation.integrated import matrix_fixtures
+    from tests.fixtures.correlation.numeric_context import fixtures as numeric_context_fixtures
+    from tests.fixtures.correlation.ordered_context import fixtures as ordered_context_fixtures
+    from tests.fixtures.correlation.standard_mappings import fixture as standard_mapping_fixture
+    from tests.fixtures.correlation.temporal_context import fixtures as temporal_context_fixtures
+    from tests.fixtures.correlation.typed_grouped_context import fixtures as typed_grouped_context_fixtures
+    from tests.fixtures.correlation.typed_grouping import fixtures as typed_grouping_fixtures
+
     return {
+        **matrix_fixtures(),
+        **typed_grouping_fixtures(),
+        **typed_grouped_context_fixtures(),
+        "standard_mappings.kql": standard_mapping_fixture(),
+        "standard_mappings_parent.kql": standard_mapping_fixture(parent=True),
+        **average_fixtures(check, HEADER),
+        **boolean_fixtures(),
+        **boolean_context_fixtures(),
+        **context_fixtures(),
+        **count_context_fixtures(),
+        **ordered_context_fixtures(),
+        **numeric_context_fixtures(),
+        **empty_child_fixtures(),
+        **temporal_context_fixtures(),
+        "context_nested.kql": nested_fixture(),
         "event_count_grouped.kql": grouped_fixture(),
         "event_count_duplicate_sources.kql": duplicate_fixture(),
         "event_count_comparisons.kql": comparisons_fixture(),
+        "value_percentile_population.kql": value_percentile_population_fixture(),
+        "value_percentile_aliases.kql": value_percentile_aliases_fixture(),
+        "value_percentile_comparisons.kql": value_percentile_comparisons_fixture(),
+        "value_percentile_endpoints.kql": value_percentile_endpoints_fixture(),
+        "value_percentile_chained.kql": value_percentile_chained_fixture(),
+        "value_sum_comparisons.kql": value_sum_comparisons_fixture(),
+        "value_sum_chained.kql": value_sum_chained_fixture(),
+        "value_sum_reals.kql": value_sum_reals_fixture(),
+        "value_sum_integer_bounds.kql": value_sum_integer_bounds_fixture(),
+        "value_sum_overflow.kql": value_sum_overflow_fixture(),
+        "value_sum_negative_overflow.kql": value_sum_overflow_fixture(negative=True),
+        "value_sum_duplicate_sources.kql": value_sum_duplicate_sources_fixture(),
         "value_count_grouped.kql": value_count_grouped_fixture(),
         "value_count_comparisons.kql": value_count_comparisons_fixture(),
         "value_count_multi_field_grouped.kql": multi_field_value_count_grouped_fixture(),
@@ -1418,6 +1988,7 @@ def fixtures():
         "chained_multilevel.kql": chained_multilevel_fixture(),
         "chained_zero_metric.kql": chained_zero_metric_fixture(),
         "value_count_typed.kql": typed_value_count_fixture(),
+        "value_count_typed_precision.kql": typed_precision_value_count_fixture(),
         "value_count_typed_multi_field.kql": typed_multi_field_value_count_fixture(),
         "value_count_typed_chained.kql": typed_chained_value_count_fixture(),
     }
@@ -1426,3 +1997,8 @@ def fixtures():
 if __name__ == "__main__":
     for name, content in fixtures().items():
         (DESTINATION / name).write_text(content)
+    import json
+
+    from tests.fixtures.correlation.runtime import manifest
+
+    (DESTINATION / "acceptance-manifest.json").write_text(json.dumps(manifest(DESTINATION), indent=2) + "\n")

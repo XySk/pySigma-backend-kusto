@@ -5,7 +5,7 @@
 ![Status](https://img.shields.io/badge/Status-pre--release-orange)
 ![PyPI version](https://badge.fury.io/py/pysigma-backend-kusto.svg)
 ![Python versions](https://img.shields.io/pypi/pyversions/pysigma-backend-kusto.svg)
-![pySigma version](https://img.shields.io/badge/pySigma-%5E1.0.0-blue)
+![pySigma version](https://img.shields.io/badge/pySigma-%5E2.1.0-blue)
 ![License](https://img.shields.io/github/license/AttackIQ/pySigma-backend-microsoft365defender.svg)
 
 ## Contents
@@ -55,7 +55,7 @@ The **pySigma Kusto Backend** transforms Sigma Rules into queries using [Kusto Q
 - **Backend**: `sigma.backends.kusto` with `KustoBackend` class
 - **Pipelines**: Provides `microsoft_xdr_pipeline`, `sentinelasim_pipeline`, and `azure_monitor_pipeline` for query tables and field renames
 - **Output**: Query strings in Kusto Query Language (KQL)
-- **pySigma v1.0.0+**: Fully compatible with pySigma v1.0.0+ using factory pattern for pipeline objects
+- **pySigma v2.1.0+**: Uses pySigma's current correlation parser and dependency ordering
 
 ### 🧑‍💻 Maintainer
 
@@ -69,7 +69,7 @@ The **pySigma Kusto Backend** transforms Sigma Rules into queries using [Kusto Q
    pip install pysigma-backend-kusto
    ```
 
-   > **Note:** This package requires `pySigma` version 1.0.0 or higher and Python 3.10+.
+   > **Note:** This package requires pySigma 2.1 or higher within the 2.x series and Python 3.11+.
 
 2. Convert a Sigma rule to MIcrosoft XDR KQL query using sigma-cli:
 
@@ -178,7 +178,25 @@ backend = KustoBackend(
 queries = backend.convert(collection)
 ```
 
-A correlation combines every converted source search with `union`, including multiple searches emitted for one source rule and searches from different tables. Each branch retains its source columns and adds a mapped `datetime` timestamp, `string` grouping and counted fields, and the source rule's name (or ID when unnamed). Correlation field aliases work for grouping and counted fields in single-source and multi-source correlations. Timestamp, grouping, and counted fields use each source's mappings. All searches emitted for one source rule must use the same mapped table.
+The only supported correlation method is `default` (also selected when the
+`correlation_method` argument is omitted). Unsupported selections fail conversion;
+they do not select fixed windows. `correlation_timestamp_field` must be a nonempty
+field-name string. Source pipelines must supply `query_table` as a nonempty table
+name string. Errors identify unavailable source searches or states, malformed
+query/table values, and child schema or timestamp metadata; preserve the state
+associated with each search when using conversion callbacks. A parent requesting
+an unavailable child field must use an available field or retain/alias that field
+explicitly in the child.
+
+Valid dependency graphs may be supplied in any document order, including shared
+children, multiple correlation levels, interleaved unrelated detections, and mixed
+name/UUID references. Conversion resolves dependencies before their consumers.
+Generation controls determine standalone output and preserve embedded child
+queries. Compare results independently of emitted query ordering, which follows
+the resolved collection order. Unresolved references fail standard collection
+resolution and identify the missing source.
+
+A correlation combines every converted source search with `union`, including multiple searches emitted for one source rule and searches from different tables. Each branch retains its source columns and adds a mapped `datetime` timestamp, typed grouping and counted fields, and the source rule's name (or ID when unnamed). Correlation field aliases work for grouping and counted fields in single-source and multi-source correlations. Timestamp, grouping, and counted fields use each source's mappings. All searches emitted for one source rule must use the same mapped table.
 
 Event counts use **exact sliding windows by default**. For each distinct valid matching-event timestamp in each correlation group, the query counts all source matches in the inclusive interval `[timestamp - timespan, timestamp]`, then applies a single `gt`, `gte`, `lt`, `lte`, `eq`, or `neq` comparison. For example, events at 12:00:59 and 12:05:01 belong together in the five-minute window ending at 12:05:01. Events exactly five minutes apart also belong together. Simultaneous matches participate in one evaluation with their complete count. Matching several source rules or searches contributes a row for every match; physical events are not deduplicated.
 
@@ -195,9 +213,30 @@ correlation:
     gte: 2
 ```
 
-Value counts use the same exact sliding windows and six comparisons. Each window counts distinct nonempty string-normalized values across all its source matches. A value repeated at different timestamps or across searches and rules counts once. Null or empty counted values contribute no value, but their otherwise valid events still establish evaluation timestamps. Such an anchored window can have `ValueCount = 0`, and may satisfy `eq: 0`. A scalar field or a one-element list returns the established `ValueCount` metric.
+Value counts use the same exact sliding windows and six comparisons. Each window counts distinct nonempty typed values across all its source matches. A value repeated at different timestamps or across searches and rules counts once. Null or empty counted values contribute no value, but their otherwise valid events still establish evaluation timestamps. Such an anchored window can have `ValueCount = 0`, and may satisfy `eq: 0`. A scalar field or a one-element list returns the established `ValueCount` metric.
+
+For `value_sum`, specify one measured field and a comparison threshold, including a fractional threshold:
+
+```yaml
+correlation:
+  type: value_sum
+  rules: [source-rule]
+  group-by: [DeviceName]
+  timespan: 5m
+  condition:
+    field: Bytes
+    gte: 12.5
+```
+
+The `ValueSum` metric adds every finite numeric source match in the inclusive sliding window. Repeated matches contribute repeatedly; zero and negative values count. Text, missing values, NaN, and infinities contribute nothing, and numeric strings are not parsed. A valid match without a numeric value still establishes a window end, so an anchored window with no numeric observations has sum zero. Integer-only windows preserve exact sums from −9,223,372,036,854,775,808 through 9,223,372,036,854,775,807. Integer observations accumulate as decimal values before a query-wide range check: an out-of-range anchored integer-only window fails explicitly with `Kusto value_sum integer overflow`, even if the rule comparison would reject that window. Opposite-sign observations can cancel before this range check; native Kusto long aggregation would silently wrap. Windows containing real values use ordinary floating-point addition, with direct comparisons and no tolerance near a threshold. The result metric is dynamic so it can retain either an integer or a real value. The numeric fixtures have passed execution against the Microsoft Kusto emulator; see [runtime evidence](tests/fixtures/correlation/RUNTIME.md). Sum queries materialize window summaries for the range check and share Kusto’s 5 GB per-node materialization cache limit; exhaustion fails the query.
+
+For `value_percentile`, use `condition: {field: Bytes, percentile: 50, gte: 12.5}`. `percentile` is a separate integer selector from 0 through 100; fractional selectors and values outside that range fail conversion. The `ValuePercentile` metric selects the exact nearest-rank observation: sort all finite numeric observations, including duplicates, and take one-based rank `max(1, ceil(percentile * population / 100))`. Zero selects the minimum, 100 the maximum, and the 50th percentile of `[1, 2, 100, 200]` is 2. This numeric quantile interpretation follows pySigma's percentile conditions and differs from the Sigma specification's categorical-frequency example. All six comparisons and fractional thresholds are supported. Finite zero remains an observation; text, missing values, NaN, and infinities do not. Their otherwise valid matches still anchor evaluation, but a window without numeric observations has no defined percentile and satisfies no comparison, including `neq`.
+
+Exact percentile queries sort the complete per-window observation stream and retain the selected numeric type, including adjacent large integers. They use neither the engine's approximate percentile aggregate nor capped arrays, sampling, or observation truncation. Dense sliding groups can create quadratic candidate joins; sorting adds CPU and memory costs. Ranked observations use Kusto's shared 5 GB per-node materialization cache, and engine resource exhaustion fails the query. The runtime fixtures validate results on the recorded engine version; no production throughput or capacity claim is made. Scalar `ValuePercentile` metrics can feed other correlations once per child summary at its `WindowEnd`, and percentile parents can consume other available scalar child metrics.
 
 To require several fields, use a list such as `field: [User, Target]`. Each field's exact count must satisfy the same comparison and threshold in the same window; the comparisons are combined with **AND**. Two users accessing one target fail `gte: 2`, while two users accessing two targets can pass. Missing values are ignored separately for each field, retaining anchors even when every counted value is missing. The result returns `ValueCount_User` and `ValueCount_Target`. In general, multiple fields return `ValueCount_<field>` using the logical condition field name (including an alias name), with quoting for names containing spaces or punctuation. Counted field names must be nonempty and unique.
+
+For `value_avg`, use the same measured-field condition with `type: value_avg`. The `ValueAvg` real metric averages every finite numeric source match, preserving repeated observations, zero, and negatives. Missing values, text (including numeric strings), NaN, and infinities do not enter the average, but valid source matches still establish evaluation timestamps. An anchored window with no numeric observations has an undefined average and satisfies no comparison, including `neq`. Kusto returns NaN for an empty `avgif` population, so generated queries explicitly require at least one numeric observation before comparing. Integer observations also enter floating-point arithmetic: averages do not preserve exact integer precision above 2^53. Comparisons preserve fractional thresholds and use ordinary floating-point results directly, with no tolerance; the average of 0.1 and 0.2 can differ from 0.15. Average parents consume scalar child metrics once per child summary at its `WindowEnd`; average children expose `ValueAvg` to parents. Retained child context contributes distinct numeric values per child and resulting parent group, as described below. The average fixtures have passed real-engine execution; see [runtime evidence](tests/fixtures/correlation/RUNTIME.md).
 
 For unordered `temporal`, omit the condition to require every referenced source-rule type:
 
@@ -213,6 +252,23 @@ The returned `RuleCount` is the exact number of distinct matching source-rule ty
 
 Unordered temporal correlations accept any event order and tied timestamps. Every contributing combination must fit within one complete timespan: A at 12:00, B at 12:04, and C at 12:08 cannot satisfy a five-minute default-all correlation. Several qualifying combinations ending at one timestamp in the same group return one summary; later qualifying event timestamps retain their own overlapping summaries.
 
+Boolean `temporal` conditions accept `and`, `or`, `not`, and parentheses through the standard Sigma parser. References can be inferred from the expression or listed explicitly in `rules` (the lists must agree):
+
+```yaml
+correlation:
+  type: temporal
+  condition: A and B and not C
+  group-by:
+    - Computer
+  timespan: 5m
+```
+
+Presence is evaluated within the same group and inclusive trailing window. Repeated matches do not change presence. `not` binds before `and`, which binds before `or`; `(A and B) or C` can match on C alone. Every referenced source, including a negated source, establishes evaluation timestamps. If C at 12:00, A at 12:01, and B at 12:02 fail a five-minute `A and B and not C` condition, C expiring creates no evaluation: another referenced source match is required. Empty streams produce no summaries. `RuleCount` reports all distinct referenced source types present in the qualifying window, including types in other alternatives. Boolean rules support detection and child sources, aliases, and existing generation controls; child matches use `WindowEnd`.
+
+The upstream expression parser accepts identifier-style source names (letters or underscore first, then letters, digits, or underscores); use `name` references rather than UUIDs or hyphenated names in expressions. Invalid syntax and unresolved references raise public parser errors.
+
+Boolean expressions apply to unordered `temporal` correlations. `temporal_ordered` continues to require a full numeric sequence condition. Requested context comes from positive matches in every satisfied alternative. For `(A and B) or C`, A and C with B absent retain only C; when both alternatives succeed, A, B, and C supply context. Negation follows parser precedence and ordinary Boolean logic, including nested negation; satisfied absence tests supply no values. An absence-only success retains empty context collections without dropping the summary. Context requests leave grouping, evaluation times, `RuleCount`, and generation unchanged. Existing numeric temporal conditions retain their distinct-rule-count meaning.
+
 For `temporal_ordered`, the declared list defines the complete sequence:
 
 ```yaml
@@ -227,9 +283,9 @@ Every step must have a **strictly later timestamp** than its predecessor. Equal 
 
 The initial ordered implementation requires the full declared sequence. Omit `condition`, or use a comparison equivalent to requiring all distinct source-rule types: with three types, `gte: 3`, `eq: 3`, and `gt: 2` are equivalent. Other thresholds raise an actionable conversion error because partial ordered subsets have no defined interpretation. With one type, `neq: 0` is also equivalent. Repeated list positions, including the same source referenced by name and ID, require separate matches at strictly increasing timestamps; for example, `[first-rule, first-rule, second-rule]` requires two successive first-rule matches followed by second-rule. `RuleCount` still reports the distinct type count (two in that example), so explicit conditions use that count. An omitted condition always requires every declared position.
 
-Every qualifying evaluation returns `WindowStart`, `WindowEnd`, the requested grouping fields, and `EventCount`, `ValueCount`, the per-field value counts, or temporal `RuleCount`. `WindowStart` is `WindowEnd - timespan`. Each joint set of grouping values is independent; omitting `group-by` defines one group. Overlapping qualifying windows remain separate summaries. No evaluation is generated solely because an event expires, and count conditions do not invent empty-window results. Invalid timestamps and null or empty grouping values are excluded before establishing evaluation timestamps. Group names `WindowStart`, `WindowEnd`, and the returned count metrics are rejected because they conflict with the result columns.
+Every qualifying evaluation returns `WindowStart`, `WindowEnd`, the requested grouping fields, and `EventCount`, `ValueCount`, `ValueSum`, `ValueAvg`, `ValuePercentile`, the per-field value counts, or temporal `RuleCount`. `WindowStart` is `WindowEnd - timespan`. Each joint set of grouping values is independent; omitting `group-by` defines one group. Overlapping qualifying windows remain separate summaries. No evaluation is generated solely because an event expires, and count conditions do not invent empty-window results. Invalid timestamps and null or empty grouping values are excluded before establishing evaluation timestamps. Group names `WindowStart`, `WindowEnd`, and the returned count metrics are rejected because they conflict with the result columns.
 
-All four supported correlation types (`event_count`, `value_count`, `temporal`, and `temporal_ordered`) can produce child summaries and consume them, including mixed direct detection sources and multiple correlation levels. Ordered parents retain the full-sequence condition restriction described above. For example, an `event_count` parent can consume an `event_count` child alongside a direct detection:
+All seven supported correlation types (`event_count`, `value_count`, `value_sum`, `value_avg`, `value_percentile`, `temporal`, and `temporal_ordered`) can produce child summaries and consume them, including mixed direct detection sources and multiple correlation levels. Ordered parents retain the full-sequence condition restriction described above. For example, an `event_count` parent can consume an `event_count` child alongside a direct detection:
 
 ```yaml
 title: Child count
@@ -259,6 +315,9 @@ Each child's returned grouping fields, `WindowStart`, `WindowEnd`, and actual me
 | `event_count` | `EventCount` |
 | `value_count`, one counted field | `ValueCount` |
 | `value_count`, multiple counted fields | `ValueCount_<logical field>` for each field |
+| `value_sum` | `ValueSum` |
+| `value_avg` | `ValueAvg` |
+| `value_percentile` | `ValuePercentile` |
 | `temporal`, `temporal_ordered` | `RuleCount` |
 
 These fields use the child's logical result names, without reapplying detection-table mappings. Parent aliases can map to those names; for example, `ChildSize: {child-count: EventCount}` makes the child metric available as a grouping field named `ChildSize`. Window fields can likewise be aliased to avoid conflicting with the parent's result column names. Conversion rejects required fields absent from the child's result schema, including original detection fields discarded by aggregation or grouping fields removed by an intermediate correlation. Both child and direct branches follow the same normalization and invalid-input exclusions.
@@ -279,7 +338,23 @@ This changes two previous behaviors: sliding windows replace fixed non-overlappi
 
 The exact event-count baseline preaggregates matches by timestamp and group, pairs candidate contributions using explicit inner joins and bins, applies the actual inclusive timestamp predicate, and sums the integer weights. Value counts first assign scalar identities to native typed values, then apply exact `count_distinctif` over the whole window. Unordered temporal correlations retain source-rule identities and use the same exact aggregation to count types over the whole window. [Kusto documents this function as preview](https://learn.microsoft.com/en-us/kusto/query/count-distinctif-aggregation-function); exceeding its 100-million-unique-value limit raises an engine error. Ordered temporal correlations instead extend valid prefixes one declared step at a time with explicit inner joins, strict timestamp comparisons, and an inclusive total-span bound. For each group and prefix-end timestamp, only the latest viable start is needed: an earlier start has the same future ordering constraints and expires sooner. This collapses alternatives after each step while preserving every possible completion. Bins prune candidates; they do not determine window membership. Dense groups, especially ungrouped streams, can create quadratic intermediate joins. There are no silent caps, sampling, or truncation, and throughput has not been benchmarked. [Deterministic KQL fixtures](tests/fixtures/correlation/README.md) provide worked expected summaries and execution instructions; they are prepared fixtures, not evidence of live engine execution.
 
-Counted-value normalization uses `pack_array(gettype(field), field)` to retain the runtime type and original value. Thus numeric `1`, real `1.0`, and string `"1"` remain separate; native dynamic equality compares arrays in order and property bags by their mappings, including nested values. Null and empty strings receive no identity while their rows still establish anchors; zero and empty arrays/bags remain values. Repeated top-level real NaNs receive one identity explicitly. Each field receives its own identities. Values are never parsed from strings or serialized to decide equality, since [dynamic values can contain extended types and unordered bag slots](https://learn.microsoft.com/en-us/kusto/query/scalar-data-types/dynamic). The [Kusto language signature excludes dynamic input from `count_distinctif`](https://github.com/microsoft/Kusto-Query-Language/blob/master/src/Kusto.Language/Aggregates.cs), so a self-join within each correlation group compares native values of the same runtime type and chooses the smallest stable row ID as their scalar identity. IDs are labels: their representative row may lie outside a later window. This extra join can be quadratic over the supplied group history, even when windows are sparse. Normalized rows and IDs are cached once with [`materialize()`](https://learn.microsoft.com/en-us/kusto/query/materialize-function); its shared 5 GB per-node cache limit aborts the query on exhaustion. No values are silently discarded to meet a limit.
+Counted-value normalization uses `pack_array(gettype(field), field)` to retain runtime types and values. Numeric `1`, real `1.0`, and string `"1"` remain separate. An iterative depth-first traversal compares typed leaves at exact paths: arrays retain element order, property bags compare by their mappings, and nested datetime/timespan/GUID values remain distinct from strings. Repeated real NaNs and signed zeros compare equal, including inside containers. Null and empty strings receive no counted identity while their rows still establish anchors; zero and empty arrays/bags remain values. Each field receives its own identities. JSON measures traversal work and encodes string bag keys; it never decides value equality. The query checks the engine's range limit and completed traversal explicitly, so excessive input fails rather than silently truncating. A self-join within each group chooses the smallest stable row ID among equivalent values. IDs are labels whose representative row may lie outside a later window. Traversal and joins add substantial work and can create quadratic intermediate results over supplied history. Normalized rows and traversal are cached with [`materialize()`](https://learn.microsoft.com/en-us/kusto/query/materialize-function); its shared 5 GB per-node cache limit aborts on exhaustion. No production throughput or capacity benchmark is claimed.
+
+### Retained investigation context
+
+Fields requested through the source or correlation rule's top-level `fields` are combined and deduplicated for `event_count`, `value_count`, `value_sum`, `value_avg`, `value_percentile`, numeric and Boolean unordered `temporal`, and full-sequence `temporal_ordered` summaries. Each requested nongrouping field returns an unordered collection of distinct runtime-typed values. A requested grouping field stays scalar. Context does not split groups, multiply measurements, or create additional summaries; it comes from the same valid source matches inside each inclusive qualifying window. Nested arrays and bags preserve typed leaves, bag key order does not affect distinctness, array positions do, and repeated NaNs and signed zero compare consistently.
+
+Logical field names are preserved through available source mappings and per-source correlation aliases. A context name colliding with `WindowStart`, `WindowEnd`, or the result metric fails conversion. Resolve it explicitly, for example `fields: [OriginalWindowEnd]` with `aliases: {OriginalWindowEnd: {source-rule: WindowEnd}}` inside `correlation`. The query also returns an allocated `_sigma_context_rows` column containing observed tuples of boxed `[runtime type, value]` fields. This preserves relationships such as `(Alice, server1)` and `(Bob, server2)` independently of their displayed collections; it is internal composition data and its allocated name can vary.
+
+Context collection uses complete typed identity traversal and checked collection lengths. Engine traversal, collection, memory, or query limits fail explicitly; values are never silently truncated to fit. The exact implementation can be expensive and no throughput claim is made. Ordered context includes only matches belonging to a successful full sequence completing at that summary timestamp. Every successful alternative contributes, including alternative starts and repeated matches, while early, tied, expired, or otherwise nonparticipating matches contribute nothing. Evidence traversal preserves all complete alternatives without detection-only prefix pruning. Boolean context preserves typed deduplication and observed field relationships from every satisfied alternative. Scalar metric chaining retains its existing behavior. [The retained-context runtime fixtures](tests/fixtures/correlation/RUNTIME.md) record successful execution of all six delivered summary types and nested typed values.
+
+Event-count, value-count, unordered temporal, ordered temporal, and Boolean temporal parents can consume individual retained child values using the child's logical field names or explicit aliases. Expansion follows observed context tuples: retaining `(Alice, server1)` and `(Bob, server2)` never invents cross-pairs. A child contributes once per resulting event-count group, including once to an ungrouped parent; value-count parents count distinct retained values associated with that group. Duplicate source values do not increase these contributions. Other child metrics remain scalar and child timestamps remain `WindowEnd`. Mixed direct and child sources and overlapping summaries preserve their normal source-match multiplicity.
+
+Temporal parents identify the immediate child rule, using its `WindowEnd` as the source timestamp. Ordered consumers still require strict timestamp order within the total span; Boolean consumers evaluate presence and absence over the entire window and do not evaluate on expiry alone. Each successful ordered alternative and each satisfied Boolean alternative supplies its participating context to later levels. Requested fields propagate through intermediate summaries even without repeating `fields`; a requested field used as a grouping field remains scalar and can be retained again when a later level uses fewer grouping fields. Shared children retain their observed relationships independently in each consuming branch.
+
+Sum, average, and exact-percentile parents consume each distinct typed numeric retained value once per child and resulting parent group, after restricting values to observed relationships with that group. Child amounts `10, 10, 20` contribute `10, 20`: sum 30 and average 15. Another child retaining 10 supplies another observation. Scalar child metrics contribute once per child/group even when other context expands into several tuples; direct detection matches retain their ordinary multiplicity. This also applies through multilevel chains: retained context does not reconstruct descendant multiplicity. Finite numeric input, zero, undefined empty averages/percentiles, exact nearest rank, integer overflow checks, and ordinary floating-point comparisons retain the contracts above. A chained query still fails for invalid arithmetic or exceeded context limits in a child, even when the child or parent has no qualifying summaries.
+
+All correlations now use exact typed group identity and return scalar grouping values with their runtime types preserved, including direct sources, mixed schemas, scalar child metrics, retained child context, and multilevel chains. This deliberately changes string-normalized grouping: numeric `1` and textual `"1"` produce separate groups. Multiple grouping fields form one observed tuple; nested arrays preserve element order and property bags compare their typed contents independent of property order. Null or empty grouping values and invalid timestamps remain excluded. Group columns are returned as dynamic values, so downstream consumers should inspect their types or explicitly normalize them when string grouping is desired. Exact relationship expansion and identity matching can require substantial memory; engine limits fail explicitly. No throughput guarantee or silent truncation is introduced.
 
 ### 🔄 Pipeline & Backend Args (New in 0.2.0)
 
@@ -592,3 +667,24 @@ Please make sure to update tests as appropriate.
 ## 📄 License
 
 This project is licensed under the GNU Lesser General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
+
+### Correlation field mappings
+
+Correlations resolve the configured timestamp, grouping, measured and retained
+context fields using the applied pipeline of each source search. Standard
+pySigma field mappings, including source-specific rule conditions and successive
+field renames, work alongside the built-in table and generic mappings. Fields
+need not appear in a detection predicate to be mapped. Correlation aliases select
+a source's logical field before its mappings apply. Result grouping and retained
+context keep their requested logical names; parents consume child result fields
+without applying the original detection-table mappings again.
+
+A correlation field must resolve to exactly one physical column. For example,
+`User: [ActorUsername, TargetUsername]` is ambiguous and produces an error listing
+the targets. Choose `User: ActorUsername` in a source-specific pipeline, alias the
+intended physical column explicitly (for example `Actor: {source-rule:
+ActorUsername}`), or normalize both columns to a single intended column before
+correlation. A subsequent standard mapping that collapses both targets to one
+column is also accepted. Ordinary detection predicates retain pySigma's normal
+one-to-many search semantics. Names containing spaces, quotes and punctuation
+are emitted as escaped Kusto column identifiers.
