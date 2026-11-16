@@ -221,6 +221,97 @@ class KustoBackend(TextQueryBackend):
 
     # Override methods
 
+    def convert(self, rule_collection, output_format=None, correlation_method=None, callback=None):
+        # Resolve the ordinary collection once before planning so generation
+        # controls and every shared/multilevel consumer are visible together.
+        rule_collection.resolve_rule_references()
+        self._correlation_graph = self._prepare_correlation_graph(rule_collection, callback)
+        try:
+            return super().convert(rule_collection, output_format, correlation_method, callback)
+        finally:
+            del self._correlation_graph
+
+    def _prepare_correlation_graph(self, rule_collection, callback=None):
+        """Collect source/consumer requirements without a second rule parser."""
+        consumers = {}
+        context = {}
+        for rule in rule_collection.rules:
+            inherited = set(rule.fields or [])
+            if isinstance(rule, SigmaCorrelationRule):
+                for reference in rule.referenced_rules:
+                    source = reference.rule
+                    consumers.setdefault(id(source), []).append((rule, reference))
+                    for field in context.get(id(source), ()):
+                        logical = next(
+                            (
+                                alias.alias
+                                for alias in rule.aliases
+                                if any(
+                                    name == field and alias_source.reference in (source.name, str(source.id))
+                                    for alias_source, name in alias.mapping.items()
+                                )
+                            ),
+                            field,
+                        )
+                        inherited.add(logical)
+            context[id(rule)] = inherited
+        existence = set()
+        for child in rule_collection.rules:
+            if (
+                not isinstance(child, SigmaCorrelationRule)
+                or child.type != SigmaCorrelationType.EVENT_COUNT
+                or child._output
+                or context[id(child)]
+                or callback is not None
+                or not consumers.get(id(child))
+            ):
+                continue
+            available = {"WindowStart", "WindowEnd", *(child.group_by or [])}
+            for consumer, reference in consumers[id(child)]:
+                # Context inherited from another source can also request this
+                # child's metric through a consumer alias.
+                required = [*(consumer.group_by or []), *context[id(consumer)]]
+                measured = getattr(consumer.condition, "fieldref", None)
+                required.extend(measured if isinstance(measured, list) else [measured] if measured else [])
+                for field in required:
+                    if field in consumer.aliases.aliases:
+                        alias = consumer.aliases.aliases[field]
+                        field = next(
+                            (
+                                name
+                                for source, name in alias.mapping.items()
+                                if source.reference in (reference.reference, child.name, str(child.id))
+                            ),
+                            field,
+                        )
+                    if field not in available:
+                        break
+                else:
+                    continue
+                break
+            else:
+                existence.add(id(child))
+        return {"consumers": consumers, "context": context, "existence_only": existence}
+
+    def _count_existence_threshold(self, rule):
+        if id(rule) not in getattr(self, "_correlation_graph", {}).get("existence_only", ()):
+            return None
+        condition = rule.condition
+        if condition is None or isinstance(condition, SigmaExtendedCorrelationCondition):
+            return None
+        count = condition.count
+        if count != int(count):
+            return None
+        if condition.op == SigmaCorrelationConditionOperator.GTE:
+            threshold = int(count)
+        elif condition.op == SigmaCorrelationConditionOperator.GT:
+            threshold = int(count) + 1
+        else:
+            return None
+        # prev() takes a positive Kusto int offset. Larger thresholds retain
+        # the count plan rather than emitting an unrepresentable offset.
+        return threshold if 0 < threshold <= 2_147_483_648 else None
+
     def escape_and_quote_field(self, field_name):
         if re.fullmatch(r"[A-Za-z_][A-Za-z_0-9]*", field_name):
             return field_name
@@ -694,7 +785,7 @@ class KustoBackend(TextQueryBackend):
         elif rule.type == SigmaCorrelationType.VALUE_AVG:
             metrics = ["ValueAvg"]
         elif counted_fields is None:
-            metrics = ["EventCount"]
+            metrics = [] if self._count_existence_threshold(rule) is not None else ["EventCount"]
         elif len(counted_fields) == 1:
             metrics = ["ValueCount"]
         else:
@@ -702,6 +793,8 @@ class KustoBackend(TextQueryBackend):
         if rule.timespan.seconds <= 0:
             raise SigmaConversionError(rule, rule.source, "Kusto correlations require a positive timespan.")
         conflicting_fields = {"WindowStart", "WindowEnd", "ContextComplete", *metrics}.intersection(rule.group_by or [])
+        if rule.type == SigmaCorrelationType.EVENT_COUNT and "EventCount" in (rule.group_by or []):
+            conflicting_fields.add("EventCount")
         if conflicting_fields:
             raise SigmaConversionError(
                 rule,
@@ -1257,7 +1350,14 @@ class KustoBackend(TextQueryBackend):
                         if shared:
                             function, child_results = self._shared_child_source(reference_index, query_index, query)
                         else:
-                            function = allocate(f"_sigma_child_{len(definitions)}")
+                            if self._count_existence_threshold(source) is not None:
+                                source_name = str(source.name or source.id)
+                                label = "".join(
+                                    part[:1].upper() + part[1:] for part in re.findall(r"[A-Za-z0-9]+", source_name)
+                                )
+                                function = allocate(label if label and not label[0].isdigit() else "CountMatches")
+                            else:
+                                function = allocate(f"_sigma_child_{len(definitions)}")
                             definitions.append(f"let {function} = () {{\n{query}\n}};\n")
                             child_results = f"{function}()"
                         relation = f"{child_results}{normalization}"
@@ -1345,15 +1445,16 @@ class KustoBackend(TextQueryBackend):
         allocate = self._name_allocator(source_fields)
 
         event_count = rule.type == SigmaCorrelationType.EVENT_COUNT
+        value_count = rule.type == SigmaCorrelationType.VALUE_COUNT
         presence_temporal = rule.type == SigmaCorrelationType.TEMPORAL
-        readable_sources = event_count or temporal
+        readable = temporal or event_count or value_count
         columns = {
-            "timestamp": allocate("EventTime" if readable_sources else "_sigma_timestamp"),
-            "rule": allocate("SourceRule" if readable_sources else "_sigma_rule"),
+            "timestamp": allocate("EventTime" if readable else "_sigma_timestamp"),
+            "rule": allocate("SourceRule" if readable else "_sigma_rule"),
             "groups": [
                 allocate(
                     "Group" + re.sub(r"[^A-Za-z0-9_]", "_" if ordered else "", field)
-                    if readable_sources
+                    if readable
                     else f"_sigma_group_{index}"
                 )
                 for index, field in enumerate(rule.group_by or [])
@@ -1365,7 +1466,7 @@ class KustoBackend(TextQueryBackend):
                 "_sigma_types" if temporal else "_sigma_weights" if counted_fields is None else "_sigma_values"
             ),
         }
-        if event_count or presence_temporal and not self._uses_context_groups(rule):
+        if event_count or value_count or presence_temporal and not self._uses_context_groups(rule):
             columns["narrow_source"] = True
         if presence_temporal:
             columns["include_source_rule"] = True
@@ -1380,8 +1481,12 @@ class KustoBackend(TextQueryBackend):
             columns["identify_values"] = True
         if counted_fields is not None:
             columns["values"] = [
-                allocate("_sigma_value" if len(counted_fields) == 1 else f"_sigma_value_{index}")
-                for index in range(len(counted_fields))
+                allocate(
+                    "Counted" + re.sub(r"[^A-Za-z0-9_]", "", field)
+                    if value_count
+                    else "_sigma_value" if len(counted_fields) == 1 else f"_sigma_value_{index}"
+                )
+                for index, field in enumerate(counted_fields)
             ]
         if rule.type == SigmaCorrelationType.VALUE_SUM:
             columns["integer_sum"] = allocate("_sigma_integer_sum")
@@ -1442,9 +1547,32 @@ class KustoBackend(TextQueryBackend):
         valid_rows = " and ".join([f"isnotnull({timestamp})", *(f"isnotempty({field})" for field in groups)])
         weighted_fields = ", ".join([timestamp, *groups])
         if rule.type == SigmaCorrelationType.EVENT_COUNT:
+            existence_threshold = self._count_existence_threshold(rule)
+            if existence_threshold is not None:
+                return [
+                    self._convert_count_existence(
+                        rule, definitions, search, columns, valid_rows, span, existence_threshold, allocate
+                    )
+                ]
             return [
                 self._convert_event_count(
                     rule, definitions, search, columns, valid_rows, span, query_operator, threshold, allocate
+                )
+            ]
+        if value_count:
+            return [
+                self._convert_value_count(
+                    rule,
+                    definitions,
+                    search,
+                    columns,
+                    valid_rows,
+                    span,
+                    query_operator,
+                    threshold,
+                    counted_fields,
+                    metrics,
+                    allocate,
                 )
             ]
         if ordered:
@@ -1565,15 +1693,6 @@ class KustoBackend(TextQueryBackend):
                 f"ValueAvg = avgif(toreal({value}[1]), {numeric})",
                 f"{columns['numeric_count']} = countif({numeric})",
             ]
-        else:
-            # Scalar identities retain empty-value rows as anchors. Each field
-            # is still counted independently across the entire window.
-            preaggregate = f"| summarize by {weighted_fields}, {', '.join(columns['values'])}"
-            distinct_anchors = "| distinct *\n"
-            aggregates = [
-                f"{metric} = count_distinctif({value}, isnotempty({value}))"
-                for metric, value in zip(metrics, columns["values"])
-            ]
         if rule.type != SigmaCorrelationType.VALUE_SUM:
             comparisons = " and ".join(f"{metric} {query_operator} {threshold}" for metric in metrics)
         if rule.type == SigmaCorrelationType.VALUE_AVG:
@@ -1594,6 +1713,123 @@ class KustoBackend(TextQueryBackend):
             scope += summary_binding + aggregate + ");\n"
             aggregate = after_summary
         return [_CorrelationQuery(scope, aggregate + f"| where {comparisons}\n| project {result_fields}")]
+
+    def _convert_value_count(
+        self,
+        rule,
+        definitions,
+        search,
+        columns,
+        valid_rows,
+        span,
+        query_operator,
+        threshold,
+        counted_fields,
+        metrics,
+        allocate,
+    ):
+        """Merge each scalar's active intervals, then count at original source anchors."""
+        matches = allocate("ValueCountSources")
+        event_time, groups = columns["timestamp"], columns["groups"]
+        boundary_time, boundary_order = [allocate(name) for name in ("ValueBoundaryTime", "ValueBoundaryOrder")]
+        deltas = [allocate(value + "Delta") for value in columns["values"]]
+        definitions += f"let {matches} = materialize({search}\n| where {valid_rows});\n"
+
+        def changed(field, kind, neighbor):
+            previous = f"{neighbor}({field})"
+            expression = f"{field} != {previous}"
+            if kind == "real":
+                # Native summarize treats NaNs as one distinct scalar value.
+                expression = f"({expression} and not(isnan({field}) and isnan({previous})))"
+            return expression
+
+        branches = []
+
+        def boundary(source, time, order, active=None, amount=0):
+            projection = [*groups, f"{boundary_time} = {time}", f"{boundary_order} = {order}"]
+            projection.extend(f"{delta} = {amount if index == active else 0}" for index, delta in enumerate(deltas))
+            return f"({source}\n| project {', '.join(projection)})"
+
+        anchor_fields = ", ".join([*groups, event_time])
+        branches.append(boundary(f"{matches} | summarize by {anchor_fields}", event_time, 1))
+        group_kinds = [self._correlation_field_types[field] for field in rule.group_by or []]
+        for index, (field, value) in enumerate(zip(counted_fields, columns["values"])):
+            intervals = allocate(value + "Activity")
+            starts, ends = [allocate(value + suffix) for suffix in ("Starts", "Ends")]
+            keys = [*groups, value]
+            kinds = [*group_kinds, self._correlation_field_types[field]]
+            start = " or ".join(
+                [
+                    f"isnull(prev({event_time}))",
+                    *(changed(key, kind, "prev") for key, kind in zip(keys, kinds)),
+                    f"{event_time} > prev({event_time}) + {span}",
+                ]
+            )
+            end = " or ".join(
+                [
+                    f"isnull(next({event_time}))",
+                    *(changed(key, kind, "next") for key, kind in zip(keys, kinds)),
+                    f"next({event_time}) > {event_time} + {span}",
+                ]
+            )
+            definitions += (
+                f"let {intervals} = materialize({matches}\n| where isnotempty({value})\n"
+                f"| summarize by {', '.join([*keys, event_time])}\n"
+                f"| sort by {', '.join(f'{key} asc' for key in [*keys, event_time])}\n"
+                "// Repeated values whose inclusive active intervals overlap contribute only once.\n"
+                f"| extend {starts} = {start},\n    {ends} = {end});\n"
+            )
+            branches.append(boundary(f"{intervals} | where {starts}", event_time, 0, index, 1))
+            branches.append(boundary(f"{intervals} | where {ends}", f"{event_time} + {span}", 2, index, -1))
+        restart = " or ".join(changed(group, kind, "prev") for group, kind in zip(groups, group_kinds))
+        accumulators = [
+            f"{metric} = row_cumsum({delta}" + (f", {restart})" if restart else ")")
+            for metric, delta in zip(metrics, deltas)
+        ]
+        comparisons = " and ".join(
+            (
+                f"todecimal({metric}) {query_operator} decimal({threshold})"
+                if threshold != int(threshold)
+                else f"{metric} {query_operator} {threshold}"
+            )
+            for metric in metrics
+        )
+        projection = self._correlation_result_projection(rule, groups, boundary_time, span, metrics)
+        body = (
+            "union " + ",\n".join(branches) + "\n"
+            "// All interval starts precede anchors; equal-time expirations follow them.\n"
+            f"| sort by {', '.join(f'{key} asc' for key in [*groups, boundary_time, boundary_order])}\n"
+            f"| extend {', '.join(accumulators)}\n"
+            f"| where {boundary_order} == 1\n| where {comparisons}\n| project {projection}"
+        )
+        return _CorrelationQuery(definitions, body)
+
+    def _convert_count_existence(self, rule, definitions, search, columns, valid_rows, span, threshold, allocate):
+        """Keep a timestamp when its Nth-most-recent source match fits."""
+        event_time, groups = columns["timestamp"], columns["groups"]
+        body = f"{search}\n| where {valid_rows}\n"
+        if threshold > 1:
+            offset = threshold - 1
+            predecessor = allocate("ThresholdPredecessorTime")
+            same_group = []
+            for logical, group in zip(rule.group_by or [], groups):
+                equality = f"{group} == prev({group}, {offset})"
+                if self._correlation_field_types[logical] == "real":
+                    equality = f"({equality} or (isnan({group}) and isnan(prev({group}, {offset}))))"
+                same_group.append(equality)
+            body += (
+                "// Preserve individual source matches, including timestamp ties, before the threshold lookup.\n"
+                f"| sort by {', '.join(f'{field} asc' for field in [*groups, event_time])}\n"
+                f"| extend {predecessor} = prev({event_time}, {offset})\n"
+                f"| where {predecessor} >= {event_time} - {span}"
+                + (f" and {' and '.join(same_group)}" if same_group else "")
+                + "\n"
+            )
+        body += (
+            f"| distinct {', '.join([event_time, *groups])}\n"
+            f"| project {self._correlation_result_projection(rule, groups, event_time, span, [])}"
+        )
+        return _CorrelationQuery(definitions, body)
 
     def _convert_temporal_presence(
         self, rule, definitions, search, columns, valid_rows, span, query_operator, threshold, allocate
@@ -1779,6 +2015,9 @@ class KustoBackend(TextQueryBackend):
         )
         if len(identities) > 1:
             prefixes = [allocate(f"Latest{'Then'.join(labels[:index])}Start") for index in range(1, len(identities))]
+            first_source = rule.referenced_rules[0].rule
+            if len(identities) == 2 and self._count_existence_threshold(first_source) is not None:
+                prefixes[0] = allocate(f"Last{labels[0].removesuffix('s')}Time")
             group_changes = []
             for field, group in zip(rule.group_by or [], groups):
                 changed = f"{group} != prev({group})"

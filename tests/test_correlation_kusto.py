@@ -241,13 +241,14 @@ def test_correlation_aliases_resolve_rule_identity_across_name_and_id_references
 
     group = (
         "GroupActor"
-        if correlation_rule in (event_count_correlation, temporal_correlation, ordered_temporal_correlation)
+        if correlation_rule
+        in (event_count_correlation, value_count_correlation, temporal_correlation, ordered_temporal_correlation)
         else "_sigma_group_0"
     )
     assert f'{group} = ["AccountName"]' in query
     assert final_summary_projection(query).endswith(f'["Actor"] = {group}, {metric}')
     if correlation_rule is value_count_correlation:
-        assert '_sigma_value = ["AccountName"]' in query
+        assert 'CountedActor = ["AccountName"]' in query
 
 
 @pytest.mark.parametrize("ordered", [False, True])
@@ -426,22 +427,14 @@ def test_value_count_retains_values_for_exact_window_wide_counts_and_missing_val
 
     (query,) = backend.convert(correlation_collection(value_count_correlation(condition="eq: 0")))
 
-    assert '_sigma_value = ["AccountName"]' in query
-    assert "| where isnotnull(_sigma_timestamp)\n| summarize by _sigma_timestamp, _sigma_value;" in query
-    assert (
-        "| project _sigma_window_end = _sigma_timestamp, _sigma_bin = bin(_sigma_timestamp, 5m)\n| distinct *\n"
-        in query
-    )
-    assert "| join kind=inner (\n    _sigma_values\n" in query
-    assert "| where _sigma_timestamp between ((_sigma_window_end - 5m) .. _sigma_window_end)\n" in query
-    assert (
-        "| summarize ValueCount = count_distinctif(_sigma_value, isnotempty(_sigma_value)) by _sigma_window_end\n"
-        in query
-    )
-    assert "| where ValueCount == 0\n" in query
-    assert final_summary_projection(query).endswith(
-        "| project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ValueCount"
-    )
+    assert 'CountedUser = ["AccountName"]' in query
+    assert "| where isnotnull(EventTime_1));" in query
+    assert "| where isnotempty(CountedUser)" in query
+    assert "ValueCountSources | summarize by EventTime_1" in query
+    assert "ValueCount = row_cumsum(CountedUserDelta)" in query
+    assert "| where ValueCount == 0" in query
+    assert "join kind=inner" not in query
+    assert final_summary_projection(query).endswith("WindowEnd = ValueBoundaryTime, ValueCount")
 
 
 @pytest.mark.parametrize(
@@ -463,22 +456,17 @@ def test_multi_field_value_count_requires_each_exact_count_and_retains_missing_v
         )
     )
 
-    assert '_sigma_value_0 = ["AccountName"], _sigma_value_1 = ["Target"]' in query
+    assert 'CountedUser = ["AccountName"], CountedTarget = ["Target"]' in query
+    assert "isnotnull(EventTime_1) and isnotempty(GroupDeviceName)" in query
+    assert "| where isnotempty(CountedUser)" in query and "| where isnotempty(CountedTarget)" in query
+    assert '["ValueCount_User"] = row_cumsum(CountedUserDelta' in query
+    assert '["ValueCount_Target"] = row_cumsum(CountedTargetDelta' in query
     assert (
-        "| where isnotnull(_sigma_timestamp) and isnotempty(_sigma_group_0)\n"
-        "| summarize by _sigma_timestamp, _sigma_group_0, _sigma_value_0, _sigma_value_1;\n"
-    ) in query
-    assert "| distinct *\n| join kind=inner (" in query
-    assert "| where _sigma_timestamp between ((_sigma_window_end - 5m) .. _sigma_window_end)\n" in query
-    assert (
-        '| summarize ["ValueCount_User"] = count_distinctif(_sigma_value_0, isnotempty(_sigma_value_0)), '
-        '["ValueCount_Target"] = count_distinctif(_sigma_value_1, isnotempty(_sigma_value_1)) '
-        "by _sigma_window_end, _sigma_group_0\n"
-        f'| where ["ValueCount_User"] {query_operator} {threshold} '
-        f'and ["ValueCount_Target"] {query_operator} {threshold}\n'
-    ) in query
+        f'| where ["ValueCount_User"] {query_operator} {threshold} and ["ValueCount_Target"] {query_operator} {threshold}'
+        in query
+    )
     assert final_summary_projection(query).endswith(
-        '["DeviceName"] = _sigma_group_0, ["ValueCount_User"], ["ValueCount_Target"]'
+        '["DeviceName"] = GroupDeviceName, ["ValueCount_User"], ["ValueCount_Target"]'
     )
 
 
@@ -518,23 +506,21 @@ def test_multi_field_value_count_maps_each_counted_alias_for_all_source_searches
 
     assert summary_data_query(query).count("(DeviceProcessEvents\n| where ") == 2
     assert summary_data_query(query).count("(DeviceNetworkEvents\n| where ") == 2
-    assert summary_data_query(query).count('_sigma_value_0 = ["ProcessUser"], _sigma_value_1 = ["ProcessTarget"]') == 2
-    assert summary_data_query(query).count('_sigma_value_0 = ["NetworkUser"], _sigma_value_1 = ["NetworkTarget"]') == 2
-    assert summary_data_query(query).count('todatetime(["ProcessTime"]), _sigma_group_0 = ["ProcessHost"]') == 2
-    assert summary_data_query(query).count('todatetime(["NetworkTime"]), _sigma_group_0 = ["NetworkHost"]') == 2
-    assert summary_data_query(query).count('| summarize ["ValueCount_Actor"]') == 1
-    assert final_summary_projection(query).endswith(
-        '["Host"] = _sigma_group_0, ["ValueCount_Actor"], ["ValueCount_Target"]'
-    )
+    assert summary_data_query(query).count('CountedActor = ["ProcessUser"], CountedTarget = ["ProcessTarget"]') == 2
+    assert summary_data_query(query).count('CountedActor = ["NetworkUser"], CountedTarget = ["NetworkTarget"]') == 2
+    assert summary_data_query(query).count('todatetime(["ProcessTime"]), GroupHost = ["ProcessHost"]') == 2
+    assert summary_data_query(query).count('todatetime(["NetworkTime"]), GroupHost = ["NetworkHost"]') == 2
+    assert summary_data_query(query).count('["ValueCount_Actor"] = row_cumsum(') == 1
+    assert final_summary_projection(query).endswith('["Host"] = GroupHost, ["ValueCount_Actor"], ["ValueCount_Target"]')
 
 
 def test_multi_field_value_count_quotes_metrics_and_preserves_colliding_source_columns_and_generation():
     counted = yaml.safe_dump(['Actor\'s "Name"', "_sigma_value_0"], default_flow_style=True).strip()
     collection = correlation_collection(value_count_correlation(field=counted, generate=True))
-    collection.rules[0].fields = ["_sigma_value_0", "_sigma_value_1", "_sigma_values"]
+    collection.rules[0].fields = ["CountedActorsName", "Counted_sigma_value_0", "ValueCountSources"]
     backend = KustoBackend(
         processing_pipeline=microsoft_365_defender_pipeline(
-            fixture_fields=[*collection.rules[0].fields, 'Actor\'s "Name"']
+            fixture_fields=[*collection.rules[0].fields, 'Actor\'s "Name"', "_sigma_value_0"]
         ),
         correlation_timestamp_field="Timestamp",
     )
@@ -542,13 +528,11 @@ def test_multi_field_value_count_quotes_metrics_and_preserves_colliding_source_c
     standalone, query = backend.convert(collection)
 
     assert standalone == 'DeviceProcessEvents\n| where ProcessCommandLine =~ "suspicious.exe"'
-    assert "let _sigma_values_1 = union " in query
-    assert '_sigma_value_0_1 = ["Actor\'s \\"Name\\""]' in query
-    assert '_sigma_value_1_1 = ["_sigma_value_0"]' in query
-    assert "| project " not in query.split("| extend _sigma_timestamp")[0]
-    assert (
-        '["ValueCount_Actor\'s \\"Name\\""] = count_distinctif(_sigma_value_0_1, isnotempty(_sigma_value_0_1))' in query
-    )
+    assert "let ValueCountSources_1 = materialize(union " in query
+    assert 'CountedActorsName_1 = ["Actor\'s \\"Name\\""]' in query
+    assert 'Counted_sigma_value_0_1 = ["_sigma_value_0"]' in query
+    assert "| project EventTime" in query
+    assert '["ValueCount_Actor\'s \\"Name\\""] = row_cumsum(CountedActorsName_1Delta' in query
     assert '["ValueCount_Actor\'s \\"Name\\""], ["ValueCount__sigma_value_0"]' in query
 
 
@@ -575,11 +559,9 @@ def test_value_count_applies_each_comparison_after_exact_aggregation(operator, q
         correlation_collection(value_count_correlation(group_by=("DeviceName",), condition=f"{operator}: 2"))
     )
 
-    assert (
-        "| summarize ValueCount = count_distinctif(_sigma_value, isnotempty(_sigma_value)) "
-        f"by _sigma_window_end, _sigma_group_0\n| where ValueCount {query_operator} 2\n"
-    ) in query
-    assert final_summary_projection(query).endswith('["DeviceName"] = _sigma_group_0, ValueCount')
+    assert "ValueCount = row_cumsum(CountedUserDelta" in query
+    assert f"| where ValueCount {query_operator} 2" in query
+    assert final_summary_projection(query).endswith('["DeviceName"] = GroupDeviceName, ValueCount')
 
 
 def test_value_count_maps_counted_and_grouping_aliases_per_source_table_and_retains_all_searches():
@@ -619,16 +601,14 @@ def test_value_count_maps_counted_and_grouping_aliases_per_source_table_and_reta
 
     assert summary_data_query(query).count("(DeviceProcessEvents\n| where ") == 2
     assert summary_data_query(query).count("(DeviceNetworkEvents\n| where ") == 1
-    assert summary_data_query(query).count('_sigma_value = ["ProcessUser"]') == 2
-    assert '_sigma_value = ["NetworkUser"]' in query
-    assert 'todatetime(["ProcessTime"]), _sigma_group_0 = ["ProcessHost"]' in query
-    assert 'todatetime(["NetworkTime"]), _sigma_group_0 = ["NetworkHost"]' in query
-    assert (
-        "| where isnotnull(_sigma_timestamp) and isnotempty(_sigma_group_0) and isnotempty(_sigma_group_1)\n" in query
-    )
-    assert summary_data_query(query).count("| summarize ValueCount") == 1
+    assert summary_data_query(query).count('CountedActor = ["ProcessUser"]') == 2
+    assert 'CountedActor = ["NetworkUser"]' in query
+    assert 'todatetime(["ProcessTime"]), GroupHost = ["ProcessHost"]' in query
+    assert 'todatetime(["NetworkTime"]), GroupHost = ["NetworkHost"]' in query
+    assert "| where isnotnull(EventTime_1) and isnotempty(GroupHost) and isnotempty(GroupDeviceName)" in query
+    assert summary_data_query(query).count("ValueCount = row_cumsum(") == 1
     assert final_summary_projection(query).endswith(
-        '["Host"] = _sigma_group_0, ["DeviceName"] = _sigma_group_1, ValueCount'
+        '["Host"] = GroupHost, ["DeviceName"] = GroupDeviceName, ValueCount'
     )
 
 
@@ -636,9 +616,9 @@ def test_single_source_value_count_aliases_quoted_counted_fields_without_overwri
     correlation = value_count_correlation(field="Actor") + "  aliases:\n    Actor:\n      source-rule: User\n"
     collection = correlation_collection(correlation, source_conditions="[selection, alternate]")
     collection.rules[0].fields = [
-        "_sigma_values",
-        "_sigma_value",
-        "_sigma_timestamp",
+        "ValueCountSources",
+        "CountedActor",
+        "EventTime",
         "_sigma_window_end",
         "_sigma_bin",
     ]
@@ -650,12 +630,11 @@ def test_single_source_value_count_aliases_quoted_counted_fields_without_overwri
 
     query = summary_data_query(query)
 
-    assert "let _sigma_values_1 = union " in query
-    assert summary_data_query(query).count('_sigma_value_1 = ["Actor\'s \\"Name\\""]') == 2
-    assert "| project " not in query.split("| extend _sigma_timestamp")[0]
-    assert "| summarize by _sigma_timestamp_1, _sigma_value_1;" in query
-    assert "count_distinctif(_sigma_value_1, isnotempty(_sigma_value_1)) by _sigma_window_end_1" in query
-    assert "_sigma_bin_1 = bin(_sigma_timestamp_1, 5m)" in query
+    assert "let ValueCountSources_1 = materialize(union " in query
+    assert summary_data_query(query).count('CountedActor_1 = ["Actor\'s \\"Name\\""]') == 2
+    assert '| project EventTime_1 = todatetime(["Timestamp"])' in query
+    assert "ValueCount = row_cumsum(CountedActor_1Delta" in query
+    assert "join kind=inner" not in summary_data_query(query).split("};", 1)[0]
 
 
 @pytest.mark.parametrize("field", ["[]", "''", "42", "[User, '']", "[User, 42]"])
@@ -685,7 +664,7 @@ def test_value_count_accepts_a_single_field_list_and_preserves_source_generation
     standalone, query = backend.convert(correlation_collection(value_count_correlation(field="[User]", generate=True)))
 
     assert standalone == 'DeviceProcessEvents\n| where ProcessCommandLine =~ "suspicious.exe"'
-    assert '_sigma_value = ["AccountName"]' in query
+    assert 'CountedUser = ["AccountName"]' in query
 
 
 @pytest.mark.parametrize("group", ["WindowStart", "WindowEnd", "ValueCount"])
@@ -1047,10 +1026,11 @@ def test_event_count_parent_counts_child_summaries_at_window_end_without_expandi
     (query,) = backend.convert(chained_event_count_collection())
 
     assert "union (DeviceProcessEvents\n| where " in summary_data_query(query)
-    assert "| where EventCount >= 10\n" in query
-    assert "union (_sigma_child_0()\n" in summary_data_query(query)
+    assert re.search(r"prev\(EventTime(?:_\d+)?, 9\)", query)
+    assert "| where EventCount >= 10\n" not in query
+    assert "union (ChildCorrelation()\n" in summary_data_query(query)
     assert 'EventTime = todatetime(["WindowEnd"])' in query
-    assert summary_data_query(query).count("| summarize SourceMatchCount = count() by EventTime") == 2
+    assert summary_data_query(query).count("| summarize SourceMatchCount = count() by EventTime") == 1
     assert "CountBoundaryTime = EventTime + 2m" in query
     assert final_summary_projection(query).endswith(
         "| project WindowStart = CountBoundaryTime - 2m, WindowEnd = CountBoundaryTime, EventCount"
@@ -1106,7 +1086,7 @@ def test_event_count_parent_combines_direct_searches_with_child_groups_and_prese
 
     (query,) = backend.convert(SigmaCollection.from_yaml(yaml.safe_dump_all([parent, child, source, direct])))
 
-    assert "let _sigma_child_0_1 = () {\n" in query
+    assert "let ChildCorrelation = () {\n" in query
     assert summary_data_query(query).count("(DeviceProcessEvents\n| where ") == 2
     assert summary_data_query(query).count("(DeviceNetworkEvents\n| where ") == 2
     assert 'EventTime_1 = todatetime(["WindowEnd"]), GroupActor = ["User"]' in query
@@ -1155,7 +1135,8 @@ def test_event_count_chain_honors_generation_of_child_and_detection_queries(
     if parent_generate:
         assert "| where EventCount >= 10\n" in queries[-2]
         assert "_sigma_child_0" not in queries[-2]
-    assert "_sigma_child_0()" in queries[-1]
+    child_binding = "_sigma_child_0" if parent_generate else "ChildCorrelation"
+    assert f"{child_binding}()" in queries[-1]
 
 
 @pytest.mark.parametrize(

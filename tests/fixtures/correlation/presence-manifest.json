@@ -46,7 +46,7 @@
     },
     {
       "name": "presence_mixed_alias.kql",
-      "sha256": "f95348db984ad9804f77c5361af0e85341f67d9ed7bc85886a20249f016f396a"
+      "sha256": "c40baa00853f2c4dd6e9fc7573fbe1d4d10d82238e6b6969ace09b6645ee99b4"
     },
     {
       "name": "presence_scalar_child_context.kql",

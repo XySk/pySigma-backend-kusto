@@ -1,0 +1,627 @@
+{
+  "engine": {
+    "Tables": [
+      {
+        "TableName": "Table_0",
+        "Columns": [
+          {
+            "ColumnName": "BuildVersion",
+            "DataType": "String"
+          },
+          {
+            "ColumnName": "BuildTime",
+            "DataType": "DateTime"
+          },
+          {
+            "ColumnName": "ServiceType",
+            "DataType": "String"
+          },
+          {
+            "ColumnName": "ProductVersion",
+            "DataType": "String"
+          },
+          {
+            "ColumnName": "ServiceOffering",
+            "DataType": "String"
+          }
+        ],
+        "Rows": [
+          [
+            "1.0.9815.14081",
+            "2026-11-15T07:49:22Z",
+            "Engine",
+            "2026.11.15.0741-2645-8e3387b-master",
+            ""
+          ]
+        ]
+      }
+    ]
+  },
+  "resource_options": {
+    "max_memory_consumption_per_query_per_node": 12884901888
+  },
+  "timeout_seconds": 45,
+  "baseline_revision": "d1301d1",
+  "baseline_description": "Native scalar exact candidate join, after tickets36/37/38/41/46",
+  "candidate_description": "Native active scalar intervals and independent accumulated field counts",
+  "samples": [
+    {
+      "strategy": "baseline",
+      "profile": "repeated",
+      "sample": 1,
+      "status": "PASS",
+      "fixture_sha256": "9eae81ea839b194733bd2ec37c1304574a5099ecdeca9413c4c880d31a38f8cf",
+      "query_sha256": "bdce069b5d0ea4ce5bc10d4a1c9208888ba86f9a7230911fa5cdfeb71c68135c",
+      "query_bytes": 1017,
+      "engine_seconds": 0.0395855,
+      "client_seconds": 0.05,
+      "cpu_seconds": 0.03309,
+      "peak_bytes": 54235056,
+      "resources": {
+        "cache": {
+          "shards": {
+            "hot": {
+              "hitbytes": 0,
+              "missbytes": 0,
+              "retrievebytes": 0
+            },
+            "cold": {
+              "hitbytes": 0,
+              "missbytes": 0,
+              "retrievebytes": 0
+            },
+            "bypassbytes": 0
+          }
+        },
+        "cpu": {
+          "user": "00:00:00.0303670",
+          "kernel": "00:00:00.0027230",
+          "total cpu": "00:00:00.0330900",
+          "breakdown": {
+            "query execution": "00:00:00.0204250",
+            "query planning": "00:00:00.0126650"
+          }
+        },
+        "memory": {
+          "peak_per_node": 54235056
+        },
+        "network": {
+          "inter_cluster_total_bytes": 611,
+          "cross_cluster_total_bytes": 0
+        }
+      },
+      "response_path": "/tmp/ticket39-runtime/comparison-1-baseline/repeated.response.json",
+      "response_sha256": "b693570ade5d9528236715fd190eb04ee5c75de746fbb87c7249935fb3fb4ae5"
+    },
+    {
+      "strategy": "baseline",
+      "profile": "repeated",
+      "sample": 2,
+      "status": "PASS",
+      "fixture_sha256": "9eae81ea839b194733bd2ec37c1304574a5099ecdeca9413c4c880d31a38f8cf",
+      "query_sha256": "bdce069b5d0ea4ce5bc10d4a1c9208888ba86f9a7230911fa5cdfeb71c68135c",
+      "query_bytes": 1017,
+      "engine_seconds": 0.0379259,
+      "client_seconds": 0.048,
+      "cpu_seconds": 0.029264,
+      "peak_bytes": 54235056,
+      "resources": {
+        "cache": {
+          "shards": {
+            "hot": {
+              "hitbytes": 0,
+              "missbytes": 0,
+              "retrievebytes": 0
+            },
+            "cold": {
+              "hitbytes": 0,
+              "missbytes": 0,
+              "retrievebytes": 0
+            },
+            "bypassbytes": 0
+          }
+        },
+        "cpu": {
+          "user": "00:00:00.0289350",
+          "kernel": "00:00:00.0003290",
+          "total cpu": "00:00:00.0292640",
+          "breakdown": {
+            "query execution": "00:00:00.0248390",
+            "query planning": "00:00:00.0044250"
+          }
+        },
+        "memory": {
+          "peak_per_node": 54235056
+        },
+        "network": {
+          "inter_cluster_total_bytes": 611,
+          "cross_cluster_total_bytes": 0
+        }
+      },
+      "response_path": "/tmp/ticket39-runtime/comparison-2-baseline/repeated.response.json",
+      "response_sha256": "502f3bb78fdf6c519748becaacaf4739074a54c74733c17354ad9bdfe5e8dcae"
+    },
+    {
+      "strategy": "baseline",
+      "profile": "repeated",
+      "sample": 3,
+      "status": "PASS",
+      "fixture_sha256": "9eae81ea839b194733bd2ec37c1304574a5099ecdeca9413c4c880d31a38f8cf",
+      "query_sha256": "bdce069b5d0ea4ce5bc10d4a1c9208888ba86f9a7230911fa5cdfeb71c68135c",
+      "query_bytes": 1017,
+      "engine_seconds": 0.0220172,
+      "client_seconds": 0.03,
+      "cpu_seconds": 0.010368,
+      "peak_bytes": 54234800,
+      "resources": {
+        "cache": {
+          "shards": {
+            "hot": {
+              "hitbytes": 0,
+              "missbytes": 0,
+              "retrievebytes": 0
+            },
+            "cold": {
+              "hitbytes": 0,
+              "missbytes": 0,
+              "retrievebytes": 0
+            },
+            "bypassbytes": 0
+          }
+        },
+        "cpu": {
+          "user": "00:00:00.0056700",
+          "kernel": "00:00:00.0046980",
+          "total cpu": "00:00:00.0103680",
+          "breakdown": {
+            "query execution": "00:00:00.0103680",
+            "query planning": "00:00:00"
+          }
+        },
+        "memory": {
+          "peak_per_node": 54234800
+        },
+        "network": {
+          "inter_cluster_total_bytes": 611,
+          "cross_cluster_total_bytes": 0
+        }
+      },
+      "response_path": "/tmp/ticket39-runtime/comparison-3-baseline/repeated.response.json",
+      "response_sha256": "33fa8b338e38082c180d46b6c5e0e48c96a3dbf1b27b8ddd229038960ec26d95"
+    },
+    {
+      "strategy": "baseline",
+      "profile": "unique",
+      "sample": 1,
+      "status": "PASS",
+      "fixture_sha256": "e894380c8b93735fc055551f5532804f2a9fb697f3536cb9ce096b6665803e57",
+      "query_sha256": "bdce069b5d0ea4ce5bc10d4a1c9208888ba86f9a7230911fa5cdfeb71c68135c",
+      "query_bytes": 1017,
+      "engine_seconds": 0.043499,
+      "client_seconds": 0.054,
+      "cpu_seconds": 0.037668,
+      "peak_bytes": 55218896,
+      "resources": {
+        "cache": {
+          "shards": {
+            "hot": {
+              "hitbytes": 0,
+              "missbytes": 0,
+              "retrievebytes": 0
+            },
+            "cold": {
+              "hitbytes": 0,
+              "missbytes": 0,
+              "retrievebytes": 0
+            },
+            "bypassbytes": 0
+          }
+        },
+        "cpu": {
+          "user": "00:00:00.0376680",
+          "kernel": "00:00:00",
+          "total cpu": "00:00:00.0376680",
+          "breakdown": {
+            "query execution": "00:00:00.0343270",
+            "query planning": "00:00:00.0033410"
+          }
+        },
+        "memory": {
+          "peak_per_node": 55218896
+        },
+        "network": {
+          "inter_cluster_total_bytes": 611,
+          "cross_cluster_total_bytes": 0
+        }
+      },
+      "response_path": "/tmp/ticket39-runtime/comparison-1-baseline/unique.response.json",
+      "response_sha256": "5e168dec22b4234881469de42f80be2cc9fa7ec1373e3f53f547e7b9f9c93dcb"
+    },
+    {
+      "strategy": "baseline",
+      "profile": "unique",
+      "sample": 2,
+      "status": "PASS",
+      "fixture_sha256": "e894380c8b93735fc055551f5532804f2a9fb697f3536cb9ce096b6665803e57",
+      "query_sha256": "bdce069b5d0ea4ce5bc10d4a1c9208888ba86f9a7230911fa5cdfeb71c68135c",
+      "query_bytes": 1017,
+      "engine_seconds": 0.0322299,
+      "client_seconds": 0.041,
+      "cpu_seconds": 0.026871,
+      "peak_bytes": 55220048,
+      "resources": {
+        "cache": {
+          "shards": {
+            "hot": {
+              "hitbytes": 0,
+              "missbytes": 0,
+              "retrievebytes": 0
+            },
+            "cold": {
+              "hitbytes": 0,
+              "missbytes": 0,
+              "retrievebytes": 0
+            },
+            "bypassbytes": 0
+          }
+        },
+        "cpu": {
+          "user": "00:00:00.0268450",
+          "kernel": "00:00:00.0000260",
+          "total cpu": "00:00:00.0268710",
+          "breakdown": {
+            "query execution": "00:00:00.0203580",
+            "query planning": "00:00:00.0065130"
+          }
+        },
+        "memory": {
+          "peak_per_node": 55220048
+        },
+        "network": {
+          "inter_cluster_total_bytes": 611,
+          "cross_cluster_total_bytes": 0
+        }
+      },
+      "response_path": "/tmp/ticket39-runtime/comparison-2-baseline/unique.response.json",
+      "response_sha256": "b53bcbfd923946dd063ccffb4a005dc61665497d133958a63862c9799f9cbb16"
+    },
+    {
+      "strategy": "baseline",
+      "profile": "unique",
+      "sample": 3,
+      "status": "PASS",
+      "fixture_sha256": "e894380c8b93735fc055551f5532804f2a9fb697f3536cb9ce096b6665803e57",
+      "query_sha256": "bdce069b5d0ea4ce5bc10d4a1c9208888ba86f9a7230911fa5cdfeb71c68135c",
+      "query_bytes": 1017,
+      "engine_seconds": 0.0283632,
+      "client_seconds": 0.037,
+      "cpu_seconds": 0.026192,
+      "peak_bytes": 55218896,
+      "resources": {
+        "cache": {
+          "shards": {
+            "hot": {
+              "hitbytes": 0,
+              "missbytes": 0,
+              "retrievebytes": 0
+            },
+            "cold": {
+              "hitbytes": 0,
+              "missbytes": 0,
+              "retrievebytes": 0
+            },
+            "bypassbytes": 0
+          }
+        },
+        "cpu": {
+          "user": "00:00:00.0261920",
+          "kernel": "00:00:00",
+          "total cpu": "00:00:00.0261920",
+          "breakdown": {
+            "query execution": "00:00:00.0202950",
+            "query planning": "00:00:00.0058970"
+          }
+        },
+        "memory": {
+          "peak_per_node": 55218896
+        },
+        "network": {
+          "inter_cluster_total_bytes": 611,
+          "cross_cluster_total_bytes": 0
+        }
+      },
+      "response_path": "/tmp/ticket39-runtime/comparison-3-baseline/unique.response.json",
+      "response_sha256": "3164c17b88e57b9424feb06202a3807a05a5baad0ad8f9e35a04c138fb89191b"
+    },
+    {
+      "strategy": "intervals-v2",
+      "profile": "repeated",
+      "sample": 1,
+      "status": "PASS",
+      "fixture_sha256": "f4956ec417639c4fbdb454efd2e09f9790f2afda007fa800a984702901c7ec42",
+      "query_sha256": "d9d0b919fa7c40634327ac0c6355ca597fe8c9b58f47ac1597dd60a8632c3e3f",
+      "query_bytes": 1691,
+      "engine_seconds": 0.0213646,
+      "client_seconds": 0.031,
+      "cpu_seconds": 0.009947,
+      "peak_bytes": 3147200,
+      "resources": {
+        "cache": {
+          "shards": {
+            "hot": {
+              "hitbytes": 0,
+              "missbytes": 0,
+              "retrievebytes": 0
+            },
+            "cold": {
+              "hitbytes": 0,
+              "missbytes": 0,
+              "retrievebytes": 0
+            },
+            "bypassbytes": 0
+          }
+        },
+        "cpu": {
+          "user": "00:00:00.0049340",
+          "kernel": "00:00:00.0050130",
+          "total cpu": "00:00:00.0099470",
+          "breakdown": {
+            "query execution": "00:00:00.0024890",
+            "query planning": "00:00:00.0074580"
+          }
+        },
+        "memory": {
+          "peak_per_node": 3147200
+        },
+        "network": {
+          "inter_cluster_total_bytes": 2518,
+          "cross_cluster_total_bytes": 0
+        }
+      },
+      "response_path": "/tmp/ticket39-runtime/comparison-1-intervals-v2/repeated.response.json",
+      "response_sha256": "b5c5fee49210f5f908ff2f9a78f8e3184e91894d9c8f7652740d661da256fbc8"
+    },
+    {
+      "strategy": "intervals-v2",
+      "profile": "repeated",
+      "sample": 2,
+      "status": "PASS",
+      "fixture_sha256": "f4956ec417639c4fbdb454efd2e09f9790f2afda007fa800a984702901c7ec42",
+      "query_sha256": "d9d0b919fa7c40634327ac0c6355ca597fe8c9b58f47ac1597dd60a8632c3e3f",
+      "query_bytes": 1691,
+      "engine_seconds": 0.0134842,
+      "client_seconds": 0.022,
+      "cpu_seconds": 0.012591,
+      "peak_bytes": 3147200,
+      "resources": {
+        "cache": {
+          "shards": {
+            "hot": {
+              "hitbytes": 0,
+              "missbytes": 0,
+              "retrievebytes": 0
+            },
+            "cold": {
+              "hitbytes": 0,
+              "missbytes": 0,
+              "retrievebytes": 0
+            },
+            "bypassbytes": 0
+          }
+        },
+        "cpu": {
+          "user": "00:00:00.0125750",
+          "kernel": "00:00:00.0000160",
+          "total cpu": "00:00:00.0125910",
+          "breakdown": {
+            "query execution": "00:00:00.0075230",
+            "query planning": "00:00:00.0050680"
+          }
+        },
+        "memory": {
+          "peak_per_node": 3147200
+        },
+        "network": {
+          "inter_cluster_total_bytes": 2518,
+          "cross_cluster_total_bytes": 0
+        }
+      },
+      "response_path": "/tmp/ticket39-runtime/comparison-2-intervals-v2/repeated.response.json",
+      "response_sha256": "260808684437e7b40d2ced018f3ff4aa8531114b98294185bde4ccabb125c909"
+    },
+    {
+      "strategy": "intervals-v2",
+      "profile": "repeated",
+      "sample": 3,
+      "status": "PASS",
+      "fixture_sha256": "f4956ec417639c4fbdb454efd2e09f9790f2afda007fa800a984702901c7ec42",
+      "query_sha256": "d9d0b919fa7c40634327ac0c6355ca597fe8c9b58f47ac1597dd60a8632c3e3f",
+      "query_bytes": 1691,
+      "engine_seconds": 0.0124417,
+      "client_seconds": 0.022,
+      "cpu_seconds": 0.001823,
+      "peak_bytes": 3147200,
+      "resources": {
+        "cache": {
+          "shards": {
+            "hot": {
+              "hitbytes": 0,
+              "missbytes": 0,
+              "retrievebytes": 0
+            },
+            "cold": {
+              "hitbytes": 0,
+              "missbytes": 0,
+              "retrievebytes": 0
+            },
+            "bypassbytes": 0
+          }
+        },
+        "cpu": {
+          "user": "00:00:00.0017800",
+          "kernel": "00:00:00.0000430",
+          "total cpu": "00:00:00.0018230",
+          "breakdown": {
+            "query execution": "00:00:00.0012600",
+            "query planning": "00:00:00.0005630"
+          }
+        },
+        "memory": {
+          "peak_per_node": 3147200
+        },
+        "network": {
+          "inter_cluster_total_bytes": 2518,
+          "cross_cluster_total_bytes": 0
+        }
+      },
+      "response_path": "/tmp/ticket39-runtime/comparison-3-intervals-v2/repeated.response.json",
+      "response_sha256": "cee5eb6a68e3ec7d2020011142a7c59e4feaa8c563a51d1feda7eb30f10e711c"
+    },
+    {
+      "strategy": "intervals-v2",
+      "profile": "unique",
+      "sample": 1,
+      "status": "PASS",
+      "fixture_sha256": "deaa39e1feab1bac9c1b7bbe5f322912e7ca4e1a929ed8e1995c4ea3e972ad98",
+      "query_sha256": "d9d0b919fa7c40634327ac0c6355ca597fe8c9b58f47ac1597dd60a8632c3e3f",
+      "query_bytes": 1691,
+      "engine_seconds": 0.0137246,
+      "client_seconds": 0.023,
+      "cpu_seconds": 0.012004,
+      "peak_bytes": 3147200,
+      "resources": {
+        "cache": {
+          "shards": {
+            "hot": {
+              "hitbytes": 0,
+              "missbytes": 0,
+              "retrievebytes": 0
+            },
+            "cold": {
+              "hitbytes": 0,
+              "missbytes": 0,
+              "retrievebytes": 0
+            },
+            "bypassbytes": 0
+          }
+        },
+        "cpu": {
+          "user": "00:00:00.0119880",
+          "kernel": "00:00:00.0000160",
+          "total cpu": "00:00:00.0120040",
+          "breakdown": {
+            "query execution": "00:00:00.0054440",
+            "query planning": "00:00:00.0065600"
+          }
+        },
+        "memory": {
+          "peak_per_node": 3147200
+        },
+        "network": {
+          "inter_cluster_total_bytes": 2518,
+          "cross_cluster_total_bytes": 0
+        }
+      },
+      "response_path": "/tmp/ticket39-runtime/comparison-1-intervals-v2/unique.response.json",
+      "response_sha256": "8f074343c04fd413b073c325d9cbaae79fb8a97e3e6566a9a0f58fa299ca7e58"
+    },
+    {
+      "strategy": "intervals-v2",
+      "profile": "unique",
+      "sample": 2,
+      "status": "PASS",
+      "fixture_sha256": "deaa39e1feab1bac9c1b7bbe5f322912e7ca4e1a929ed8e1995c4ea3e972ad98",
+      "query_sha256": "d9d0b919fa7c40634327ac0c6355ca597fe8c9b58f47ac1597dd60a8632c3e3f",
+      "query_bytes": 1691,
+      "engine_seconds": 0.018856,
+      "client_seconds": 0.028,
+      "cpu_seconds": 0.017807,
+      "peak_bytes": 3147200,
+      "resources": {
+        "cache": {
+          "shards": {
+            "hot": {
+              "hitbytes": 0,
+              "missbytes": 0,
+              "retrievebytes": 0
+            },
+            "cold": {
+              "hitbytes": 0,
+              "missbytes": 0,
+              "retrievebytes": 0
+            },
+            "bypassbytes": 0
+          }
+        },
+        "cpu": {
+          "user": "00:00:00.0176360",
+          "kernel": "00:00:00.0001710",
+          "total cpu": "00:00:00.0178070",
+          "breakdown": {
+            "query execution": "00:00:00.0045660",
+            "query planning": "00:00:00.0132410"
+          }
+        },
+        "memory": {
+          "peak_per_node": 3147200
+        },
+        "network": {
+          "inter_cluster_total_bytes": 2518,
+          "cross_cluster_total_bytes": 0
+        }
+      },
+      "response_path": "/tmp/ticket39-runtime/comparison-2-intervals-v2/unique.response.json",
+      "response_sha256": "8387b3c9a7ccb4e5bd365bc39df0a40bf1867eb79c5baf5386ef14c4b292545b"
+    },
+    {
+      "strategy": "intervals-v2",
+      "profile": "unique",
+      "sample": 3,
+      "status": "PASS",
+      "fixture_sha256": "deaa39e1feab1bac9c1b7bbe5f322912e7ca4e1a929ed8e1995c4ea3e972ad98",
+      "query_sha256": "d9d0b919fa7c40634327ac0c6355ca597fe8c9b58f47ac1597dd60a8632c3e3f",
+      "query_bytes": 1691,
+      "engine_seconds": 0.0164966,
+      "client_seconds": 0.025,
+      "cpu_seconds": 0.014742,
+      "peak_bytes": 3147200,
+      "resources": {
+        "cache": {
+          "shards": {
+            "hot": {
+              "hitbytes": 0,
+              "missbytes": 0,
+              "retrievebytes": 0
+            },
+            "cold": {
+              "hitbytes": 0,
+              "missbytes": 0,
+              "retrievebytes": 0
+            },
+            "bypassbytes": 0
+          }
+        },
+        "cpu": {
+          "user": "00:00:00.0144120",
+          "kernel": "00:00:00.0003300",
+          "total cpu": "00:00:00.0147420",
+          "breakdown": {
+            "query execution": "00:00:00.0064710",
+            "query planning": "00:00:00.0082710"
+          }
+        },
+        "memory": {
+          "peak_per_node": 3147200
+        },
+        "network": {
+          "inter_cluster_total_bytes": 2518,
+          "cross_cluster_total_bytes": 0
+        }
+      },
+      "response_path": "/tmp/ticket39-runtime/comparison-3-intervals-v2/unique.response.json",
+      "response_sha256": "f1fc9470e8286746c741ab2dc7a1eb8a953a19828bbcc01611a01c26167657f3"
+    }
+  ],
+  "strict_focused_evidence": "/tmp/ticket39-runtime/evidence-intervals-v2/results.json",
+  "failed_fixture_selection": "/tmp/ticket39-runtime/evidence-intervals/results.json"
+}
