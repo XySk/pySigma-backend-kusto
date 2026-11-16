@@ -28,9 +28,9 @@ def test_retained_context_omits_null_values_from_displayed_collection_and_limit_
 
     (query,) = convert_documents([source, summary])
 
-    assert "| where isnotnull(_sigma_context_value)" in query
-    assert "make_list(_sigma_context_value, 1000)" in query
-    assert "DistinctValueCount = count()" in query
+    assert "| where isnotnull(ContextAmount)" in query
+    assert "make_list(ContextAmount, 1000)" in query
+    assert "DistinctAmountCount = count()" in query
 
 
 @pytest.mark.parametrize(

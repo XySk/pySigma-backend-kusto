@@ -263,7 +263,11 @@ def test_temporal_maps_group_aliases_and_timestamps_for_all_searches_across_tabl
     pipeline.vars["kusto_field_mappings"] = FieldMappings(
         table_mappings={
             "DeviceProcessEvents": {"EventTime": "ProcessTime", "Computer": "ProcessHost", "User": "ProcessUser"},
-            "DeviceNetworkEvents": {"EventTime": "NetworkTime", "SourceComputer": "NetworkHost", "User": "NetworkUser"},
+            "DeviceNetworkEvents": {
+                "EventTime": "NetworkTime",
+                "SourceComputer": "NetworkHost",
+                "User": "NetworkUser",
+            },
         }
     )
 
@@ -322,7 +326,7 @@ def test_temporal_preserves_colliding_source_columns_escaped_identity_and_standa
     assert len(standalone) == 2
     assert standalone[0] == 'DeviceProcessEvents\n| where ProcessCommandLine =~ "suspicious.exe"'
     assert query.count('EventTime_1 = todatetime(["Timestamp"])') == 2
-    assert query.count(f'SourceRule = "{identity}"') == 2
+    assert len(re.findall(r'(?<![A-Za-z_])SourceRule = "' + re.escape(identity) + '"', query)) == 2
     if ordered:
         assert "| summarize by EventTime_1" in query
         assert "WindowEnd = EventTime_1, RuleCount = tolong(1)" in query
@@ -870,10 +874,9 @@ def test_event_count_preserves_columns_that_overlap_sliding_window_names():
     assert "let SourceMatchArrivals = union (" in query
     assert "| summarize SourceMatchCount = count() by EventTime_1, GroupUser;" in query
     assert "EventCount = row_cumsum(SourceMatchDelta, GroupUser != prev(GroupUser))" in query
-    for index, field in enumerate(collection.rules[0].fields):
-        suffix = f"_{index}" if index else ""
-        assert f'_sigma_context_value{suffix} = ["{field}"]' in query
-        assert f'["{field}"] = coalesce(DisplayedValues{suffix}, dynamic([]))' in query
+    for field in collection.rules[0].fields:
+        assert f'Context{field} = ["{field}"]' in query
+        assert f'["{field}"] = coalesce(Displayed{field}, dynamic([]))' in query
 
 
 def test_event_count_quotes_requested_group_names_in_result_summary():

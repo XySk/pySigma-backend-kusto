@@ -1,0 +1,21 @@
+{
+  "status": "PENDING",
+  "scope": "ordered participants: one step and repeated five/seven positions; direct exhaustive independent tuple oracle",
+  "fixtures": [
+    {
+      "name": "participants_single.kql",
+      "sha256": "7e77cf69e12a0afad7de8b1b12d6a362349e1aa1052157910013b70769a94d26",
+      "expected_error": null
+    },
+    {
+      "name": "participants_repeated_long.kql",
+      "sha256": "351cef59079121816d92e3b7b67f45e45ff953c3aadaa86d30015f7531e0a76a",
+      "expected_error": null
+    },
+    {
+      "name": "participants_repeated_seven.kql",
+      "sha256": "a9a641d279fc8768cf953301b2d490c6bf09ac44b21be8779e18d237fd63f41b",
+      "expected_error": null
+    }
+  ]
+}

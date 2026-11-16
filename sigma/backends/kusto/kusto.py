@@ -877,11 +877,13 @@ class KustoBackend(TextQueryBackend):
         allocate = self._name_allocator(reserved)
 
         columns = {
-            "timestamp": allocate("_sigma_context_timestamp"),
-            "rule": allocate("_sigma_context_rule"),
-            "groups": [allocate("_sigma_context_group") for _ in (rule.group_by or [])],
+            "timestamp": allocate("ContextEventTime"),
+            "rule": allocate("ContextSourceRule"),
+            "groups": [
+                allocate("ContextGroup" + re.sub(r"[^A-Za-z0-9_]", "_", field)) for field in (rule.group_by or [])
+            ],
             "values": [],
-            "context": [allocate("_sigma_context_value") for _ in context_fields],
+            "context": [allocate("Context" + re.sub(r"[^A-Za-z0-9_]", "_", field)) for field in context_fields],
         }
         self._correlation_group_by = rule.group_by or []
         self._correlation_counted_fields = []
@@ -893,15 +895,15 @@ class KustoBackend(TextQueryBackend):
             del self._correlation_group_by, self._correlation_counted_fields
             del self._correlation_context_fields, self._correlation_columns
         summary_function, summaries, matched = [
-            allocate(name) for name in ("_sigma_context_summary", "_sigma_context_summaries", "_sigma_context_matches")
+            allocate(name) for name in ("ContextSummary", "CorrelationMatches", "WindowSourceMatches")
         ]
         source_id, end, key = [
-            allocate(name) for name in ("_sigma_context_id", "_sigma_context_end", "_sigma_context_key")
+            allocate(name) for name in ("CorrelationMatchId", "CompletionTime", "SourceRelationshipId")
         ]
-        relationships, count = [allocate(name) for name in ("_sigma_context_rows", "_sigma_context_count")]
+        relationships, count = [allocate(name) for name in ("CompleteContextRelationships", "ContextCount")]
         groups, timestamp, values = columns["groups"], columns["timestamp"], columns["context"]
         # A constant joins the single ungrouped partition; grouping never uses context values.
-        join_key = allocate("_sigma_context_partition")
+        join_key = allocate("ContextPartition")
         group_projection = [
             f"{column} = {self._quote_correlation_field(field)}" for column, field in zip(groups, rule.group_by or [])
         ]
@@ -933,11 +935,13 @@ class KustoBackend(TextQueryBackend):
                 presence = {}
                 aggregates = []
                 for reference in rule.referenced_rules:
-                    column = allocate("_sigma_context_present")
+                    column = allocate(
+                        "Has" + re.sub(r"[^A-Za-z0-9_]", "_", str(reference.rule.name or reference.rule.id))
+                    )
                     identity = json.dumps(str(reference.rule.name or reference.rule.id), ensure_ascii=False)
                     presence[reference.reference] = column
                     aggregates.append(f"{column} = countif({columns['rule']} == {identity}) > 0")
-                eligible = allocate("_sigma_context_eligible")
+                eligible = allocate("BooleanParticipants")
                 evidence = self._boolean_context_expression(rule, rule.condition.parsed, presence, columns["rule"])[1]
                 prefix += (
                     f"let {eligible} = materialize({matched}\n"
@@ -960,7 +964,8 @@ class KustoBackend(TextQueryBackend):
             limit = self.backend_options.get("correlation_context_limit", 1000)
             for field, value in zip(context_fields, values):
                 binding, collection, amount = [
-                    allocate(name) for name in ("ContextValues", "DisplayedValues", "DistinctValueCount")
+                    allocate(re.sub(r"[^A-Za-z0-9_]", "_", name))
+                    for name in ("ValuesFor" + field, "Displayed" + field, "Distinct" + field + "Count")
                 ]
                 prefix += (
                     f"let {binding} = {relationships}\n| where isnotnull({value})\n"
@@ -995,44 +1000,75 @@ class KustoBackend(TextQueryBackend):
         return output, relationships
 
     def _ordered_context_membership(self, rule, matches, columns, source_id, completion, key, allocate):
-        """Union source rows from every full sequence for each qualifying completion.
+        """Find all sequence participants with scalar prefix/suffix reachability.
 
-        Unlike detection-only prefix pruning, evidence traversal keeps every
-        alternative. Row identities preserve repeated matches and relationships
-        without putting sequence alternatives into a bounded collection.
+        Candidates already lie in one successful completion's inclusive window.
+        The earliest reachable prefix end and latest reachable suffix start are
+        the least restrictive witnesses on either side of a candidate. Joining
+        those scalar witnesses never enumerates combinations of alternatives.
         """
         timestamp, rule_column = columns["timestamp"], columns["rule"]
-        previous = allocate("_sigma_context_previous")
-        paths = []
-        row_ids = []
-        definitions = ""
-        for index, reference in enumerate(rule.referenced_rules):
-            path = allocate("_sigma_context_path")
-            row_id = allocate("_sigma_context_step")
-            step_time = allocate("_sigma_context_step_time")
-            identity = reference.rule.name or str(reference.rule.id)
-            candidates = (
-                f"{matches}\n| where {rule_column} == {json.dumps(identity, ensure_ascii=False)}\n"
-                f"| project {source_id}, {completion}, {row_id} = {key}, {step_time} = {timestamp}"
+        candidates, labels = [], []
+        definitions = (
+            "// All candidates share one successful completion's inclusive window.\n"
+            "// Strict prefix/suffix witnesses retain every participating alternative.\n"
+        )
+        for reference in rule.referenced_rules:
+            identity = str(reference.rule.name or reference.rule.id)
+            label = re.sub(r"[^A-Za-z0-9_]", "_", identity)
+            relation = allocate("CandidatesFor" + label)
+            definitions += (
+                f"let {relation} = {matches}\n"
+                f"| where {rule_column} == {json.dumps(identity, ensure_ascii=False)}\n"
+                f"| project {source_id}, {completion}, {key}, {timestamp};\n"
             )
-            if index == 0:
-                expression = candidates
+            labels.append(label)
+            candidates.append(relation)
+
+        # Every threshold relation contains at most one row per match ID.
+        earliest, latest = [], [None] * len(candidates)
+        for index in range(len(candidates) - 1):
+            relation, threshold = allocate("Earliest" + labels[index] + "Prefix"), allocate("PrefixEndTime")
+            expression = candidates[index]
+            if index:
+                prior, bound = earliest[-1]
+                expression += f"\n| join kind=inner ({prior}) on {source_id}" f"\n| where {timestamp} > {bound}"
+            definitions += (
+                f"let {relation} = materialize({expression}\n"
+                f"| summarize {threshold} = min({timestamp}) by {source_id});\n"
+            )
+            earliest.append((relation, threshold))
+
+        for index in range(len(candidates) - 1, 0, -1):
+            relation, threshold = allocate("Latest" + labels[index] + "Suffix"), allocate("SuffixStartTime")
+            expression = candidates[index]
+            if index == len(candidates) - 1:
+                expression += f"\n| where {timestamp} == {completion}"
             else:
-                expression = (
-                    f"{paths[-1]}\n| join kind=inner (\n{candidates}\n) on {source_id}\n"
-                    f"| where {step_time} > {previous}"
-                )
-            if index == len(rule.referenced_rules) - 1:
-                expression += f"\n| where {step_time} == {completion}"
-            row_ids.append(row_id)
-            projection = ", ".join([source_id, completion, *row_ids, f"{previous} = {step_time}"])
-            definitions += f"let {path} = {expression}\n| project {projection};\n"
-            paths.append(path)
-        participating = allocate("_sigma_context_participating")
-        selected = allocate("_sigma_context_selected")
-        alternatives = ", ".join(f"({paths[-1]} | project {source_id}, {key} = {row_id})" for row_id in row_ids)
+                following, bound = latest[index + 1]
+                expression += f"\n| join kind=inner ({following}) on {source_id}" f"\n| where {timestamp} < {bound}"
+            definitions += (
+                f"let {relation} = materialize({expression}\n"
+                f"| summarize {threshold} = max({timestamp}) by {source_id});\n"
+            )
+            latest[index] = (relation, threshold)
+
+        participants = []
+        for index, candidate in enumerate(candidates):
+            expression = candidate
+            if index:
+                prior, bound = earliest[index - 1]
+                expression += f"\n| join kind=inner ({prior}) on {source_id}" f"\n| where {timestamp} > {bound}"
+            if index == len(candidates) - 1:
+                expression += f"\n| where {timestamp} == {completion}"
+            else:
+                following, bound = latest[index + 1]
+                expression += f"\n| join kind=inner ({following}) on {source_id}" f"\n| where {timestamp} < {bound}"
+            participants.append(f"({expression}\n| project {source_id}, {key})")
+        participating = allocate("OrderedParticipants")
+        selected = allocate("OrderedSourceRelationships")
         definitions += (
-            f"let {participating} = union {alternatives}\n| distinct {source_id}, {key};\n"
+            f"let {participating} = union {', '.join(participants)}\n| distinct {source_id}, {key};\n"
             f"let {selected} = materialize({matches}\n"
             f"| join kind=leftsemi ({participating}) on {source_id}, {key});\n"
         )

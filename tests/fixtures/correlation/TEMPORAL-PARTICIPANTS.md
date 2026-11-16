@@ -1,0 +1,15 @@
+# Temporal participants
+
+Ordered retained context uses reachability thresholds within each successful correlation match's inclusive window. A candidate at position i participates when it is strictly later than the earliest reachable prefix endpoint at i-1 and strictly earlier than the latest reachable suffix start at i+1. The final position must occur at the actual completion timestamp. Missing threshold rows are unreachable, enforced by inner joins.
+
+The earliest reachable prefix endpoint gives the least restrictive valid predecessor. The latest reachable suffix start gives the least restrictive valid successor. Their witnesses concatenate around the candidate because the timestamps are strictly separated. All candidates already share one completion's `[WindowEnd - timespan, WindowEnd]`, so concatenation respects the total span. Conversely, every full sequence supplies both witnesses. Repeated references are separate positions; equal timestamps cannot advance adjacent positions.
+
+Each threshold relation contains at most one row per correlation match. Membership joins candidates only to these scalar threshold relations, then unions participant relationship IDs and selects the complete source rows. No stage joins populations of alternative paths. Complete context remains a native relationship relation consumed by parents; display truncation and `ContextComplete` remain separate.
+
+Boolean evidence keeps the existing parsed-expression recurrence: AND gates all child evidence by the whole conjunction; OR unions evidence from each satisfied child; negation propagates to leaves with De Morgan's laws, and absence leaves supply no values. The correctness gate includes all satisfied alternatives, incomplete alternatives, precedence, nested negation, absence-only evidence, shared sources and multilevel parents.
+
+Names expose source and field roles (`ContextUser`, `ContextGroupHost`, `CandidatesForFailure`, `EarliestFailurePrefix`, `LatestSuccessSuffix`, `OrderedParticipants`). Allocation reserves existing query identifiers and logical fields; punctuation becomes underscores and collisions gain suffixes. Public logical field names are quoted and preserved.
+
+`temporal_participants.py` prepares public-conversion fixtures and freezes sequence-length/branching workloads. Its correctness oracle exhaustively enumerates strictly ordered tuples and takes their contributor union; it does not use the backend's reachability recurrence. Benchmark stage diagnostics independently count window/source pairs, enumeration paths, scalar thresholds and selected participants. These extra diagnostics are measured separately from timed full-result workloads.
+
+The remaining expensive stage pairs successful completions with source rows in their windows. Dense overlapping completions can therefore still grow with completion/source pairs. The threshold algorithm removes path products, not that pairing or the display collection cost. Small deterministic datatables establish neither production capacity nor a universal latency guarantee.

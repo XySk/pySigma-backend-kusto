@@ -1934,6 +1934,7 @@ def fixtures():
     from tests.fixtures.correlation.relational_context import fixtures as relational_context_fixtures
     from tests.fixtures.correlation.standard_mappings import fixture as standard_mapping_fixture
     from tests.fixtures.correlation.temporal_context import fixtures as temporal_context_fixtures
+    from tests.fixtures.correlation.temporal_participants import fixtures as participant_fixtures
     from tests.fixtures.correlation.typed_grouped_context import fixtures as typed_grouped_context_fixtures
     from tests.fixtures.correlation.typed_grouping import fixtures as typed_grouping_fixtures
 
@@ -1950,6 +1951,7 @@ def fixtures():
         **context_fixtures(),
         **count_context_fixtures(),
         **ordered_context_fixtures(),
+        **participant_fixtures(),
         **ordered_state_fixtures(),
         **numeric_context_fixtures(),
         **empty_child_fixtures(),

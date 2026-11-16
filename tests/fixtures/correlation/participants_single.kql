@@ -1,0 +1,81 @@
+let Events=datatable(Timestamp:datetime, Host:string, Marker:string, User:string, Server:string) [
+datetime(2026-01-01T12:00:00Z), "h", "a", "a0", "a0-server",
+datetime(2026-01-01T12:01:00Z), "h", "a", "a1", "a1-server",
+datetime(2026-01-01T12:02:00Z), "h", "b", "b2", "b2-server",
+datetime(2026-01-01T12:02:00Z), "h", "a", "tie", "tie-server",
+datetime(2026-01-01T12:03:00Z), "h", "c", "c3", "c3-server",
+datetime(2026-01-01T12:04:00Z), "h", "a", "a4", "a4-server",
+datetime(2026-01-01T12:05:00Z), "h", "b", "b5", "b5-server",
+datetime(2026-01-01T12:06:00Z), "h", "a", "a6", "a6-server",
+datetime(2026-01-01T12:07:00Z), "h", "c", "c7", "c7-server",
+datetime(2026-01-01T12:08:00Z), "h", "a", "a8", "a8-server",
+datetime(2026-01-01T12:09:00Z), "h", "b", "b9", "b9-server",
+datetime(2026-01-01T12:10:00Z), "h", "a", "a10", "a10-server"
+];
+let Actual=() {
+let ContextSummary = () {
+// Strict sequence: "a". Total inclusive span: 7m.
+union (Events
+| where Marker =~ "a"
+| extend EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"]
+| extend SourceRule = "a")
+| where isnotnull(EventTime_1) and isnotempty(GroupHost)
+// Batch equal timestamps: simultaneous source matches cannot advance strict sequence positions.
+| summarize by EventTime_1, GroupHost
+| project WindowStart = EventTime_1 - 7m, WindowEnd = EventTime_1, ["Host"] = GroupHost, RuleCount = tolong(1)
+};
+let CorrelationMatches = materialize(ContextSummary()
+| serialize CorrelationMatchId = row_number());
+let WindowSourceMatches = materialize(
+CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, ContextGroupHost = ["Host"], ContextPartition = 1
+| join kind=inner (
+union (Events
+| where Marker =~ "a"
+| extend ContextEventTime = todatetime(["Timestamp"]), ContextGroupHost = ["Host"], ContextUser = ["User"], ContextServer = ["Server"]
+| extend ContextSourceRule = "a")
+| project ContextEventTime, ContextSourceRule, ContextGroupHost, ContextUser, ContextServer, ContextPartition = 1
+) on ContextGroupHost
+| where ContextEventTime between ((CompletionTime - 7m) .. CompletionTime)
+| serialize SourceRelationshipId = row_number());
+// All candidates share one successful completion's inclusive window.
+// Strict prefix/suffix witnesses retain every participating alternative.
+let CandidatesFora = WindowSourceMatches
+| where ContextSourceRule == "a"
+| project CorrelationMatchId, CompletionTime, SourceRelationshipId, ContextEventTime;
+let OrderedParticipants = union (CandidatesFora
+| where ContextEventTime == CompletionTime
+| project CorrelationMatchId, SourceRelationshipId)
+| distinct CorrelationMatchId, SourceRelationshipId;
+let OrderedSourceRelationships = materialize(WindowSourceMatches
+| join kind=leftsemi (OrderedParticipants) on CorrelationMatchId, SourceRelationshipId);
+let CompleteContextRelationships = materialize(OrderedSourceRelationships
+| project CorrelationMatchId, ContextUser, ContextServer
+| distinct *);
+let ValuesForUser = CompleteContextRelationships
+| where isnotnull(ContextUser)
+| summarize by CorrelationMatchId, ContextUser
+| summarize DisplayedUser = make_list(ContextUser, 1000), DistinctUserCount = count() by CorrelationMatchId;
+let ValuesForServer = CompleteContextRelationships
+| where isnotnull(ContextServer)
+| summarize by CorrelationMatchId, ContextServer
+| summarize DisplayedServer = make_list(ContextServer, 1000), DistinctServerCount = count() by CorrelationMatchId;
+CorrelationMatches
+| join kind=leftouter (ValuesForUser) on CorrelationMatchId
+| extend ["User"] = coalesce(DisplayedUser, dynamic([]))
+| join kind=leftouter (ValuesForServer) on CorrelationMatchId
+| extend ["Server"] = coalesce(DisplayedServer, dynamic([]))
+| extend ContextComplete = coalesce(DistinctUserCount, 0) <= 1000 and coalesce(DistinctServerCount, 0) <= 1000
+| project ["WindowStart"], ["WindowEnd"], ["Host"], ["User"], ["Server"], ["RuleCount"], ["ContextComplete"]
+};
+let Observed=Actual() | project WindowEnd, Users=tostring(array_sort_asc(User)), Servers=tostring(array_sort_asc(Server)), RuleCount, ContextComplete;
+let Expected=datatable(WindowEnd:datetime, Users:string, Servers:string, RuleCount:long, ContextComplete:bool) [
+datetime(2026-01-01T12:00:00Z), '["a0"]', '["a0-server"]', 1, true,
+datetime(2026-01-01T12:01:00Z), '["a1"]', '["a1-server"]', 1, true,
+datetime(2026-01-01T12:02:00Z), '["tie"]', '["tie-server"]', 1, true,
+datetime(2026-01-01T12:04:00Z), '["a4"]', '["a4-server"]', 1, true,
+datetime(2026-01-01T12:06:00Z), '["a6"]', '["a6-server"]', 1, true,
+datetime(2026-01-01T12:08:00Z), '["a8"]', '["a8-server"]', 1, true,
+datetime(2026-01-01T12:10:00Z), '["a10"]', '["a10-server"]', 1, true
+];
+union (Observed | extend Delta=1), (Expected | extend Delta=-1)
+| summarize Delta=sum(Delta) by WindowEnd, Users, Servers, RuleCount, ContextComplete | where Delta != 0
