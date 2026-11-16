@@ -35,8 +35,7 @@ union (Events
 | extend ContextSourceRule = "a")
 | project ContextEventTime, ContextSourceRule, ContextGroupHost, ContextUser, ContextServer, ContextPartition = 1
 ) on ContextGroupHost
-| where ContextEventTime between ((CompletionTime - 7m) .. CompletionTime)
-| serialize SourceRelationshipId = row_number());
+| where ContextEventTime between ((CompletionTime - 7m) .. CompletionTime));
 // Successful one/two-step completions need only endpoint participant filters.
 let OrderedSourceRelationships = materialize(WindowSourceMatches
 | where (ContextSourceRule == "a" and ContextEventTime == CompletionTime));

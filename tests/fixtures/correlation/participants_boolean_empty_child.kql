@@ -50,8 +50,7 @@ union (Events
 | extend ContextSourceRule = "C")
 | project ContextEventTime, ContextSourceRule, ContextGroupHost, ContextUser, ContextServer, ContextPartition = 1
 ) on ContextGroupHost
-| where ContextEventTime between ((CompletionTime - 5m) .. CompletionTime)
-| serialize SourceRelationshipId = row_number());
+| where ContextEventTime between ((CompletionTime - 5m) .. CompletionTime));
 let BooleanParticipants = materialize(WindowSourceMatches
 | join kind=inner (WindowSourceMatches | summarize HasA_1 = countif(ContextSourceRule == "A") > 0, HasB_1 = countif(ContextSourceRule == "B") > 0, HasC_1 = countif(ContextSourceRule == "C") > 0 by CorrelationMatchId) on CorrelationMatchId
 | where ((not(HasA_1) and (false)) or ((HasB_1 and HasC_1) and (((HasB_1 and HasC_1) and ((HasB_1 and (ContextSourceRule == "B")) or (HasC_1 and (ContextSourceRule == "C"))))))));
@@ -101,8 +100,7 @@ union (_sigma_shared_results | where ["ContextRowKind"] == "Summary"
 | extend HasContextEvidence = true)
 | project ContextEventTime, ContextSourceRule, ContextGroupHost, ContextUser, ContextServer, HasContextEvidence, ContextPartition = 1
 ) on ContextGroupHost
-| where ContextEventTime between ((CompletionTime - 5m) .. CompletionTime)
-| serialize SourceRelationshipId = row_number());
+| where ContextEventTime between ((CompletionTime - 5m) .. CompletionTime));
 let BooleanParticipants = materialize(WindowSourceMatches
 | join kind=inner (WindowSourceMatches | summarize HasAbsenceChild_1 = countif(ContextSourceRule == "AbsenceChild") > 0, HasFinish_1 = countif(ContextSourceRule == "Finish") > 0 by CorrelationMatchId) on CorrelationMatchId
 | where ((HasAbsenceChild_1 and HasFinish_1) and ((HasAbsenceChild_1 and (ContextSourceRule == "AbsenceChild")) or (HasFinish_1 and (ContextSourceRule == "Finish")))));

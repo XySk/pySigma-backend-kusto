@@ -4,7 +4,7 @@
   "fixtures": [
     {
       "name": "participants_single.kql",
-      "sha256": "dd7e45ffddb7f371d13ded6257f86db26f661f97dc9704d3446cd5dfbd24bd56",
+      "sha256": "0c8759f215b727066086450794add19910e89dddc71f630fc8e2eb475e9cd3cc",
       "expected_error": null
     },
     {
@@ -14,12 +14,12 @@
     },
     {
       "name": "participants_ordered_empty_child.kql",
-      "sha256": "6613311705337659b204ffb2509e5b260993ff604b688f4930d3683f9fcb7edb",
+      "sha256": "a74e767ecec144b7d03bc299a22410e5acc86047e38ef783486ce5a419d42e64",
       "expected_error": null
     },
     {
       "name": "participants_boolean_empty_child.kql",
-      "sha256": "4b6434c14aac0bdf0cbd263fec8d4d6227db9ceeb556d4eb35e3e3cdcfa9f4e8",
+      "sha256": "296bc9f58dd289810e0d13020d8006b673f61d40cdef720490eb71004ea92c2c",
       "expected_error": null
     },
     {
