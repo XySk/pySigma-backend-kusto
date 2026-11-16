@@ -725,3 +725,22 @@ fixtures were not completed in this stream. Issue #31 still depends on released
 upstream range parsing, and partial ordered thresholds remain deferred. These gaps
 are follow-up work; they are not converted into acceptance passes by merging the
 available implementation.
+
+## Table-sensitive source predicates (2026-11-16)
+
+`source_predicates_securityevent.kql` passed the strict v2 runner on Kusto emulator
+`2026.11.15.0741-2645-8e3387b-master`, database `NetDefaultDB`, with the unchanged
+12 GiB per-query memory cap. HTTP 200, one empty primary multiset diagnostic, and
+a successful uncancelled completion establish the two independently expected
+four-distinct-group Alice windows. The source retains EventID 4799,
+CallerProcessId 0x0, and all four privileged-group predicates after custom
+SecurityEvent selection and Microsoft XDR processing. Standard field mappings,
+a per-source counted-field alias, and explicit detection-value normalization are
+included. This small predicate regression does not establish throughput.
+
+[Results and fixture hash](runtime-evidence/source-predicates/results.json),
+[engine response](runtime-evidence/source-predicates/engine-version.response.json),
+and [query response](runtime-evidence/source-predicates/source_predicates_securityevent.response.json)
+retain the execution evidence. Re-run with the targeted
+`source-predicates-manifest.json`; regenerate its fixture/hash after backend
+changes before claiming acceptance for the changed query.
