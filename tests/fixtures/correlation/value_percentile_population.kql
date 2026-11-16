@@ -30,7 +30,7 @@ _sigma_ranked
 _sigma_ranked | summarize _sigma_population = max(_sigma_rank) by _sigma_partition
 ) on _sigma_partition
 | where _sigma_rank == max_of(1, (_sigma_population / 100) * 0 + tolong(ceiling(toreal((_sigma_population % 100) * 0) / 100.0)))
-| extend ValuePercentile = _sigma_value[1]
+| extend ValuePercentile = tolong(_sigma_value[1])
 | where (gettype(ValuePercentile) in ("int", "long") and todecimal(ValuePercentile) >= decimal(0)) or (gettype(ValuePercentile) in ("real", "double", "decimal") and toreal(ValuePercentile) >= 0)
 | project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ValuePercentile
 };
@@ -60,7 +60,7 @@ _sigma_ranked
 _sigma_ranked | summarize _sigma_population = max(_sigma_rank) by _sigma_partition
 ) on _sigma_partition
 | where _sigma_rank == max_of(1, (_sigma_population / 100) * 1 + tolong(ceiling(toreal((_sigma_population % 100) * 1) / 100.0)))
-| extend ValuePercentile = _sigma_value[1]
+| extend ValuePercentile = tolong(_sigma_value[1])
 | where (gettype(ValuePercentile) in ("int", "long") and todecimal(ValuePercentile) >= decimal(0)) or (gettype(ValuePercentile) in ("real", "double", "decimal") and toreal(ValuePercentile) >= 0)
 | project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ValuePercentile
 };
@@ -90,7 +90,7 @@ _sigma_ranked
 _sigma_ranked | summarize _sigma_population = max(_sigma_rank) by _sigma_partition
 ) on _sigma_partition
 | where _sigma_rank == max_of(1, (_sigma_population / 100) * 50 + tolong(ceiling(toreal((_sigma_population % 100) * 50) / 100.0)))
-| extend ValuePercentile = _sigma_value[1]
+| extend ValuePercentile = tolong(_sigma_value[1])
 | where (gettype(ValuePercentile) in ("int", "long") and todecimal(ValuePercentile) >= decimal(0)) or (gettype(ValuePercentile) in ("real", "double", "decimal") and toreal(ValuePercentile) >= 0)
 | project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ValuePercentile
 };
@@ -120,7 +120,7 @@ _sigma_ranked
 _sigma_ranked | summarize _sigma_population = max(_sigma_rank) by _sigma_partition
 ) on _sigma_partition
 | where _sigma_rank == max_of(1, (_sigma_population / 100) * 99 + tolong(ceiling(toreal((_sigma_population % 100) * 99) / 100.0)))
-| extend ValuePercentile = _sigma_value[1]
+| extend ValuePercentile = tolong(_sigma_value[1])
 | where (gettype(ValuePercentile) in ("int", "long") and todecimal(ValuePercentile) >= decimal(0)) or (gettype(ValuePercentile) in ("real", "double", "decimal") and toreal(ValuePercentile) >= 0)
 | project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ValuePercentile
 };
@@ -150,7 +150,7 @@ _sigma_ranked
 _sigma_ranked | summarize _sigma_population = max(_sigma_rank) by _sigma_partition
 ) on _sigma_partition
 | where _sigma_rank == max_of(1, (_sigma_population / 100) * 100 + tolong(ceiling(toreal((_sigma_population % 100) * 100) / 100.0)))
-| extend ValuePercentile = _sigma_value[1]
+| extend ValuePercentile = tolong(_sigma_value[1])
 | where (gettype(ValuePercentile) in ("int", "long") and todecimal(ValuePercentile) >= decimal(0)) or (gettype(ValuePercentile) in ("real", "double", "decimal") and toreal(ValuePercentile) >= 0)
 | project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ValuePercentile
 };

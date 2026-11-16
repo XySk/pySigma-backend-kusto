@@ -3,11 +3,13 @@
 // Run the entire file in one Kusto query. PASS = zero output rows.
 // Nonempty rows identify a missing, additional, or duplicated summary.
 // Each physical input row satisfies two searches in each of two source rules.
-let Events = datatable(Timestamp:string, Marker:string) [
+let Events=datatable(Timestamp:string, Marker:string) [
     "2026-01-01T12:00:00Z", "match",
     "2026-01-01T12:00:00Z", "match",
     "2026-01-01T12:01:00Z", "match"
-];
+]
+// Normalize Events scalar fixture inputs explicitly.
+| extend Timestamp=todatetime(Timestamp);
 let Actual = () {
 let _sigma_weights = union (Events
 | where Marker =~ "match"

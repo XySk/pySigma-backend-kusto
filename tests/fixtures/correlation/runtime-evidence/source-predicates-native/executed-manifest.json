@@ -1,0 +1,11 @@
+{
+  "source_revision": "fda6d2a514a712b01ca189820160ea04d09e7cfa",
+  "status": "PASS",
+  "fixtures": [
+    {
+      "name": "source_predicates_securityevent.kql",
+      "sha256": "120494d80e695613471489b7effb949b069b43c6bd69ac003034d809ce010c10",
+      "expected_error": null
+    }
+  ]
+}

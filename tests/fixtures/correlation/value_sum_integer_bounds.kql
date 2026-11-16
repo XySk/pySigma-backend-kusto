@@ -3,12 +3,14 @@
 // Run the entire file in one Kusto query. PASS = zero output rows.
 // Nonempty rows identify a missing, additional, or duplicated summary.
 // Both totals remain within signed 64-bit range and must stay exact.
-let Events = datatable(Timestamp:string, Amount:dynamic, Marker:string) [
+let Events=datatable(Timestamp:string, Amount:dynamic, Marker:string) [
     "2026-01-01T12:00:00Z", dynamic(9223372036854775807), "match",
     "2026-01-01T12:00:00Z", dynamic(1), "match",
     "2026-01-01T12:00:00Z", dynamic(-1), "match",
     "2026-01-01T12:01:00Z", dynamic(-1), "match"
-];
+]
+// Normalize Events scalar fixture inputs explicitly.
+| extend Amount=iff(gettype(Amount) in ("int","long","real","double","decimal"), tolong(Amount), long(null)), Timestamp=todatetime(Timestamp);
 let Actual = () {
 let _sigma_guarded_query = () {
 let _sigma_values = union (Events
@@ -30,7 +32,7 @@ _sigma_values
 | summarize _sigma_integer_sum = sumif(todecimal(_sigma_value[1]), tostring(_sigma_value[0]) in ("int", "long")), _sigma_real_sum = sumif(toreal(_sigma_value[1]), tostring(_sigma_value[0]) in ("real", "double", "decimal") and isfinite(toreal(_sigma_value[1]))), _sigma_real_count = countif(tostring(_sigma_value[0]) in ("real", "double", "decimal") and isfinite(toreal(_sigma_value[1]))) by _sigma_window_end
 );
 _sigma_sums
-| extend ValueSum = iff(_sigma_real_count > 0, pack_array(toreal(_sigma_integer_sum) + _sigma_real_sum)[0], pack_array(tolong(_sigma_integer_sum))[0])
+| extend ValueSum = tolong(_sigma_integer_sum)
 | where (_sigma_real_count == 0 and todecimal(_sigma_integer_sum) >= decimal(9223372036854775806)) or (_sigma_real_count > 0 and toreal(_sigma_integer_sum) + _sigma_real_sum >= 9223372036854775806)
 | project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ValueSum
 };

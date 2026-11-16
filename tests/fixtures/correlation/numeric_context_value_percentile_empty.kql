@@ -1,6 +1,8 @@
 let Events=datatable(Amount:dynamic) [dynamic("10"),dynamic(null),dynamic("bad")]
 | union (print Amount=pack_array(real(nan))[0]), (print Amount=pack_array(real(+inf))[0]), (print Amount=pack_array(real(-inf))[0])
-| extend Timestamp=datetime(2026-01-01T12:00:00Z),Host="h",Marker="match",User="Alice";
+| extend Timestamp=datetime(2026-01-01T12:00:00Z),Host="h",Marker="match",User="Alice"
+// Normalize Events scalar fixture inputs explicitly.
+| extend Amount=iff(gettype(Amount) in ("int","long","real","double","decimal"), tolong(Amount), long(null));
 let Actual=(){
 let _sigma_guarded_query_ = () {
 let _sigma_shared_child = () {
@@ -105,7 +107,7 @@ _sigma_ranked
 _sigma_ranked | summarize _sigma_population = max(_sigma_rank) by _sigma_partition
 ) on _sigma_partition
 | where _sigma_rank == max_of(1, (_sigma_population / 100) * 60 + tolong(ceiling(toreal((_sigma_population % 100) * 60) / 100.0)))
-| extend ValuePercentile = _sigma_value[1]
+| extend ValuePercentile = tolong(_sigma_value[1])
 | where (gettype(ValuePercentile) in ("int", "long") and todecimal(ValuePercentile) != decimal(-1)) or (gettype(ValuePercentile) in ("real", "double", "decimal") and toreal(ValuePercentile) != -1)
 | project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ValuePercentile
 };
@@ -263,7 +265,7 @@ _sigma_ranked
 _sigma_ranked | summarize _sigma_population = max(_sigma_rank) by _sigma_partition
 ) on _sigma_partition
 | where _sigma_rank == max_of(1, (_sigma_population / 100) * 60 + tolong(ceiling(toreal((_sigma_population % 100) * 60) / 100.0)))
-| extend ValuePercentile = _sigma_value[1]
+| extend ValuePercentile = tolong(_sigma_value[1])
 | where (gettype(ValuePercentile) in ("int", "long") and todecimal(ValuePercentile) != decimal(-1)) or (gettype(ValuePercentile) in ("real", "double", "decimal") and toreal(ValuePercentile) != -1)
 | project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ValuePercentile
 };

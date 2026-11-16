@@ -7,7 +7,7 @@
 // A -> A -> B completes only at B timestamps 12:02, 12:04, and 12:22.
 // Repeated rule-list positions require separate strictly later matches;
 // their RuleCount remains the distinct type count (2).
-let Events = datatable(Timestamp:string, Marker:string) [
+let Events=datatable(Timestamp:string, Marker:string) [
     "2026-01-01T12:00:00Z", "A",
     "2026-01-01T12:00:00Z", "A",
     "2026-01-01T12:00:00Z", "B",
@@ -27,7 +27,9 @@ let Events = datatable(Timestamp:string, Marker:string) [
     "2026-01-01T12:23:00Z", "C",
     "2026-01-01T12:30:00Z", "none",
     "invalid", "C"
-];
+]
+// Normalize Events scalar fixture inputs explicitly.
+| extend Timestamp=todatetime(Timestamp);
 let default = () {
 let _sigma_types = union (Events
 | where Marker =~ "A"

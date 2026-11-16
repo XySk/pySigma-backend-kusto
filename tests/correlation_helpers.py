@@ -4,8 +4,8 @@ import yaml
 
 from sigma.backends.kusto import KustoBackend
 from sigma.collection import SigmaCollection
-from sigma.processing.pipeline import ProcessingPipeline
 from sigma.pipelines.kusto_common.schema import BaseSchema, FieldInfo, TableSchema
+from sigma.processing.pipeline import ProcessingPipeline
 
 
 def source_document(name="source-rule", marker="match", *, product="fixture"):
@@ -69,6 +69,11 @@ def fixture_schema(tables=("Events", "NetworkEvents"), **overrides):
             "Network Actor",
             "Group",
             "Value",
+            "Other",
+            "Tenant",
+            "Scope",
+            "NetworkScope",
+            "ProcessCase",
         )
     }
     types.update(

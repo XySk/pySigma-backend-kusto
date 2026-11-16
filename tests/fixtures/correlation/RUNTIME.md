@@ -1,3 +1,25 @@
+# Native scalar source/type acceptance (#37 and refreshed #36)
+
+Executed on 2026-11-16 with the existing strict runtime harness against engine `2026.11.15.0741-2645-8e3387b-master`, database `NetDefaultDB`, and the query memory option `max_memory_consumption_per_query_per_node=12884901888`. All eleven generated queries returned HTTP 200, exactly one empty primary multiset/schema diagnostic, and successful uncancelled completion without engine errors. The SecurityEvent fixture also compares the complete public schema: datetime window bounds, native string Actor, and long ValueCount.
+
+The selected fixtures cover direct grouped and ungrouped sources, duplicate source matches, standard mappings, retained scalar context, native long/string grouping, guid alias chains, mixed direct/child sources, native sum/percentile output, and real/long/decimal distinct-value precision. Their expected rows are independent literal examples; this is a scoped correctness gate, not a full-corpus or performance result. Other regenerated hashes still need integrated acceptance. Historical results below apply only to their original recorded hashes.
+
+Exact executed queries, hashes, raw completion/error/resource frames, engine version, and harness results are preserved under [native-scalars](runtime-evidence/native-scalars/results.json) and [source-predicates-native](runtime-evidence/source-predicates-native/results.json).
+
+| Fixture | Executed SHA-256 | Result |
+| --- | --- | --- |
+| `event_count_duplicate_sources.kql` | `ce4be2e5c144899fb02a64e5bb6ba3de36d2c20dd3f7b6c0e2225cef240fa189` | PASS |
+| `event_count_grouped.kql` | `8ba348aeca8bd59c6dd74302739c63e6c79d7b95649a24bf142e5c34fcd5d37d` | PASS |
+| `standard_mappings.kql` | `df28cd7a67dbd37e8856d006feb3776b9b76940d6b44b52ed2c68d363fb2749d` | PASS |
+| `typed_grouping_event_count.kql` | `a92e409ee0ba26aaed07578e84991a9f72cbf1631a249ee57e57a8ad13866f19` | PASS |
+| `typed_grouping_extended_chain.kql` | `e313ca053afeae46a9d0d3ee29e615ba9eac14570892e9aaeea70f3c1885e876` | PASS |
+| `typed_grouping_mixed_chain.kql` | `9facfe2cc77005e26f568262a185ac7df84c93752bee2e4c35fbcba039377e54` | PASS |
+| `typed_grouping_value_count.kql` | `c340c283132f66d9faa018ebb4b5a976f96fc0970bc46503aed8205d43309e78` | PASS |
+| `typed_grouping_value_percentile.kql` | `05cf0b029b94ec95851a36927ed09b00d8c05ce904703d8b0312c1e1bf2a958f` | PASS |
+| `typed_grouping_value_sum.kql` | `2565a30982f04f7d02af5f6f54401a7e48f1c30cd711c02856c499f5b3430554` | PASS |
+| `value_count_typed_precision.kql` | `8139cb1f1fcba90338d2508f581b703626d5684d1da06e2f5804005db46c907d` | PASS |
+| `source_predicates_securityevent.kql` | `120494d80e695613471489b7effb949b069b43c6bd69ac003034d809ce010c10` | PASS |
+
 # Numeric sum runtime evidence
 
 Executed on 2026-11-15 against the Microsoft Azure Data Explorer Kusto emulator,

@@ -5,7 +5,7 @@
 // Anchors/type counts: 12:00=1, 12:01=1, 12:05=3, 12:06=3,
 // 12:06:00.0000001=2, 12:20=1. Ties/repeated searches do not inflate types.
 // eq: 0 returns no rows; expiry alone and nonmatching events create no anchors.
-let Events = datatable(Timestamp:string, Marker:string) [
+let Events=datatable(Timestamp:string, Marker:string) [
     "2026-01-01T12:05:00Z", "C",
     "2026-01-01T12:00:00Z", "A",
     "2026-01-01T12:00:00Z", "A",
@@ -17,7 +17,9 @@ let Events = datatable(Timestamp:string, Marker:string) [
     "2026-01-01T12:20:00Z", "A",
     "2026-01-01T12:30:00Z", "none",
     "invalid", "C"
-];
+]
+// Normalize Events scalar fixture inputs explicitly.
+| extend Timestamp=todatetime(Timestamp);
 let gt_2 = () {
 let _sigma_types = union (Events
 | where Marker =~ "A"
