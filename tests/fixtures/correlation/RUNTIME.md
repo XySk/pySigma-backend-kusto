@@ -856,3 +856,22 @@ peak-memory measurements increased despite lower elapsed time and CPU.
 The native-average strategy passed all 16 focused real-Kusto fixtures, including current-window results after a large real observation expires, finite-only and undefined populations, weighting, ordinary decimal-to-real rounding, aliases, child metrics, and retained context. Paired old/new strategy benchmarks passed all 48 samples across eight long/real, many-group/hot-group, plain/context workloads. All eight wall/engine medians decreased; one CPU median increased and one peak-memory median increased slightly. The query keeps exact candidate pairing and actual-time membership to avoid history-dependent floating-point residue.
 
 [Recorded evidence and per-workload results](runtime-evidence/native-averages/README.md) include frozen public queries and independent expected multisets, engine requests/responses, strict verdicts, version/settings, and raw CPU/memory statistics. These compare the old boxed average after scalar/context foundations against the native average; they are separate from the #35 pre-redesign baseline. The small emulator workloads do not establish production-scale capacity. Final integrated corpus and performance gates remain required.
+
+
+# Pinned scalar redesign baseline (#35)
+
+The [pre-redesign baseline report](BENCHMARK-BASELINE.md) pins revision
+`07525ee` and 64 public-conversion workloads. All have three non-interrupted
+attempts on the same 12 GiB emulator/image/version with fixed 15-second client
+and 13-second server deadlines. Of 195 measured attempts, 81 were originally
+PASS and 114 FAIL; three schema-only boxed-sum failures are separately reassessed
+from their original frames, yielding 84 verified samples across 28 plain
+workloads. One explicit interruption remains FAIL/unverified. All 36 context/chain
+workloads failed to complete verified output; timeout/empty replies are not
+successful empty results and do not establish OOM.
+
+The report preserves every original raw ledger/request/response with hashes,
+repeated client/engine elapsed samples and actual CPU/peak memory when exposed.
+These 4/24/96-row synthetic inputs chiefly reveal planning cost and representative
+behavior, not production throughput or capacity. Intermediate growth is unobserved.
+Earlier focused evidence and later candidate studies remain separate.

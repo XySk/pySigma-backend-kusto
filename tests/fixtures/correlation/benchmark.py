@@ -326,6 +326,8 @@ def assess(payload, fixture, baseline=False):
     primary = next(frame for frame in payload if frame.get("TableKind") == "PrimaryResult")
     columns = primary.get("Columns", [])
     schema = {column.get("ColumnName"): column.get("ColumnType") for column in columns}
+    if fixture.get("context") and not baseline and schema.get("ContextComplete") != "bool":
+        return False, "candidate context output requires ContextComplete:bool"
     # Pre-redesign grouping was dynamic. Record this intentional migration
     # separately; compare values after checking the explicitly allowed schema.
     for column, typ in fixture["schema"].items():

@@ -1,0 +1,5506 @@
+{
+  "baseline_revision": "07525ee846878754bda7933eab0684895a156086",
+  "manifest_sha256": "5141df3cfb4f43f276f4ca49f0113a467ec59c97534d042b35f51c928c0963ea",
+  "scope": "small synthetic datatables, 4/24/96 input rows; planning and query behavior, not capacity",
+  "intermediate_growth": "unobserved; operator text counts are not runtime cardinalities",
+  "runs": [
+    {
+      "directory": "kusto-spec34-baseline-measured",
+      "started_utc": "2026-11-16T17:01:06.623982+00:00",
+      "recorded_status": "FAIL",
+      "attempts": 28,
+      "container": {
+        "image": "sha256:65e8298d9350856dec696e0e41327288e7bc105146768a1429fce62f3640acd8",
+        "memory": 12884901888,
+        "memory_swap": 12884901888,
+        "cpu_quota": 0,
+        "nano_cpus": 0
+      },
+      "engine_version": {
+        "status": "PASS",
+        "response": {
+          "Tables": [
+            {
+              "TableName": "Table_0",
+              "Columns": [
+                {
+                  "ColumnName": "BuildVersion",
+                  "DataType": "String"
+                },
+                {
+                  "ColumnName": "BuildTime",
+                  "DataType": "DateTime"
+                },
+                {
+                  "ColumnName": "ServiceType",
+                  "DataType": "String"
+                },
+                {
+                  "ColumnName": "ProductVersion",
+                  "DataType": "String"
+                },
+                {
+                  "ColumnName": "ServiceOffering",
+                  "DataType": "String"
+                }
+              ],
+              "Rows": [
+                [
+                  "1.0.9815.14081",
+                  "2026-11-15T07:49:22Z",
+                  "Engine",
+                  "2026.11.15.0741-2645-8e3387b-master",
+                  ""
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "request_options": {
+        "max_memory_consumption_per_query_per_node": 12884901888,
+        "query_results_cache_max_age": "00:00:00",
+        "servertimeout": "00:00:13"
+      },
+      "timeout_seconds": 15
+    },
+    {
+      "directory": "kusto-spec34-baseline-remaining",
+      "started_utc": "2026-11-16T17:11:56.351848+00:00",
+      "recorded_status": "FAIL",
+      "attempts": 62,
+      "container": {
+        "image": "sha256:65e8298d9350856dec696e0e41327288e7bc105146768a1429fce62f3640acd8",
+        "memory": 12884901888,
+        "memory_swap": 12884901888,
+        "cpu_quota": 0,
+        "nano_cpus": 0
+      },
+      "engine_version": {
+        "status": "PASS",
+        "response": {
+          "Tables": [
+            {
+              "TableName": "Table_0",
+              "Columns": [
+                {
+                  "ColumnName": "BuildVersion",
+                  "DataType": "String"
+                },
+                {
+                  "ColumnName": "BuildTime",
+                  "DataType": "DateTime"
+                },
+                {
+                  "ColumnName": "ServiceType",
+                  "DataType": "String"
+                },
+                {
+                  "ColumnName": "ProductVersion",
+                  "DataType": "String"
+                },
+                {
+                  "ColumnName": "ServiceOffering",
+                  "DataType": "String"
+                }
+              ],
+              "Rows": [
+                [
+                  "1.0.9815.14081",
+                  "2026-11-15T07:49:22Z",
+                  "Engine",
+                  "2026.11.15.0741-2645-8e3387b-master",
+                  ""
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "request_options": {
+        "max_memory_consumption_per_query_per_node": 12884901888,
+        "query_results_cache_max_age": "00:00:00",
+        "servertimeout": "00:00:13"
+      },
+      "timeout_seconds": 15
+    },
+    {
+      "directory": "kusto-spec34-baseline-fast",
+      "started_utc": "2026-11-16T17:41:03.946845+00:00",
+      "recorded_status": "PASS",
+      "attempts": 42,
+      "container": {
+        "image": "sha256:65e8298d9350856dec696e0e41327288e7bc105146768a1429fce62f3640acd8",
+        "memory": 12884901888,
+        "memory_swap": 12884901888,
+        "cpu_quota": 0,
+        "nano_cpus": 0
+      },
+      "engine_version": {
+        "status": "PASS",
+        "response": {
+          "Tables": [
+            {
+              "TableName": "Table_0",
+              "Columns": [
+                {
+                  "ColumnName": "BuildVersion",
+                  "DataType": "String"
+                },
+                {
+                  "ColumnName": "BuildTime",
+                  "DataType": "DateTime"
+                },
+                {
+                  "ColumnName": "ServiceType",
+                  "DataType": "String"
+                },
+                {
+                  "ColumnName": "ProductVersion",
+                  "DataType": "String"
+                },
+                {
+                  "ColumnName": "ServiceOffering",
+                  "DataType": "String"
+                }
+              ],
+              "Rows": [
+                [
+                  "1.0.9815.14081",
+                  "2026-11-15T07:49:22Z",
+                  "Engine",
+                  "2026.11.15.0741-2645-8e3387b-master",
+                  ""
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "request_options": {
+        "max_memory_consumption_per_query_per_node": 12884901888,
+        "query_results_cache_max_age": "00:00:00",
+        "servertimeout": "00:00:13"
+      },
+      "timeout_seconds": 15
+    },
+    {
+      "directory": "kusto-spec34-baseline-context-batch1",
+      "started_utc": "2026-11-16T17:50:28.222267+00:00",
+      "recorded_status": "FAIL",
+      "attempts": 21,
+      "container": {
+        "image": "sha256:65e8298d9350856dec696e0e41327288e7bc105146768a1429fce62f3640acd8",
+        "memory": 12884901888,
+        "memory_swap": 12884901888,
+        "cpu_quota": 0,
+        "nano_cpus": 0
+      },
+      "engine_version": {
+        "status": "PASS",
+        "response": {
+          "Tables": [
+            {
+              "TableName": "Table_0",
+              "Columns": [
+                {
+                  "ColumnName": "BuildVersion",
+                  "DataType": "String"
+                },
+                {
+                  "ColumnName": "BuildTime",
+                  "DataType": "DateTime"
+                },
+                {
+                  "ColumnName": "ServiceType",
+                  "DataType": "String"
+                },
+                {
+                  "ColumnName": "ProductVersion",
+                  "DataType": "String"
+                },
+                {
+                  "ColumnName": "ServiceOffering",
+                  "DataType": "String"
+                }
+              ],
+              "Rows": [
+                [
+                  "1.0.9815.14081",
+                  "2026-11-15T07:49:22Z",
+                  "Engine",
+                  "2026.11.15.0741-2645-8e3387b-master",
+                  ""
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "request_options": {
+        "max_memory_consumption_per_query_per_node": 12884901888,
+        "query_results_cache_max_age": "00:00:00",
+        "servertimeout": "00:00:13"
+      },
+      "timeout_seconds": 15
+    },
+    {
+      "directory": "kusto-spec34-baseline-context-batch2",
+      "started_utc": "2026-11-16T18:58:38.075189+00:00",
+      "recorded_status": "FAIL",
+      "attempts": 21,
+      "container": {
+        "image": "sha256:65e8298d9350856dec696e0e41327288e7bc105146768a1429fce62f3640acd8",
+        "memory": 12884901888,
+        "memory_swap": 12884901888,
+        "cpu_quota": 0,
+        "nano_cpus": 0
+      },
+      "engine_version": {
+        "status": "PASS",
+        "response": {
+          "Tables": [
+            {
+              "TableName": "Table_0",
+              "Columns": [
+                {
+                  "ColumnName": "BuildVersion",
+                  "DataType": "String"
+                },
+                {
+                  "ColumnName": "BuildTime",
+                  "DataType": "DateTime"
+                },
+                {
+                  "ColumnName": "ServiceType",
+                  "DataType": "String"
+                },
+                {
+                  "ColumnName": "ProductVersion",
+                  "DataType": "String"
+                },
+                {
+                  "ColumnName": "ServiceOffering",
+                  "DataType": "String"
+                }
+              ],
+              "Rows": [
+                [
+                  "1.0.9815.14081",
+                  "2026-11-15T07:49:22Z",
+                  "Engine",
+                  "2026.11.15.0741-2645-8e3387b-master",
+                  ""
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "request_options": {
+        "max_memory_consumption_per_query_per_node": 12884901888,
+        "query_results_cache_max_age": "00:00:00",
+        "servertimeout": "00:00:13"
+      },
+      "timeout_seconds": 15
+    },
+    {
+      "directory": "kusto-spec34-baseline-context-batch3",
+      "started_utc": "2026-11-16T19:09:01.059620+00:00",
+      "recorded_status": "FAIL",
+      "attempts": 21,
+      "container": {
+        "image": "sha256:65e8298d9350856dec696e0e41327288e7bc105146768a1429fce62f3640acd8",
+        "memory": 12884901888,
+        "memory_swap": 12884901888,
+        "cpu_quota": 0,
+        "nano_cpus": 0
+      },
+      "engine_version": {
+        "status": "PASS",
+        "response": {
+          "Tables": [
+            {
+              "TableName": "Table_0",
+              "Columns": [
+                {
+                  "ColumnName": "BuildVersion",
+                  "DataType": "String"
+                },
+                {
+                  "ColumnName": "BuildTime",
+                  "DataType": "DateTime"
+                },
+                {
+                  "ColumnName": "ServiceType",
+                  "DataType": "String"
+                },
+                {
+                  "ColumnName": "ProductVersion",
+                  "DataType": "String"
+                },
+                {
+                  "ColumnName": "ServiceOffering",
+                  "DataType": "String"
+                }
+              ],
+              "Rows": [
+                [
+                  "1.0.9815.14081",
+                  "2026-11-15T07:49:22Z",
+                  "Engine",
+                  "2026.11.15.0741-2645-8e3387b-master",
+                  ""
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "request_options": {
+        "max_memory_consumption_per_query_per_node": 12884901888,
+        "query_results_cache_max_age": "00:00:00",
+        "servertimeout": "00:00:13"
+      },
+      "timeout_seconds": 15
+    }
+  ],
+  "workloads": [
+    {
+      "name": "sparse-event_count-plain",
+      "input_rows": 4,
+      "expected_rows": 2,
+      "query_sha256": "a13faabd023481146aef8fc95c8fd0769ffe7ac207bf624b0ca60d311d98c871",
+      "fixture_sha256": "77fc7e69c779eed84e3913d48f4896a21bcc30e47cc458a8be71a24dd8b1a7eb",
+      "query_bytes": 14935,
+      "query_lines": 118,
+      "operators": {
+        "extend": 22,
+        "join": 8,
+        "mv-expand": 5,
+        "project": 16,
+        "project-away": 1,
+        "scan": 4,
+        "serialize": 4,
+        "sort": 6,
+        "summarize": 10,
+        "where": 22
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "EventCount": "long"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 3,
+      "runtime_failures": 0,
+      "recorded_failures": 0,
+      "failure_details": {},
+      "all_client_elapsed_seconds": {
+        "samples": [
+          0.463276,
+          0.437852,
+          0.457227
+        ],
+        "median": 0.457227
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [
+            0.463276,
+            0.437852,
+            0.457227
+          ],
+          "median": 0.457227
+        },
+        "engine_elapsed_seconds": {
+          "samples": [
+            0.4550594,
+            0.4290694,
+            0.4490395
+          ],
+          "median": 0.4490395
+        },
+        "cpu_seconds": {
+          "samples": [
+            0.347419,
+            0.314819,
+            0.348695
+          ],
+          "median": 0.347419
+        },
+        "planning_cpu_seconds": {
+          "samples": [
+            0.346497,
+            0.312658,
+            0.342688
+          ],
+          "median": 0.342688
+        },
+        "execution_cpu_seconds": {
+          "samples": [
+            0.000922,
+            0.002161,
+            0.006007
+          ],
+          "median": 0.002161
+        },
+        "peak_memory_bytes": {
+          "samples": [
+            15618112,
+            15665856,
+            15688896
+          ],
+          "median": 15665856
+        }
+      }
+    },
+    {
+      "name": "sparse-event_count-context",
+      "input_rows": 4,
+      "expected_rows": 2,
+      "query_sha256": "344c05b8941b0749b07ce3c661ef5b420c08404edca8dcaa9cefd3f728918c0e",
+      "fixture_sha256": "381d9d0fd76f1e0fbc0e3d8b4220f3886771473d4b65039c71676a06baa98e5e",
+      "query_bytes": 50252,
+      "query_lines": 361,
+      "operators": {
+        "extend": 64,
+        "join": 25,
+        "mv-expand": 14,
+        "project": 55,
+        "project-away": 2,
+        "scan": 14,
+        "serialize": 14,
+        "sort": 21,
+        "summarize": 27,
+        "where": 57
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "EventCount": "long",
+        "User": "dynamic"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 0,
+      "runtime_failures": 3,
+      "recorded_failures": 3,
+      "failure_details": {
+        "curl failed (28): curl: (28) Operation timed out after 15002 milliseconds with 0 bytes received": 1,
+        "Expecting value: line 1 column 1 (char 0)": 2
+      },
+      "all_client_elapsed_seconds": {
+        "samples": [
+          15.012168,
+          13.03357,
+          13.014949
+        ],
+        "median": 13.03357
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "engine_elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "planning_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "execution_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "peak_memory_bytes": {
+          "samples": [],
+          "median": null
+        }
+      }
+    },
+    {
+      "name": "sparse-value_count-plain",
+      "input_rows": 4,
+      "expected_rows": 1,
+      "query_sha256": "14c0fb709c30d7a17d720e046ff511d5ab266df035477af9b54154b57aa257d6",
+      "fixture_sha256": "4acd3a9e0c4db2268e5677dd4e85d7ca14a73062d24f03770a3a52ac471c147b",
+      "query_bytes": 15210,
+      "query_lines": 121,
+      "operators": {
+        "distinct": 1,
+        "extend": 20,
+        "join": 10,
+        "mv-expand": 5,
+        "project": 18,
+        "project-away": 1,
+        "scan": 4,
+        "serialize": 4,
+        "sort": 6,
+        "summarize": 8,
+        "where": 22
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "ValueCount": "long"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 3,
+      "runtime_failures": 0,
+      "recorded_failures": 0,
+      "failure_details": {},
+      "all_client_elapsed_seconds": {
+        "samples": [
+          0.673195,
+          0.633112,
+          0.62255
+        ],
+        "median": 0.633112
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [
+            0.673195,
+            0.633112,
+            0.62255
+          ],
+          "median": 0.633112
+        },
+        "engine_elapsed_seconds": {
+          "samples": [
+            0.6657192,
+            0.6252755,
+            0.6150278
+          ],
+          "median": 0.6252755
+        },
+        "cpu_seconds": {
+          "samples": [
+            0.54925,
+            0.525523,
+            0.511717
+          ],
+          "median": 0.525523
+        },
+        "planning_cpu_seconds": {
+          "samples": [
+            0.543217,
+            0.520421,
+            0.506451
+          ],
+          "median": 0.520421
+        },
+        "execution_cpu_seconds": {
+          "samples": [
+            0.006033,
+            0.005102,
+            0.005266
+          ],
+          "median": 0.005266
+        },
+        "peak_memory_bytes": {
+          "samples": [
+            3717056,
+            3710400,
+            3677664
+          ],
+          "median": 3710400
+        }
+      }
+    },
+    {
+      "name": "sparse-value_count-context",
+      "input_rows": 4,
+      "expected_rows": 1,
+      "query_sha256": "fff28b8c43cdfc0c8d8892f1d1e9e5c58efdefe9ffe37f3d5da60cd9ca760599",
+      "fixture_sha256": "b1d75513284e176d62e9b68b7bb8b726184367186b275ad469dd82583c84026b",
+      "query_bytes": 50689,
+      "query_lines": 366,
+      "operators": {
+        "distinct": 2,
+        "extend": 61,
+        "join": 28,
+        "mv-expand": 14,
+        "project": 58,
+        "project-away": 2,
+        "scan": 14,
+        "serialize": 14,
+        "sort": 21,
+        "summarize": 24,
+        "where": 57
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "ValueCount": "long",
+        "User": "dynamic"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 0,
+      "runtime_failures": 3,
+      "recorded_failures": 3,
+      "failure_details": {
+        "curl failed (28): curl: (28) Operation timed out after 15002 milliseconds with 0 bytes received": 3
+      },
+      "all_client_elapsed_seconds": {
+        "samples": [
+          15.008074,
+          15.007276,
+          15.007536
+        ],
+        "median": 15.007536
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "engine_elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "planning_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "execution_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "peak_memory_bytes": {
+          "samples": [],
+          "median": null
+        }
+      }
+    },
+    {
+      "name": "sparse-value_sum-plain",
+      "input_rows": 4,
+      "expected_rows": 3,
+      "query_sha256": "94c7027d19e5fca12d48a8ee23bb63cf950d297420a6fb35028c6997785571bb",
+      "fixture_sha256": "ee30ba527f4701d9446afc10d7558fcca7db561f1171dadc09b7308f1e4e750c",
+      "query_bytes": 16140,
+      "query_lines": 131,
+      "operators": {
+        "distinct": 2,
+        "extend": 22,
+        "join": 9,
+        "mv-expand": 6,
+        "project": 18,
+        "project-away": 1,
+        "scan": 4,
+        "serialize": 4,
+        "sort": 6,
+        "summarize": 7,
+        "where": 20
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "ValueSum": "long"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 3,
+      "runtime_failures": 0,
+      "recorded_failures": 3,
+      "failure_details": {},
+      "all_client_elapsed_seconds": {
+        "samples": [
+          0.716113,
+          0.638473,
+          0.742784
+        ],
+        "median": 0.716113
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [
+            0.716113,
+            0.638473,
+            0.742784
+          ],
+          "median": 0.716113
+        },
+        "engine_elapsed_seconds": {
+          "samples": [
+            0.7079763,
+            0.6276919,
+            0.7357554
+          ],
+          "median": 0.7079763
+        },
+        "cpu_seconds": {
+          "samples": [
+            0.394393,
+            0.325972,
+            0.360156
+          ],
+          "median": 0.360156
+        },
+        "planning_cpu_seconds": {
+          "samples": [
+            0.378518,
+            0.323339,
+            0.353632
+          ],
+          "median": 0.353632
+        },
+        "execution_cpu_seconds": {
+          "samples": [
+            0.015875,
+            0.002633,
+            0.006524
+          ],
+          "median": 0.006524
+        },
+        "peak_memory_bytes": {
+          "samples": [
+            3689104,
+            3677968,
+            3212496
+          ],
+          "median": 3677968
+        }
+      }
+    },
+    {
+      "name": "sparse-value_sum-context",
+      "input_rows": 4,
+      "expected_rows": 3,
+      "query_sha256": "fb2469a3853af54cdbe68dbbcdebe1671fa510f61345016710ea7dea29ea9228",
+      "fixture_sha256": "83f89e8957322606a7870b046b7090b243db23df9beaee80152158767a5b246e",
+      "query_bytes": 51813,
+      "query_lines": 377,
+      "operators": {
+        "distinct": 3,
+        "extend": 64,
+        "join": 26,
+        "mv-expand": 15,
+        "project": 57,
+        "project-away": 2,
+        "scan": 14,
+        "serialize": 14,
+        "sort": 21,
+        "summarize": 22,
+        "where": 53
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "ValueSum": "long",
+        "User": "dynamic"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 0,
+      "runtime_failures": 3,
+      "recorded_failures": 3,
+      "failure_details": {
+        "Expecting value: line 1 column 1 (char 0)": 2,
+        "curl failed (28): curl: (28) Operation timed out after 15002 milliseconds with 0 bytes received": 1
+      },
+      "all_client_elapsed_seconds": {
+        "samples": [
+          13.558203,
+          13.041605,
+          15.011195
+        ],
+        "median": 13.558203
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "engine_elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "planning_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "execution_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "peak_memory_bytes": {
+          "samples": [],
+          "median": null
+        }
+      }
+    },
+    {
+      "name": "sparse-value_avg-plain",
+      "input_rows": 4,
+      "expected_rows": 3,
+      "query_sha256": "c25fce43c7781d1e0a542e054a9d1b487aa3349ff627b0a9469024f777f9c1e6",
+      "fixture_sha256": "a0043918e593a07988fb72f1a7d778610037a5b3e5b0b725acdc832caf175763",
+      "query_bytes": 14581,
+      "query_lines": 115,
+      "operators": {
+        "distinct": 1,
+        "extend": 20,
+        "join": 8,
+        "mv-expand": 5,
+        "project": 16,
+        "project-away": 1,
+        "scan": 4,
+        "serialize": 4,
+        "sort": 6,
+        "summarize": 6,
+        "where": 18
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "ValueAvg": "real"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 3,
+      "runtime_failures": 0,
+      "recorded_failures": 0,
+      "failure_details": {},
+      "all_client_elapsed_seconds": {
+        "samples": [
+          0.510836,
+          0.440116,
+          0.518748
+        ],
+        "median": 0.510836
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [
+            0.510836,
+            0.440116,
+            0.518748
+          ],
+          "median": 0.510836
+        },
+        "engine_elapsed_seconds": {
+          "samples": [
+            0.5012747,
+            0.4308647,
+            0.5091048
+          ],
+          "median": 0.5012747
+        },
+        "cpu_seconds": {
+          "samples": [
+            0.382404,
+            0.332291,
+            0.38033
+          ],
+          "median": 0.38033
+        },
+        "planning_cpu_seconds": {
+          "samples": [
+            0.375144,
+            0.330403,
+            0.379014
+          ],
+          "median": 0.375144
+        },
+        "execution_cpu_seconds": {
+          "samples": [
+            0.00726,
+            0.001888,
+            0.001316
+          ],
+          "median": 0.001888
+        },
+        "peak_memory_bytes": {
+          "samples": [
+            3679488,
+            3715296,
+            3676624
+          ],
+          "median": 3679488
+        }
+      }
+    },
+    {
+      "name": "sparse-value_avg-context",
+      "input_rows": 4,
+      "expected_rows": 3,
+      "query_sha256": "cabcec30434e0923b6f77b2bb2c0f35f2940415d9b6a7ff5494fe109c3e70498",
+      "fixture_sha256": "4e71fcd29948b7e94630342388d6ad166cae0a6991a8df0e58d1d1f29eb06aef",
+      "query_bytes": 49870,
+      "query_lines": 357,
+      "operators": {
+        "distinct": 2,
+        "extend": 61,
+        "join": 25,
+        "mv-expand": 14,
+        "project": 55,
+        "project-away": 2,
+        "scan": 14,
+        "serialize": 14,
+        "sort": 21,
+        "summarize": 21,
+        "where": 51
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "ValueAvg": "real",
+        "User": "dynamic"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 0,
+      "runtime_failures": 3,
+      "recorded_failures": 3,
+      "failure_details": {
+        "Expecting value: line 1 column 1 (char 0)": 2,
+        "curl failed (28): curl: (28) Operation timed out after 15002 milliseconds with 0 bytes received": 1
+      },
+      "all_client_elapsed_seconds": {
+        "samples": [
+          13.03541,
+          13.014966,
+          15.009481
+        ],
+        "median": 13.03541
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "engine_elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "planning_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "execution_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "peak_memory_bytes": {
+          "samples": [],
+          "median": null
+        }
+      }
+    },
+    {
+      "name": "sparse-value_percentile-plain",
+      "input_rows": 4,
+      "expected_rows": 3,
+      "query_sha256": "1177c0c59e6b9c0a8a0f341a32b2959e890adf1e52d08ddecafbc286e57c0332",
+      "fixture_sha256": "92c1ee88bd23e0b6eb22113e0a8d243c00db8267222bc14a8840c44b2c8991e1",
+      "query_bytes": 16065,
+      "query_lines": 139,
+      "operators": {
+        "distinct": 2,
+        "extend": 24,
+        "join": 10,
+        "mv-expand": 6,
+        "project": 17,
+        "project-away": 1,
+        "scan": 4,
+        "serialize": 6,
+        "sort": 8,
+        "summarize": 6,
+        "where": 22
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "ValuePercentile": "long"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 3,
+      "runtime_failures": 0,
+      "recorded_failures": 0,
+      "failure_details": {},
+      "all_client_elapsed_seconds": {
+        "samples": [
+          0.648052,
+          0.716226,
+          0.689807
+        ],
+        "median": 0.689807
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [
+            0.648052,
+            0.716226,
+            0.689807
+          ],
+          "median": 0.689807
+        },
+        "engine_elapsed_seconds": {
+          "samples": [
+            0.6386172,
+            0.7082238,
+            0.6816275
+          ],
+          "median": 0.6816275
+        },
+        "cpu_seconds": {
+          "samples": [
+            0.523208,
+            0.592891,
+            0.567047
+          ],
+          "median": 0.567047
+        },
+        "planning_cpu_seconds": {
+          "samples": [
+            0.522206,
+            0.582558,
+            0.562852
+          ],
+          "median": 0.562852
+        },
+        "execution_cpu_seconds": {
+          "samples": [
+            0.001002,
+            0.010333,
+            0.004195
+          ],
+          "median": 0.004195
+        },
+        "peak_memory_bytes": {
+          "samples": [
+            3734576,
+            3700496,
+            3738416
+          ],
+          "median": 3734576
+        }
+      }
+    },
+    {
+      "name": "sparse-value_percentile-context",
+      "input_rows": 4,
+      "expected_rows": 3,
+      "query_sha256": "b0e1bd2656979030bce728be48b07b4fe9473c2936d0c613dea473526df17ee7",
+      "fixture_sha256": "607550a0b70a6edeb92f8d9a792122c60e6febc53cbd4ec1894cf8e215910fd1",
+      "query_bytes": 51952,
+      "query_lines": 391,
+      "operators": {
+        "distinct": 3,
+        "extend": 67,
+        "join": 28,
+        "mv-expand": 15,
+        "project": 56,
+        "project-away": 2,
+        "scan": 14,
+        "serialize": 17,
+        "sort": 24,
+        "summarize": 21,
+        "where": 57
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "ValuePercentile": "long",
+        "User": "dynamic"
+      },
+      "attempts": 4,
+      "noninterrupted_attempts": 4,
+      "verified_passes": 0,
+      "runtime_failures": 4,
+      "recorded_failures": 4,
+      "failure_details": {
+        "curl failed (28): curl: (28) Operation timed out after 15002 milliseconds with 0 bytes received": 2,
+        "Expecting value: line 1 column 1 (char 0)": 2
+      },
+      "all_client_elapsed_seconds": {
+        "samples": [
+          15.00883,
+          13.093826,
+          13.049642,
+          15.013738
+        ],
+        "median": 14.051328
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "engine_elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "planning_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "execution_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "peak_memory_bytes": {
+          "samples": [],
+          "median": null
+        }
+      }
+    },
+    {
+      "name": "sparse-temporal-plain",
+      "input_rows": 4,
+      "expected_rows": 0,
+      "query_sha256": "38e707713b3520daee5a4da55c293a965423b03e81e9683b206dd7428bc7632e",
+      "fixture_sha256": "7ef1d376ab604fa43fc6ca59a1e68605bad946278b31e25f0fbbe88e67ab5fe8",
+      "query_bytes": 14980,
+      "query_lines": 131,
+      "operators": {
+        "distinct": 1,
+        "extend": 28,
+        "join": 8,
+        "mv-expand": 5,
+        "project": 16,
+        "project-away": 1,
+        "scan": 4,
+        "serialize": 4,
+        "sort": 6,
+        "summarize": 8,
+        "where": 22
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "RuleCount": "long"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 3,
+      "runtime_failures": 0,
+      "recorded_failures": 0,
+      "failure_details": {},
+      "all_client_elapsed_seconds": {
+        "samples": [
+          1.144717,
+          0.884424,
+          0.79767
+        ],
+        "median": 0.884424
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [
+            1.144717,
+            0.884424,
+            0.79767
+          ],
+          "median": 0.884424
+        },
+        "engine_elapsed_seconds": {
+          "samples": [
+            1.1287189,
+            0.8687789,
+            0.782509
+          ],
+          "median": 0.8687789
+        },
+        "cpu_seconds": {
+          "samples": [
+            0.888725,
+            0.660614,
+            0.595671
+          ],
+          "median": 0.660614
+        },
+        "planning_cpu_seconds": {
+          "samples": [
+            0.87456,
+            0.658663,
+            0.595671
+          ],
+          "median": 0.658663
+        },
+        "execution_cpu_seconds": {
+          "samples": [
+            0.014165,
+            0.001951,
+            0.0
+          ],
+          "median": 0.001951
+        },
+        "peak_memory_bytes": {
+          "samples": [
+            9562720,
+            9464448,
+            7268320
+          ],
+          "median": 9464448
+        }
+      }
+    },
+    {
+      "name": "sparse-temporal-context",
+      "input_rows": 4,
+      "expected_rows": 0,
+      "query_sha256": "e5b58efb20333bd571c712671ff6152f798273c6f70e64ff37dd3fabc52a2d94",
+      "fixture_sha256": "bc9fcccc2f02bce5407fd498a7a9d5f63c42cfb046161281791135cbcde0cbc6",
+      "query_bytes": 51345,
+      "query_lines": 397,
+      "operators": {
+        "distinct": 2,
+        "extend": 81,
+        "join": 25,
+        "mv-expand": 14,
+        "project": 55,
+        "project-away": 2,
+        "scan": 14,
+        "serialize": 14,
+        "sort": 21,
+        "summarize": 24,
+        "where": 61
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "RuleCount": "long",
+        "User": "dynamic"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 0,
+      "runtime_failures": 3,
+      "recorded_failures": 3,
+      "failure_details": {
+        "curl failed (28): curl: (28) Operation timed out after 15002 milliseconds with 0 bytes received": 3
+      },
+      "all_client_elapsed_seconds": {
+        "samples": [
+          15.011472,
+          15.013574,
+          15.013422
+        ],
+        "median": 15.013422
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "engine_elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "planning_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "execution_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "peak_memory_bytes": {
+          "samples": [],
+          "median": null
+        }
+      }
+    },
+    {
+      "name": "sparse-temporal_ordered-plain",
+      "input_rows": 4,
+      "expected_rows": 0,
+      "query_sha256": "1276d991698552e5e20b912db3c3bda85f0af3d04c16b1458555d567770df7fa",
+      "fixture_sha256": "ffbb0cf7213508bbe9bc6073159abfce8dccc1d1d3552beb54e3d2fead6e024f",
+      "query_bytes": 17209,
+      "query_lines": 167,
+      "operators": {
+        "extend": 31,
+        "join": 11,
+        "mv-expand": 8,
+        "project": 21,
+        "project-away": 1,
+        "scan": 4,
+        "serialize": 4,
+        "sort": 6,
+        "summarize": 11,
+        "where": 30
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "RuleCount": "long"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 3,
+      "runtime_failures": 0,
+      "recorded_failures": 0,
+      "failure_details": {},
+      "all_client_elapsed_seconds": {
+        "samples": [
+          1.260185,
+          1.168381,
+          0.980203
+        ],
+        "median": 1.168381
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [
+            1.260185,
+            1.168381,
+            0.980203
+          ],
+          "median": 1.168381
+        },
+        "engine_elapsed_seconds": {
+          "samples": [
+            1.2458609,
+            1.1510159,
+            0.9666809
+          ],
+          "median": 1.1510159
+        },
+        "cpu_seconds": {
+          "samples": [
+            1.039062,
+            0.913977,
+            0.729523
+          ],
+          "median": 0.913977
+        },
+        "planning_cpu_seconds": {
+          "samples": [
+            1.029443,
+            0.911212,
+            0.729523
+          ],
+          "median": 0.911212
+        },
+        "execution_cpu_seconds": {
+          "samples": [
+            0.009619,
+            0.002765,
+            0.0
+          ],
+          "median": 0.002765
+        },
+        "peak_memory_bytes": {
+          "samples": [
+            3750496,
+            3717472,
+            3697904
+          ],
+          "median": 3717472
+        }
+      }
+    },
+    {
+      "name": "sparse-temporal_ordered-context",
+      "input_rows": 4,
+      "expected_rows": 0,
+      "query_sha256": "458ed8d1681a74fcf7a2611075da890da159d0770ba7f8daf2371b1029ef385c",
+      "fixture_sha256": "834bfe88867c6a584fcbcaa51bb6276fd8abf377674196d2ba68ce6ed1fd6fce",
+      "query_bytes": 58423,
+      "query_lines": 496,
+      "operators": {
+        "distinct": 2,
+        "extend": 85,
+        "join": 35,
+        "mv-expand": 18,
+        "project": 80,
+        "project-away": 2,
+        "scan": 14,
+        "serialize": 14,
+        "sort": 21,
+        "summarize": 28,
+        "where": 84
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "RuleCount": "long",
+        "User": "dynamic"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 0,
+      "runtime_failures": 3,
+      "recorded_failures": 3,
+      "failure_details": {
+        "Expecting value: line 1 column 1 (char 0)": 3
+      },
+      "all_client_elapsed_seconds": {
+        "samples": [
+          13.032287,
+          14.062297,
+          14.052838
+        ],
+        "median": 14.052838
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "engine_elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "planning_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "execution_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "peak_memory_bytes": {
+          "samples": [],
+          "median": null
+        }
+      }
+    },
+    {
+      "name": "sparse-mixed-multilevel-plain",
+      "input_rows": 4,
+      "expected_rows": 2,
+      "query_sha256": "576fc32c76e2dd2a260780b0c802b11c4e8819a6c2eed0e26b5cefa8f58f56cb",
+      "fixture_sha256": "0278cf803ada84d6b99e33580dd23188484323ac34c29e68b5eaf31b624c05aa",
+      "query_bytes": 67306,
+      "query_lines": 550,
+      "operators": {
+        "extend": 108,
+        "join": 39,
+        "mv-expand": 24,
+        "project": 75,
+        "project-away": 6,
+        "scan": 18,
+        "serialize": 18,
+        "sort": 27,
+        "summarize": 43,
+        "where": 95
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "EventCount": "long"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 0,
+      "runtime_failures": 3,
+      "recorded_failures": 3,
+      "failure_details": {
+        "Expecting value: line 1 column 1 (char 0)": 3
+      },
+      "all_client_elapsed_seconds": {
+        "samples": [
+          14.9479,
+          13.536033,
+          14.286793
+        ],
+        "median": 14.286793
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "engine_elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "planning_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "execution_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "peak_memory_bytes": {
+          "samples": [],
+          "median": null
+        }
+      }
+    },
+    {
+      "name": "sparse-mixed-multilevel-context",
+      "input_rows": 4,
+      "expected_rows": 2,
+      "query_sha256": "44fbfea89b5f9555603fadcf61b3084d8d6fbeaa8bdfbcbe2bc9cbc81fe81211",
+      "fixture_sha256": "db8f6d4f9ab92a6a142f40ceebb9fc20865853ad41de9576ce748a556e86ddcc",
+      "query_bytes": 278858,
+      "query_lines": 2047,
+      "operators": {
+        "extend": 378,
+        "join": 147,
+        "mv-expand": 84,
+        "project": 297,
+        "project-away": 12,
+        "scan": 78,
+        "serialize": 78,
+        "sort": 117,
+        "summarize": 145,
+        "where": 290
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "EventCount": "long",
+        "User": "dynamic"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 0,
+      "runtime_failures": 3,
+      "recorded_failures": 3,
+      "failure_details": {
+        "curl failed (28): curl: (28) Operation timed out after 15001 milliseconds with 0 bytes received": 1,
+        "Expecting value: line 1 column 1 (char 0)": 2
+      },
+      "all_client_elapsed_seconds": {
+        "samples": [
+          15.017733,
+          13.107089,
+          14.047534
+        ],
+        "median": 14.047534
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "engine_elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "planning_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "execution_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "peak_memory_bytes": {
+          "samples": [],
+          "median": null
+        }
+      }
+    },
+    {
+      "name": "dense-event_count-plain",
+      "input_rows": 24,
+      "expected_rows": 23,
+      "query_sha256": "550ff4cd5046943bdebd566ddb895791556a5e1637e34699d358608645120f05",
+      "fixture_sha256": "c5d64199af8136c54a6de4fb46dda122f09b89ec4ed47b967cbac32f64138fa7",
+      "query_bytes": 14935,
+      "query_lines": 118,
+      "operators": {
+        "extend": 22,
+        "join": 8,
+        "mv-expand": 5,
+        "project": 16,
+        "project-away": 1,
+        "scan": 4,
+        "serialize": 4,
+        "sort": 6,
+        "summarize": 10,
+        "where": 22
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "EventCount": "long"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 3,
+      "runtime_failures": 0,
+      "recorded_failures": 0,
+      "failure_details": {},
+      "all_client_elapsed_seconds": {
+        "samples": [
+          1.12329,
+          0.921713,
+          0.916656
+        ],
+        "median": 0.921713
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [
+            1.12329,
+            0.921713,
+            0.916656
+          ],
+          "median": 0.921713
+        },
+        "engine_elapsed_seconds": {
+          "samples": [
+            1.1054327,
+            0.9089327,
+            0.9016891
+          ],
+          "median": 0.9089327
+        },
+        "cpu_seconds": {
+          "samples": [
+            0.787629,
+            0.617517,
+            0.664169
+          ],
+          "median": 0.664169
+        },
+        "planning_cpu_seconds": {
+          "samples": [
+            0.778178,
+            0.614119,
+            0.651796
+          ],
+          "median": 0.651796
+        },
+        "execution_cpu_seconds": {
+          "samples": [
+            0.009451,
+            0.003398,
+            0.012373
+          ],
+          "median": 0.009451
+        },
+        "peak_memory_bytes": {
+          "samples": [
+            15512784,
+            15711824,
+            15758160
+          ],
+          "median": 15711824
+        }
+      }
+    },
+    {
+      "name": "dense-event_count-context",
+      "input_rows": 24,
+      "expected_rows": 23,
+      "query_sha256": "f8a4dfbfc4048fd684d983f9db0217e217775f7da275b4cadf2b476c94567b47",
+      "fixture_sha256": "8e9d26d51bc3f52bcd0fc47667d714732ff2d09247c996ff4c051656841c1276",
+      "query_bytes": 50252,
+      "query_lines": 361,
+      "operators": {
+        "extend": 64,
+        "join": 25,
+        "mv-expand": 14,
+        "project": 55,
+        "project-away": 2,
+        "scan": 14,
+        "serialize": 14,
+        "sort": 21,
+        "summarize": 27,
+        "where": 57
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "EventCount": "long",
+        "User": "dynamic"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 0,
+      "runtime_failures": 3,
+      "recorded_failures": 3,
+      "failure_details": {
+        "curl failed (28): curl: (28) Operation timed out after 15001 milliseconds with 0 bytes received": 3
+      },
+      "all_client_elapsed_seconds": {
+        "samples": [
+          15.014657,
+          15.016585,
+          15.013606
+        ],
+        "median": 15.014657
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "engine_elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "planning_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "execution_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "peak_memory_bytes": {
+          "samples": [],
+          "median": null
+        }
+      }
+    },
+    {
+      "name": "dense-value_count-plain",
+      "input_rows": 24,
+      "expected_rows": 23,
+      "query_sha256": "fa750c10cf76b23358510095e418e6037520eb60d5216d791803ce94354412c0",
+      "fixture_sha256": "32521f4c07c7d484a9dd80272cd43c542d73fe9fdedae115902c2f8aeeace3a4",
+      "query_bytes": 15210,
+      "query_lines": 121,
+      "operators": {
+        "distinct": 1,
+        "extend": 20,
+        "join": 10,
+        "mv-expand": 5,
+        "project": 18,
+        "project-away": 1,
+        "scan": 4,
+        "serialize": 4,
+        "sort": 6,
+        "summarize": 8,
+        "where": 22
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "ValueCount": "long"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 3,
+      "runtime_failures": 0,
+      "recorded_failures": 0,
+      "failure_details": {},
+      "all_client_elapsed_seconds": {
+        "samples": [
+          1.594728,
+          1.420511,
+          1.301954
+        ],
+        "median": 1.420511
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [
+            1.594728,
+            1.420511,
+            1.301954
+          ],
+          "median": 1.420511
+        },
+        "engine_elapsed_seconds": {
+          "samples": [
+            1.5713866,
+            1.4031873,
+            1.2840493
+          ],
+          "median": 1.4031873
+        },
+        "cpu_seconds": {
+          "samples": [
+            1.27466,
+            1.180332,
+            1.090444
+          ],
+          "median": 1.180332
+        },
+        "planning_cpu_seconds": {
+          "samples": [
+            1.26225,
+            1.161004,
+            1.076778
+          ],
+          "median": 1.161004
+        },
+        "execution_cpu_seconds": {
+          "samples": [
+            0.01241,
+            0.019328,
+            0.013666
+          ],
+          "median": 0.013666
+        },
+        "peak_memory_bytes": {
+          "samples": [
+            3685312,
+            3730368,
+            3725568
+          ],
+          "median": 3725568
+        }
+      }
+    },
+    {
+      "name": "dense-value_count-context",
+      "input_rows": 24,
+      "expected_rows": 23,
+      "query_sha256": "b9622a33ed3061726506adb4cd0387eb8d3437aaa8c1bb7a57925cfff253ca55",
+      "fixture_sha256": "56aabd1d91cedb0714aef3ae16cf6856946bbc186a079e362f3a0f790ac14e03",
+      "query_bytes": 50689,
+      "query_lines": 366,
+      "operators": {
+        "distinct": 2,
+        "extend": 61,
+        "join": 28,
+        "mv-expand": 14,
+        "project": 58,
+        "project-away": 2,
+        "scan": 14,
+        "serialize": 14,
+        "sort": 21,
+        "summarize": 24,
+        "where": 57
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "ValueCount": "long",
+        "User": "dynamic"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 0,
+      "runtime_failures": 3,
+      "recorded_failures": 3,
+      "failure_details": {
+        "curl failed (28): curl: (28) Operation timed out after 15002 milliseconds with 0 bytes received": 2,
+        "Expecting value: line 1 column 1 (char 0)": 1
+      },
+      "all_client_elapsed_seconds": {
+        "samples": [
+          15.013654,
+          13.028126,
+          15.020857
+        ],
+        "median": 15.013654
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "engine_elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "planning_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "execution_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "peak_memory_bytes": {
+          "samples": [],
+          "median": null
+        }
+      }
+    },
+    {
+      "name": "dense-value_sum-plain",
+      "input_rows": 24,
+      "expected_rows": 24,
+      "query_sha256": "0165dcea7af7561467ec0430420b11c01f66a1270f434d454180da222b7667d5",
+      "fixture_sha256": "38e095742ad9bd1108961da71db2be2baaf2c46bd7beda12f8e0a0fa892da3a9",
+      "query_bytes": 16140,
+      "query_lines": 131,
+      "operators": {
+        "distinct": 2,
+        "extend": 22,
+        "join": 9,
+        "mv-expand": 6,
+        "project": 18,
+        "project-away": 1,
+        "scan": 4,
+        "serialize": 4,
+        "sort": 6,
+        "summarize": 7,
+        "where": 20
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "ValueSum": "long"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 3,
+      "runtime_failures": 0,
+      "recorded_failures": 0,
+      "failure_details": {},
+      "all_client_elapsed_seconds": {
+        "samples": [
+          1.367552,
+          1.375207,
+          1.460605
+        ],
+        "median": 1.375207
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [
+            1.367552,
+            1.375207,
+            1.460605
+          ],
+          "median": 1.375207
+        },
+        "engine_elapsed_seconds": {
+          "samples": [
+            1.3452343,
+            1.3599663,
+            1.4429297
+          ],
+          "median": 1.3599663
+        },
+        "cpu_seconds": {
+          "samples": [
+            0.74332,
+            0.710803,
+            0.722774
+          ],
+          "median": 0.722774
+        },
+        "planning_cpu_seconds": {
+          "samples": [
+            0.719172,
+            0.693654,
+            0.700512
+          ],
+          "median": 0.700512
+        },
+        "execution_cpu_seconds": {
+          "samples": [
+            0.024148,
+            0.017149,
+            0.022262
+          ],
+          "median": 0.022262
+        },
+        "peak_memory_bytes": {
+          "samples": [
+            3733120,
+            3692784,
+            3743984
+          ],
+          "median": 3733120
+        }
+      }
+    },
+    {
+      "name": "dense-value_sum-context",
+      "input_rows": 24,
+      "expected_rows": 24,
+      "query_sha256": "b20b431b57adb35068878b8b44fefc448197c0772aba29d64ee2a6c14ede756b",
+      "fixture_sha256": "a6e0e11ebfe8d14868172287bcd7b982f4e5f13f64b393c8c11f83a1fc61ac50",
+      "query_bytes": 51813,
+      "query_lines": 377,
+      "operators": {
+        "distinct": 3,
+        "extend": 64,
+        "join": 26,
+        "mv-expand": 15,
+        "project": 57,
+        "project-away": 2,
+        "scan": 14,
+        "serialize": 14,
+        "sort": 21,
+        "summarize": 22,
+        "where": 53
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "ValueSum": "long",
+        "User": "dynamic"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 0,
+      "runtime_failures": 3,
+      "recorded_failures": 3,
+      "failure_details": {
+        "curl failed (28): curl: (28) Operation timed out after 15002 milliseconds with 0 bytes received": 3
+      },
+      "all_client_elapsed_seconds": {
+        "samples": [
+          15.014397,
+          15.015284,
+          15.013157
+        ],
+        "median": 15.014397
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "engine_elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "planning_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "execution_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "peak_memory_bytes": {
+          "samples": [],
+          "median": null
+        }
+      }
+    },
+    {
+      "name": "dense-value_avg-plain",
+      "input_rows": 24,
+      "expected_rows": 24,
+      "query_sha256": "9f2f351322e55025edeb0090c203f17e8f54a523d98b9a11552cb5c49c8971c8",
+      "fixture_sha256": "e6c534eab60f989c12ae50239aaeacbe7e35ca75e4457eb4154b9e6bba38dee6",
+      "query_bytes": 14581,
+      "query_lines": 115,
+      "operators": {
+        "distinct": 1,
+        "extend": 20,
+        "join": 8,
+        "mv-expand": 5,
+        "project": 16,
+        "project-away": 1,
+        "scan": 4,
+        "serialize": 4,
+        "sort": 6,
+        "summarize": 6,
+        "where": 18
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "ValueAvg": "real"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 3,
+      "runtime_failures": 0,
+      "recorded_failures": 0,
+      "failure_details": {},
+      "all_client_elapsed_seconds": {
+        "samples": [
+          0.948813,
+          0.907085,
+          0.901599
+        ],
+        "median": 0.907085
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [
+            0.948813,
+            0.907085,
+            0.901599
+          ],
+          "median": 0.907085
+        },
+        "engine_elapsed_seconds": {
+          "samples": [
+            0.930491,
+            0.8913379,
+            0.8849809
+          ],
+          "median": 0.8913379
+        },
+        "cpu_seconds": {
+          "samples": [
+            0.660731,
+            0.697378,
+            0.687146
+          ],
+          "median": 0.687146
+        },
+        "planning_cpu_seconds": {
+          "samples": [
+            0.657742,
+            0.67794,
+            0.660983
+          ],
+          "median": 0.660983
+        },
+        "execution_cpu_seconds": {
+          "samples": [
+            0.002989,
+            0.019438,
+            0.026163
+          ],
+          "median": 0.019438
+        },
+        "peak_memory_bytes": {
+          "samples": [
+            3703120,
+            2190368,
+            3733472
+          ],
+          "median": 3703120
+        }
+      }
+    },
+    {
+      "name": "dense-value_avg-context",
+      "input_rows": 24,
+      "expected_rows": 24,
+      "query_sha256": "b00561f473603312a8adda179684b4b75ee3b09cdd460eeb999ae4df6e3a6040",
+      "fixture_sha256": "4d8eaf81239182800a825a6d083d7853ce0c58cf681a0c7528488081c90b6bf4",
+      "query_bytes": 49870,
+      "query_lines": 357,
+      "operators": {
+        "distinct": 2,
+        "extend": 61,
+        "join": 25,
+        "mv-expand": 14,
+        "project": 55,
+        "project-away": 2,
+        "scan": 14,
+        "serialize": 14,
+        "sort": 21,
+        "summarize": 21,
+        "where": 51
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "ValueAvg": "real",
+        "User": "dynamic"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 0,
+      "runtime_failures": 3,
+      "recorded_failures": 3,
+      "failure_details": {
+        "curl failed (28): curl: (28) Operation timed out after 15002 milliseconds with 0 bytes received": 3
+      },
+      "all_client_elapsed_seconds": {
+        "samples": [
+          15.01365,
+          15.012095,
+          15.013826
+        ],
+        "median": 15.01365
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "engine_elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "planning_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "execution_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "peak_memory_bytes": {
+          "samples": [],
+          "median": null
+        }
+      }
+    },
+    {
+      "name": "dense-value_percentile-plain",
+      "input_rows": 24,
+      "expected_rows": 24,
+      "query_sha256": "c65b19c4eaead7dec32a1055d3c3c67cbfbfbeaa4e68129175d7a75fa496bbdb",
+      "fixture_sha256": "d05d84101be1acf0d1e7b3b44d5f7d4706b3924d44062c5095ab4ea314698488",
+      "query_bytes": 16065,
+      "query_lines": 139,
+      "operators": {
+        "distinct": 2,
+        "extend": 24,
+        "join": 10,
+        "mv-expand": 6,
+        "project": 17,
+        "project-away": 1,
+        "scan": 4,
+        "serialize": 6,
+        "sort": 8,
+        "summarize": 6,
+        "where": 22
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "ValuePercentile": "long"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 3,
+      "runtime_failures": 0,
+      "recorded_failures": 0,
+      "failure_details": {},
+      "all_client_elapsed_seconds": {
+        "samples": [
+          1.198333,
+          1.294812,
+          1.30651
+        ],
+        "median": 1.294812
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [
+            1.198333,
+            1.294812,
+            1.30651
+          ],
+          "median": 1.294812
+        },
+        "engine_elapsed_seconds": {
+          "samples": [
+            1.1787685,
+            1.2690366,
+            1.2940078
+          ],
+          "median": 1.2690366
+        },
+        "cpu_seconds": {
+          "samples": [
+            1.000823,
+            1.065022,
+            1.048326
+          ],
+          "median": 1.048326
+        },
+        "planning_cpu_seconds": {
+          "samples": [
+            0.984301,
+            1.045284,
+            1.042882
+          ],
+          "median": 1.042882
+        },
+        "execution_cpu_seconds": {
+          "samples": [
+            0.016522,
+            0.019738,
+            0.005444
+          ],
+          "median": 0.016522
+        },
+        "peak_memory_bytes": {
+          "samples": [
+            3749664,
+            3694992,
+            3686288
+          ],
+          "median": 3694992
+        }
+      }
+    },
+    {
+      "name": "dense-value_percentile-context",
+      "input_rows": 24,
+      "expected_rows": 24,
+      "query_sha256": "e7c5236ff06ae5be4da7d4903c961cea689465824f8ab5ebfc1ec963946f8d3b",
+      "fixture_sha256": "430dc2138e267618632848fe730b23288d36c787c0475ec55135ae9bbd6618bc",
+      "query_bytes": 51952,
+      "query_lines": 391,
+      "operators": {
+        "distinct": 3,
+        "extend": 67,
+        "join": 28,
+        "mv-expand": 15,
+        "project": 56,
+        "project-away": 2,
+        "scan": 14,
+        "serialize": 17,
+        "sort": 24,
+        "summarize": 21,
+        "where": 57
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "ValuePercentile": "long",
+        "User": "dynamic"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 0,
+      "runtime_failures": 3,
+      "recorded_failures": 3,
+      "failure_details": {
+        "Expecting value: line 1 column 1 (char 0)": 2,
+        "curl failed (28): curl: (28) Operation timed out after 15002 milliseconds with 0 bytes received": 1
+      },
+      "all_client_elapsed_seconds": {
+        "samples": [
+          13.088797,
+          15.015181,
+          13.044117
+        ],
+        "median": 13.088797
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "engine_elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "planning_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "execution_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "peak_memory_bytes": {
+          "samples": [],
+          "median": null
+        }
+      }
+    },
+    {
+      "name": "dense-temporal-plain",
+      "input_rows": 24,
+      "expected_rows": 22,
+      "query_sha256": "b4a28124ccb34bf91b70de19674e19d6e78a7d1e76dad8b8ad9ba3d7cb256b79",
+      "fixture_sha256": "791e3d39a1fd54a19c75223ce9225652e9e59982c4c6264a4c4785fe3ba00222",
+      "query_bytes": 14980,
+      "query_lines": 131,
+      "operators": {
+        "distinct": 1,
+        "extend": 28,
+        "join": 8,
+        "mv-expand": 5,
+        "project": 16,
+        "project-away": 1,
+        "scan": 4,
+        "serialize": 4,
+        "sort": 6,
+        "summarize": 8,
+        "where": 22
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "RuleCount": "long"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 3,
+      "runtime_failures": 0,
+      "recorded_failures": 0,
+      "failure_details": {},
+      "all_client_elapsed_seconds": {
+        "samples": [
+          1.063418,
+          0.93418,
+          0.99685
+        ],
+        "median": 0.99685
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [
+            1.063418,
+            0.93418,
+            0.99685
+          ],
+          "median": 0.99685
+        },
+        "engine_elapsed_seconds": {
+          "samples": [
+            1.0467543,
+            0.9175382,
+            0.9732067
+          ],
+          "median": 0.9732067
+        },
+        "cpu_seconds": {
+          "samples": [
+            0.835116,
+            0.683313,
+            0.713874
+          ],
+          "median": 0.713874
+        },
+        "planning_cpu_seconds": {
+          "samples": [
+            0.819582,
+            0.668546,
+            0.707781
+          ],
+          "median": 0.707781
+        },
+        "execution_cpu_seconds": {
+          "samples": [
+            0.015534,
+            0.014767,
+            0.006093
+          ],
+          "median": 0.014767
+        },
+        "peak_memory_bytes": {
+          "samples": [
+            7441344,
+            7319840,
+            7481568
+          ],
+          "median": 7441344
+        }
+      }
+    },
+    {
+      "name": "dense-temporal-context",
+      "input_rows": 24,
+      "expected_rows": 22,
+      "query_sha256": "000cec576f425d352395a142c59e181388ee6084110a5a828f354852a138b99c",
+      "fixture_sha256": "beb1b233f18a11e1fd18e467647298a449fc350066ffffca61457ff0db0c5b33",
+      "query_bytes": 51345,
+      "query_lines": 397,
+      "operators": {
+        "distinct": 2,
+        "extend": 81,
+        "join": 25,
+        "mv-expand": 14,
+        "project": 55,
+        "project-away": 2,
+        "scan": 14,
+        "serialize": 14,
+        "sort": 21,
+        "summarize": 24,
+        "where": 61
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "RuleCount": "long",
+        "User": "dynamic"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 0,
+      "runtime_failures": 3,
+      "recorded_failures": 3,
+      "failure_details": {
+        "curl failed (28): curl: (28) Operation timed out after 15002 milliseconds with 0 bytes received": 3
+      },
+      "all_client_elapsed_seconds": {
+        "samples": [
+          15.012121,
+          15.012892,
+          15.012613
+        ],
+        "median": 15.012613
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "engine_elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "planning_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "execution_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "peak_memory_bytes": {
+          "samples": [],
+          "median": null
+        }
+      }
+    },
+    {
+      "name": "dense-temporal_ordered-plain",
+      "input_rows": 24,
+      "expected_rows": 8,
+      "query_sha256": "aa28cd8ef2f7cc81adf1c98ca6ca04c48056679a65dee6f67b5e3f9a21370471",
+      "fixture_sha256": "2eb713256caf369ec5af24b37c391843257751e9f1703ff8b839afec8316e9eb",
+      "query_bytes": 17209,
+      "query_lines": 167,
+      "operators": {
+        "extend": 31,
+        "join": 11,
+        "mv-expand": 8,
+        "project": 21,
+        "project-away": 1,
+        "scan": 4,
+        "serialize": 4,
+        "sort": 6,
+        "summarize": 11,
+        "where": 30
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "RuleCount": "long"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 3,
+      "runtime_failures": 0,
+      "recorded_failures": 0,
+      "failure_details": {},
+      "all_client_elapsed_seconds": {
+        "samples": [
+          1.089268,
+          1.244136,
+          1.296159
+        ],
+        "median": 1.244136
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [
+            1.089268,
+            1.244136,
+            1.296159
+          ],
+          "median": 1.244136
+        },
+        "engine_elapsed_seconds": {
+          "samples": [
+            1.0714048,
+            1.2313868,
+            1.2821081
+          ],
+          "median": 1.2313868
+        },
+        "cpu_seconds": {
+          "samples": [
+            0.880231,
+            1.012799,
+            1.011477
+          ],
+          "median": 1.011477
+        },
+        "planning_cpu_seconds": {
+          "samples": [
+            0.862492,
+            0.99292,
+            0.996687
+          ],
+          "median": 0.99292
+        },
+        "execution_cpu_seconds": {
+          "samples": [
+            0.017739,
+            0.019879,
+            0.01479
+          ],
+          "median": 0.017739
+        },
+        "peak_memory_bytes": {
+          "samples": [
+            3701984,
+            3757408,
+            3743072
+          ],
+          "median": 3743072
+        }
+      }
+    },
+    {
+      "name": "dense-temporal_ordered-context",
+      "input_rows": 24,
+      "expected_rows": 8,
+      "query_sha256": "2720bb1d05ad1b53f5d7cd910c240b32230f01e50afc7adde601dc6d347fd604",
+      "fixture_sha256": "9447dce640ddaae8888ba96f06a76f00228932ddf24d28a6b8802e7e51ac105c",
+      "query_bytes": 58423,
+      "query_lines": 496,
+      "operators": {
+        "distinct": 2,
+        "extend": 85,
+        "join": 35,
+        "mv-expand": 18,
+        "project": 80,
+        "project-away": 2,
+        "scan": 14,
+        "serialize": 14,
+        "sort": 21,
+        "summarize": 28,
+        "where": 84
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "RuleCount": "long",
+        "User": "dynamic"
+      },
+      "attempts": 5,
+      "noninterrupted_attempts": 4,
+      "verified_passes": 0,
+      "runtime_failures": 4,
+      "recorded_failures": 5,
+      "failure_details": {
+        "Expecting value: line 1 column 1 (char 0)": 4
+      },
+      "all_client_elapsed_seconds": {
+        "samples": [
+          13.36198,
+          13.288465,
+          13.147885,
+          13.037117
+        ],
+        "median": 13.218175
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "engine_elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "planning_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "execution_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "peak_memory_bytes": {
+          "samples": [],
+          "median": null
+        }
+      }
+    },
+    {
+      "name": "dense-mixed-multilevel-plain",
+      "input_rows": 24,
+      "expected_rows": 23,
+      "query_sha256": "8ecd472d45fb803de09fcb8209daf5a03bbcba34230dcabe9ca541b2ff9589c2",
+      "fixture_sha256": "e47f318a1e07b140eaa372db1837c6f5396cf2d5909f924210ce37267f162200",
+      "query_bytes": 67306,
+      "query_lines": 550,
+      "operators": {
+        "extend": 108,
+        "join": 39,
+        "mv-expand": 24,
+        "project": 75,
+        "project-away": 6,
+        "scan": 18,
+        "serialize": 18,
+        "sort": 27,
+        "summarize": 43,
+        "where": 95
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "EventCount": "long"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 0,
+      "runtime_failures": 3,
+      "recorded_failures": 3,
+      "failure_details": {
+        "Expecting value: line 1 column 1 (char 0)": 3
+      },
+      "all_client_elapsed_seconds": {
+        "samples": [
+          13.034299,
+          13.933907,
+          13.540493
+        ],
+        "median": 13.540493
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "engine_elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "planning_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "execution_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "peak_memory_bytes": {
+          "samples": [],
+          "median": null
+        }
+      }
+    },
+    {
+      "name": "dense-mixed-multilevel-context",
+      "input_rows": 24,
+      "expected_rows": 23,
+      "query_sha256": "02c412c5af4923aea9fef4fdb51fa2e73f9bbf756e18e24cccebee551767c083",
+      "fixture_sha256": "17a15c82db79868fbec35f553f37b3cc9a511de2e76f76a16db0406093dfdc00",
+      "query_bytes": 278858,
+      "query_lines": 2047,
+      "operators": {
+        "extend": 378,
+        "join": 147,
+        "mv-expand": 84,
+        "project": 297,
+        "project-away": 12,
+        "scan": 78,
+        "serialize": 78,
+        "sort": 117,
+        "summarize": 145,
+        "where": 290
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "EventCount": "long",
+        "User": "dynamic"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 0,
+      "runtime_failures": 3,
+      "recorded_failures": 3,
+      "failure_details": {
+        "curl failed (28): curl: (28) Operation timed out after 15002 milliseconds with 0 bytes received": 1,
+        "Expecting value: line 1 column 1 (char 0)": 2
+      },
+      "all_client_elapsed_seconds": {
+        "samples": [
+          15.015417,
+          14.07384,
+          14.897109
+        ],
+        "median": 14.897109
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "engine_elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "planning_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "execution_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "peak_memory_bytes": {
+          "samples": [],
+          "median": null
+        }
+      }
+    },
+    {
+      "name": "many-groups-event_count-plain",
+      "input_rows": 96,
+      "expected_rows": 84,
+      "query_sha256": "1f1ed2fa0a6efead5b9d081160131aff23b10578c71f8ded274b2dc29e26dc5c",
+      "fixture_sha256": "33f0d1f5f2af927c189bd7cd06b97bc09ee48a83f1734a369f81220755ad2dc0",
+      "query_bytes": 14935,
+      "query_lines": 118,
+      "operators": {
+        "extend": 22,
+        "join": 8,
+        "mv-expand": 5,
+        "project": 16,
+        "project-away": 1,
+        "scan": 4,
+        "serialize": 4,
+        "sort": 6,
+        "summarize": 10,
+        "where": 22
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "EventCount": "long"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 3,
+      "runtime_failures": 0,
+      "recorded_failures": 0,
+      "failure_details": {},
+      "all_client_elapsed_seconds": {
+        "samples": [
+          1.170963,
+          0.959476,
+          0.88967
+        ],
+        "median": 0.959476
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [
+            1.170963,
+            0.959476,
+            0.88967
+          ],
+          "median": 0.959476
+        },
+        "engine_elapsed_seconds": {
+          "samples": [
+            1.1467322,
+            0.9463276,
+            0.8733481
+          ],
+          "median": 0.9463276
+        },
+        "cpu_seconds": {
+          "samples": [
+            0.865035,
+            0.715144,
+            0.666693
+          ],
+          "median": 0.715144
+        },
+        "planning_cpu_seconds": {
+          "samples": [
+            0.830032,
+            0.695835,
+            0.64715
+          ],
+          "median": 0.695835
+        },
+        "execution_cpu_seconds": {
+          "samples": [
+            0.035003,
+            0.019309,
+            0.019543
+          ],
+          "median": 0.019543
+        },
+        "peak_memory_bytes": {
+          "samples": [
+            15313808,
+            15313808,
+            15412112
+          ],
+          "median": 15313808
+        }
+      }
+    },
+    {
+      "name": "many-groups-event_count-context",
+      "input_rows": 96,
+      "expected_rows": 84,
+      "query_sha256": "57c088b5dbceee059691735535db50db61dbc4737d52762e72f381c007dc004f",
+      "fixture_sha256": "8e6dc8d7739e409f9b077279c67a6c1f1902e53351c443958559d5edcba9e37c",
+      "query_bytes": 50252,
+      "query_lines": 361,
+      "operators": {
+        "extend": 64,
+        "join": 25,
+        "mv-expand": 14,
+        "project": 55,
+        "project-away": 2,
+        "scan": 14,
+        "serialize": 14,
+        "sort": 21,
+        "summarize": 27,
+        "where": 57
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "EventCount": "long",
+        "User": "dynamic"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 0,
+      "runtime_failures": 3,
+      "recorded_failures": 3,
+      "failure_details": {
+        "curl failed (28): curl: (28) Operation timed out after 15002 milliseconds with 0 bytes received": 2,
+        "curl failed (28): curl: (28) Operation timed out after 15001 milliseconds with 0 bytes received": 1
+      },
+      "all_client_elapsed_seconds": {
+        "samples": [
+          15.01227,
+          15.013042,
+          15.011244
+        ],
+        "median": 15.01227
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "engine_elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "planning_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "execution_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "peak_memory_bytes": {
+          "samples": [],
+          "median": null
+        }
+      }
+    },
+    {
+      "name": "many-groups-value_count-plain",
+      "input_rows": 96,
+      "expected_rows": 84,
+      "query_sha256": "c2a2f1ca01e43b4ebd87b993714183a77205f200f387012d848284d2b99de468",
+      "fixture_sha256": "659c57ce1896af28d39ba2ca67388a88b14a5d6718f0275d3b0ac21e6f77d485",
+      "query_bytes": 15210,
+      "query_lines": 121,
+      "operators": {
+        "distinct": 1,
+        "extend": 20,
+        "join": 10,
+        "mv-expand": 5,
+        "project": 18,
+        "project-away": 1,
+        "scan": 4,
+        "serialize": 4,
+        "sort": 6,
+        "summarize": 8,
+        "where": 22
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "ValueCount": "long"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 3,
+      "runtime_failures": 0,
+      "recorded_failures": 0,
+      "failure_details": {},
+      "all_client_elapsed_seconds": {
+        "samples": [
+          1.352587,
+          1.459064,
+          1.381189
+        ],
+        "median": 1.381189
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [
+            1.352587,
+            1.459064,
+            1.381189
+          ],
+          "median": 1.381189
+        },
+        "engine_elapsed_seconds": {
+          "samples": [
+            1.3360107,
+            1.4435611,
+            1.3634699
+          ],
+          "median": 1.3634699
+        },
+        "cpu_seconds": {
+          "samples": [
+            1.152639,
+            1.231217,
+            1.176364
+          ],
+          "median": 1.176364
+        },
+        "planning_cpu_seconds": {
+          "samples": [
+            1.11345,
+            1.191711,
+            1.148484
+          ],
+          "median": 1.148484
+        },
+        "execution_cpu_seconds": {
+          "samples": [
+            0.039189,
+            0.039506,
+            0.02788
+          ],
+          "median": 0.039189
+        },
+        "peak_memory_bytes": {
+          "samples": [
+            5718384,
+            5647360,
+            5682144
+          ],
+          "median": 5682144
+        }
+      }
+    },
+    {
+      "name": "many-groups-value_count-context",
+      "input_rows": 96,
+      "expected_rows": 84,
+      "query_sha256": "1c207145109ee6fcb83fe2ec9ec4c43fff8bbd102f6b804cfdd3e59883b510f5",
+      "fixture_sha256": "7398d180b4a136ef3a7df81da11fc1ebdc8fd1592340d2d6cbf3deaf49ac2f9f",
+      "query_bytes": 50689,
+      "query_lines": 366,
+      "operators": {
+        "distinct": 2,
+        "extend": 61,
+        "join": 28,
+        "mv-expand": 14,
+        "project": 58,
+        "project-away": 2,
+        "scan": 14,
+        "serialize": 14,
+        "sort": 21,
+        "summarize": 24,
+        "where": 57
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "ValueCount": "long",
+        "User": "dynamic"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 0,
+      "runtime_failures": 3,
+      "recorded_failures": 3,
+      "failure_details": {
+        "curl failed (28): curl: (28) Operation timed out after 15002 milliseconds with 0 bytes received": 1,
+        "curl failed (28): curl: (28) Operation timed out after 15001 milliseconds with 0 bytes received": 2
+      },
+      "all_client_elapsed_seconds": {
+        "samples": [
+          15.009922,
+          15.008327,
+          15.008086
+        ],
+        "median": 15.008327
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "engine_elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "planning_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "execution_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "peak_memory_bytes": {
+          "samples": [],
+          "median": null
+        }
+      }
+    },
+    {
+      "name": "many-groups-value_sum-plain",
+      "input_rows": 96,
+      "expected_rows": 96,
+      "query_sha256": "03227de2c2e3adce677fc6b93311aa5a1d1b08991a9515a53992fd031ed7f96b",
+      "fixture_sha256": "d06edd80bfeb7ef2682dd29ddb00e3f1f2a4fcb2ec13f06832dd4f853fd16faa",
+      "query_bytes": 16140,
+      "query_lines": 131,
+      "operators": {
+        "distinct": 2,
+        "extend": 22,
+        "join": 9,
+        "mv-expand": 6,
+        "project": 18,
+        "project-away": 1,
+        "scan": 4,
+        "serialize": 4,
+        "sort": 6,
+        "summarize": 7,
+        "where": 20
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "ValueSum": "long"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 3,
+      "runtime_failures": 0,
+      "recorded_failures": 0,
+      "failure_details": {},
+      "all_client_elapsed_seconds": {
+        "samples": [
+          1.37705,
+          1.43152,
+          1.358897
+        ],
+        "median": 1.37705
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [
+            1.37705,
+            1.43152,
+            1.358897
+          ],
+          "median": 1.37705
+        },
+        "engine_elapsed_seconds": {
+          "samples": [
+            1.3577892,
+            1.4159947,
+            1.3440241
+          ],
+          "median": 1.3577892
+        },
+        "cpu_seconds": {
+          "samples": [
+            0.734562,
+            0.697969,
+            0.688901
+          ],
+          "median": 0.697969
+        },
+        "planning_cpu_seconds": {
+          "samples": [
+            0.704242,
+            0.658364,
+            0.646049
+          ],
+          "median": 0.658364
+        },
+        "execution_cpu_seconds": {
+          "samples": [
+            0.03032,
+            0.039605,
+            0.042852
+          ],
+          "median": 0.039605
+        },
+        "peak_memory_bytes": {
+          "samples": [
+            5321632,
+            5053424,
+            5627104
+          ],
+          "median": 5321632
+        }
+      }
+    },
+    {
+      "name": "many-groups-value_sum-context",
+      "input_rows": 96,
+      "expected_rows": 96,
+      "query_sha256": "ca343b14e8289f53624889681632b6ee5b5c65a656e82c59379c86e8e192ddaa",
+      "fixture_sha256": "8861814f0f391b66373a8882cda92cbbe0f9764c1e1405585832bea6345ba003",
+      "query_bytes": 51813,
+      "query_lines": 377,
+      "operators": {
+        "distinct": 3,
+        "extend": 64,
+        "join": 26,
+        "mv-expand": 15,
+        "project": 57,
+        "project-away": 2,
+        "scan": 14,
+        "serialize": 14,
+        "sort": 21,
+        "summarize": 22,
+        "where": 53
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "ValueSum": "long",
+        "User": "dynamic"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 0,
+      "runtime_failures": 3,
+      "recorded_failures": 3,
+      "failure_details": {
+        "curl failed (28): curl: (28) Operation timed out after 15002 milliseconds with 0 bytes received": 3
+      },
+      "all_client_elapsed_seconds": {
+        "samples": [
+          15.012543,
+          15.010447,
+          15.013254
+        ],
+        "median": 15.012543
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "engine_elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "planning_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "execution_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "peak_memory_bytes": {
+          "samples": [],
+          "median": null
+        }
+      }
+    },
+    {
+      "name": "many-groups-value_avg-plain",
+      "input_rows": 96,
+      "expected_rows": 96,
+      "query_sha256": "4fdd5453ba42133738b7cc4eee8de792aae6d5b0f90fc5137b3a5c5a3ec7e5d0",
+      "fixture_sha256": "a8a264e637f98cdd84bd30e6a58f3c0525352fa05c2a41c94e9ec254ffdd4bba",
+      "query_bytes": 14581,
+      "query_lines": 115,
+      "operators": {
+        "distinct": 1,
+        "extend": 20,
+        "join": 8,
+        "mv-expand": 5,
+        "project": 16,
+        "project-away": 1,
+        "scan": 4,
+        "serialize": 4,
+        "sort": 6,
+        "summarize": 6,
+        "where": 18
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "ValueAvg": "real"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 3,
+      "runtime_failures": 0,
+      "recorded_failures": 0,
+      "failure_details": {},
+      "all_client_elapsed_seconds": {
+        "samples": [
+          0.871018,
+          0.904245,
+          0.988646
+        ],
+        "median": 0.904245
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [
+            0.871018,
+            0.904245,
+            0.988646
+          ],
+          "median": 0.904245
+        },
+        "engine_elapsed_seconds": {
+          "samples": [
+            0.8560724,
+            0.885113,
+            0.9747678
+          ],
+          "median": 0.885113
+        },
+        "cpu_seconds": {
+          "samples": [
+            0.66959,
+            0.660106,
+            0.767651
+          ],
+          "median": 0.66959
+        },
+        "planning_cpu_seconds": {
+          "samples": [
+            0.639988,
+            0.630534,
+            0.738059
+          ],
+          "median": 0.639988
+        },
+        "execution_cpu_seconds": {
+          "samples": [
+            0.029602,
+            0.029572,
+            0.029592
+          ],
+          "median": 0.029592
+        },
+        "peak_memory_bytes": {
+          "samples": [
+            5108032,
+            5195984,
+            5116624
+          ],
+          "median": 5116624
+        }
+      }
+    },
+    {
+      "name": "many-groups-value_avg-context",
+      "input_rows": 96,
+      "expected_rows": 96,
+      "query_sha256": "f19fadcb045668e82e1d9e8adfa91ed751d7b978739d0ec88dadf64e0c75d333",
+      "fixture_sha256": "632ffbf0b33317b685b4546cb1cd08dff647382397495f8b46b310ee69d4cdbd",
+      "query_bytes": 49870,
+      "query_lines": 357,
+      "operators": {
+        "distinct": 2,
+        "extend": 61,
+        "join": 25,
+        "mv-expand": 14,
+        "project": 55,
+        "project-away": 2,
+        "scan": 14,
+        "serialize": 14,
+        "sort": 21,
+        "summarize": 21,
+        "where": 51
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "ValueAvg": "real",
+        "User": "dynamic"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 0,
+      "runtime_failures": 3,
+      "recorded_failures": 3,
+      "failure_details": {
+        "curl failed (28): curl: (28) Operation timed out after 15002 milliseconds with 0 bytes received": 2,
+        "Expecting value: line 1 column 1 (char 0)": 1
+      },
+      "all_client_elapsed_seconds": {
+        "samples": [
+          15.011799,
+          13.601154,
+          15.008547
+        ],
+        "median": 15.008547
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "engine_elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "planning_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "execution_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "peak_memory_bytes": {
+          "samples": [],
+          "median": null
+        }
+      }
+    },
+    {
+      "name": "many-groups-value_percentile-plain",
+      "input_rows": 96,
+      "expected_rows": 96,
+      "query_sha256": "6e876691bc6bf23712e5d560a9be6f0c9328f24afeecad18dcf5caeaa18a332d",
+      "fixture_sha256": "c937c2951fa0cafacededa6ff8c355e34a0cf31bc2bc9c4349436216382f3bc2",
+      "query_bytes": 16065,
+      "query_lines": 139,
+      "operators": {
+        "distinct": 2,
+        "extend": 24,
+        "join": 10,
+        "mv-expand": 6,
+        "project": 17,
+        "project-away": 1,
+        "scan": 4,
+        "serialize": 6,
+        "sort": 8,
+        "summarize": 6,
+        "where": 22
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "ValuePercentile": "long"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 3,
+      "runtime_failures": 0,
+      "recorded_failures": 0,
+      "failure_details": {},
+      "all_client_elapsed_seconds": {
+        "samples": [
+          1.31958,
+          1.349818,
+          1.437046
+        ],
+        "median": 1.349818
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [
+            1.31958,
+            1.349818,
+            1.437046
+          ],
+          "median": 1.349818
+        },
+        "engine_elapsed_seconds": {
+          "samples": [
+            1.2971603,
+            1.3377531,
+            1.4226282
+          ],
+          "median": 1.3377531
+        },
+        "cpu_seconds": {
+          "samples": [
+            1.093643,
+            1.126581,
+            1.19626
+          ],
+          "median": 1.126581
+        },
+        "planning_cpu_seconds": {
+          "samples": [
+            1.06588,
+            1.086873,
+            1.156258
+          ],
+          "median": 1.086873
+        },
+        "execution_cpu_seconds": {
+          "samples": [
+            0.027763,
+            0.039708,
+            0.040002
+          ],
+          "median": 0.039708
+        },
+        "peak_memory_bytes": {
+          "samples": [
+            5425648,
+            5369824,
+            5376992
+          ],
+          "median": 5376992
+        }
+      }
+    },
+    {
+      "name": "many-groups-value_percentile-context",
+      "input_rows": 96,
+      "expected_rows": 96,
+      "query_sha256": "15eb41217854e0192564270b9265f43c994bf5aad7f7a340a73596b8c31461ea",
+      "fixture_sha256": "c15cb96961a39a3141e83cba8c59ea15e3e6ec1d2640ed38f295d01134e44984",
+      "query_bytes": 51952,
+      "query_lines": 391,
+      "operators": {
+        "distinct": 3,
+        "extend": 67,
+        "join": 28,
+        "mv-expand": 15,
+        "project": 56,
+        "project-away": 2,
+        "scan": 14,
+        "serialize": 17,
+        "sort": 24,
+        "summarize": 21,
+        "where": 57
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "ValuePercentile": "long",
+        "User": "dynamic"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 0,
+      "runtime_failures": 3,
+      "recorded_failures": 3,
+      "failure_details": {
+        "curl failed (28): curl: (28) Operation timed out after 15001 milliseconds with 0 bytes received": 3
+      },
+      "all_client_elapsed_seconds": {
+        "samples": [
+          15.006212,
+          15.007903,
+          15.006075
+        ],
+        "median": 15.006212
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "engine_elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "planning_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "execution_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "peak_memory_bytes": {
+          "samples": [],
+          "median": null
+        }
+      }
+    },
+    {
+      "name": "many-groups-temporal-plain",
+      "input_rows": 96,
+      "expected_rows": 72,
+      "query_sha256": "011b1e9128f6f54d4b63cc207554110459d1b8d4f077cf61f827b2d848f685a9",
+      "fixture_sha256": "f1b3aa3ad4ad8bacdde41c51e72c7f95046769c25f3f629706d64d1c3f0e2970",
+      "query_bytes": 14980,
+      "query_lines": 131,
+      "operators": {
+        "distinct": 1,
+        "extend": 28,
+        "join": 8,
+        "mv-expand": 5,
+        "project": 16,
+        "project-away": 1,
+        "scan": 4,
+        "serialize": 4,
+        "sort": 6,
+        "summarize": 8,
+        "where": 22
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "RuleCount": "long"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 3,
+      "runtime_failures": 0,
+      "recorded_failures": 0,
+      "failure_details": {},
+      "all_client_elapsed_seconds": {
+        "samples": [
+          1.003871,
+          0.995739,
+          1.078726
+        ],
+        "median": 1.003871
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [
+            1.003871,
+            0.995739,
+            1.078726
+          ],
+          "median": 1.003871
+        },
+        "engine_elapsed_seconds": {
+          "samples": [
+            0.9873653,
+            0.9805142,
+            1.0581286
+          ],
+          "median": 0.9873653
+        },
+        "cpu_seconds": {
+          "samples": [
+            0.76582,
+            0.788956,
+            0.766347
+          ],
+          "median": 0.766347
+        },
+        "planning_cpu_seconds": {
+          "samples": [
+            0.735288,
+            0.749792,
+            0.736568
+          ],
+          "median": 0.736568
+        },
+        "execution_cpu_seconds": {
+          "samples": [
+            0.030532,
+            0.039164,
+            0.029779
+          ],
+          "median": 0.030532
+        },
+        "peak_memory_bytes": {
+          "samples": [
+            6418848,
+            6656016,
+            6444864
+          ],
+          "median": 6444864
+        }
+      }
+    },
+    {
+      "name": "many-groups-temporal-context",
+      "input_rows": 96,
+      "expected_rows": 72,
+      "query_sha256": "2cb5c94703c3dddf9a83a5c000a5d7835666ca1f918b6eb5015c1f69b902595b",
+      "fixture_sha256": "7cdfc1b96603e38c40580aaf0704ba07d4fe207d34b6d7b3f6d20ed9fe3d4845",
+      "query_bytes": 51345,
+      "query_lines": 397,
+      "operators": {
+        "distinct": 2,
+        "extend": 81,
+        "join": 25,
+        "mv-expand": 14,
+        "project": 55,
+        "project-away": 2,
+        "scan": 14,
+        "serialize": 14,
+        "sort": 21,
+        "summarize": 24,
+        "where": 61
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "RuleCount": "long",
+        "User": "dynamic"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 0,
+      "runtime_failures": 3,
+      "recorded_failures": 3,
+      "failure_details": {
+        "Expecting value: line 1 column 1 (char 0)": 2,
+        "curl failed (28): curl: (28) Operation timed out after 15002 milliseconds with 0 bytes received": 1
+      },
+      "all_client_elapsed_seconds": {
+        "samples": [
+          13.03179,
+          15.00872,
+          13.31552
+        ],
+        "median": 13.31552
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "engine_elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "planning_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "execution_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "peak_memory_bytes": {
+          "samples": [],
+          "median": null
+        }
+      }
+    },
+    {
+      "name": "many-groups-temporal_ordered-plain",
+      "input_rows": 96,
+      "expected_rows": 24,
+      "query_sha256": "a5a785d1c55011069ed537994f4da1950a8cafb4747ea9f9ecc6bfb779c363f3",
+      "fixture_sha256": "308b702d647d50efd3cb5a98d5b0c51c208b77ca42f60bd2bcc600ff19abbd31",
+      "query_bytes": 17209,
+      "query_lines": 167,
+      "operators": {
+        "extend": 31,
+        "join": 11,
+        "mv-expand": 8,
+        "project": 21,
+        "project-away": 1,
+        "scan": 4,
+        "serialize": 4,
+        "sort": 6,
+        "summarize": 11,
+        "where": 30
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "RuleCount": "long"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 3,
+      "runtime_failures": 0,
+      "recorded_failures": 0,
+      "failure_details": {},
+      "all_client_elapsed_seconds": {
+        "samples": [
+          1.174016,
+          1.247711,
+          1.278695
+        ],
+        "median": 1.247711
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [
+            1.174016,
+            1.247711,
+            1.278695
+          ],
+          "median": 1.247711
+        },
+        "engine_elapsed_seconds": {
+          "samples": [
+            1.1583758,
+            1.2287118,
+            1.2583713
+          ],
+          "median": 1.2287118
+        },
+        "cpu_seconds": {
+          "samples": [
+            0.932783,
+            1.021253,
+            0.987242
+          ],
+          "median": 0.987242
+        },
+        "planning_cpu_seconds": {
+          "samples": [
+            0.913174,
+            0.983531,
+            0.947173
+          ],
+          "median": 0.947173
+        },
+        "execution_cpu_seconds": {
+          "samples": [
+            0.019609,
+            0.037722,
+            0.040069
+          ],
+          "median": 0.037722
+        },
+        "peak_memory_bytes": {
+          "samples": [
+            5394512,
+            5403712,
+            5405760
+          ],
+          "median": 5403712
+        }
+      }
+    },
+    {
+      "name": "many-groups-temporal_ordered-context",
+      "input_rows": 96,
+      "expected_rows": 24,
+      "query_sha256": "788170a29a9b8a6da098fec92599c51bfd77da5ebb52132bbac4f00554e3ebb2",
+      "fixture_sha256": "ee2e577b4517947e065bbb41f68f38cdf84e4e545dab27b62985706084a29835",
+      "query_bytes": 58423,
+      "query_lines": 496,
+      "operators": {
+        "distinct": 2,
+        "extend": 85,
+        "join": 35,
+        "mv-expand": 18,
+        "project": 80,
+        "project-away": 2,
+        "scan": 14,
+        "serialize": 14,
+        "sort": 21,
+        "summarize": 28,
+        "where": 84
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "RuleCount": "long",
+        "User": "dynamic"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 0,
+      "runtime_failures": 3,
+      "recorded_failures": 3,
+      "failure_details": {
+        "Expecting value: line 1 column 1 (char 0)": 3
+      },
+      "all_client_elapsed_seconds": {
+        "samples": [
+          13.057922,
+          13.018389,
+          13.01784
+        ],
+        "median": 13.018389
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "engine_elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "planning_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "execution_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "peak_memory_bytes": {
+          "samples": [],
+          "median": null
+        }
+      }
+    },
+    {
+      "name": "many-groups-mixed-multilevel-plain",
+      "input_rows": 96,
+      "expected_rows": 84,
+      "query_sha256": "d576074cbd3888e249fed236fe3554e9e4c764e590f08f6ea01be5f194698f17",
+      "fixture_sha256": "61793b5baf3dbdecb6dbb6d23db3ffbb48ab25a32c35f3dae7c064dd5f74aea3",
+      "query_bytes": 67306,
+      "query_lines": 550,
+      "operators": {
+        "extend": 108,
+        "join": 39,
+        "mv-expand": 24,
+        "project": 75,
+        "project-away": 6,
+        "scan": 18,
+        "serialize": 18,
+        "sort": 27,
+        "summarize": 43,
+        "where": 95
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "EventCount": "long"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 0,
+      "runtime_failures": 3,
+      "recorded_failures": 3,
+      "failure_details": {
+        "Expecting value: line 1 column 1 (char 0)": 3
+      },
+      "all_client_elapsed_seconds": {
+        "samples": [
+          14.065546,
+          13.401893,
+          13.653232
+        ],
+        "median": 13.653232
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "engine_elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "planning_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "execution_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "peak_memory_bytes": {
+          "samples": [],
+          "median": null
+        }
+      }
+    },
+    {
+      "name": "many-groups-mixed-multilevel-context",
+      "input_rows": 96,
+      "expected_rows": 84,
+      "query_sha256": "3e2f579d5695a7b7faf8a8fca7b886056b84954d677f35e312068d00ddc7d2c1",
+      "fixture_sha256": "92c247e101edebaaee92a93a6cdf3b63671b7ddfc8b42f96655374308b4eba1b",
+      "query_bytes": 278858,
+      "query_lines": 2047,
+      "operators": {
+        "extend": 378,
+        "join": 147,
+        "mv-expand": 84,
+        "project": 297,
+        "project-away": 12,
+        "scan": 78,
+        "serialize": 78,
+        "sort": 117,
+        "summarize": 145,
+        "where": 290
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "EventCount": "long",
+        "User": "dynamic"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 0,
+      "runtime_failures": 3,
+      "recorded_failures": 3,
+      "failure_details": {
+        "curl failed (28): curl: (28) Operation timed out after 15001 milliseconds with 0 bytes received": 2,
+        "Expecting value: line 1 column 1 (char 0)": 1
+      },
+      "all_client_elapsed_seconds": {
+        "samples": [
+          15.009609,
+          15.009123,
+          13.296782
+        ],
+        "median": 15.009123
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "engine_elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "planning_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "execution_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "peak_memory_bytes": {
+          "samples": [],
+          "median": null
+        }
+      }
+    },
+    {
+      "name": "hot-group-event_count-plain",
+      "input_rows": 96,
+      "expected_rows": 0,
+      "query_sha256": "767f7e69fb597e7496935482926bff8dbea9aef0e46187c0e04bb5fd3e89aa5e",
+      "fixture_sha256": "805191187b0665ba77b5e494cda48615201c2f9e63582af266e23535b50653ca",
+      "query_bytes": 14939,
+      "query_lines": 118,
+      "operators": {
+        "extend": 22,
+        "join": 8,
+        "mv-expand": 5,
+        "project": 16,
+        "project-away": 1,
+        "scan": 4,
+        "serialize": 4,
+        "sort": 6,
+        "summarize": 10,
+        "where": 22
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "EventCount": "long"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 3,
+      "runtime_failures": 0,
+      "recorded_failures": 0,
+      "failure_details": {},
+      "all_client_elapsed_seconds": {
+        "samples": [
+          1.304047,
+          1.063568,
+          0.959418
+        ],
+        "median": 1.063568
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [
+            1.304047,
+            1.063568,
+            0.959418
+          ],
+          "median": 1.063568
+        },
+        "engine_elapsed_seconds": {
+          "samples": [
+            1.2828599,
+            1.0465932,
+            0.9442118
+          ],
+          "median": 1.0465932
+        },
+        "cpu_seconds": {
+          "samples": [
+            0.870777,
+            0.80528,
+            0.718758
+          ],
+          "median": 0.80528
+        },
+        "planning_cpu_seconds": {
+          "samples": [
+            0.84358,
+            0.785896,
+            0.689118
+          ],
+          "median": 0.785896
+        },
+        "execution_cpu_seconds": {
+          "samples": [
+            0.027197,
+            0.019384,
+            0.02964
+          ],
+          "median": 0.027197
+        },
+        "peak_memory_bytes": {
+          "samples": [
+            15313808,
+            15314064,
+            15312784
+          ],
+          "median": 15313808
+        }
+      }
+    },
+    {
+      "name": "hot-group-event_count-context",
+      "input_rows": 96,
+      "expected_rows": 0,
+      "query_sha256": "05d870b5a29f8028774493b06a6c44eb4d62cd5922f40ae7e4cd9ffb03438cf9",
+      "fixture_sha256": "c836aab90a8f38e9288fdb1fe92a5d553d11ade9429a87aa7b3044a6ea108725",
+      "query_bytes": 50260,
+      "query_lines": 361,
+      "operators": {
+        "extend": 64,
+        "join": 25,
+        "mv-expand": 14,
+        "project": 55,
+        "project-away": 2,
+        "scan": 14,
+        "serialize": 14,
+        "sort": 21,
+        "summarize": 27,
+        "where": 57
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "EventCount": "long",
+        "User": "dynamic"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 0,
+      "runtime_failures": 3,
+      "recorded_failures": 3,
+      "failure_details": {
+        "Expecting value: line 1 column 1 (char 0)": 2,
+        "curl failed (28): curl: (28) Operation timed out after 15001 milliseconds with 0 bytes received": 1
+      },
+      "all_client_elapsed_seconds": {
+        "samples": [
+          13.125095,
+          13.011702,
+          15.006745
+        ],
+        "median": 13.125095
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "engine_elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "planning_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "execution_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "peak_memory_bytes": {
+          "samples": [],
+          "median": null
+        }
+      }
+    },
+    {
+      "name": "hot-group-value_count-plain",
+      "input_rows": 96,
+      "expected_rows": 0,
+      "query_sha256": "aad4b446356ae4d18ac2c308487147df0ab32b71d00d6e98da5e8575147ea53b",
+      "fixture_sha256": "b120646e5a2bfea0b0d9f765337bc1260248b8016f64972d7ba861d68d2a5d89",
+      "query_bytes": 15214,
+      "query_lines": 121,
+      "operators": {
+        "distinct": 1,
+        "extend": 20,
+        "join": 10,
+        "mv-expand": 5,
+        "project": 18,
+        "project-away": 1,
+        "scan": 4,
+        "serialize": 4,
+        "sort": 6,
+        "summarize": 8,
+        "where": 22
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "ValueCount": "long"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 3,
+      "runtime_failures": 0,
+      "recorded_failures": 0,
+      "failure_details": {},
+      "all_client_elapsed_seconds": {
+        "samples": [
+          1.359331,
+          1.3579,
+          1.361633
+        ],
+        "median": 1.359331
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [
+            1.359331,
+            1.3579,
+            1.361633
+          ],
+          "median": 1.359331
+        },
+        "engine_elapsed_seconds": {
+          "samples": [
+            1.344118,
+            1.3431238,
+            1.3472687
+          ],
+          "median": 1.344118
+        },
+        "cpu_seconds": {
+          "samples": [
+            1.138933,
+            1.128632,
+            1.134762
+          ],
+          "median": 1.134762
+        },
+        "planning_cpu_seconds": {
+          "samples": [
+            1.109433,
+            1.099025,
+            1.09928
+          ],
+          "median": 1.09928
+        },
+        "execution_cpu_seconds": {
+          "samples": [
+            0.0295,
+            0.029607,
+            0.035482
+          ],
+          "median": 0.029607
+        },
+        "peak_memory_bytes": {
+          "samples": [
+            5521664,
+            5491456,
+            5672672
+          ],
+          "median": 5521664
+        }
+      }
+    },
+    {
+      "name": "hot-group-value_count-context",
+      "input_rows": 96,
+      "expected_rows": 0,
+      "query_sha256": "95499f1c6602584183355ee85ec78b2953a2c42d56e18f17976c66ea70aa31d4",
+      "fixture_sha256": "52ede1c3ae29ae342be55c11256c392a16863be7a16bd6dd4d1d22681c687ff6",
+      "query_bytes": 50697,
+      "query_lines": 366,
+      "operators": {
+        "distinct": 2,
+        "extend": 61,
+        "join": 28,
+        "mv-expand": 14,
+        "project": 58,
+        "project-away": 2,
+        "scan": 14,
+        "serialize": 14,
+        "sort": 21,
+        "summarize": 24,
+        "where": 57
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "ValueCount": "long",
+        "User": "dynamic"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 0,
+      "runtime_failures": 3,
+      "recorded_failures": 3,
+      "failure_details": {
+        "curl failed (28): curl: (28) Operation timed out after 15001 milliseconds with 0 bytes received": 1,
+        "curl failed (28): curl: (28) Operation timed out after 15002 milliseconds with 0 bytes received": 2
+      },
+      "all_client_elapsed_seconds": {
+        "samples": [
+          15.007377,
+          15.007534,
+          15.008114
+        ],
+        "median": 15.007534
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "engine_elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "planning_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "execution_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "peak_memory_bytes": {
+          "samples": [],
+          "median": null
+        }
+      }
+    },
+    {
+      "name": "hot-group-value_sum-plain",
+      "input_rows": 96,
+      "expected_rows": 0,
+      "query_sha256": "fbc7b7642577f1bc24190f889c503ac4464884339ba94c9e4bed3e42d4690129",
+      "fixture_sha256": "b02035a2a7d45b3c4b4a5e526479d4d6c7f180ca11657247ca3092149c913a7f",
+      "query_bytes": 16148,
+      "query_lines": 131,
+      "operators": {
+        "distinct": 2,
+        "extend": 22,
+        "join": 9,
+        "mv-expand": 6,
+        "project": 18,
+        "project-away": 1,
+        "scan": 4,
+        "serialize": 4,
+        "sort": 6,
+        "summarize": 7,
+        "where": 20
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "ValueSum": "long"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 3,
+      "runtime_failures": 0,
+      "recorded_failures": 0,
+      "failure_details": {},
+      "all_client_elapsed_seconds": {
+        "samples": [
+          1.301927,
+          1.417227,
+          1.300081
+        ],
+        "median": 1.301927
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [
+            1.301927,
+            1.417227,
+            1.300081
+          ],
+          "median": 1.301927
+        },
+        "engine_elapsed_seconds": {
+          "samples": [
+            1.2883184,
+            1.4041603,
+            1.2844746
+          ],
+          "median": 1.2883184
+        },
+        "cpu_seconds": {
+          "samples": [
+            0.676452,
+            0.667545,
+            0.677858
+          ],
+          "median": 0.676452
+        },
+        "planning_cpu_seconds": {
+          "samples": [
+            0.645028,
+            0.646249,
+            0.656607
+          ],
+          "median": 0.646249
+        },
+        "execution_cpu_seconds": {
+          "samples": [
+            0.031424,
+            0.021296,
+            0.021251
+          ],
+          "median": 0.021296
+        },
+        "peak_memory_bytes": {
+          "samples": [
+            5268960,
+            5053392,
+            5070800
+          ],
+          "median": 5070800
+        }
+      }
+    },
+    {
+      "name": "hot-group-value_sum-context",
+      "input_rows": 96,
+      "expected_rows": 0,
+      "query_sha256": "a3cee0342ffc93351dac8b568efd6281a46f048e50e2561bb8fbfb4478e9e9ec",
+      "fixture_sha256": "a916facf63f0371eda0c6f6724869b184634586f0c2fa3255649336f73a6f5ec",
+      "query_bytes": 51829,
+      "query_lines": 377,
+      "operators": {
+        "distinct": 3,
+        "extend": 64,
+        "join": 26,
+        "mv-expand": 15,
+        "project": 57,
+        "project-away": 2,
+        "scan": 14,
+        "serialize": 14,
+        "sort": 21,
+        "summarize": 22,
+        "where": 53
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "ValueSum": "long",
+        "User": "dynamic"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 0,
+      "runtime_failures": 3,
+      "recorded_failures": 3,
+      "failure_details": {
+        "Expecting value: line 1 column 1 (char 0)": 1,
+        "curl failed (28): curl: (28) Operation timed out after 15001 milliseconds with 0 bytes received": 2
+      },
+      "all_client_elapsed_seconds": {
+        "samples": [
+          13.020542,
+          15.00677,
+          15.006703
+        ],
+        "median": 15.006703
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "engine_elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "planning_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "execution_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "peak_memory_bytes": {
+          "samples": [],
+          "median": null
+        }
+      }
+    },
+    {
+      "name": "hot-group-value_avg-plain",
+      "input_rows": 96,
+      "expected_rows": 0,
+      "query_sha256": "d28a77f107920e1c1e14956e796540ab4ad09013480ae743cec68cd0e513b8c3",
+      "fixture_sha256": "952f21ef09bf811cad7f940ca7ff52cb32b6bcd5d677e96a347474adc2941301",
+      "query_bytes": 14585,
+      "query_lines": 115,
+      "operators": {
+        "distinct": 1,
+        "extend": 20,
+        "join": 8,
+        "mv-expand": 5,
+        "project": 16,
+        "project-away": 1,
+        "scan": 4,
+        "serialize": 4,
+        "sort": 6,
+        "summarize": 6,
+        "where": 18
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "ValueAvg": "real"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 3,
+      "runtime_failures": 0,
+      "recorded_failures": 0,
+      "failure_details": {},
+      "all_client_elapsed_seconds": {
+        "samples": [
+          0.957625,
+          0.847166,
+          0.87913
+        ],
+        "median": 0.87913
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [
+            0.957625,
+            0.847166,
+            0.87913
+          ],
+          "median": 0.87913
+        },
+        "engine_elapsed_seconds": {
+          "samples": [
+            0.9424351,
+            0.8343282,
+            0.860856
+          ],
+          "median": 0.860856
+        },
+        "cpu_seconds": {
+          "samples": [
+            0.722499,
+            0.643074,
+            0.660863
+          ],
+          "median": 0.660863
+        },
+        "planning_cpu_seconds": {
+          "samples": [
+            0.703105,
+            0.623393,
+            0.621611
+          ],
+          "median": 0.623393
+        },
+        "execution_cpu_seconds": {
+          "samples": [
+            0.019394,
+            0.019681,
+            0.039252
+          ],
+          "median": 0.019681
+        },
+        "peak_memory_bytes": {
+          "samples": [
+            5158384,
+            5078608,
+            2970576
+          ],
+          "median": 5078608
+        }
+      }
+    },
+    {
+      "name": "hot-group-value_avg-context",
+      "input_rows": 96,
+      "expected_rows": 0,
+      "query_sha256": "5b030b63504b950b90920e6b143abc9a6e4f448fc59851252aefbf91281e5fa0",
+      "fixture_sha256": "52a19a909b8d895ca15aa5c94f645474db9a1f3c57d0778afab80406c5fcb1a2",
+      "query_bytes": 49878,
+      "query_lines": 357,
+      "operators": {
+        "distinct": 2,
+        "extend": 61,
+        "join": 25,
+        "mv-expand": 14,
+        "project": 55,
+        "project-away": 2,
+        "scan": 14,
+        "serialize": 14,
+        "sort": 21,
+        "summarize": 21,
+        "where": 51
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "ValueAvg": "real",
+        "User": "dynamic"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 0,
+      "runtime_failures": 3,
+      "recorded_failures": 3,
+      "failure_details": {
+        "curl failed (28): curl: (28) Operation timed out after 15001 milliseconds with 0 bytes received": 2,
+        "curl failed (28): curl: (28) Operation timed out after 15002 milliseconds with 0 bytes received": 1
+      },
+      "all_client_elapsed_seconds": {
+        "samples": [
+          15.006816,
+          15.008214,
+          15.008333
+        ],
+        "median": 15.008214
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "engine_elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "planning_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "execution_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "peak_memory_bytes": {
+          "samples": [],
+          "median": null
+        }
+      }
+    },
+    {
+      "name": "hot-group-value_percentile-plain",
+      "input_rows": 96,
+      "expected_rows": 0,
+      "query_sha256": "d9bda50dd9f222e05a25e368605562b99dbe0a40378f29333f6212dc05b661f3",
+      "fixture_sha256": "d679bc7017ab10d56f1693f725f33991f35308a9e7fcb25005cf6964e67e0f67",
+      "query_bytes": 16073,
+      "query_lines": 139,
+      "operators": {
+        "distinct": 2,
+        "extend": 24,
+        "join": 10,
+        "mv-expand": 6,
+        "project": 17,
+        "project-away": 1,
+        "scan": 4,
+        "serialize": 6,
+        "sort": 8,
+        "summarize": 6,
+        "where": 22
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "ValuePercentile": "long"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 3,
+      "runtime_failures": 0,
+      "recorded_failures": 0,
+      "failure_details": {},
+      "all_client_elapsed_seconds": {
+        "samples": [
+          1.318503,
+          1.448748,
+          1.329915
+        ],
+        "median": 1.329915
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [
+            1.318503,
+            1.448748,
+            1.329915
+          ],
+          "median": 1.329915
+        },
+        "engine_elapsed_seconds": {
+          "samples": [
+            1.3040154,
+            1.4319898,
+            1.3150294
+          ],
+          "median": 1.3150294
+        },
+        "cpu_seconds": {
+          "samples": [
+            1.088754,
+            1.221747,
+            1.103986
+          ],
+          "median": 1.103986
+        },
+        "planning_cpu_seconds": {
+          "samples": [
+            1.061366,
+            1.192262,
+            1.074974
+          ],
+          "median": 1.074974
+        },
+        "execution_cpu_seconds": {
+          "samples": [
+            0.027388,
+            0.029485,
+            0.029012
+          ],
+          "median": 0.029012
+        },
+        "peak_memory_bytes": {
+          "samples": [
+            5204528,
+            5253344,
+            5259840
+          ],
+          "median": 5253344
+        }
+      }
+    },
+    {
+      "name": "hot-group-value_percentile-context",
+      "input_rows": 96,
+      "expected_rows": 0,
+      "query_sha256": "d94ad3ddb2c48bc979e9309745453db989d4000ee29f3d5733274afe0ee6d969",
+      "fixture_sha256": "5fc33cd451c4ade8a71ec49fb00b83a5965b8de86c73a77b0c1c7d60605f7ac3",
+      "query_bytes": 51968,
+      "query_lines": 391,
+      "operators": {
+        "distinct": 3,
+        "extend": 67,
+        "join": 28,
+        "mv-expand": 15,
+        "project": 56,
+        "project-away": 2,
+        "scan": 14,
+        "serialize": 17,
+        "sort": 24,
+        "summarize": 21,
+        "where": 57
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "ValuePercentile": "long",
+        "User": "dynamic"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 0,
+      "runtime_failures": 3,
+      "recorded_failures": 3,
+      "failure_details": {
+        "curl failed (28): curl: (28) Operation timed out after 15002 milliseconds with 0 bytes received": 2,
+        "curl failed (28): curl: (28) Operation timed out after 15001 milliseconds with 0 bytes received": 1
+      },
+      "all_client_elapsed_seconds": {
+        "samples": [
+          15.00796,
+          15.008105,
+          15.007769
+        ],
+        "median": 15.00796
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "engine_elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "planning_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "execution_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "peak_memory_bytes": {
+          "samples": [],
+          "median": null
+        }
+      }
+    },
+    {
+      "name": "hot-group-temporal-plain",
+      "input_rows": 96,
+      "expected_rows": 47,
+      "query_sha256": "86df5a95863ce256c7acef61833cccb85ede6b1539fe477e481ec0dce9852f5c",
+      "fixture_sha256": "5bc37ed7f487b486a167251fa66e85a6742418e4f0552d2b5aa350b3dfce331a",
+      "query_bytes": 15334,
+      "query_lines": 139,
+      "operators": {
+        "distinct": 1,
+        "extend": 32,
+        "join": 8,
+        "mv-expand": 5,
+        "project": 16,
+        "project-away": 1,
+        "scan": 4,
+        "serialize": 4,
+        "sort": 6,
+        "summarize": 8,
+        "where": 24
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "RuleCount": "long"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 3,
+      "runtime_failures": 0,
+      "recorded_failures": 0,
+      "failure_details": {},
+      "all_client_elapsed_seconds": {
+        "samples": [
+          0.938459,
+          0.951625,
+          0.979221
+        ],
+        "median": 0.951625
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [
+            0.938459,
+            0.951625,
+            0.979221
+          ],
+          "median": 0.951625
+        },
+        "engine_elapsed_seconds": {
+          "samples": [
+            0.9240755,
+            0.9348819,
+            0.9600508
+          ],
+          "median": 0.9348819
+        },
+        "cpu_seconds": {
+          "samples": [
+            0.72439,
+            0.738614,
+            0.691754
+          ],
+          "median": 0.72439
+        },
+        "planning_cpu_seconds": {
+          "samples": [
+            0.694536,
+            0.698583,
+            0.671945
+          ],
+          "median": 0.694536
+        },
+        "execution_cpu_seconds": {
+          "samples": [
+            0.029854,
+            0.040031,
+            0.019809
+          ],
+          "median": 0.029854
+        },
+        "peak_memory_bytes": {
+          "samples": [
+            6576176,
+            6528544,
+            6626128
+          ],
+          "median": 6576176
+        }
+      }
+    },
+    {
+      "name": "hot-group-temporal-context",
+      "input_rows": 96,
+      "expected_rows": 47,
+      "query_sha256": "79ee342eaa81cd2da0262fdd61e6d1e1bbf58238374fce1c0fe309acf237c1b8",
+      "fixture_sha256": "d2974099f6b21d2b0a60e5a8387dca8e77a5680b809464323a56dcc040cbd43b",
+      "query_bytes": 52402,
+      "query_lines": 417,
+      "operators": {
+        "distinct": 2,
+        "extend": 91,
+        "join": 25,
+        "mv-expand": 14,
+        "project": 55,
+        "project-away": 2,
+        "scan": 14,
+        "serialize": 14,
+        "sort": 21,
+        "summarize": 24,
+        "where": 66
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "RuleCount": "long",
+        "User": "dynamic"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 0,
+      "runtime_failures": 3,
+      "recorded_failures": 3,
+      "failure_details": {
+        "Expecting value: line 1 column 1 (char 0)": 3
+      },
+      "all_client_elapsed_seconds": {
+        "samples": [
+          14.683463,
+          13.199253,
+          13.149014
+        ],
+        "median": 13.199253
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "engine_elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "planning_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "execution_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "peak_memory_bytes": {
+          "samples": [],
+          "median": null
+        }
+      }
+    },
+    {
+      "name": "hot-group-temporal_ordered-plain",
+      "input_rows": 96,
+      "expected_rows": 22,
+      "query_sha256": "6f342cfcbdf8eea002712114c2594c86aec9089ed0172c48023548d5c1e2139b",
+      "fixture_sha256": "163484ca699827bfa9be21f3eb7e4299bebfdd50a49daea8c27c3789646848ce",
+      "query_bytes": 18763,
+      "query_lines": 195,
+      "operators": {
+        "extend": 37,
+        "join": 13,
+        "mv-expand": 10,
+        "project": 23,
+        "project-away": 1,
+        "scan": 4,
+        "serialize": 4,
+        "sort": 6,
+        "summarize": 13,
+        "where": 36
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "RuleCount": "long"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 3,
+      "runtime_failures": 0,
+      "recorded_failures": 0,
+      "failure_details": {},
+      "all_client_elapsed_seconds": {
+        "samples": [
+          1.340343,
+          1.483154,
+          1.587816
+        ],
+        "median": 1.483154
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [
+            1.340343,
+            1.483154,
+            1.587816
+          ],
+          "median": 1.483154
+        },
+        "engine_elapsed_seconds": {
+          "samples": [
+            1.3292158,
+            1.4674342,
+            1.5615451
+          ],
+          "median": 1.4674342
+        },
+        "cpu_seconds": {
+          "samples": [
+            1.082411,
+            1.254883,
+            1.246881
+          ],
+          "median": 1.246881
+        },
+        "planning_cpu_seconds": {
+          "samples": [
+            1.059868,
+            1.225164,
+            1.206969
+          ],
+          "median": 1.206969
+        },
+        "execution_cpu_seconds": {
+          "samples": [
+            0.022543,
+            0.029719,
+            0.039912
+          ],
+          "median": 0.029719
+        },
+        "peak_memory_bytes": {
+          "samples": [
+            5582272,
+            5666720,
+            5543424
+          ],
+          "median": 5582272
+        }
+      }
+    },
+    {
+      "name": "hot-group-temporal_ordered-context",
+      "input_rows": 96,
+      "expected_rows": 22,
+      "query_sha256": "cdfbd181cdb9b23a4b40925902f1093f1c8cb511ac3ae207872acf74f1483bac",
+      "fixture_sha256": "5cfaa3cc614707094783c9e4b04eb06b8bfde9567690a329f9e382eb2b29b2af",
+      "query_bytes": 62590,
+      "query_lines": 562,
+      "operators": {
+        "distinct": 2,
+        "extend": 98,
+        "join": 40,
+        "mv-expand": 21,
+        "project": 89,
+        "project-away": 2,
+        "scan": 14,
+        "serialize": 14,
+        "sort": 21,
+        "summarize": 31,
+        "where": 99
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "RuleCount": "long",
+        "User": "dynamic"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 0,
+      "runtime_failures": 3,
+      "recorded_failures": 3,
+      "failure_details": {
+        "Expecting value: line 1 column 1 (char 0)": 3
+      },
+      "all_client_elapsed_seconds": {
+        "samples": [
+          13.17154,
+          14.236389,
+          13.126338
+        ],
+        "median": 13.17154
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "engine_elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "planning_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "execution_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "peak_memory_bytes": {
+          "samples": [],
+          "median": null
+        }
+      }
+    },
+    {
+      "name": "hot-group-mixed-multilevel-plain",
+      "input_rows": 96,
+      "expected_rows": 24,
+      "query_sha256": "b2bbaf733ffdddd75b2ccfa556f0f46f9a966490a2d7502865a9ba8967f8377d",
+      "fixture_sha256": "6988d1d29a91b7cc1721597eb8412025c0b7f7904bb9a645e20a39e9244fd2d8",
+      "query_bytes": 67318,
+      "query_lines": 550,
+      "operators": {
+        "extend": 108,
+        "join": 39,
+        "mv-expand": 24,
+        "project": 75,
+        "project-away": 6,
+        "scan": 18,
+        "serialize": 18,
+        "sort": 27,
+        "summarize": 43,
+        "where": 95
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "EventCount": "long"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 0,
+      "runtime_failures": 3,
+      "recorded_failures": 3,
+      "failure_details": {
+        "Expecting value: line 1 column 1 (char 0)": 3
+      },
+      "all_client_elapsed_seconds": {
+        "samples": [
+          14.154359,
+          13.807484,
+          13.038179
+        ],
+        "median": 13.807484
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "engine_elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "planning_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "execution_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "peak_memory_bytes": {
+          "samples": [],
+          "median": null
+        }
+      }
+    },
+    {
+      "name": "hot-group-mixed-multilevel-context",
+      "input_rows": 96,
+      "expected_rows": 24,
+      "query_sha256": "de885c815ecc357ba3cd0602d2b431a570b99bc556d81793a7eaf9a1ffb0132b",
+      "fixture_sha256": "23e824a039a991e643f05b672f2859bba0df68ce300dad59ef076f1d82de2410",
+      "query_bytes": 278882,
+      "query_lines": 2047,
+      "operators": {
+        "extend": 378,
+        "join": 147,
+        "mv-expand": 84,
+        "project": 297,
+        "project-away": 12,
+        "scan": 78,
+        "serialize": 78,
+        "sort": 117,
+        "summarize": 145,
+        "where": 290
+      },
+      "expected_schema": {
+        "WindowStart": "datetime",
+        "WindowEnd": "datetime",
+        "Host": "string",
+        "EventCount": "long",
+        "User": "dynamic"
+      },
+      "attempts": 3,
+      "noninterrupted_attempts": 3,
+      "verified_passes": 0,
+      "runtime_failures": 3,
+      "recorded_failures": 3,
+      "failure_details": {
+        "curl failed (28): curl: (28) Operation timed out after 15001 milliseconds with 0 bytes received": 1,
+        "curl failed (28): curl: (28) Operation timed out after 15002 milliseconds with 0 bytes received": 1,
+        "Expecting value: line 1 column 1 (char 0)": 1
+      },
+      "all_client_elapsed_seconds": {
+        "samples": [
+          15.008312,
+          15.009872,
+          13.314471
+        ],
+        "median": 15.008312
+      },
+      "verified_metrics": {
+        "elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "engine_elapsed_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "planning_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "execution_cpu_seconds": {
+          "samples": [],
+          "median": null
+        },
+        "peak_memory_bytes": {
+          "samples": [],
+          "median": null
+        }
+      }
+    }
+  ],
+  "recorded_attempts": 195,
+  "recorded_passes": 81,
+  "recorded_failures": 114,
+  "interrupted_attempts": 1,
+  "schema_only_reassessments": 3,
+  "verified_workloads": 28
+}
