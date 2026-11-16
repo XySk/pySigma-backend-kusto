@@ -103,4 +103,4 @@ def test_average_child_composes_with_every_supported_consumer(kind, condition):
     (query,) = convert_documents([source_document(), child, parent])
 
     assert "ValueAvg = avgif(" in query
-    assert '_sigma_timestamp = todatetime(["WindowEnd"])' in query
+    assert 'todatetime(["WindowEnd"])' in query

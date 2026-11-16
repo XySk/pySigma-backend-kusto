@@ -1,0 +1,60 @@
+{
+  "started_utc": "2026-11-16T17:27:58.575792+00:00",
+  "endpoint": "http://localhost:8080",
+  "database": "NetDefaultDB",
+  "request_options": {
+    "max_memory_consumption_per_query_per_node": 12884901888
+  },
+  "timeout_seconds": 45,
+  "manifest_sha256": "09616cb55538ad6cde642455369652d6a83c31f89b2bf3f921ca00991ea14cc7",
+  "fixtures": [
+    {
+      "name": "event_count_real_groups.kql",
+      "sha256": "c811a90a6f126a325d9655fb977f5630537e1dcff8ac669dc87a89958b7771b8",
+      "expected_error": null,
+      "status": "FAIL",
+      "detail": "multiset differences: [[\"2026-01-01T00:00:00Z\", 1, \"nan\", -1], [\"2026-01-01T00:00:00Z\", 1, \"+inf\", -1], [\"2026-01-01T00:00:00Z\", 1, \"0\", -1], [\"2026-01-01T00:01:00Z\", 2, \"nan\", -1], [\"2026-01-01T00:01:00Z\", 2, \"+inf\", -1], [\"2026-01-01T00:01:00Z\", 2, \"0\", -1], [\"2026-01-01T00:00:00Z\", 1, \"NaN\", 1], [\"2026-01-01T00:01:00Z\", 1, \"NaN\", 1], [\"2026-01-01T00:00:00Z\", 1, \"0.0\", 1], [\"2026-01-01T00:01:00Z\", 2, \"0.0\", 1], [\"2026-01-01T00:00:00Z\", 1, \"inf\", 1], [\"2026-01-01T00:01:00Z\", 2, \"inf\", 1]]",
+      "http_status": 200,
+      "seconds": 0.034
+    }
+  ],
+  "status": "FAIL",
+  "engine_version": {
+    "Tables": [
+      {
+        "TableName": "Table_0",
+        "Columns": [
+          {
+            "ColumnName": "BuildVersion",
+            "DataType": "String"
+          },
+          {
+            "ColumnName": "BuildTime",
+            "DataType": "DateTime"
+          },
+          {
+            "ColumnName": "ServiceType",
+            "DataType": "String"
+          },
+          {
+            "ColumnName": "ProductVersion",
+            "DataType": "String"
+          },
+          {
+            "ColumnName": "ServiceOffering",
+            "DataType": "String"
+          }
+        ],
+        "Rows": [
+          [
+            "1.0.9815.14081",
+            "2026-11-15T07:49:22Z",
+            "Engine",
+            "2026.11.15.0741-2645-8e3387b-master",
+            ""
+          ]
+        ]
+      }
+    ]
+  }
+}
