@@ -1055,10 +1055,11 @@ def test_event_count_parent_counts_child_summaries_at_window_end_without_expandi
     (query,) = backend.convert(chained_event_count_collection())
 
     assert "union (DeviceProcessEvents\n| where " in summary_data_query(query)
-    assert "| where EventCount >= 10\n" in query
-    assert "union (_sigma_child_0()\n" in summary_data_query(query)
+    assert re.search(r"prev\(EventTime(?:_\d+)?, 9\)", query)
+    assert "| where EventCount >= 10\n" not in query
+    assert "union (ChildCorrelation()\n" in summary_data_query(query)
     assert 'EventTime = todatetime(["WindowEnd"])' in query
-    assert summary_data_query(query).count("| summarize SourceMatchCount = count() by EventTime") == 2
+    assert summary_data_query(query).count("| summarize SourceMatchCount = count() by EventTime") == 1
     assert "CountBoundaryTime = EventTime + 2m" in query
     assert final_summary_projection(query).endswith(
         "| project WindowStart = CountBoundaryTime - 2m, WindowEnd = CountBoundaryTime, EventCount"
@@ -1114,7 +1115,7 @@ def test_event_count_parent_combines_direct_searches_with_child_groups_and_prese
 
     (query,) = backend.convert(SigmaCollection.from_yaml(yaml.safe_dump_all([parent, child, source, direct])))
 
-    assert "let _sigma_child_0_1 = () {\n" in query
+    assert "let ChildCorrelation = () {\n" in query
     assert summary_data_query(query).count("(DeviceProcessEvents\n| where ") == 2
     assert summary_data_query(query).count("(DeviceNetworkEvents\n| where ") == 2
     assert 'EventTime_1 = todatetime(["WindowEnd"]), GroupActor = ["User"]' in query
@@ -1163,7 +1164,8 @@ def test_event_count_chain_honors_generation_of_child_and_detection_queries(
     if parent_generate:
         assert "| where EventCount >= 10\n" in queries[-2]
         assert "_sigma_child_0" not in queries[-2]
-    assert "_sigma_child_0()" in queries[-1]
+    child_binding = "_sigma_child_0" if parent_generate else "ChildCorrelation"
+    assert f"{child_binding}()" in queries[-1]
 
 
 @pytest.mark.parametrize(

@@ -1621,7 +1621,7 @@ datetime(2026-01-01T00:00:00.0000000), "", "failure",
 datetime(2026-01-01T00:00:00.0000001), "", "success"
 ];
 let Specialized = () {
-let _sigma_child_0 = () {
+let FailedLogonBursts = () {
 union (Events
 | where Marker =~ "failure"
 | project EventTime_1 = todatetime(["Timestamp"]), GroupUser = ["User"]),
@@ -1637,7 +1637,7 @@ union (Events
 | project WindowStart = EventTime_1 - 5m, WindowEnd = EventTime_1, ["User"] = GroupUser
 };
 // Strict sequence: "failed-logon-bursts" -> "successful-logon". Total inclusive span: 3m.
-union (_sigma_child_0()
+union (FailedLogonBursts()
 | extend EventTime_1 = todatetime(["WindowEnd"]), GroupUser = ["User"]
 | extend SourceRule = "failed-logon-bursts"),
 (Events
@@ -1650,10 +1650,10 @@ union (_sigma_child_0()
 | sort by GroupUser asc, EventTime_1 asc
 | extend NewCorrelationGroup = isnull(prev(EventTime_1)) or GroupUser != prev(GroupUser)
 // Read preceding timestamp state for every assignment; preserve viable earlier prefixes.
-| scan declare (LatestFailedLogonBurstsStart:datetime = datetime(null), CompleteNow:bool = false) with (
+| scan declare (LastFailedLogonBurstTime:datetime = datetime(null), CompleteNow:bool = false) with (
     step SequenceState: true =>
-        CompleteNow = not(NewCorrelationGroup) and HasSuccessfulLogon and isnotnull(SequenceState.LatestFailedLogonBurstsStart) and SequenceState.LatestFailedLogonBurstsStart >= EventTime_1 - 3m,
-        LatestFailedLogonBurstsStart = iff(HasFailedLogonBursts, EventTime_1, iff(NewCorrelationGroup, datetime(null), SequenceState.LatestFailedLogonBurstsStart));
+        CompleteNow = not(NewCorrelationGroup) and HasSuccessfulLogon and isnotnull(SequenceState.LastFailedLogonBurstTime) and SequenceState.LastFailedLogonBurstTime >= EventTime_1 - 3m,
+        LastFailedLogonBurstTime = iff(HasFailedLogonBursts, EventTime_1, iff(NewCorrelationGroup, datetime(null), SequenceState.LastFailedLogonBurstTime));
 )
 | where CompleteNow
 | project WindowStart = EventTime_1 - 3m, WindowEnd = EventTime_1, ["User"] = GroupUser, RuleCount = tolong(2)

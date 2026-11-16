@@ -236,11 +236,24 @@ class KustoBackend(TextQueryBackend):
         consumers = {}
         context = {}
         for rule in rule_collection.rules:
-            inherited = bool(rule.fields)
+            inherited = set(rule.fields or [])
             if isinstance(rule, SigmaCorrelationRule):
                 for reference in rule.referenced_rules:
-                    consumers.setdefault(id(reference.rule), []).append((rule, reference))
-                    inherited |= context.get(id(reference.rule), False)
+                    source = reference.rule
+                    consumers.setdefault(id(source), []).append((rule, reference))
+                    for field in context.get(id(source), ()):
+                        logical = next(
+                            (
+                                alias.alias
+                                for alias in rule.aliases
+                                if any(
+                                    name == field and alias_source.reference in (source.name, str(source.id))
+                                    for alias_source, name in alias.mapping.items()
+                                )
+                            ),
+                            field,
+                        )
+                        inherited.add(logical)
             context[id(rule)] = inherited
         existence = set()
         for child in rule_collection.rules:
@@ -255,7 +268,9 @@ class KustoBackend(TextQueryBackend):
                 continue
             available = {"WindowStart", "WindowEnd", *(child.group_by or [])}
             for consumer, reference in consumers[id(child)]:
-                required = [*(consumer.group_by or []), *(consumer.fields or [])]
+                # Context inherited from another source can also request this
+                # child's metric through a consumer alias.
+                required = [*(consumer.group_by or []), *context[id(consumer)]]
                 measured = getattr(consumer.condition, "fieldref", None)
                 required.extend(measured if isinstance(measured, list) else [measured] if measured else [])
                 for field in required:
@@ -293,7 +308,9 @@ class KustoBackend(TextQueryBackend):
             threshold = int(count) + 1
         else:
             return None
-        return threshold if threshold > 0 else None
+        # prev() takes a positive Kusto int offset. Larger thresholds retain
+        # the count plan rather than emitting an unrepresentable offset.
+        return threshold if 0 < threshold <= 2_147_483_648 else None
 
     def escape_and_quote_field(self, field_name):
         if re.fullmatch(r"[A-Za-z_][A-Za-z_0-9]*", field_name):
@@ -776,6 +793,8 @@ class KustoBackend(TextQueryBackend):
         if rule.timespan.seconds <= 0:
             raise SigmaConversionError(rule, rule.source, "Kusto correlations require a positive timespan.")
         conflicting_fields = {"WindowStart", "WindowEnd", "ContextComplete", *metrics}.intersection(rule.group_by or [])
+        if rule.type == SigmaCorrelationType.EVENT_COUNT and "EventCount" in (rule.group_by or []):
+            conflicting_fields.add("EventCount")
         if conflicting_fields:
             raise SigmaConversionError(
                 rule,
@@ -1256,7 +1275,14 @@ class KustoBackend(TextQueryBackend):
                         if shared:
                             function, child_results = self._shared_child_source(reference_index, query_index, query)
                         else:
-                            function = allocate(f"_sigma_child_{len(definitions)}")
+                            if self._count_existence_threshold(source) is not None:
+                                source_name = str(source.name or source.id)
+                                label = "".join(
+                                    part[:1].upper() + part[1:] for part in re.findall(r"[A-Za-z0-9]+", source_name)
+                                )
+                                function = allocate(label if label and not label[0].isdigit() else "CountMatches")
+                            else:
+                                function = allocate(f"_sigma_child_{len(definitions)}")
                             definitions.append(f"let {function} = () {{\n{query}\n}};\n")
                             child_results = f"{function}()"
                         relation = f"{child_results}{normalization}"
@@ -1751,6 +1777,9 @@ class KustoBackend(TextQueryBackend):
         )
         if len(identities) > 1:
             prefixes = [allocate(f"Latest{'Then'.join(labels[:index])}Start") for index in range(1, len(identities))]
+            first_source = rule.referenced_rules[0].rule
+            if len(identities) == 2 and self._count_existence_threshold(first_source) is not None:
+                prefixes[0] = allocate(f"Last{labels[0].removesuffix('s')}Time")
             group_changes = []
             for field, group in zip(rule.group_by or [], groups):
                 changed = f"{group} != prev({group})"
