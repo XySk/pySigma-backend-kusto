@@ -1,0 +1,55 @@
+let Events = union
+(range Minute from 0 to 9 step 1 | project Timestamp=datetime(2026-01-01T10:00:00Z) + Minute * 1m, User="target", Marker="failure"),
+(datatable(Timestamp:datetime, User:string, Marker:string) [datetime(2026-01-01T10:18:00Z), "target", "success"]);
+let Actual0 = () {
+let ReportStart_ = datetime(2026-01-01T10:18:00.0000000Z);
+let ReportEnd_ = datetime(2026-01-01T10:19:00.0000000Z);
+let _sigma_child_0 = () {
+let ReportStart = datetime(2026-01-01T10:18:00.0000000Z);
+let ReportEnd = datetime(2026-01-01T10:19:00.0000000Z);
+let SourceMatchArrivals = union (Events
+| where Marker =~ "failure"
+| where ["Timestamp"] >= ReportStart - 1200s and ["Timestamp"] < ReportEnd
+| project EventTime_1 = todatetime(["Timestamp"]), GroupUser = ["User"])
+| where isnotnull(EventTime_1) and isnotempty(GroupUser)
+| summarize SourceMatchCount = count() by EventTime_1, GroupUser;
+union (SourceMatchArrivals
+| project GroupUser, CountBoundaryTime = EventTime_1, CountBoundaryOrder = 0, SourceMatchDelta = SourceMatchCount),
+(SourceMatchArrivals
+| project GroupUser, CountBoundaryTime = EventTime_1 + 10m, CountBoundaryOrder = 1, SourceMatchDelta = -SourceMatchCount)
+// Arrivals evaluate before equal-time expirations; expirations never create matches.
+| sort by GroupUser asc, CountBoundaryTime asc, CountBoundaryOrder asc
+| extend EventCount = row_cumsum(SourceMatchDelta, GroupUser != prev(GroupUser))
+| where CountBoundaryOrder == 0
+| where EventCount >= 10
+| project WindowStart = CountBoundaryTime - 10m, WindowEnd = CountBoundaryTime, ["User"] = GroupUser, EventCount
+};
+// Strict sequence: "failed-logon-bursts" -> "successful-logon". Total inclusive span: 10m.
+union (_sigma_child_0()
+| extend EventTime_1 = todatetime(["WindowEnd"]), GroupUser = ["User"]
+| extend SourceRule = "failed-logon-bursts"),
+(Events
+| where Marker =~ "success"
+| where ["Timestamp"] >= ReportStart_ - 600s and ["Timestamp"] < ReportEnd_
+| extend EventTime_1 = todatetime(["Timestamp"]), GroupUser = ["User"]
+| extend SourceRule = "successful-logon")
+| where isnotnull(EventTime_1) and isnotempty(GroupUser)
+// Batch equal timestamps: simultaneous source matches cannot advance strict sequence positions.
+| summarize HasFailedLogonBursts = countif(SourceRule == "failed-logon-bursts") > 0, HasSuccessfulLogon = countif(SourceRule == "successful-logon") > 0 by EventTime_1, GroupUser
+| sort by GroupUser asc, EventTime_1 asc
+| extend NewCorrelationGroup = isnull(prev(EventTime_1)) or GroupUser != prev(GroupUser)
+// Read preceding timestamp state for every assignment; preserve viable earlier prefixes.
+| scan declare (LatestFailedLogonBurstsStart:datetime = datetime(null), CompleteNow:bool = false) with (
+    step SequenceState: true =>
+        CompleteNow = not(NewCorrelationGroup) and HasSuccessfulLogon and isnotnull(SequenceState.LatestFailedLogonBurstsStart) and SequenceState.LatestFailedLogonBurstsStart >= EventTime_1 - 10m,
+        LatestFailedLogonBurstsStart = iff(HasFailedLogonBursts, EventTime_1, iff(NewCorrelationGroup, datetime(null), SequenceState.LatestFailedLogonBurstsStart));
+)
+| where CompleteNow
+| project WindowStart = EventTime_1 - 10m, WindowEnd = EventTime_1, ["User"] = GroupUser, RuleCount = tolong(2)
+| where WindowEnd >= ReportStart_ and WindowEnd < ReportEnd_
+};
+let Expected = datatable(WindowEnd:datetime, User:string, RuleCount:long) [datetime(2026-01-01T10:18:00Z), "target", 2]
+| extend WindowStart=WindowEnd-10m;
+union (Actual0() | extend User=tostring(User) | extend Delta = 1), (Expected | extend Delta = -1)
+| summarize Delta = sum(Delta) by WindowStart, WindowEnd, User, RuleCount
+| where Delta != 0
