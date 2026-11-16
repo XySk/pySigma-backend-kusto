@@ -1454,7 +1454,8 @@ class KustoBackend(TextQueryBackend):
         value_count = rule.type == SigmaCorrelationType.VALUE_COUNT
         presence_temporal = rule.type == SigmaCorrelationType.TEMPORAL
         value_sum = rule.type == SigmaCorrelationType.VALUE_SUM
-        readable = temporal or event_count or value_count or value_sum
+        value_percentile = rule.type == SigmaCorrelationType.VALUE_PERCENTILE
+        readable = temporal or event_count or value_count or value_sum or value_percentile
         columns = {
             "timestamp": allocate("EventTime" if readable else "_sigma_timestamp"),
             "rule": allocate("SourceRule" if readable else "_sigma_rule"),
@@ -1475,7 +1476,7 @@ class KustoBackend(TextQueryBackend):
         }
         if event_count or value_count or presence_temporal and not self._uses_context_groups(rule):
             columns["narrow_source"] = True
-        if value_sum:
+        if value_sum or value_percentile:
             columns["narrow_source"] = True
             columns["native_values"] = True
         if presence_temporal:
@@ -1496,7 +1497,7 @@ class KustoBackend(TextQueryBackend):
                     if value_count
                     else (
                         "Measured" + re.sub(r"[^A-Za-z0-9_]", "", field)
-                        if value_sum
+                        if value_sum or value_percentile
                         else "_sigma_value" if len(counted_fields) == 1 else f"_sigma_value_{index}"
                     )
                 )
@@ -1618,46 +1619,19 @@ class KustoBackend(TextQueryBackend):
         join_fields = ", ".join([*groups, time_bin])
         summary_fields = ", ".join([window_end, *groups])
         result_fields = self._correlation_result_projection(rule, groups, window_end, span, metrics)
-        if rule.type == SigmaCorrelationType.VALUE_PERCENTILE:
-            value = columns["values"][0]
-            partition = allocate("_sigma_partition")
-            rank = allocate("_sigma_rank")
-            population = allocate("_sigma_population")
-            numeric = allocate("_sigma_numeric")
-            precise = allocate("_sigma_precise")
-            ranked = allocate("_sigma_ranked")
-            selector = rule.condition.percentile
-            # Sort the complete observation stream, without capped arrays or an
-            # approximate aggregate. The decimal tie-break distinguishes longs
-            # that round to the same double; the real key covers double extremes
-            # outside decimal's range. Preserve the selected observation's type.
+        if value_percentile:
             return [
-                _CorrelationQuery(
-                    f"{definitions}let {weights} = {search}\n| where {valid_rows};\n"
-                    f"let {ranked} = materialize(\n"
-                    f"{weights}\n| project {anchor_fields}\n| distinct *\n"
-                    f"| join kind=inner (\n{weights}\n"
-                    f"| extend {time_bin} = pack_array(bin({timestamp}, {span}), bin({timestamp}, {span}) + {span})\n"
-                    f"| mv-expand {time_bin} to typeof(datetime)\n) on {join_fields}\n"
-                    f"| where {timestamp} between (({window_end} - {span}) .. {window_end})\n"
-                    f'| where tostring({value}[0]) in ("int", "long", "real", "double", "decimal") '
-                    f"and isfinite(toreal({value}[1]))\n"
-                    f"| extend {partition} = tostring(pack_array({summary_fields})), "
-                    f"{numeric} = toreal({value}[1]), {precise} = todecimal({value}[1])\n"
-                    f"| sort by {partition} asc, {numeric} asc, {precise} asc\n"
-                    f"| serialize {rank} = row_number(1, {partition} != prev({partition}))\n);\n",
-                    f"{ranked}\n| join kind=inner (\n"
-                    f"{ranked} | summarize {population} = max({rank}) by {partition}\n) on {partition}\n"
-                    # Quotient/remainder avoids multiplying an arbitrarily large
-                    # population by 100, and keeps the ceil operand below 10000.
-                    f"| where {rank} == max_of(1, ({population} / 100) * {selector} + "
-                    f"tolong(ceiling(toreal(({population} % 100) * {selector}) / 100.0)))\n"
-                    f"| extend ValuePercentile = to{self._correlation_field_types[counted_fields[0]]}({value}[1])\n"
-                    f'| where (gettype(ValuePercentile) in ("int", "long") and '
-                    f"todecimal(ValuePercentile) {query_operator} decimal({threshold})) or "
-                    f'(gettype(ValuePercentile) in ("real", "double", "decimal") and '
-                    f"toreal(ValuePercentile) {query_operator} {threshold})\n"
-                    f"| project {result_fields}",
+                self._convert_value_percentile(
+                    rule,
+                    definitions,
+                    search,
+                    columns,
+                    valid_rows,
+                    span,
+                    query_operator,
+                    threshold,
+                    counted_fields[0],
+                    allocate,
                 )
             ]
         after_summary = ""
@@ -1700,6 +1674,74 @@ class KustoBackend(TextQueryBackend):
             scope += summary_binding + aggregate + ");\n"
             aggregate = after_summary
         return [_CorrelationQuery(scope, aggregate + f"| where {comparisons}\n| project {result_fields}")]
+
+    def _convert_value_percentile(
+        self, rule, definitions, search, columns, valid_rows, span, query_operator, threshold, measured_field, allocate
+    ):
+        """Select an exact native observation at the inclusive nearest-rank position."""
+        observations = allocate("PercentileObservations")
+        candidates = allocate("PercentileWindowValues")
+        event_time, groups, value = columns["timestamp"], columns["groups"], columns["values"][0]
+        window_end, time_bin = allocate("PercentileWindowEnd"), allocate("PercentileTimeBin")
+        kind = self._correlation_field_types[measured_field]
+        usable = f"isnotnull({value})"
+        if kind == "real":
+            usable += f" and isfinite({value})"
+        keys = [*groups, window_end]
+        key_fields = ", ".join(keys)
+        joins = ", ".join([*groups, time_bin])
+        anchors = ", ".join([*groups, f"{window_end} = {event_time}", f"{time_bin} = bin({event_time}, {span})"])
+        definitions += f"let {observations} = {search}\n| where {valid_rows};\n"
+        # Original observations provide anchors even when their measurement is
+        # missing. Only usable observations participate in selection.
+        pairs = (
+            f"{observations}\n| project {anchors}\n| distinct *\n"
+            f"| join kind=inner (\n{observations}\n| where {usable}\n"
+            f"| extend {time_bin} = pack_array(bin({event_time}, {span}), bin({event_time}, {span}) + {span})\n"
+            f"| mv-expand {time_bin} to typeof(datetime)\n) on {joins}\n"
+            f"| where {event_time} between (({window_end} - {span}) .. {window_end})\n"
+            f"| project {key_fields}, {value}"
+        )
+        selector = rule.condition.percentile
+        if selector in (0, 100):
+            # At the endpoints, native extrema select the same observation
+            # without population counting, serialization, or sorting.
+            body = (
+                pairs
+                + f"\n| summarize ValuePercentile = {'min' if selector == 0 else 'max'}({value}) by {key_fields}\n"
+            )
+        else:
+            population, rank = allocate("PercentilePopulation"), allocate("PercentileRank")
+            # Reuse the exact candidate relation for counting and selection.
+            # Projecting it narrowly keeps the one materialization and sort small.
+            definitions += f"let {candidates} = materialize(\n{pairs}\n);\n"
+            changes = []
+            for logical, field in zip(rule.group_by or [], groups):
+                changed = f"{field} != prev({field})"
+                if self._correlation_field_types[logical] == "real":
+                    changed = f"({changed} and not(isnan({field}) and isnan(prev({field}))))"
+                changes.append(changed)
+            changes.append(f"{window_end} != prev({window_end})")
+            reset = " or ".join(changes)
+            order = ", ".join(f"{field} asc" for field in [*keys, value])
+            body = (
+                f"{candidates}\n| join kind=inner (\n"
+                f"{candidates} | summarize {population} = count() by {key_fields}\n) on {key_fields}\n"
+                f"| project {key_fields}, {value}, {population}\n"
+                f"| sort by {order}\n| serialize {rank} = row_number(1, {reset})\n"
+                # Quotient/remainder avoids multiplying an arbitrarily large
+                # population by the selector before dividing by 100.
+                f"| where {rank} == max_of(1, ({population} / 100) * {selector} + "
+                f"tolong(ceiling(toreal(({population} % 100) * {selector}) / 100.0)))\n"
+                f"| extend ValuePercentile = {value}\n"
+            )
+        comparison = f"ValuePercentile {query_operator} {threshold}"
+        if kind == "decimal":
+            comparison = f"ValuePercentile {query_operator} decimal({threshold})"
+        elif kind in ("int", "long") and threshold != int(threshold):
+            comparison = f"todecimal(ValuePercentile) {query_operator} decimal({threshold})"
+        projection = self._correlation_result_projection(rule, groups, window_end, span, ["ValuePercentile"])
+        return _CorrelationQuery(definitions, body + f"| where {comparison}\n| project {projection}")
 
     def _convert_value_sum(
         self, rule, definitions, search, columns, valid_rows, span, query_operator, threshold, measured_field, allocate
