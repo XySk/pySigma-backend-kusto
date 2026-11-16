@@ -816,7 +816,8 @@ class KustoBackend(TextQueryBackend):
             )
         )
         # Strip only our own report cutoff, replaying an appended callback
-        # against complete history. Incoherent metadata keeps the checked query.
+        # against complete history. Reporting requires coherent provenance;
+        # unbounded conversions retain the conservative checked-query fallback.
         if valid:
             return raw + query[len(checked) :], tuple(zip(checks, columns)), messages
         if (
@@ -2261,13 +2262,15 @@ class KustoBackend(TextQueryBackend):
             if child
             else map_field(self.backend_options["correlation_timestamp_field"])
         )
-        self._correlation_scalar_type(rule_reference.rule, source_state, timestamp_field)
+        timestamp_type = self._correlation_scalar_type(rule_reference.rule, source_state, timestamp_field)
         columns = self._correlation_columns
         fields = [f"{columns['timestamp']} = todatetime({self._quote_correlation_field(timestamp_field)})"]
         source_filter = ""
         if not child:
             names = getattr(self, "_correlation_report_names", {})
             source_time = self._quote_correlation_field(timestamp_field)
+            if timestamp_type != "datetime":
+                source_time = f"todatetime({source_time})"
             conditions = []
             if "start" in names:
                 conditions.append(f"{source_time} >= {names['start']} - {self._correlation_report_lookback}s")

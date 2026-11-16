@@ -169,6 +169,28 @@ let Expected=datatable(WindowEnd:datetime,Host:string,EventCount:long) [datetime
     )
 
 
+def string_timestamp():
+    docs = [source_document(), correlation_document("count", "event_count", ["source-rule"], condition={"gte": 1})]
+    (query,) = convert_documents(
+        docs,
+        schema=fixture_schema(Timestamp="string"),
+        backend_options=options("2026-01-01T10:00:00Z", "2026-01-01T10:01:00Z"),
+    )
+    return (
+        """let Events=datatable(Timestamp:string,Host:string,Marker:string) [
+"2026-01-01T09:54:59.9999999Z","h","match",
+"2026-01-01T09:55:00Z","h","match",
+"2026-01-01T10:00:00Z","h","match",
+"invalid","h","match",
+"2026-01-01T10:01:00Z","h","match"
+];
+let Expected=datatable(WindowEnd:datetime,Host:string,EventCount:long) [datetime(2026-01-01T10:00:00Z),"h",2] | extend WindowStart=WindowEnd-5m;
+"""
+        + named_queries([query])
+        + check("Actual0()", "Expected", ["WindowStart", "WindowEnd", "Host", "EventCount"])
+    )
+
+
 def fixtures():
     return {
         "reporting_early_existence.kql": early_logon(),
@@ -178,6 +200,7 @@ def fixtures():
         "reporting_shared_reversed.kql": shared_multilevel(reverse=True),
         "reporting_context_callback.kql": context_callback(),
         "reporting_name_collision.kql": collision(),
+        "reporting_string_timestamp.kql": string_timestamp(),
     }
 
 

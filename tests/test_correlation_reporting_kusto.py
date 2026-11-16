@@ -179,3 +179,14 @@ def test_incoherent_child_reporting_provenance_fails_instead_of_truncating_paren
 
     with pytest.raises(SigmaConversionError, match="metadata.*inconsistent"):
         convert_documents(docs, callback=callback, backend_options={"correlation_report_start": "2026-01-01T10:00:00Z"})
+
+
+def test_report_pushdown_preserves_string_timestamp_conversion():
+    from tests.correlation_helpers import fixture_schema
+
+    (query,) = convert_documents(
+        documents(),
+        schema=fixture_schema(Timestamp="string"),
+        backend_options={"correlation_report_start": "2026-01-01T10:00:00Z"},
+    )
+    assert 'todatetime(["Timestamp"]) >= ReportStart - 300s' in query

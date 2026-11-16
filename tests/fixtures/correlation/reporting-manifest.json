@@ -35,6 +35,11 @@
       "name": "reporting_name_collision.kql",
       "sha256": "e7578954bed9998ea180fbfbf786e53ad01e444cf59996d2ca6c8cebd009f984",
       "expected_error": null
+    },
+    {
+      "name": "reporting_string_timestamp.kql",
+      "sha256": "26efc3c6a50eda00cf2be01b326404118a7da62f28e662e2b0a129d77f4cb6d2",
+      "expected_error": null
     }
   ]
 }
