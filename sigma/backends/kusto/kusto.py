@@ -1368,13 +1368,15 @@ class KustoBackend(TextQueryBackend):
         allocate = self._name_allocator(source_fields)
 
         event_count = rule.type == SigmaCorrelationType.EVENT_COUNT
+        presence_temporal = rule.type == SigmaCorrelationType.TEMPORAL
+        readable_sources = event_count or temporal
         columns = {
-            "timestamp": allocate("EventTime" if ordered or event_count else "_sigma_timestamp"),
-            "rule": allocate("SourceRule" if ordered or event_count else "_sigma_rule"),
+            "timestamp": allocate("EventTime" if readable_sources else "_sigma_timestamp"),
+            "rule": allocate("SourceRule" if readable_sources else "_sigma_rule"),
             "groups": [
                 allocate(
                     "Group" + re.sub(r"[^A-Za-z0-9_]", "_" if ordered else "", field)
-                    if ordered or event_count
+                    if readable_sources
                     else f"_sigma_group_{index}"
                 )
                 for index, field in enumerate(rule.group_by or [])
@@ -1386,8 +1388,10 @@ class KustoBackend(TextQueryBackend):
                 "_sigma_types" if temporal else "_sigma_weights" if counted_fields is None else "_sigma_values"
             ),
         }
-        if event_count:
+        if event_count or presence_temporal and not self._uses_context_groups(rule):
             columns["narrow_source"] = True
+        if presence_temporal:
+            columns["include_source_rule"] = True
         numeric_context = rule.type in (
             SigmaCorrelationType.VALUE_SUM,
             SigmaCorrelationType.VALUE_AVG,
@@ -1480,6 +1484,12 @@ class KustoBackend(TextQueryBackend):
                     rule, search, columns, valid_rows, span, source_type_count, allocate
                 )
             ]
+        if presence_temporal:
+            return [
+                self._convert_temporal_presence(
+                    rule, definitions, search, columns, valid_rows, span, query_operator, threshold, allocate
+                )
+            ]
         anchor_fields = ", ".join([*groups, f"{window_end} = {timestamp}", f"{time_bin} = bin({timestamp}, {span})"])
         join_fields = ", ".join([*groups, time_bin])
         summary_fields = ", ".join([window_end, *groups])
@@ -1528,13 +1538,7 @@ class KustoBackend(TextQueryBackend):
             ]
         after_summary = ""
         summary_binding = ""
-        if temporal:
-            # One retained rule identity per timestamp/group is sufficient for
-            # exact type counts; repetitions never become additional types.
-            preaggregate = f"| summarize by {weighted_fields}, {columns['rule']}"
-            distinct_anchors = "| distinct *\n"
-            aggregates = [f"RuleCount = count_distinctif({columns['rule']}, isnotempty({columns['rule']}))"]
-        elif counted_fields is None:
+        if counted_fields is None:
             preaggregate = f"| summarize {weight} = count() by {weighted_fields}"
             distinct_anchors = ""
             aggregates = [f"EventCount = sum({weight})"]
@@ -1600,16 +1604,7 @@ class KustoBackend(TextQueryBackend):
                 f"{metric} = count_distinctif({value}, isnotempty({value}))"
                 for metric, value in zip(metrics, columns["values"])
             ]
-        if boolean:
-            references = {reference.reference: reference.rule for reference in rule.referenced_rules}
-            presence = {}
-            for reference, source in references.items():
-                identity = json.dumps(str(source.name or source.id), ensure_ascii=False)
-                column = allocate("_sigma_present")
-                aggregates.append(f"{column} = countif({columns['rule']} == {identity}) > 0")
-                presence[reference] = column
-            comparisons = self._boolean_temporal_expression(rule, rule.condition.parsed, presence)
-        elif rule.type != SigmaCorrelationType.VALUE_SUM:
+        if rule.type != SigmaCorrelationType.VALUE_SUM:
             comparisons = " and ".join(f"{metric} {query_operator} {threshold}" for metric in metrics)
         if rule.type == SigmaCorrelationType.VALUE_AVG:
             # Kusto avgif() returns NaN for no observations, which satisfies
@@ -1654,6 +1649,70 @@ class KustoBackend(TextQueryBackend):
         body += (
             f"| distinct {', '.join([event_time, *groups])}\n"
             f"| project {self._correlation_result_projection(rule, groups, event_time, span, [])}"
+        )
+        return _CorrelationQuery(definitions, body)
+
+    def _convert_temporal_presence(
+        self, rule, definitions, search, columns, valid_rows, span, query_operator, threshold, allocate
+    ):
+        """Evaluate inclusive source presence once at each source-match timestamp."""
+        event_time, source_rule = columns["timestamp"], columns["rule"]
+        groups = columns["groups"]
+        sources = list({id(ref.rule): ref.rule for ref in rule.referenced_rules}.values())
+        membership, last_seen, presence = {}, {}, {}
+        for source in sources:
+            name = re.sub(r"[^A-Za-z_0-9]", "", source.name or source.title or str(source.id)) or "Source"
+            name = name[0].upper() + name[1:]
+            membership[id(source)] = allocate("Matches" + name)
+            last_seen[id(source)] = allocate("Last" + name + "Time")
+            presence[id(source)] = allocate("Has" + name)
+        group_start = allocate("NewCorrelationGroup")
+        scan_step = allocate("PresenceWindow")
+        changes = [f"isnull(prev({event_time}))"]
+        for logical, field in zip(rule.group_by or [], groups):
+            changed = f"{field} != prev({field})"
+            if self._correlation_field_types[logical] == "real":
+                changed = f"({changed} and not(isnan({field}) and isnan(prev({field}))))"
+            changes.append(changed)
+        memberships = ", ".join(
+            f"{membership[id(source)]} = countif({source_rule} == "
+            f"{json.dumps(str(source.name or source.id), ensure_ascii=False)}) > 0"
+            for source in sources
+        )
+        declarations = ", ".join(f"{last_seen[id(source)]}:datetime" for source in sources)
+        updates = ",\n        ".join(
+            f"{last_seen[id(source)]} = iff({membership[id(source)]}, {event_time}, "
+            f"iff({group_start}, datetime(null), {scan_step}.{last_seen[id(source)]}))"
+            for source in sources
+        )
+        present = ", ".join(
+            f"{presence[id(source)]} = isnotnull({last_seen[id(source)]}) and "
+            f"{last_seen[id(source)]} >= {event_time} - {span}"
+            for source in sources
+        )
+        rule_count = " + ".join(f"tolong({presence[id(source)]})" for source in sources)
+        if isinstance(rule.condition, SigmaExtendedCorrelationCondition):
+            references = {ref.reference: presence[id(ref.rule)] for ref in rule.referenced_rules}
+            comparison = self._boolean_temporal_expression(rule, rule.condition.parsed, references)
+        elif threshold != int(threshold):
+            comparison = f"todecimal(RuleCount) {query_operator} decimal({threshold})"
+        else:
+            comparison = f"RuleCount {query_operator} {threshold}"
+        keys = ", ".join([*groups, event_time])
+        order = ", ".join(f"{field} asc" for field in [*groups, event_time])
+        projection = self._correlation_result_projection(rule, groups, event_time, span, ["RuleCount"])
+        body = (
+            f"{search}\n| where {valid_rows}\n"
+            "// Batch simultaneous source matches before updating inclusive trailing presence.\n"
+            f"| summarize {memberships} by {keys}\n"
+            f"| sort by {order}\n"
+            f"| extend {group_start} = {' or '.join(changes)}\n"
+            f"| scan declare ({declarations}) with (\n"
+            f"    step {scan_step}: true =>\n        {updates};\n)\n"
+            "// Only source-match timestamps evaluate; expiration never creates an anchor.\n"
+            f"| extend {present}\n"
+            f"| extend RuleCount = {rule_count}\n"
+            f"| where {comparison}\n| project {projection}"
         )
         return _CorrelationQuery(definitions, body)
 
@@ -2073,8 +2132,16 @@ class KustoBackend(TextQueryBackend):
             if mapped_field not in context_fields:
                 scalar = self._quote_correlation_field(mapped_field)
             fields.append(f"{column} = {scalar}")
-        if columns.get("narrow_source") and child and source_state.processing_state.get("kusto_context_artifact"):
+        if (
+            columns.get("narrow_source")
+            and columns.get("child_match")
+            and child
+            and source_state.processing_state.get("kusto_context_artifact")
+        ):
             fields.append(columns["child_match"])
+        if columns.get("narrow_source") and columns.get("include_source_rule"):
+            identity = json.dumps(str(rule_reference.rule.name or rule_reference.rule.id), ensure_ascii=False)
+            fields.append(f"{columns['rule']} = {identity}")
         operator = "project" if columns.get("narrow_source") else "extend"
         result = _CorrelationNormalization(f"\n| {operator} " + ", ".join(fields), columns["rule"])
         result.expands_context = expanded

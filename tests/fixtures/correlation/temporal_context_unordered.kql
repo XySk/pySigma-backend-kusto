@@ -46,28 +46,29 @@ union (_sigma_context_summaries | extend ContextRowKind = "Summary"), (_sigma_co
 };
 let _sigma_shared_results = materialize(_sigma_shared_child());
 let _sigma_context_summary = () {
-let _sigma_types = union (_sigma_shared_results
+union (_sigma_shared_results
 | where ["ContextRowKind"] == "ContextEvidence"
-| extend _sigma_timestamp = todatetime(["WindowEnd"]), _sigma_group_0 = tostring(pack_array(gettype(["_sigma_context_value"]), ["_sigma_context_value"])[1])
-| extend _sigma_rule = "child"),
+| extend EventTime_1 = todatetime(["WindowEnd"]), GroupUser = tostring(pack_array(gettype(["_sigma_context_value"]), ["_sigma_context_value"])[1])
+| extend SourceRule = "child"),
 (Events
 | where Marker =~ "B"
-| extend _sigma_timestamp = todatetime(["Timestamp"]), _sigma_group_0 = ["User"]
-| extend _sigma_rule = "B")
-| where isnotnull(_sigma_timestamp) and isnotempty(_sigma_group_0)
-| summarize by _sigma_timestamp, _sigma_group_0, _sigma_rule;
-_sigma_types
-| project _sigma_group_0, _sigma_window_end = _sigma_timestamp, _sigma_bin = bin(_sigma_timestamp, 5m)
-| distinct *
-| join kind=inner (
-    _sigma_types
-    | extend _sigma_bin = pack_array(bin(_sigma_timestamp, 5m), bin(_sigma_timestamp, 5m) + 5m)
-    | mv-expand _sigma_bin to typeof(datetime)
-) on _sigma_group_0, _sigma_bin
-| where _sigma_timestamp between ((_sigma_window_end - 5m) .. _sigma_window_end)
-| summarize RuleCount = count_distinctif(_sigma_rule, isnotempty(_sigma_rule)) by _sigma_window_end, _sigma_group_0
+| extend EventTime_1 = todatetime(["Timestamp"]), GroupUser = ["User"]
+| extend SourceRule = "B")
+| where isnotnull(EventTime_1) and isnotempty(GroupUser)
+// Batch simultaneous source matches before updating inclusive trailing presence.
+| summarize MatchesChild = countif(SourceRule == "child") > 0, MatchesB = countif(SourceRule == "B") > 0 by GroupUser, EventTime_1
+| sort by GroupUser asc, EventTime_1 asc
+| extend NewCorrelationGroup = isnull(prev(EventTime_1)) or GroupUser != prev(GroupUser)
+| scan declare (LastChildTime:datetime, LastBTime:datetime) with (
+    step PresenceWindow: true =>
+        LastChildTime = iff(MatchesChild, EventTime_1, iff(NewCorrelationGroup, datetime(null), PresenceWindow.LastChildTime)),
+        LastBTime = iff(MatchesB, EventTime_1, iff(NewCorrelationGroup, datetime(null), PresenceWindow.LastBTime));
+)
+// Only source-match timestamps evaluate; expiration never creates an anchor.
+| extend HasChild = isnotnull(LastChildTime) and LastChildTime >= EventTime_1 - 5m, HasB = isnotnull(LastBTime) and LastBTime >= EventTime_1 - 5m
+| extend RuleCount = tolong(HasChild) + tolong(HasB)
 | where RuleCount >= 2
-| project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, ["User"] = _sigma_group_0, RuleCount
+| project WindowStart = EventTime_1 - 5m, WindowEnd = EventTime_1, ["User"] = GroupUser, RuleCount
 };
 let _sigma_context_summaries = materialize(_sigma_context_summary()
 | serialize _sigma_context_id = row_number());

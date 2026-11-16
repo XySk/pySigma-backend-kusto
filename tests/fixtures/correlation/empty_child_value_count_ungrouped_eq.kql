@@ -2,28 +2,27 @@ let Events=datatable(Timestamp:datetime, Host:string, Marker:string, Amount:long
 let Actual=(){
 let _sigma_shared_child = () {
 let _sigma_context_summary = () {
-let _sigma_types = union (Events
+union (Events
 | where Marker =~ "A"
-| extend _sigma_timestamp = todatetime(["Timestamp"])
-| extend _sigma_rule = "A"),
+| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "A"),
 (Events
 | where Marker =~ "B"
-| extend _sigma_timestamp = todatetime(["Timestamp"])
-| extend _sigma_rule = "B")
-| where isnotnull(_sigma_timestamp)
-| summarize by _sigma_timestamp, _sigma_rule;
-_sigma_types
-| project _sigma_window_end = _sigma_timestamp, _sigma_bin = bin(_sigma_timestamp, 5m)
-| distinct *
-| join kind=inner (
-    _sigma_types
-    | extend _sigma_bin = pack_array(bin(_sigma_timestamp, 5m), bin(_sigma_timestamp, 5m) + 5m)
-    | mv-expand _sigma_bin to typeof(datetime)
-) on _sigma_bin
-| where _sigma_timestamp between ((_sigma_window_end - 5m) .. _sigma_window_end)
-| summarize RuleCount = count_distinctif(_sigma_rule, isnotempty(_sigma_rule)), _sigma_present = countif(_sigma_rule == "A") > 0, _sigma_present_1 = countif(_sigma_rule == "B") > 0 by _sigma_window_end
-| where (not(_sigma_present) or not(_sigma_present_1))
-| project WindowStart = _sigma_window_end - 5m, WindowEnd = _sigma_window_end, RuleCount
+| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "B")
+| where isnotnull(EventTime_1)
+// Batch simultaneous source matches before updating inclusive trailing presence.
+| summarize MatchesA = countif(SourceRule == "A") > 0, MatchesB = countif(SourceRule == "B") > 0 by EventTime_1
+| sort by EventTime_1 asc
+| extend NewCorrelationGroup = isnull(prev(EventTime_1))
+| scan declare (LastATime:datetime, LastBTime:datetime) with (
+    step PresenceWindow: true =>
+        LastATime = iff(MatchesA, EventTime_1, iff(NewCorrelationGroup, datetime(null), PresenceWindow.LastATime)),
+        LastBTime = iff(MatchesB, EventTime_1, iff(NewCorrelationGroup, datetime(null), PresenceWindow.LastBTime));
+)
+// Only source-match timestamps evaluate; expiration never creates an anchor.
+| extend HasA = isnotnull(LastATime) and LastATime >= EventTime_1 - 5m, HasB = isnotnull(LastBTime) and LastBTime >= EventTime_1 - 5m
+| extend RuleCount = tolong(HasA) + tolong(HasB)
+| where (not(HasA) or not(HasB))
+| project WindowStart = EventTime_1 - 5m, WindowEnd = EventTime_1, RuleCount
 };
 let _sigma_context_summaries = materialize(_sigma_context_summary()
 | serialize _sigma_context_id = row_number());
