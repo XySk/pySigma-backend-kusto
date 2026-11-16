@@ -4,42 +4,42 @@
   "fixtures": [
     {
       "name": "event_count_fractional.kql",
-      "sha256": "80a6b4aba0c6bb12153e8d1539162f59396408c90503b1767ab4cbab723849a8",
+      "sha256": "3cae81b1298d1b5e3e4822276a6ec49e1cf8c76e4834e6c3f859a3aca6c633c8",
       "expected_error": null
     },
     {
       "name": "event_count_empty.kql",
-      "sha256": "43a68823e9bed3d804d80635e3556cae76896b74b21cb871df251053ffcf38c4",
+      "sha256": "1b1101b00016cc4bb1838583bb0e63673e27da89cd0e91013dc05cc638a426f3",
       "expected_error": null
     },
     {
       "name": "event_count_grouped.kql",
-      "sha256": "3e740e0461d19b9ac96e4565f24812e4e3a2ad87ecfe2209ade736878f3561bf",
+      "sha256": "c64f8f1d2f613c636857073940780236cb47e93ae01b73315eedfaf3562739de",
       "expected_error": null
     },
     {
       "name": "event_count_duplicate_sources.kql",
-      "sha256": "701b3a00846acae0ad7bfc143587baa89745c70d2fb2ca1a2305028f413f24c7",
+      "sha256": "95eca5d941f85325277753bd382dd78bf8ec49ceb4668e3e500faba865b29d48",
       "expected_error": null
     },
     {
       "name": "event_count_comparisons.kql",
-      "sha256": "cc1b68ce172e9562b9e873c2014d6757c8a8b7ca5ea9402511dda9371771ef6d",
+      "sha256": "cb793e1749ea302218230b64cc1fda5dba98186a32d8d7e61ddc30759f530dfa",
       "expected_error": null
     },
     {
       "name": "event_count_chained_grouped.kql",
-      "sha256": "c460192d5ac280699d06c6150ff28e0c494517cb2885c12990fafa6c9cf476dd",
+      "sha256": "9a79439f5c1635efc5390f69f85702e08362aa7f7a3534c3a4bf45c3b7c7a91b",
       "expected_error": null
     },
     {
       "name": "event_count_chained_comparisons.kql",
-      "sha256": "1b96fe15135eeb75b04ff124f106c6d5c926c1e58acef361b0b1a5e8fa85853c",
+      "sha256": "acc2370fe0af48adc92658dd789ab465291af62ed0117426bb9062101de4efd1",
       "expected_error": null
     },
     {
       "name": "event_count_chained_metrics.kql",
-      "sha256": "d03036424d8b58e21c3af7d7f4c1c2f9a406e2b0de7bfb7936204bae2297de11",
+      "sha256": "868b5ae60cf464816120964f66a97a013628fb6f2e29ba9091a434485f246be1",
       "expected_error": null
     },
     {

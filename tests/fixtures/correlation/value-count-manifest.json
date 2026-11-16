@@ -4,7 +4,7 @@
   "fixtures": [
     {
       "name": "value_count_fractional.kql",
-      "sha256": "c09591fcc125cf37452409efca612ddf1d0b1498f68270ddcac70ac1c6167c95",
+      "sha256": "37256d816f3c5bb131785356ac000819133884010572bf7a494487629abfeef7",
       "expected_error": null
     },
     {
@@ -14,12 +14,12 @@
     },
     {
       "name": "value_count_native_types.kql",
-      "sha256": "fc2580612e37f10bf2b6c18ff75fe71cbdd6e9e514389fbc12f0d4f79426cf0a",
+      "sha256": "845c1ca5cc9c3548082d7dfb9a6c274536d390a0e6dad84a0e7f9a601f3c00c5",
       "expected_error": null
     },
     {
       "name": "value_count_real_intervals.kql",
-      "sha256": "151267e4929eb934d5e673ffb6a3dc3c1b6daedfa7af8f73c339f7674448b883",
+      "sha256": "e6c9bcc44d49dae996f20a782bcaa22ece37d1538e49e7747ae8c622bff5b37b",
       "expected_error": null
     }
   ]

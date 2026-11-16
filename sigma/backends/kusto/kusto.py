@@ -362,9 +362,10 @@ class KustoBackend(TextQueryBackend):
             threshold = int(count) + 1
         else:
             return None
-        # prev() takes a positive Kusto int offset. Larger thresholds retain
-        # the count plan rather than emitting an unrepresentable offset.
-        return threshold if 0 < threshold <= 2_147_483_648 else None
+        # Verified engine SEM0248 restricts prev() offsets to [1..1024].
+        # Threshold one needs no offset; larger unsupported thresholds use
+        # exact general counts instead of producing an invalid query.
+        return threshold if 0 < threshold <= 1025 else None
 
     def escape_and_quote_field(self, field_name):
         if re.fullmatch(r"[A-Za-z_][A-Za-z_0-9]*", field_name):

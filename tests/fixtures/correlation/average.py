@@ -7,11 +7,6 @@ from tests.fixtures.correlation.scalar_inputs import scalar_inputs
 
 @scalar_inputs(Amount="real")
 def average_fixtures(check, header):
-    header = header.replace(
-        "Prepared deterministic fixture; live engine execution has not been performed.",
-        "Deterministic fixture; see RUNTIME.md for recorded engine execution.",
-    )
-
     def converted(operator, threshold, *, input_kind="real", **kwargs):
         return convert_documents(
             [

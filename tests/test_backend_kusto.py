@@ -501,6 +501,7 @@ def test_kusto_not_exists_expression(microsoft365defender_backend: KustoBackend)
         == ["DeviceProcessEvents\n| where isempty(ProcessCommandLine)"]
     )
 
+
 def test_kusto_wildcard_regex_multi_char(microsoft365defender_backend: KustoBackend):
     """Test multi-char wildcard (*) in middle of string converts to regex."""
     assert (
@@ -609,4 +610,3 @@ def test_kusto_wildcard_regex_with_backslashes(microsoft365defender_backend: Kus
         )
         == ['DeviceProcessEvents\n| where FolderPath matches regex "C:\\\\\\\\Windows.*\\\\\\\\process\\\\.exe"']
     )
-

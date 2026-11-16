@@ -24,12 +24,19 @@ def test_temporal_chain_carries_inherited_requests_and_scalar_group_relationship
     assert 'todatetime(["WindowEnd"])' in query
 
 
-
-@pytest.mark.parametrize("producer", ["event_count", "value_count", "value_sum", "value_avg", "value_percentile", "temporal", "temporal_ordered"])
+@pytest.mark.parametrize(
+    "producer",
+    ["event_count", "value_count", "value_sum", "value_avg", "value_percentile", "temporal", "temporal_ordered"],
+)
 @pytest.mark.parametrize("consumer", ["temporal", "temporal_ordered", "boolean"])
 def test_temporal_context_consumers_accept_supported_producer_summaries(producer, consumer):
     docs = chain(consumer)
-    child = correlation_document("child", producer, ["source-rule"], condition={"gte": 1, **({"field": "Amount"} if producer == "value_avg" else {})})
+    child = correlation_document(
+        "child",
+        producer,
+        ["source-rule"],
+        condition={"gte": 1, **({"field": "Amount"} if producer == "value_avg" else {})},
+    )
     if producer in ("temporal", "temporal_ordered"):
         child["correlation"].pop("condition", None)
     docs[1] = child
