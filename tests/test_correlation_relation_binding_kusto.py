@@ -64,9 +64,7 @@ def test_measured_single_display_exceptions_cache_only_the_beneficial_relation(
     condition = {"field": "Amount", "gte": 1}
     if kind == "value_percentile":
         condition["percentile"] = 50
-    summary = correlation_document(
-        "summary", kind, ["source-rule"], field="Amount", condition=condition
-    )
+    summary = correlation_document("summary", kind, ["source-rule"], field="Amount", condition=condition)
     summary["fields"] = ["User"]
 
     (query,) = convert_documents([source_document(), summary])

@@ -14,9 +14,7 @@ def _multiple_display_expected(rows):
     expected = []
     for row in benchmark.oracle(rows, "event_count", True, "dense"):
         end = next(
-            item["second"]
-            for item in rows
-            if benchmark.timestamp(item["second"]) == row[1] and item["Host"] == row[2]
+            item["second"] for item in rows if benchmark.timestamp(item["second"]) == row[1] and item["Host"] == row[2]
         )
         window = [item for item in rows if item["Host"] == row[2] and end - 300 <= item["second"] <= end]
         expected.append([*row, sorted({item["Amount"] for item in window})])

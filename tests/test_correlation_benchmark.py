@@ -112,16 +112,14 @@ def test_benchmark_compares_each_declared_context_collection_independently():
         },
         "expected": [["2026-01-01T11:55:00Z", "2026-01-01T12:00:00Z", "g0", 2, ["a", "b"], [1, 2]]],
     }
-    columns = [
-        {"ColumnName": name, "ColumnType": kind} for name, kind in fixture["schema"].items()
-    ] + [{"ColumnName": "ContextComplete", "ColumnType": "bool"}]
+    columns = [{"ColumnName": name, "ColumnType": kind} for name, kind in fixture["schema"].items()] + [
+        {"ColumnName": "ContextComplete", "ColumnType": "bool"}
+    ]
     primary = {
         "FrameType": "DataTable",
         "TableKind": "PrimaryResult",
         "Columns": columns,
-        "Rows": [
-            ["2026-01-01T11:55:00Z", "2026-01-01T12:00:00Z", "g0", 2, '["b","a"]', "[2,1]", True]
-        ],
+        "Rows": [["2026-01-01T11:55:00Z", "2026-01-01T12:00:00Z", "g0", 2, '["b","a"]', "[2,1]", True]],
     }
     complete = {"FrameType": "DataSetCompletion", "HasErrors": False}
 

@@ -1103,9 +1103,11 @@ class KustoBackend(TextQueryBackend):
                 consumer_count=(
                     2
                     if isinstance(rule.condition, SigmaExtendedCorrelationCondition)
-                    else len(rule.referenced_rules) + 1
-                    if rule.type == SigmaCorrelationType.TEMPORAL_ORDERED and len(rule.referenced_rules) > 2
-                    else 1
+                    else (
+                        len(rule.referenced_rules) + 1
+                        if rule.type == SigmaCorrelationType.TEMPORAL_ORDERED and len(rule.referenced_rules) > 2
+                        else 1
+                    )
                 ),
                 completed_reductions=("restrict source matches to the exact correlation window",),
                 preserve_evaluation=bool(relationship_key),
@@ -1150,9 +1152,7 @@ class KustoBackend(TextQueryBackend):
             relationship_source = context_matches
             if "context_evidence" in columns:
                 relationship_source += f"\n| where {columns['context_evidence']}"
-            has_parent_consumer = bool(
-                getattr(self, "_correlation_graph", {}).get("consumers", {}).get(id(rule))
-            )
+            has_parent_consumer = bool(getattr(self, "_correlation_graph", {}).get("consumers", {}).get(id(rule)))
             prefix += _CorrelationRelationBinding(
                 relationships,
                 f"{relationship_source}\n| project {relationship_fields}\n| distinct *",
