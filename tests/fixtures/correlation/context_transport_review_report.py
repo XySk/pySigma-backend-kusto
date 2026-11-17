@@ -53,7 +53,9 @@ def publish(
     depth_one = workloads["chain-depth-one"]
     depth_three = workloads["chain-depth-three"]
     shared = workloads["shared-child-consumers"]
-    assert len(depth_one["relations"]) == 2 and len(depth_three["relations"]) == len(shared["relations"]) == 4
+    assert len(depth_one["relations"]) == 1
+    assert len(depth_three["relations"]) == 3
+    assert len(shared["relations"]) == 4
     assert depth_three["current"]["rows_across_uses"] > depth_one["current"]["rows_across_uses"]
     output.mkdir(parents=True, exist_ok=False)
     summary = {

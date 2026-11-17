@@ -68,13 +68,108 @@ def test_context_transport_scale_benchmark_covers_ticket_53_dimensions(tmp_path)
     depth_one = workloads["chain-depth-one"]["transport_model"]
     depth_three = workloads["chain-depth-three"]["transport_model"]
     shared = workloads["shared-child-consumers"]["transport_model"]
-    assert len(depth_one["relations"]) == 2
-    assert len(depth_three["relations"]) == 4
+    assert len(depth_one["relations"]) == 1
+    assert len(depth_three["relations"]) == 3
     assert depth_three["current"]["rows_across_uses"] > depth_one["current"]["rows_across_uses"]
     assert (
         depth_three["candidate"]["estimated_bytes_across_uses"] > depth_one["candidate"]["estimated_bytes_across_uses"]
     )
-    assert shared["relations"][0]["parent_consumers"] == 2
+    assert len(shared["relations"]) == 4
+    assert [relation["consumer"] for relation in shared["relations"][:2]] == [
+        "ParentByUser",
+        "ParentByServer",
+    ]
+
+
+def test_context_transport_chain_depth_one_counts_actual_relation_references(tmp_path):
+    from tests.fixtures.correlation.context_transport_benchmark import freeze
+
+    freeze(tmp_path)
+    manifest = json.loads((tmp_path / "manifest.json").read_text())
+    workload = next(item for item in manifest["workloads"] if item["name"] == "chain-depth-one")
+    model = workload["transport_model"]
+    query = (tmp_path / workload["query"]).read_text()
+
+    assert [
+        (relation["name"], relation["summary_references"], relation["evidence_references"])
+        for relation in model["relations"]
+    ] == [("ScaleChild", 1, 2)]
+    assert query.count('ScaleChildResults | where ["ContextRowKind"] == "Summary"') == 1
+    assert query.count('ScaleChildResults\n| where ["ContextRowKind"] == "ContextEvidence"') == 1
+    assert query.count('ScaleChildResults | where ["ContextRowKind"] == "ContextEvidence"') == 1
+    assert model["current"] == {"rows_across_uses": 25146, "estimated_bytes_across_uses": 1434765}
+    assert model["candidate"] == {"rows_across_uses": 16637, "estimated_bytes_across_uses": 542430}
+
+
+def test_context_transport_chain_depth_three_counts_each_intermediate_relation_role(tmp_path):
+    from tests.fixtures.correlation.context_transport_benchmark import freeze
+
+    freeze(tmp_path)
+    manifest = json.loads((tmp_path / "manifest.json").read_text())
+    workload = next(item for item in manifest["workloads"] if item["name"] == "chain-depth-three")
+    model = workload["transport_model"]
+    query = (tmp_path / workload["query"]).read_text()
+
+    assert [
+        (
+            relation["name"],
+            relation["consumer"],
+            relation["summary_references"],
+            relation["evidence_references"],
+        )
+        for relation in model["relations"]
+    ] == [
+        ("ScaleChild", "ContextParent1", 1, 2),
+        ("ContextParent1", "ContextParent2", 2, 1),
+        ("ContextParent2", "ContextParent3", 2, 1),
+    ]
+    assert query.count('ScaleChildResults | where ["ContextRowKind"] == "Summary"') == 1
+    assert query.count('ScaleChildResults\n| where ["ContextRowKind"] == "ContextEvidence"') == 1
+    assert query.count('ScaleChildResults | where ["ContextRowKind"] == "ContextEvidence"') == 1
+    assert query.count('ContextParent1Results\n| where ["ContextRowKind_1"] == "Summary"') == 1
+    assert query.count('ContextParent1Results | where ["ContextRowKind_1"] == "Summary"') == 1
+    assert query.count('ContextParent1Results | where ["ContextRowKind_1"] == "ContextEvidence"') == 1
+    assert query.count('ContextParent2Results\n| where ["ContextRowKind"] == "Summary"') == 1
+    assert query.count('ContextParent2Results | where ["ContextRowKind"] == "Summary"') == 1
+    assert query.count('ContextParent2Results | where ["ContextRowKind"] == "ContextEvidence"') == 1
+    assert model["current"] == {"rows_across_uses": 77706, "estimated_bytes_across_uses": 5128461}
+    assert model["candidate"] == {"rows_across_uses": 35167, "estimated_bytes_across_uses": 1418972}
+
+
+def test_context_transport_shared_child_counts_scoped_relations_and_root_references(tmp_path):
+    from tests.fixtures.correlation.context_transport_benchmark import freeze
+
+    freeze(tmp_path)
+    manifest = json.loads((tmp_path / "manifest.json").read_text())
+    workload = next(item for item in manifest["workloads"] if item["name"] == "shared-child-consumers")
+    model = workload["transport_model"]
+    query = (tmp_path / workload["query"]).read_text()
+
+    assert [
+        (
+            relation["name"],
+            relation["consumer"],
+            relation["summary_references"],
+            relation["evidence_references"],
+        )
+        for relation in model["relations"]
+    ] == [
+        ("ScaleChild", "ParentByUser", 1, 2),
+        ("ScaleChild", "ParentByServer", 1, 2),
+        ("ParentByUser", "SharedRoot", 2, 1),
+        ("ParentByServer", "SharedRoot", 2, 1),
+    ]
+    assert query.count('ScaleChildResults | where ["ContextRowKind"] == "Summary"') == 2
+    assert query.count('ScaleChildResults\n| where ["ContextRowKind"] == "ContextEvidence"') == 2
+    assert query.count('ScaleChildResults | where ["ContextRowKind"] == "ContextEvidence"') == 2
+    assert query.count('ParentByUserResults\n| where ["ContextRowKind_1"] == "Summary"') == 1
+    assert query.count('ParentByUserResults | where ["ContextRowKind_1"] == "Summary"') == 1
+    assert query.count('ParentByUserResults | where ["ContextRowKind_1"] == "ContextEvidence"') == 1
+    assert query.count('ParentByServerResults\n| where ["ContextRowKind_1"] == "Summary"') == 1
+    assert query.count('ParentByServerResults | where ["ContextRowKind_1"] == "Summary"') == 1
+    assert query.count('ParentByServerResults | where ["ContextRowKind_1"] == "ContextEvidence"') == 1
+    assert model["current"] == {"rows_across_uses": 103896, "estimated_bytes_across_uses": 6619767}
+    assert model["candidate"] == {"rows_across_uses": 52500, "estimated_bytes_across_uses": 1983572}
 
 
 def test_context_transport_correctness_freeze_covers_every_candidate_contract(tmp_path):

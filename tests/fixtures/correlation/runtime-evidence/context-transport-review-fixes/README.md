@@ -7,17 +7,21 @@ than inferring correctness from the scale diagnostics.
 
 ## Complete transport growth
 
-`transport-growth-manifest.json` records every context-bearing relation and
-every parent/public transport use for all 15 scale workloads. The old estimate
-counted only `ScaleChild`, which made depth-one, depth-three, and shared graphs
-look identical. The corrected totals include two relations for depth one and
-four for depth three/shared use:
+`transport-growth-manifest.json` records every scoped context-bearing relation
+and every summary/evidence reference from its consuming parent for all 15 scale
+workloads. The one-level chain reads its combined child relation three times:
+once as evidence for matching, then once each as summary and evidence for
+context reconstruction. Intermediate chains repeat that pattern according to
+the matching role. Final roots return `CorrelationMatches` directly and are not
+invented as transported summary/evidence relations. Shared branches contain
+two separately generated `ScaleChild` bindings plus their two intermediate
+parent relations.
 
 | Workload | Relations | Current rows / estimated bytes | Candidate rows / estimated bytes |
 | --- | ---: | ---: | ---: |
-| Chain depth one | 2 | 17,142 / 1,093,871 | 8,887 / 300,717 |
-| Chain depth three | 4 | 34,662 / 2,325,103 | 26,407 / 1,123,267 |
-| Shared child consumers | 4 | 43,014 / 2,609,743 | 34,759 / 1,376,689 |
+| Chain depth one | 1 | 25,146 / 1,434,765 | 16,637 / 542,430 |
+| Chain depth three | 3 | 77,706 / 5,128,461 | 35,167 / 1,418,972 |
+| Shared child consumers | 4 | 103,896 / 6,619,767 | 52,500 / 1,983,572 |
 
 These are transparent row/serialized-byte models, not engine operator
 cardinalities. The Kusto response protocol still does not expose per-operator
