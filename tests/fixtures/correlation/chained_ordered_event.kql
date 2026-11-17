@@ -17,13 +17,14 @@ let C = () {
 // Strict sequence: "OA" -> "OB". Total inclusive span: 5m.
 union (Events
 | where Marker =~ "OA"
-| extend EventTime_1 = todatetime(["Timestamp"]), GroupCase = ["Case"], GroupHost = ["Host"]
+| extend EventTime_1 = ["Timestamp"], GroupCase = ["Case"], GroupHost = ["Host"]
+| where isnotnull(EventTime_1) and isnotempty(GroupCase) and isnotempty(GroupHost)
 | extend SourceRule = "OA"),
 (Events
 | where Marker =~ "OB"
-| extend EventTime_1 = todatetime(["Timestamp"]), GroupCase = ["Case"], GroupHost = ["Host"]
-| extend SourceRule = "OB")
+| extend EventTime_1 = ["Timestamp"], GroupCase = ["Case"], GroupHost = ["Host"]
 | where isnotnull(EventTime_1) and isnotempty(GroupCase) and isnotempty(GroupHost)
+| extend SourceRule = "OB")
 // Batch equal timestamps: simultaneous source matches cannot advance strict sequence positions.
 | summarize HasOA = countif(SourceRule == "OA") > 0, HasOB = countif(SourceRule == "OB") > 0 by EventTime_1, GroupCase, GroupHost
 | sort by GroupCase asc, GroupHost asc, EventTime_1 asc
@@ -37,8 +38,8 @@ union (Events
 | where CompleteNow
 | project WindowStart = EventTime_1 - 5m, WindowEnd = EventTime_1, ["Case"] = GroupCase, ["Host"] = GroupHost, RuleCount = tolong(2)
 };
-let SourceMatchArrivals = union (C()
-| project EventTime = todatetime(["WindowEnd"]), GroupCase = ["Case"], GroupHost = ["Host"])
+let SourceMatchArrivals = C()
+| project EventTime = ["WindowEnd"], GroupCase = ["Case"], GroupHost = ["Host"]
 | where isnotnull(EventTime) and isnotempty(GroupCase) and isnotempty(GroupHost)
 | summarize SourceMatchCount = count() by EventTime, GroupCase, GroupHost;
 union (SourceMatchArrivals

@@ -20,9 +20,9 @@ let Events=datatable(Timestamp:string, User:dynamic, Marker:string) [
 // Normalize Events scalar fixture inputs explicitly.
 | extend Timestamp=todatetime(Timestamp), User=tostring(User);
 let gt_2 = () {
-let ValueCountSources = materialize(union (Events
+let ValueCountSources = materialize(Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), CountedUser = ["User"])
+| project EventTime_1 = ["Timestamp"], CountedUser = ["User"]
 | where isnotnull(EventTime_1));
 let CountedUserActivity = materialize(ValueCountSources
 | where isnotempty(CountedUser)
@@ -45,9 +45,9 @@ union (ValueCountSources | summarize by EventTime_1
 | project WindowStart = ValueBoundaryTime - 5m, WindowEnd = ValueBoundaryTime, ValueCount
 };
 let gte_2 = () {
-let ValueCountSources = materialize(union (Events
+let ValueCountSources = materialize(Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), CountedUser = ["User"])
+| project EventTime_1 = ["Timestamp"], CountedUser = ["User"]
 | where isnotnull(EventTime_1));
 let CountedUserActivity = materialize(ValueCountSources
 | where isnotempty(CountedUser)
@@ -70,9 +70,9 @@ union (ValueCountSources | summarize by EventTime_1
 | project WindowStart = ValueBoundaryTime - 5m, WindowEnd = ValueBoundaryTime, ValueCount
 };
 let lt_2 = () {
-let ValueCountSources = materialize(union (Events
+let ValueCountSources = materialize(Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), CountedUser = ["User"])
+| project EventTime_1 = ["Timestamp"], CountedUser = ["User"]
 | where isnotnull(EventTime_1));
 let CountedUserActivity = materialize(ValueCountSources
 | where isnotempty(CountedUser)
@@ -95,9 +95,9 @@ union (ValueCountSources | summarize by EventTime_1
 | project WindowStart = ValueBoundaryTime - 5m, WindowEnd = ValueBoundaryTime, ValueCount
 };
 let lte_2 = () {
-let ValueCountSources = materialize(union (Events
+let ValueCountSources = materialize(Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), CountedUser = ["User"])
+| project EventTime_1 = ["Timestamp"], CountedUser = ["User"]
 | where isnotnull(EventTime_1));
 let CountedUserActivity = materialize(ValueCountSources
 | where isnotempty(CountedUser)
@@ -120,9 +120,9 @@ union (ValueCountSources | summarize by EventTime_1
 | project WindowStart = ValueBoundaryTime - 5m, WindowEnd = ValueBoundaryTime, ValueCount
 };
 let eq_2 = () {
-let ValueCountSources = materialize(union (Events
+let ValueCountSources = materialize(Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), CountedUser = ["User"])
+| project EventTime_1 = ["Timestamp"], CountedUser = ["User"]
 | where isnotnull(EventTime_1));
 let CountedUserActivity = materialize(ValueCountSources
 | where isnotempty(CountedUser)
@@ -145,9 +145,9 @@ union (ValueCountSources | summarize by EventTime_1
 | project WindowStart = ValueBoundaryTime - 5m, WindowEnd = ValueBoundaryTime, ValueCount
 };
 let neq_2 = () {
-let ValueCountSources = materialize(union (Events
+let ValueCountSources = materialize(Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), CountedUser = ["User"])
+| project EventTime_1 = ["Timestamp"], CountedUser = ["User"]
 | where isnotnull(EventTime_1));
 let CountedUserActivity = materialize(ValueCountSources
 | where isnotempty(CountedUser)
@@ -170,9 +170,9 @@ union (ValueCountSources | summarize by EventTime_1
 | project WindowStart = ValueBoundaryTime - 5m, WindowEnd = ValueBoundaryTime, ValueCount
 };
 let eq_0 = () {
-let ValueCountSources = materialize(union (Events
+let ValueCountSources = materialize(Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), CountedUser = ["User"])
+| project EventTime_1 = ["Timestamp"], CountedUser = ["User"]
 | where isnotnull(EventTime_1));
 let CountedUserActivity = materialize(ValueCountSources
 | where isnotempty(CountedUser)

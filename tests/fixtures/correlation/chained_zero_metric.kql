@@ -14,9 +14,9 @@ let Events=datatable(Timestamp:string, User:dynamic, Marker:string) [
 | extend Timestamp=todatetime(Timestamp), User=tostring(User);
 let Actual = () {
 let C = () {
-let ValueCountSources = materialize(union (Events
+let ValueCountSources = materialize(Events
 | where Marker =~ "E"
-| project EventTime_1 = todatetime(["Timestamp"]), CountedUser = ["User"])
+| project EventTime_1 = ["Timestamp"], CountedUser = ["User"]
 | where isnotnull(EventTime_1));
 let CountedUserActivity = materialize(ValueCountSources
 | where isnotempty(CountedUser)
@@ -38,8 +38,8 @@ union (ValueCountSources | summarize by EventTime_1
 | where ValueCount == 0
 | project WindowStart = ValueBoundaryTime - 5m, WindowEnd = ValueBoundaryTime, ValueCount
 };
-let ValueCountSources = materialize(union (C()
-| project EventTime = todatetime(["WindowEnd"]), CountedValueCount = ["ValueCount"])
+let ValueCountSources = materialize(C()
+| project EventTime = ["WindowEnd"], CountedValueCount = ["ValueCount"]
 | where isnotnull(EventTime));
 let CountedValueCountActivity = materialize(ValueCountSources
 | where isnotempty(CountedValueCount)

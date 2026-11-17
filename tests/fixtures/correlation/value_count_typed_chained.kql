@@ -11,9 +11,9 @@ let Events=datatable(Timestamp:datetime,Case:string,User:long,End:datetime,Marke
 ];
 let Actual = () {
 let C = () {
-let ValueCountSources = materialize(union (Events
+let ValueCountSources = materialize(Events
 | where Marker =~ "E"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupCase = ["Case"], CountedUser = ["User"])
+| project EventTime_1 = ["Timestamp"], GroupCase = ["Case"], CountedUser = ["User"]
 | where isnotnull(EventTime_1) and isnotempty(GroupCase));
 let CountedUserActivity = materialize(ValueCountSources
 | where isnotempty(CountedUser)
@@ -36,11 +36,12 @@ union (ValueCountSources | summarize by GroupCase, EventTime_1
 | project WindowStart = ValueBoundaryTime - 5m, WindowEnd = ValueBoundaryTime, ["Case"] = GroupCase, ValueCount
 };
 let ValueCountSources = materialize(union (C()
-| project EventTime_1 = todatetime(["WindowEnd"]), GroupCase = ["Case"], CountedMetric = ["ValueCount"], CountedEnd = ["WindowEnd"]),
+| project EventTime_1 = ["WindowEnd"], GroupCase = ["Case"], CountedMetric = ["ValueCount"], CountedEnd = ["WindowEnd"]
+| where isnotnull(EventTime_1) and isnotempty(GroupCase)),
 (Events
 | where Marker =~ "D"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupCase = ["Case"], CountedMetric = ["User"], CountedEnd = ["End"])
-| where isnotnull(EventTime_1) and isnotempty(GroupCase));
+| project EventTime_1 = ["Timestamp"], GroupCase = ["Case"], CountedMetric = ["User"], CountedEnd = ["End"]
+| where isnotnull(EventTime_1) and isnotempty(GroupCase)));
 let CountedMetricActivity = materialize(ValueCountSources
 | where isnotempty(CountedMetric)
 | summarize by GroupCase, CountedMetric, EventTime_1

@@ -5,9 +5,9 @@ let Events=datatable(Timestamp:datetime,Marker:string,Amount:real) [
 let Actual=(){
 let Child = () {
 let ContextSummary = () {
-let PercentileObservations = union (Events
+let PercentileObservations = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), MeasuredAmount = ["Amount"])
+| project EventTime_1 = ["Timestamp"], MeasuredAmount = ["Amount"]
 | where isnotnull(EventTime_1);
 let PercentileWindowValues = materialize(
 PercentileObservations
@@ -39,10 +39,11 @@ let CorrelationMatches = materialize(ContextSummary()
 let WindowSourceMatches = materialize(
 CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, ContextPartition = 1
 | join kind=inner (
-union (Events
+Events
 | where Marker =~ "match"
-| extend ContextEventTime = todatetime(["Timestamp"]), ContextAmount = ["Amount"]
-| extend ContextSourceRule = "source-rule")
+| extend ContextEventTime = ["Timestamp"], ContextAmount = ["Amount"]
+| where isnotnull(ContextEventTime)
+| extend ContextSourceRule = "source-rule"
 | project ContextEventTime, ContextSourceRule, ContextAmount, ContextPartition = 1
 ) on ContextPartition
 | where ContextEventTime between ((CompletionTime - 1m) .. CompletionTime));
@@ -53,10 +54,10 @@ union (CorrelationMatches | extend ContextRowKind = "Summary"), (CorrelationMatc
 };
 let ChildResults = materialize(Child());
 let ContextSummary = () {
-let SourceMatchArrivals = union (ChildResults
+let SourceMatchArrivals = ChildResults
 | where ["ContextRowKind"] == "Summary"
 | extend ChildCorrelationMatch = strcat("Child", "_", tostring(["CorrelationMatchId"]))
-| project EventTime = todatetime(["WindowEnd"]), ChildCorrelationMatch)
+| project EventTime = ["WindowEnd"], ChildCorrelationMatch
 | where isnotnull(EventTime)
 | summarize SourceMatchCount = count() by EventTime;
 union (SourceMatchArrivals
@@ -75,11 +76,12 @@ let CorrelationMatches = materialize(ContextSummary()
 let WindowSourceMatches = materialize(
 CorrelationMatches | project CorrelationMatchId_1, CompletionTime = WindowEnd, ContextPartition = 1
 | join kind=inner (
-union (ChildResults | where ["ContextRowKind"] == "Summary"
+ChildResults | where ["ContextRowKind"] == "Summary"
 | project-away ["ContextAmount"]
 | join kind=leftouter (ChildResults | where ["ContextRowKind"] == "ContextEvidence" | project ["CorrelationMatchId"], ["ContextAmount"], HasContextEvidence = true) on ["CorrelationMatchId"]
-| extend ContextEventTime = todatetime(["WindowEnd"]), ContextAmount = ["ContextAmount"]
-| extend ContextSourceRule = "child")
+| extend ContextEventTime = ["WindowEnd"], ContextAmount = ["ContextAmount"]
+| where isnotnull(ContextEventTime)
+| extend ContextSourceRule = "child"
 | project ContextEventTime, ContextSourceRule, ContextAmount, HasContextEvidence, ContextPartition = 1
 ) on ContextPartition
 | where ContextEventTime between ((CompletionTime - 5m) .. CompletionTime));

@@ -9,10 +9,10 @@ let Actual0 = () {
 let ReportStart = datetime(2026-01-01T10:08:00.0000000Z);
 let ReportEnd = datetime(2026-01-01T10:09:00.0000000Z);
 let ContextSummary = () {
-let SourceMatchArrivals = union (Events
+let SourceMatchArrivals = Events
 | where Marker =~ "match"
 | where ["Timestamp"] >= ReportStart - 720s and ["Timestamp"] < ReportEnd
-| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"])
+| project EventTime_1 = ["Timestamp"], GroupHost = ["Host"]
 | where isnotnull(EventTime_1) and isnotempty(GroupHost)
 | summarize SourceMatchCount = count() by EventTime_1, GroupHost;
 union (SourceMatchArrivals
@@ -31,11 +31,12 @@ let CorrelationMatches = materialize(ContextSummary()
 let WindowSourceMatches = materialize(
 CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, ContextGroupHost = ["Host"], ContextPartition = 1
 | join kind=inner (
-union (Events
+Events
 | where Marker =~ "match"
 | where ["Timestamp"] >= ReportStart - 720s and ["Timestamp"] < ReportEnd
-| extend ContextEventTime = todatetime(["Timestamp"]), ContextGroupHost = ["Host"], ContextUser = ["User"]
-| extend ContextSourceRule = "source-rule")
+| extend ContextEventTime = ["Timestamp"], ContextGroupHost = ["Host"], ContextUser = ["User"]
+| where isnotnull(ContextEventTime) and isnotempty(ContextGroupHost)
+| extend ContextSourceRule = "source-rule"
 | project ContextEventTime, ContextSourceRule, ContextGroupHost, ContextUser, ContextPartition = 1
 ) on ContextGroupHost
 | where ContextEventTime between ((CompletionTime - 3m) .. CompletionTime));
@@ -63,10 +64,10 @@ let EligibleChildMatches = () {
 let ReportStart = datetime(2026-01-01T10:08:00.0000000Z);
 let ReportEnd = datetime(2026-01-01T10:09:00.0000000Z);
 let ContextSummary = () {
-let SourceMatchArrivals = union (Events
+let SourceMatchArrivals = Events
 | where Marker =~ "match"
 | where ["Timestamp"] >= ReportStart - 720s and ["Timestamp"] < ReportEnd
-| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"])
+| project EventTime_1 = ["Timestamp"], GroupHost = ["Host"]
 | where isnotnull(EventTime_1) and isnotempty(GroupHost)
 | summarize SourceMatchCount = count() by EventTime_1, GroupHost;
 union (SourceMatchArrivals
@@ -85,11 +86,12 @@ let CorrelationMatches = materialize(ContextSummary()
 let WindowSourceMatches = materialize(
 CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, ContextGroupHost = ["Host"], ContextPartition = 1
 | join kind=inner (
-union (Events
+Events
 | where Marker =~ "match"
 | where ["Timestamp"] >= ReportStart - 720s and ["Timestamp"] < ReportEnd
-| extend ContextEventTime = todatetime(["Timestamp"]), ContextGroupHost = ["Host"], ContextUser = ["User"]
-| extend ContextSourceRule = "source-rule")
+| extend ContextEventTime = ["Timestamp"], ContextGroupHost = ["Host"], ContextUser = ["User"]
+| where isnotnull(ContextEventTime) and isnotempty(ContextGroupHost)
+| extend ContextSourceRule = "source-rule"
 | project ContextEventTime, ContextSourceRule, ContextGroupHost, ContextUser, ContextPartition = 1
 ) on ContextGroupHost
 | where ContextEventTime between ((CompletionTime - 3m) .. CompletionTime));
@@ -112,10 +114,10 @@ let CompleteChildContext = () {
 let ReportStart = datetime(2026-01-01T10:08:00.0000000Z);
 let ReportEnd = datetime(2026-01-01T10:09:00.0000000Z);
 let ContextSummary = () {
-let SourceMatchArrivals = union (Events
+let SourceMatchArrivals = Events
 | where Marker =~ "match"
 | where ["Timestamp"] >= ReportStart - 720s and ["Timestamp"] < ReportEnd
-| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"])
+| project EventTime_1 = ["Timestamp"], GroupHost = ["Host"]
 | where isnotnull(EventTime_1) and isnotempty(GroupHost)
 | summarize SourceMatchCount = count() by EventTime_1, GroupHost;
 union (SourceMatchArrivals
@@ -134,11 +136,12 @@ let CorrelationMatches = materialize(ContextSummary()
 let WindowSourceMatches = materialize(
 CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, ContextGroupHost = ["Host"], ContextPartition = 1
 | join kind=inner (
-union (Events
+Events
 | where Marker =~ "match"
 | where ["Timestamp"] >= ReportStart - 720s and ["Timestamp"] < ReportEnd
-| extend ContextEventTime = todatetime(["Timestamp"]), ContextGroupHost = ["Host"], ContextUser = ["User"]
-| extend ContextSourceRule = "source-rule")
+| extend ContextEventTime = ["Timestamp"], ContextGroupHost = ["Host"], ContextUser = ["User"]
+| where isnotnull(ContextEventTime) and isnotempty(ContextGroupHost)
+| extend ContextSourceRule = "source-rule"
 | project ContextEventTime, ContextSourceRule, ContextGroupHost, ContextUser, ContextPartition = 1
 ) on ContextGroupHost
 | where ContextEventTime between ((CompletionTime - 3m) .. CompletionTime));
@@ -155,14 +158,15 @@ let ContextSummary = () {
 // Strict sequence: "child" -> "success". Total inclusive span: 7m.
 union (ChildResults
 | where ["ContextRowKind"] == "Summary"
-| extend EventTime_1 = todatetime(["WindowEnd"]), GroupHost = ["Host"]
+| extend EventTime_1 = ["WindowEnd"], GroupHost = ["Host"]
+| where isnotnull(EventTime_1) and isnotempty(GroupHost)
 | extend SourceRule = "child"),
 (Events
 | where Marker =~ "success"
 | where ["Timestamp"] >= ReportStart_ - 540s and ["Timestamp"] < ReportEnd_
-| extend EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"]
-| extend SourceRule = "success")
+| extend EventTime_1 = ["Timestamp"], GroupHost = ["Host"]
 | where isnotnull(EventTime_1) and isnotempty(GroupHost)
+| extend SourceRule = "success")
 // Batch equal timestamps: simultaneous source matches cannot advance strict sequence positions.
 | summarize HasChild = countif(SourceRule == "child") > 0, HasSuccess = countif(SourceRule == "success") > 0 by EventTime_1, GroupHost
 | sort by GroupHost asc, EventTime_1 asc
@@ -184,12 +188,14 @@ CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, Con
 union (ChildResults | where ["ContextRowKind"] == "Summary"
 | project-away ["ContextUser"]
 | join kind=leftouter (ChildResults | where ["ContextRowKind"] == "ContextEvidence" | project ["CorrelationMatchId"], ["ContextUser"], HasContextEvidence = true) on ["CorrelationMatchId"]
-| extend ContextEventTime = todatetime(["WindowEnd"]), ContextGroupHost = ["Host"], ContextUser = ["ContextUser"]
+| extend ContextEventTime = ["WindowEnd"], ContextGroupHost = ["Host"], ContextUser = ["ContextUser"]
+| where isnotnull(ContextEventTime) and isnotempty(ContextGroupHost)
 | extend ContextSourceRule = "child"),
 ((Events
 | where Marker =~ "success"
 | where ["Timestamp"] >= ReportStart_ - 540s and ["Timestamp"] < ReportEnd_
-| extend ContextEventTime = todatetime(["Timestamp"]), ContextGroupHost = ["Host"], ContextUser = ["User"]
+| extend ContextEventTime = ["Timestamp"], ContextGroupHost = ["Host"], ContextUser = ["User"]
+| where isnotnull(ContextEventTime) and isnotempty(ContextGroupHost)
 | extend ContextSourceRule = "success")
 | extend HasContextEvidence = true)
 | project ContextEventTime, ContextSourceRule, ContextGroupHost, ContextUser, HasContextEvidence, ContextPartition = 1
@@ -224,10 +230,10 @@ let EligibleChildMatches = () {
 let ReportStart = datetime(2026-01-01T10:08:00.0000000Z);
 let ReportEnd = datetime(2026-01-01T10:09:00.0000000Z);
 let ContextSummary = () {
-let SourceMatchArrivals = union (Events
+let SourceMatchArrivals = Events
 | where Marker =~ "match"
 | where ["Timestamp"] >= ReportStart - 720s and ["Timestamp"] < ReportEnd
-| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"])
+| project EventTime_1 = ["Timestamp"], GroupHost = ["Host"]
 | where isnotnull(EventTime_1) and isnotempty(GroupHost)
 | summarize SourceMatchCount = count() by EventTime_1, GroupHost;
 union (SourceMatchArrivals
@@ -246,11 +252,12 @@ let CorrelationMatches = materialize(ContextSummary()
 let WindowSourceMatches = materialize(
 CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, ContextGroupHost = ["Host"], ContextPartition = 1
 | join kind=inner (
-union (Events
+Events
 | where Marker =~ "match"
 | where ["Timestamp"] >= ReportStart - 720s and ["Timestamp"] < ReportEnd
-| extend ContextEventTime = todatetime(["Timestamp"]), ContextGroupHost = ["Host"], ContextUser = ["User"]
-| extend ContextSourceRule = "source-rule")
+| extend ContextEventTime = ["Timestamp"], ContextGroupHost = ["Host"], ContextUser = ["User"]
+| where isnotnull(ContextEventTime) and isnotempty(ContextGroupHost)
+| extend ContextSourceRule = "source-rule"
 | project ContextEventTime, ContextSourceRule, ContextGroupHost, ContextUser, ContextPartition = 1
 ) on ContextGroupHost
 | where ContextEventTime between ((CompletionTime - 3m) .. CompletionTime));
@@ -273,10 +280,10 @@ let CompleteChildContext = () {
 let ReportStart = datetime(2026-01-01T10:08:00.0000000Z);
 let ReportEnd = datetime(2026-01-01T10:09:00.0000000Z);
 let ContextSummary = () {
-let SourceMatchArrivals = union (Events
+let SourceMatchArrivals = Events
 | where Marker =~ "match"
 | where ["Timestamp"] >= ReportStart - 720s and ["Timestamp"] < ReportEnd
-| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"])
+| project EventTime_1 = ["Timestamp"], GroupHost = ["Host"]
 | where isnotnull(EventTime_1) and isnotempty(GroupHost)
 | summarize SourceMatchCount = count() by EventTime_1, GroupHost;
 union (SourceMatchArrivals
@@ -295,11 +302,12 @@ let CorrelationMatches = materialize(ContextSummary()
 let WindowSourceMatches = materialize(
 CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, ContextGroupHost = ["Host"], ContextPartition = 1
 | join kind=inner (
-union (Events
+Events
 | where Marker =~ "match"
 | where ["Timestamp"] >= ReportStart - 720s and ["Timestamp"] < ReportEnd
-| extend ContextEventTime = todatetime(["Timestamp"]), ContextGroupHost = ["Host"], ContextUser = ["User"]
-| extend ContextSourceRule = "source-rule")
+| extend ContextEventTime = ["Timestamp"], ContextGroupHost = ["Host"], ContextUser = ["User"]
+| where isnotnull(ContextEventTime) and isnotempty(ContextGroupHost)
+| extend ContextSourceRule = "source-rule"
 | project ContextEventTime, ContextSourceRule, ContextGroupHost, ContextUser, ContextPartition = 1
 ) on ContextGroupHost
 | where ContextEventTime between ((CompletionTime - 3m) .. CompletionTime));
@@ -316,14 +324,15 @@ let ContextSummary = () {
 // Strict sequence: "child" -> "success". Total inclusive span: 7m.
 union (ChildResults
 | where ["ContextRowKind"] == "Summary"
-| extend EventTime_1 = todatetime(["WindowEnd"]), GroupHost = ["Host"]
+| extend EventTime_1 = ["WindowEnd"], GroupHost = ["Host"]
+| where isnotnull(EventTime_1) and isnotempty(GroupHost)
 | extend SourceRule = "child"),
 (Events
 | where Marker =~ "success"
 | where ["Timestamp"] >= ReportStart_ - 540s and ["Timestamp"] < ReportEnd_
-| extend EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"]
-| extend SourceRule = "success")
+| extend EventTime_1 = ["Timestamp"], GroupHost = ["Host"]
 | where isnotnull(EventTime_1) and isnotempty(GroupHost)
+| extend SourceRule = "success")
 // Batch equal timestamps: simultaneous source matches cannot advance strict sequence positions.
 | summarize HasChild = countif(SourceRule == "child") > 0, HasSuccess = countif(SourceRule == "success") > 0 by EventTime_1, GroupHost
 | sort by GroupHost asc, EventTime_1 asc
@@ -345,12 +354,14 @@ CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, Con
 union (ChildResults | where ["ContextRowKind"] == "Summary"
 | project-away ["ContextUser"]
 | join kind=leftouter (ChildResults | where ["ContextRowKind"] == "ContextEvidence" | project ["CorrelationMatchId"], ["ContextUser"], HasContextEvidence = true) on ["CorrelationMatchId"]
-| extend ContextEventTime = todatetime(["WindowEnd"]), ContextGroupHost = ["Host"], ContextUser = ["ContextUser"]
+| extend ContextEventTime = ["WindowEnd"], ContextGroupHost = ["Host"], ContextUser = ["ContextUser"]
+| where isnotnull(ContextEventTime) and isnotempty(ContextGroupHost)
 | extend ContextSourceRule = "child"),
 ((Events
 | where Marker =~ "success"
 | where ["Timestamp"] >= ReportStart_ - 540s and ["Timestamp"] < ReportEnd_
-| extend ContextEventTime = todatetime(["Timestamp"]), ContextGroupHost = ["Host"], ContextUser = ["User"]
+| extend ContextEventTime = ["Timestamp"], ContextGroupHost = ["Host"], ContextUser = ["User"]
+| where isnotnull(ContextEventTime) and isnotempty(ContextGroupHost)
 | extend ContextSourceRule = "success")
 | extend HasContextEvidence = true)
 | project ContextEventTime, ContextSourceRule, ContextGroupHost, ContextUser, HasContextEvidence, ContextPartition = 1
@@ -367,10 +378,10 @@ union (CorrelationMatches | extend ContextRowKind_1 = "Summary"), (CorrelationMa
 };
 let MiddleResults = materialize(Middle());
 let ContextSummary = () {
-let ValueCountSources = materialize(union (MiddleResults | where ["ContextRowKind_1"] == "Summary"
+let ValueCountSources = materialize(MiddleResults | where ["ContextRowKind_1"] == "Summary"
 | project-away ["ContextUser"]
 | join kind=leftouter (MiddleResults | where ["ContextRowKind_1"] == "ContextEvidence" | project ["CorrelationMatchId"], ["ContextUser"]) on ["CorrelationMatchId"]
-| project EventTime = todatetime(["WindowEnd"]), GroupHost = ["Host"], CountedUser = ["ContextUser"])
+| project EventTime = ["WindowEnd"], GroupHost = ["Host"], CountedUser = ["ContextUser"]
 | where isnotnull(EventTime) and isnotempty(GroupHost));
 let CountedUserActivity = materialize(ValueCountSources
 | where isnotempty(CountedUser)
@@ -397,11 +408,12 @@ let CorrelationMatches = materialize(ContextSummary()
 let WindowSourceMatches = materialize(
 CorrelationMatches | project CorrelationMatchId_1, CompletionTime = WindowEnd, ContextGroupHost = ["Host"], ContextPartition = 1
 | join kind=inner (
-union (MiddleResults | where ["ContextRowKind_1"] == "Summary"
+MiddleResults | where ["ContextRowKind_1"] == "Summary"
 | project-away ["ContextUser"]
 | join kind=leftouter (MiddleResults | where ["ContextRowKind_1"] == "ContextEvidence" | project ["CorrelationMatchId"], ["ContextUser"], HasContextEvidence = true) on ["CorrelationMatchId"]
-| extend ContextEventTime = todatetime(["WindowEnd"]), ContextGroupHost = ["Host"], ContextUser_1 = ["ContextUser"]
-| extend ContextSourceRule = "middle")
+| extend ContextEventTime = ["WindowEnd"], ContextGroupHost = ["Host"], ContextUser_1 = ["ContextUser"]
+| where isnotnull(ContextEventTime) and isnotempty(ContextGroupHost)
+| extend ContextSourceRule = "middle"
 | project ContextEventTime, ContextSourceRule, ContextGroupHost, ContextUser_1, HasContextEvidence, ContextPartition = 1
 ) on ContextGroupHost
 | where ContextEventTime between ((CompletionTime - 2m) .. CompletionTime));

@@ -14,9 +14,9 @@ let SecurityEvent=datatable(TimeGenerated:datetime, EventID:long, CallerProcessI
  datetime(2026-01-01T12:02:00Z),4799,"0x0","bob","Remote Management Users","A"
 ];
 let Actual=() {
-let ValueCountSources = materialize(union (SecurityEvent
+let ValueCountSources = materialize(SecurityEvent
 | where EventID == 4799 and CallerProcessId =~ "0x0" and (TargetUserName in~ ("Administrators", "Remote Desktop Users", "Remote Management Users", "Distributed COM Users"))
-| project EventTime = todatetime(["TimeGenerated"]), GroupActor = ["SubjectUserName"], CountedGroup = ["TargetUserName"])
+| project EventTime = ["TimeGenerated"], GroupActor = ["SubjectUserName"], CountedGroup = ["TargetUserName"]
 | where isnotnull(EventTime) and isnotempty(GroupActor));
 let CountedGroupActivity = materialize(ValueCountSources
 | where isnotempty(CountedGroup)

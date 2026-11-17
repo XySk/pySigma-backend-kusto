@@ -4,11 +4,12 @@ let Child = () {
 let ContextSummary = () {
 union (Events
 | where Marker =~ "A"
-| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "A"),
+| project EventTime_1 = ["Timestamp"], SourceRule = "A"
+| where isnotnull(EventTime_1)),
 (Events
 | where Marker =~ "B"
-| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "B")
-| where isnotnull(EventTime_1)
+| project EventTime_1 = ["Timestamp"], SourceRule = "B"
+| where isnotnull(EventTime_1))
 // Batch simultaneous source matches before updating inclusive trailing presence.
 | summarize MatchesA = countif(SourceRule == "A") > 0, MatchesB = countif(SourceRule == "B") > 0 by EventTime_1
 | sort by EventTime_1 asc
@@ -31,11 +32,13 @@ CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, Con
 | join kind=inner (
 union (Events
 | where Marker =~ "A"
-| extend ContextEventTime = todatetime(["Timestamp"]), ContextAmount = ["Amount"]
+| extend ContextEventTime = ["Timestamp"], ContextAmount = ["Amount"]
+| where isnotnull(ContextEventTime)
 | extend ContextSourceRule = "A"),
 (Events
 | where Marker =~ "B"
-| extend ContextEventTime = todatetime(["Timestamp"]), ContextAmount = ["Amount"]
+| extend ContextEventTime = ["Timestamp"], ContextAmount = ["Amount"]
+| where isnotnull(ContextEventTime)
 | extend ContextSourceRule = "B")
 | project ContextEventTime, ContextSourceRule, ContextAmount, ContextPartition = 1
 ) on ContextPartition
@@ -50,14 +53,14 @@ union (CorrelationMatches | extend ContextRowKind = "Summary"), (CorrelationMatc
 };
 let ChildResults = materialize(Child());
 let ContextSummary = () {
-let ParentSourceMatches = materialize(union (ChildResults | where ["ContextRowKind"] == "Summary"
+let ParentSourceMatches = materialize(ChildResults | where ["ContextRowKind"] == "Summary"
 | project-away ["ContextAmount"]
 | join kind=leftouter (ChildResults | where ["ContextRowKind"] == "ContextEvidence" | project ["CorrelationMatchId"], ["ContextAmount"]) on ["CorrelationMatchId"]
 | extend ChildCorrelationMatch = strcat("Child", "_", tostring(["CorrelationMatchId"]))
-| project EventTime = todatetime(["WindowEnd"]), GroupChildRuleCount = ["RuleCount"], MeasuredAmount = ["ContextAmount"], ChildCorrelationMatch)
+| project EventTime = ["WindowEnd"], GroupChildRuleCount = ["RuleCount"], MeasuredAmount = ["ContextAmount"], ChildCorrelationMatch
+| where isnotnull(EventTime) and isnotempty(GroupChildRuleCount)
 | extend ChildCorrelationMatch = tostring(column_ifexists("ChildCorrelationMatch", "")));
-let AverageObservations = union (ParentSourceMatches | where isempty(ChildCorrelationMatch)), (ParentSourceMatches | where isnotempty(ChildCorrelationMatch) | extend RetainedNumericValue = MeasuredAmount | summarize take_any(*) by ChildCorrelationMatch, GroupChildRuleCount, RetainedNumericValue)
-| where isnotnull(EventTime) and isnotempty(GroupChildRuleCount);
+let AverageObservations = union (ParentSourceMatches | where isempty(ChildCorrelationMatch)), (ParentSourceMatches | where isnotempty(ChildCorrelationMatch) | extend RetainedNumericValue = MeasuredAmount | summarize take_any(*) by ChildCorrelationMatch, GroupChildRuleCount, RetainedNumericValue);
 AverageObservations
 | summarize by GroupChildRuleCount, AverageWindowEnd = EventTime, AverageTimeBin = bin(EventTime, 5m)
 | join kind=inner (
@@ -75,11 +78,12 @@ let CorrelationMatches = materialize(ContextSummary()
 let WindowSourceMatches = materialize(
 CorrelationMatches | project CorrelationMatchId_1, CompletionTime = WindowEnd, ContextGroupChildRuleCount = ["ChildRuleCount"], ContextPartition = 1
 | join kind=inner (
-union (ChildResults | where ["ContextRowKind"] == "Summary"
+ChildResults | where ["ContextRowKind"] == "Summary"
 | project-away ["ContextAmount"]
 | join kind=leftouter (ChildResults | where ["ContextRowKind"] == "ContextEvidence" | project ["CorrelationMatchId"], ["ContextAmount"], HasContextEvidence = true) on ["CorrelationMatchId"]
-| extend ContextEventTime = todatetime(["WindowEnd"]), ContextGroupChildRuleCount = ["RuleCount"], ContextAmount_1 = ["ContextAmount"]
-| extend ContextSourceRule = "child")
+| extend ContextEventTime = ["WindowEnd"], ContextGroupChildRuleCount = ["RuleCount"], ContextAmount_1 = ["ContextAmount"]
+| where isnotnull(ContextEventTime) and isnotempty(ContextGroupChildRuleCount)
+| extend ContextSourceRule = "child"
 | project ContextEventTime, ContextSourceRule, ContextGroupChildRuleCount, ContextAmount_1, HasContextEvidence, ContextPartition = 1
 ) on ContextGroupChildRuleCount
 | where ContextEventTime between ((CompletionTime - 5m) .. CompletionTime));

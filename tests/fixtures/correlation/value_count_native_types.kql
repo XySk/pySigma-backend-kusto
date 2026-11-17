@@ -4,9 +4,9 @@
 // Nonempty rows identify a missing, additional, or duplicated summary.
 let boolValues=(){
 let Events=datatable(Value:bool) [bool(false),bool(false),bool(true),bool(null)] | extend Timestamp=datetime(2026-01-01),Marker="match";
-let ValueCountSources = materialize(union (Events
+let ValueCountSources = materialize(Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), CountedValue = ["Value"])
+| project EventTime_1 = ["Timestamp"], CountedValue = ["Value"]
 | where isnotnull(EventTime_1));
 let CountedValueActivity = materialize(ValueCountSources
 | where isnotempty(CountedValue)
@@ -30,9 +30,9 @@ union (ValueCountSources | summarize by EventTime_1
 };
 let decimalValues=(){
 let Events=datatable(Value:decimal) [decimal(9007199254740992.1),decimal(9007199254740992.1),decimal(9007199254740992.2),decimal(null)] | extend Timestamp=datetime(2026-01-01),Marker="match";
-let ValueCountSources = materialize(union (Events
+let ValueCountSources = materialize(Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), CountedValue = ["Value"])
+| project EventTime_1 = ["Timestamp"], CountedValue = ["Value"]
 | where isnotnull(EventTime_1));
 let CountedValueActivity = materialize(ValueCountSources
 | where isnotempty(CountedValue)
@@ -56,9 +56,9 @@ union (ValueCountSources | summarize by EventTime_1
 };
 let guidValues=(){
 let Events=datatable(Value:guid) [guid(00000000-0000-0000-0000-000000000001),guid(00000000-0000-0000-0000-000000000001),guid(00000000-0000-0000-0000-000000000002),guid(null)] | extend Timestamp=datetime(2026-01-01),Marker="match";
-let ValueCountSources = materialize(union (Events
+let ValueCountSources = materialize(Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), CountedValue = ["Value"])
+| project EventTime_1 = ["Timestamp"], CountedValue = ["Value"]
 | where isnotnull(EventTime_1));
 let CountedValueActivity = materialize(ValueCountSources
 | where isnotempty(CountedValue)
@@ -82,9 +82,9 @@ union (ValueCountSources | summarize by EventTime_1
 };
 let datetimeValues=(){
 let Events=datatable(Value:datetime) [datetime(2026-01-01),datetime(2026-01-01),datetime(2026-01-02),datetime(null)] | extend Timestamp=datetime(2026-01-01),Marker="match";
-let ValueCountSources = materialize(union (Events
+let ValueCountSources = materialize(Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), CountedValue = ["Value"])
+| project EventTime_1 = ["Timestamp"], CountedValue = ["Value"]
 | where isnotnull(EventTime_1));
 let CountedValueActivity = materialize(ValueCountSources
 | where isnotempty(CountedValue)
@@ -108,9 +108,9 @@ union (ValueCountSources | summarize by EventTime_1
 };
 let timespanValues=(){
 let Events=datatable(Value:timespan) [0s,0s,1s,timespan(null)] | extend Timestamp=datetime(2026-01-01),Marker="match";
-let ValueCountSources = materialize(union (Events
+let ValueCountSources = materialize(Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), CountedValue = ["Value"])
+| project EventTime_1 = ["Timestamp"], CountedValue = ["Value"]
 | where isnotnull(EventTime_1));
 let CountedValueActivity = materialize(ValueCountSources
 | where isnotempty(CountedValue)
@@ -134,9 +134,9 @@ union (ValueCountSources | summarize by EventTime_1
 };
 let longValues=(){
 let Events=datatable(Value:long) [9007199254740992,9007199254740992,9007199254740993,long(null)] | extend Timestamp=datetime(2026-01-01),Marker="match";
-let ValueCountSources = materialize(union (Events
+let ValueCountSources = materialize(Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), CountedValue = ["Value"])
+| project EventTime_1 = ["Timestamp"], CountedValue = ["Value"]
 | where isnotnull(EventTime_1));
 let CountedValueActivity = materialize(ValueCountSources
 | where isnotempty(CountedValue)

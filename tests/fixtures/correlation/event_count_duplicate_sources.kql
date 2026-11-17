@@ -13,17 +13,20 @@ let Events=datatable(Timestamp:string, Marker:string) [
 let Actual = () {
 let SourceMatchArrivals = union (Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"])),
+| project EventTime_1 = ["Timestamp"]
+| where isnotnull(EventTime_1)),
 (Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"])),
+| project EventTime_1 = ["Timestamp"]
+| where isnotnull(EventTime_1)),
 (Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"])),
+| project EventTime_1 = ["Timestamp"]
+| where isnotnull(EventTime_1)),
 (Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]))
-| where isnotnull(EventTime_1)
+| project EventTime_1 = ["Timestamp"]
+| where isnotnull(EventTime_1))
 | summarize SourceMatchCount = count() by EventTime_1;
 union (SourceMatchArrivals
 | project CountBoundaryTime = EventTime_1, CountBoundaryOrder = 0, SourceMatchDelta = SourceMatchCount),

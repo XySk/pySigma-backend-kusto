@@ -8,9 +8,9 @@ let Events=datatable(Timestamp:datetime,Amount:int,Marker:string) [
 ];
 let Actual=(){
 let Sum = () {
-let SumObservations = union (Events
+let SumObservations = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), MeasuredAmount = ["Amount"])
+| project EventTime_1 = ["Timestamp"], MeasuredAmount = ["Amount"]
 | where isnotnull(EventTime_1);
 let SumArrivals = SumObservations
 | summarize ArrivalSum = sum(MeasuredAmount) by EventTime_1;
@@ -25,8 +25,8 @@ union (SumArrivals
 | where ValueSum >= 0
 | project WindowStart = SumBoundaryTime - 5m, WindowEnd = SumBoundaryTime, ValueSum
 };
-let SumObservations = union (Sum()
-| project EventTime = todatetime(["WindowEnd"]), MeasuredValueSum = ["ValueSum"])
+let SumObservations = Sum()
+| project EventTime = ["WindowEnd"], MeasuredValueSum = ["ValueSum"]
 | where isnotnull(EventTime);
 let SumArrivals = SumObservations
 | summarize ArrivalSum = sum(MeasuredValueSum) by EventTime;

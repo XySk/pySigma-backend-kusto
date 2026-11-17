@@ -66,9 +66,9 @@ let OtherEvents=datatable(NetworkTime:string, Case:string, NetworkUser:dynamic, 
 | extend NetworkTime=todatetime(NetworkTime), NetworkUser=tostring(NetworkUser);
 let Actual = () {
 let ChildRule = () {
-union (Events
+Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["ProcessTime"]), GroupCase = ["Case"], GroupActor = ["ProcessUser"], GroupHost = ["ProcessHost"])
+| project EventTime_1 = ["ProcessTime"], GroupCase = ["Case"], GroupActor = ["ProcessUser"], GroupHost = ["ProcessHost"]
 | where isnotnull(EventTime_1) and isnotempty(GroupCase) and isnotempty(GroupActor) and isnotempty(GroupHost)
 // Preserve individual source matches, including timestamp ties, before the threshold lookup.
 | sort by GroupCase asc, GroupActor asc, GroupHost asc, EventTime_1 asc
@@ -78,11 +78,12 @@ union (Events
 | project WindowStart = EventTime_1 - 5m, WindowEnd = EventTime_1, ["Case"] = GroupCase, ["Actor"] = GroupActor, ["Host"] = GroupHost
 };
 let SourceMatchArrivals = union (ChildRule()
-| project EventTime_1 = todatetime(["WindowEnd"]), GroupCase = ["Case"], GroupActor = ["Actor"]),
+| project EventTime_1 = ["WindowEnd"], GroupCase = ["Case"], GroupActor = ["Actor"]
+| where isnotnull(EventTime_1) and isnotempty(GroupCase) and isnotempty(GroupActor)),
 (OtherEvents
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["NetworkTime"]), GroupCase = ["Case"], GroupActor = ["NetworkUser"])
-| where isnotnull(EventTime_1) and isnotempty(GroupCase) and isnotempty(GroupActor)
+| project EventTime_1 = ["NetworkTime"], GroupCase = ["Case"], GroupActor = ["NetworkUser"]
+| where isnotnull(EventTime_1) and isnotempty(GroupCase) and isnotempty(GroupActor))
 | summarize SourceMatchCount = count() by EventTime_1, GroupCase, GroupActor;
 union (SourceMatchArrivals
 | project GroupCase, GroupActor, CountBoundaryTime = EventTime_1, CountBoundaryOrder = 0, SourceMatchDelta = SourceMatchCount),

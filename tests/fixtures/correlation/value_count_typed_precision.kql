@@ -1,7 +1,7 @@
 let Scenario0=() { let Events=datatable(Value:real) [real(1.0),real(1.0000000000000002)] | extend Timestamp=datetime(2026-01-01T12:00:00Z),Marker="match";
-let ValueCountSources = materialize(union (Events
+let ValueCountSources = materialize(Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), CountedValue = ["Value"])
+| project EventTime_1 = ["Timestamp"], CountedValue = ["Value"]
 | where isnotnull(EventTime_1));
 let CountedValueActivity = materialize(ValueCountSources
 | where isnotempty(CountedValue)
@@ -24,9 +24,9 @@ union (ValueCountSources | summarize by EventTime_1
 | project WindowStart = ValueBoundaryTime - 5m, WindowEnd = ValueBoundaryTime, ValueCount
 };
 let Scenario1=() { let Events=datatable(Value:long) [9223372036854775806,9223372036854775807] | extend Timestamp=datetime(2026-01-01T12:00:00Z),Marker="match";
-let ValueCountSources = materialize(union (Events
+let ValueCountSources = materialize(Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), CountedValue = ["Value"])
+| project EventTime_1 = ["Timestamp"], CountedValue = ["Value"]
 | where isnotnull(EventTime_1));
 let CountedValueActivity = materialize(ValueCountSources
 | where isnotempty(CountedValue)
@@ -49,9 +49,9 @@ union (ValueCountSources | summarize by EventTime_1
 | project WindowStart = ValueBoundaryTime - 5m, WindowEnd = ValueBoundaryTime, ValueCount
 };
 let Scenario2=() { let Events=datatable(Value:decimal) [decimal(1.00),decimal(1.0)] | extend Timestamp=datetime(2026-01-01T12:00:00Z),Marker="match";
-let ValueCountSources = materialize(union (Events
+let ValueCountSources = materialize(Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), CountedValue = ["Value"])
+| project EventTime_1 = ["Timestamp"], CountedValue = ["Value"]
 | where isnotnull(EventTime_1));
 let CountedValueActivity = materialize(ValueCountSources
 | where isnotempty(CountedValue)
@@ -74,9 +74,9 @@ union (ValueCountSources | summarize by EventTime_1
 | project WindowStart = ValueBoundaryTime - 5m, WindowEnd = ValueBoundaryTime, ValueCount
 };
 let Scenario3=() { let Events=datatable(Value:decimal) [decimal(0.00),decimal(-0.0)] | extend Timestamp=datetime(2026-01-01T12:00:00Z),Marker="match";
-let ValueCountSources = materialize(union (Events
+let ValueCountSources = materialize(Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), CountedValue = ["Value"])
+| project EventTime_1 = ["Timestamp"], CountedValue = ["Value"]
 | where isnotnull(EventTime_1));
 let CountedValueActivity = materialize(ValueCountSources
 | where isnotempty(CountedValue)
@@ -99,9 +99,9 @@ union (ValueCountSources | summarize by EventTime_1
 | project WindowStart = ValueBoundaryTime - 5m, WindowEnd = ValueBoundaryTime, ValueCount
 };
 let Scenario4=() { let Events=datatable(Value:real) [real(0.0),real(-0.0)] | extend Timestamp=datetime(2026-01-01T12:00:00Z),Marker="match";
-let ValueCountSources = materialize(union (Events
+let ValueCountSources = materialize(Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), CountedValue = ["Value"])
+| project EventTime_1 = ["Timestamp"], CountedValue = ["Value"]
 | where isnotnull(EventTime_1));
 let CountedValueActivity = materialize(ValueCountSources
 | where isnotempty(CountedValue)
@@ -124,9 +124,9 @@ union (ValueCountSources | summarize by EventTime_1
 | project WindowStart = ValueBoundaryTime - 5m, WindowEnd = ValueBoundaryTime, ValueCount
 };
 let Scenario5=() { let Events=datatable(Value:real) [real(nan),real(nan),real(+inf),real(-inf)] | extend Timestamp=datetime(2026-01-01T12:00:00Z),Marker="match";
-let ValueCountSources = materialize(union (Events
+let ValueCountSources = materialize(Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), CountedValue = ["Value"])
+| project EventTime_1 = ["Timestamp"], CountedValue = ["Value"]
 | where isnotnull(EventTime_1));
 let CountedValueActivity = materialize(ValueCountSources
 | where isnotempty(CountedValue)

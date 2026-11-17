@@ -2,7 +2,7 @@
   "fixtures": [
     {
       "name": "event_count_real_groups.kql",
-      "sha256": "50102d573de6761437f7c1336a8db2e84a5db7ce7454fee04dccdff895329275",
+      "sha256": "a4e85bd57bfac8ac5520805fb90f425bddb53433ddd3476da3c19f14d7eeb588",
       "expected_error": null
     }
   ]

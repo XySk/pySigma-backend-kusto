@@ -34,29 +34,34 @@ let default = () {
 // Strict sequence: "source-rule" -> "other-rule" -> "third-rule". Total inclusive span: 5m.
 union (Events
 | where Marker =~ "A"
-| extend EventTime_1 = todatetime(["Timestamp"])
+| extend EventTime_1 = ["Timestamp"]
+| where isnotnull(EventTime_1)
 | extend SourceRule = "source-rule"),
 (Events
 | where Marker =~ "A"
-| extend EventTime_1 = todatetime(["Timestamp"])
+| extend EventTime_1 = ["Timestamp"]
+| where isnotnull(EventTime_1)
 | extend SourceRule = "source-rule"),
 (Events
 | where Marker =~ "B"
-| extend EventTime_1 = todatetime(["Timestamp"])
+| extend EventTime_1 = ["Timestamp"]
+| where isnotnull(EventTime_1)
 | extend SourceRule = "other-rule"),
 (Events
 | where Marker =~ "B"
-| extend EventTime_1 = todatetime(["Timestamp"])
+| extend EventTime_1 = ["Timestamp"]
+| where isnotnull(EventTime_1)
 | extend SourceRule = "other-rule"),
 (Events
 | where Marker =~ "C"
-| extend EventTime_1 = todatetime(["Timestamp"])
+| extend EventTime_1 = ["Timestamp"]
+| where isnotnull(EventTime_1)
 | extend SourceRule = "third-rule"),
 (Events
 | where Marker =~ "C"
-| extend EventTime_1 = todatetime(["Timestamp"])
-| extend SourceRule = "third-rule")
+| extend EventTime_1 = ["Timestamp"]
 | where isnotnull(EventTime_1)
+| extend SourceRule = "third-rule")
 // Batch equal timestamps: simultaneous source matches cannot advance strict sequence positions.
 | summarize HasSourceRule = countif(SourceRule == "source-rule") > 0, HasOtherRule = countif(SourceRule == "other-rule") > 0, HasThirdRule = countif(SourceRule == "third-rule") > 0 by EventTime_1
 | sort by EventTime_1 asc
@@ -75,29 +80,34 @@ let gte_3 = () {
 // Strict sequence: "source-rule" -> "other-rule" -> "third-rule". Total inclusive span: 5m.
 union (Events
 | where Marker =~ "A"
-| extend EventTime_1 = todatetime(["Timestamp"])
+| extend EventTime_1 = ["Timestamp"]
+| where isnotnull(EventTime_1)
 | extend SourceRule = "source-rule"),
 (Events
 | where Marker =~ "A"
-| extend EventTime_1 = todatetime(["Timestamp"])
+| extend EventTime_1 = ["Timestamp"]
+| where isnotnull(EventTime_1)
 | extend SourceRule = "source-rule"),
 (Events
 | where Marker =~ "B"
-| extend EventTime_1 = todatetime(["Timestamp"])
+| extend EventTime_1 = ["Timestamp"]
+| where isnotnull(EventTime_1)
 | extend SourceRule = "other-rule"),
 (Events
 | where Marker =~ "B"
-| extend EventTime_1 = todatetime(["Timestamp"])
+| extend EventTime_1 = ["Timestamp"]
+| where isnotnull(EventTime_1)
 | extend SourceRule = "other-rule"),
 (Events
 | where Marker =~ "C"
-| extend EventTime_1 = todatetime(["Timestamp"])
+| extend EventTime_1 = ["Timestamp"]
+| where isnotnull(EventTime_1)
 | extend SourceRule = "third-rule"),
 (Events
 | where Marker =~ "C"
-| extend EventTime_1 = todatetime(["Timestamp"])
-| extend SourceRule = "third-rule")
+| extend EventTime_1 = ["Timestamp"]
 | where isnotnull(EventTime_1)
+| extend SourceRule = "third-rule")
 // Batch equal timestamps: simultaneous source matches cannot advance strict sequence positions.
 | summarize HasSourceRule = countif(SourceRule == "source-rule") > 0, HasOtherRule = countif(SourceRule == "other-rule") > 0, HasThirdRule = countif(SourceRule == "third-rule") > 0 by EventTime_1
 | sort by EventTime_1 asc
@@ -116,29 +126,34 @@ let eq_3 = () {
 // Strict sequence: "source-rule" -> "other-rule" -> "third-rule". Total inclusive span: 5m.
 union (Events
 | where Marker =~ "A"
-| extend EventTime_1 = todatetime(["Timestamp"])
+| extend EventTime_1 = ["Timestamp"]
+| where isnotnull(EventTime_1)
 | extend SourceRule = "source-rule"),
 (Events
 | where Marker =~ "A"
-| extend EventTime_1 = todatetime(["Timestamp"])
+| extend EventTime_1 = ["Timestamp"]
+| where isnotnull(EventTime_1)
 | extend SourceRule = "source-rule"),
 (Events
 | where Marker =~ "B"
-| extend EventTime_1 = todatetime(["Timestamp"])
+| extend EventTime_1 = ["Timestamp"]
+| where isnotnull(EventTime_1)
 | extend SourceRule = "other-rule"),
 (Events
 | where Marker =~ "B"
-| extend EventTime_1 = todatetime(["Timestamp"])
+| extend EventTime_1 = ["Timestamp"]
+| where isnotnull(EventTime_1)
 | extend SourceRule = "other-rule"),
 (Events
 | where Marker =~ "C"
-| extend EventTime_1 = todatetime(["Timestamp"])
+| extend EventTime_1 = ["Timestamp"]
+| where isnotnull(EventTime_1)
 | extend SourceRule = "third-rule"),
 (Events
 | where Marker =~ "C"
-| extend EventTime_1 = todatetime(["Timestamp"])
-| extend SourceRule = "third-rule")
+| extend EventTime_1 = ["Timestamp"]
 | where isnotnull(EventTime_1)
+| extend SourceRule = "third-rule")
 // Batch equal timestamps: simultaneous source matches cannot advance strict sequence positions.
 | summarize HasSourceRule = countif(SourceRule == "source-rule") > 0, HasOtherRule = countif(SourceRule == "other-rule") > 0, HasThirdRule = countif(SourceRule == "third-rule") > 0 by EventTime_1
 | sort by EventTime_1 asc
@@ -157,29 +172,34 @@ let gt_2 = () {
 // Strict sequence: "source-rule" -> "other-rule" -> "third-rule". Total inclusive span: 5m.
 union (Events
 | where Marker =~ "A"
-| extend EventTime_1 = todatetime(["Timestamp"])
+| extend EventTime_1 = ["Timestamp"]
+| where isnotnull(EventTime_1)
 | extend SourceRule = "source-rule"),
 (Events
 | where Marker =~ "A"
-| extend EventTime_1 = todatetime(["Timestamp"])
+| extend EventTime_1 = ["Timestamp"]
+| where isnotnull(EventTime_1)
 | extend SourceRule = "source-rule"),
 (Events
 | where Marker =~ "B"
-| extend EventTime_1 = todatetime(["Timestamp"])
+| extend EventTime_1 = ["Timestamp"]
+| where isnotnull(EventTime_1)
 | extend SourceRule = "other-rule"),
 (Events
 | where Marker =~ "B"
-| extend EventTime_1 = todatetime(["Timestamp"])
+| extend EventTime_1 = ["Timestamp"]
+| where isnotnull(EventTime_1)
 | extend SourceRule = "other-rule"),
 (Events
 | where Marker =~ "C"
-| extend EventTime_1 = todatetime(["Timestamp"])
+| extend EventTime_1 = ["Timestamp"]
+| where isnotnull(EventTime_1)
 | extend SourceRule = "third-rule"),
 (Events
 | where Marker =~ "C"
-| extend EventTime_1 = todatetime(["Timestamp"])
-| extend SourceRule = "third-rule")
+| extend EventTime_1 = ["Timestamp"]
 | where isnotnull(EventTime_1)
+| extend SourceRule = "third-rule")
 // Batch equal timestamps: simultaneous source matches cannot advance strict sequence positions.
 | summarize HasSourceRule = countif(SourceRule == "source-rule") > 0, HasOtherRule = countif(SourceRule == "other-rule") > 0, HasThirdRule = countif(SourceRule == "third-rule") > 0 by EventTime_1
 | sort by EventTime_1 asc
@@ -198,29 +218,34 @@ let Repeated = () {
 // Strict sequence: "source-rule" -> "source-rule" -> "other-rule". Total inclusive span: 5m.
 union (Events
 | where Marker =~ "A"
-| extend EventTime_1 = todatetime(["Timestamp"])
+| extend EventTime_1 = ["Timestamp"]
+| where isnotnull(EventTime_1)
 | extend SourceRule = "source-rule"),
 (Events
 | where Marker =~ "A"
-| extend EventTime_1 = todatetime(["Timestamp"])
+| extend EventTime_1 = ["Timestamp"]
+| where isnotnull(EventTime_1)
 | extend SourceRule = "source-rule"),
 (Events
 | where Marker =~ "A"
-| extend EventTime_1 = todatetime(["Timestamp"])
+| extend EventTime_1 = ["Timestamp"]
+| where isnotnull(EventTime_1)
 | extend SourceRule = "source-rule"),
 (Events
 | where Marker =~ "A"
-| extend EventTime_1 = todatetime(["Timestamp"])
+| extend EventTime_1 = ["Timestamp"]
+| where isnotnull(EventTime_1)
 | extend SourceRule = "source-rule"),
 (Events
 | where Marker =~ "B"
-| extend EventTime_1 = todatetime(["Timestamp"])
+| extend EventTime_1 = ["Timestamp"]
+| where isnotnull(EventTime_1)
 | extend SourceRule = "other-rule"),
 (Events
 | where Marker =~ "B"
-| extend EventTime_1 = todatetime(["Timestamp"])
-| extend SourceRule = "other-rule")
+| extend EventTime_1 = ["Timestamp"]
 | where isnotnull(EventTime_1)
+| extend SourceRule = "other-rule")
 // Batch equal timestamps: simultaneous source matches cannot advance strict sequence positions.
 | summarize HasSourceRule = countif(SourceRule == "source-rule") > 0, HasOtherRule = countif(SourceRule == "other-rule") > 0 by EventTime_1
 | sort by EventTime_1 asc

@@ -7,14 +7,16 @@ let AbsenceChild = () {
 let ContextSummary = () {
 union (Events
 | where Marker =~ "A"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"], SourceRule = "A"),
+| project EventTime_1 = ["Timestamp"], GroupHost = ["Host"], SourceRule = "A"
+| where isnotnull(EventTime_1) and isnotempty(GroupHost)),
 (Events
 | where Marker =~ "B"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"], SourceRule = "B"),
+| project EventTime_1 = ["Timestamp"], GroupHost = ["Host"], SourceRule = "B"
+| where isnotnull(EventTime_1) and isnotempty(GroupHost)),
 (Events
 | where Marker =~ "C"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"], SourceRule = "C")
-| where isnotnull(EventTime_1) and isnotempty(GroupHost)
+| project EventTime_1 = ["Timestamp"], GroupHost = ["Host"], SourceRule = "C"
+| where isnotnull(EventTime_1) and isnotempty(GroupHost))
 // Batch simultaneous source matches before updating inclusive trailing presence.
 | summarize MatchesA = countif(SourceRule == "A") > 0, MatchesB = countif(SourceRule == "B") > 0, MatchesC = countif(SourceRule == "C") > 0 by GroupHost, EventTime_1
 | sort by GroupHost asc, EventTime_1 asc
@@ -38,15 +40,18 @@ CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, Con
 | join kind=inner (
 union (Events
 | where Marker =~ "A"
-| extend ContextEventTime = todatetime(["Timestamp"]), ContextGroupHost = ["Host"], ContextUser = ["User"], ContextServer = ["Server"]
+| extend ContextEventTime = ["Timestamp"], ContextGroupHost = ["Host"], ContextUser = ["User"], ContextServer = ["Server"]
+| where isnotnull(ContextEventTime) and isnotempty(ContextGroupHost)
 | extend ContextSourceRule = "A"),
 (Events
 | where Marker =~ "B"
-| extend ContextEventTime = todatetime(["Timestamp"]), ContextGroupHost = ["Host"], ContextUser = ["User"], ContextServer = ["Server"]
+| extend ContextEventTime = ["Timestamp"], ContextGroupHost = ["Host"], ContextUser = ["User"], ContextServer = ["Server"]
+| where isnotnull(ContextEventTime) and isnotempty(ContextGroupHost)
 | extend ContextSourceRule = "B"),
 (Events
 | where Marker =~ "C"
-| extend ContextEventTime = todatetime(["Timestamp"]), ContextGroupHost = ["Host"], ContextUser = ["User"], ContextServer = ["Server"]
+| extend ContextEventTime = ["Timestamp"], ContextGroupHost = ["Host"], ContextUser = ["User"], ContextServer = ["Server"]
+| where isnotnull(ContextEventTime) and isnotempty(ContextGroupHost)
 | extend ContextSourceRule = "C")
 | project ContextEventTime, ContextSourceRule, ContextGroupHost, ContextUser, ContextServer, ContextPartition = 1
 ) on ContextGroupHost
@@ -64,13 +69,14 @@ let ContextSummary = () {
 // Strict sequence: "AbsenceChild" -> "Finish". Total inclusive span: 5m.
 union (AbsenceChildResults
 | where ["ContextRowKind"] == "Summary"
-| extend EventTime_1 = todatetime(["WindowEnd"]), GroupHost = ["Host"]
+| extend EventTime_1 = ["WindowEnd"], GroupHost = ["Host"]
+| where isnotnull(EventTime_1) and isnotempty(GroupHost)
 | extend SourceRule = "AbsenceChild"),
 (Events
 | where Marker =~ "Finish"
-| extend EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"]
-| extend SourceRule = "Finish")
+| extend EventTime_1 = ["Timestamp"], GroupHost = ["Host"]
 | where isnotnull(EventTime_1) and isnotempty(GroupHost)
+| extend SourceRule = "Finish")
 // Batch equal timestamps: simultaneous source matches cannot advance strict sequence positions.
 | summarize HasAbsenceChild = countif(SourceRule == "AbsenceChild") > 0, HasFinish = countif(SourceRule == "Finish") > 0 by EventTime_1, GroupHost
 | sort by GroupHost asc, EventTime_1 asc
@@ -92,11 +98,13 @@ CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, Con
 union (AbsenceChildResults | where ["ContextRowKind"] == "Summary"
 | project-away ["ContextUser"], ["ContextServer"]
 | join kind=leftouter (AbsenceChildResults | where ["ContextRowKind"] == "ContextEvidence" | project ["CorrelationMatchId"], ["ContextUser"], ["ContextServer"], HasContextEvidence = true) on ["CorrelationMatchId"]
-| extend ContextEventTime = todatetime(["WindowEnd"]), ContextGroupHost = ["Host"], ContextUser = ["ContextUser"], ContextServer = ["ContextServer"]
+| extend ContextEventTime = ["WindowEnd"], ContextGroupHost = ["Host"], ContextUser = ["ContextUser"], ContextServer = ["ContextServer"]
+| where isnotnull(ContextEventTime) and isnotempty(ContextGroupHost)
 | extend ContextSourceRule = "AbsenceChild"),
 ((Events
 | where Marker =~ "Finish"
-| extend ContextEventTime = todatetime(["Timestamp"]), ContextGroupHost = ["Host"], ContextUser = ["User"], ContextServer = ["Server"]
+| extend ContextEventTime = ["Timestamp"], ContextGroupHost = ["Host"], ContextUser = ["User"], ContextServer = ["Server"]
+| where isnotnull(ContextEventTime) and isnotempty(ContextGroupHost)
 | extend ContextSourceRule = "Finish")
 | extend HasContextEvidence = true)
 | project ContextEventTime, ContextSourceRule, ContextGroupHost, ContextUser, ContextServer, HasContextEvidence, ContextPartition = 1

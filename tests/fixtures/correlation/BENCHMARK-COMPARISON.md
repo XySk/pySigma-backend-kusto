@@ -1,5 +1,13 @@
 # Final integrated correlation comparison (#49)
 
+> Update for #51: the source-shaping revision reran all 64 workloads six times
+> on the same engine/image and 12 GiB limits. All 384 samples passed exact result
+> and schema assessment. Median per-workload ratios versus the final candidate
+> below were 0.928 client elapsed, 0.934 engine elapsed, 0.925 total CPU, and
+> 1.000 peak memory; no material regression was confirmed. The exact hashes,
+> samples, raw frames, and query-size tradeoff are preserved in the
+> [source-shaping evidence](runtime-evidence/source-shaping-final/README.md).
+
 **All 64 candidate workloads passed all three repetitions (192/192 samples).**
 The final 255-fixture correctness corpus also passed successful uncancelled
 completion with exact empty multiset/schema diagnostics. Candidate production and

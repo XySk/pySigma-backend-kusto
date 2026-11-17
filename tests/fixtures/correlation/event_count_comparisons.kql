@@ -15,9 +15,9 @@ let Events=datatable(Timestamp:string, Marker:string) [
 // Normalize Events scalar fixture inputs explicitly.
 | extend Timestamp=todatetime(Timestamp);
 let gt_2 = () {
-let SourceMatchArrivals = union (Events
+let SourceMatchArrivals = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]))
+| project EventTime_1 = ["Timestamp"]
 | where isnotnull(EventTime_1)
 | summarize SourceMatchCount = count() by EventTime_1;
 union (SourceMatchArrivals
@@ -32,9 +32,9 @@ union (SourceMatchArrivals
 | project WindowStart = CountBoundaryTime - 5m, WindowEnd = CountBoundaryTime, EventCount
 };
 let gte_2 = () {
-let SourceMatchArrivals = union (Events
+let SourceMatchArrivals = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]))
+| project EventTime_1 = ["Timestamp"]
 | where isnotnull(EventTime_1)
 | summarize SourceMatchCount = count() by EventTime_1;
 union (SourceMatchArrivals
@@ -49,9 +49,9 @@ union (SourceMatchArrivals
 | project WindowStart = CountBoundaryTime - 5m, WindowEnd = CountBoundaryTime, EventCount
 };
 let lt_2 = () {
-let SourceMatchArrivals = union (Events
+let SourceMatchArrivals = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]))
+| project EventTime_1 = ["Timestamp"]
 | where isnotnull(EventTime_1)
 | summarize SourceMatchCount = count() by EventTime_1;
 union (SourceMatchArrivals
@@ -66,9 +66,9 @@ union (SourceMatchArrivals
 | project WindowStart = CountBoundaryTime - 5m, WindowEnd = CountBoundaryTime, EventCount
 };
 let lte_2 = () {
-let SourceMatchArrivals = union (Events
+let SourceMatchArrivals = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]))
+| project EventTime_1 = ["Timestamp"]
 | where isnotnull(EventTime_1)
 | summarize SourceMatchCount = count() by EventTime_1;
 union (SourceMatchArrivals
@@ -83,9 +83,9 @@ union (SourceMatchArrivals
 | project WindowStart = CountBoundaryTime - 5m, WindowEnd = CountBoundaryTime, EventCount
 };
 let eq_2 = () {
-let SourceMatchArrivals = union (Events
+let SourceMatchArrivals = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]))
+| project EventTime_1 = ["Timestamp"]
 | where isnotnull(EventTime_1)
 | summarize SourceMatchCount = count() by EventTime_1;
 union (SourceMatchArrivals
@@ -100,9 +100,9 @@ union (SourceMatchArrivals
 | project WindowStart = CountBoundaryTime - 5m, WindowEnd = CountBoundaryTime, EventCount
 };
 let neq_2 = () {
-let SourceMatchArrivals = union (Events
+let SourceMatchArrivals = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]))
+| project EventTime_1 = ["Timestamp"]
 | where isnotnull(EventTime_1)
 | summarize SourceMatchCount = count() by EventTime_1;
 union (SourceMatchArrivals
@@ -117,9 +117,9 @@ union (SourceMatchArrivals
 | project WindowStart = CountBoundaryTime - 5m, WindowEnd = CountBoundaryTime, EventCount
 };
 let eq_0 = () {
-let SourceMatchArrivals = union (Events
+let SourceMatchArrivals = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]))
+| project EventTime_1 = ["Timestamp"]
 | where isnotnull(EventTime_1)
 | summarize SourceMatchCount = count() by EventTime_1;
 union (SourceMatchArrivals

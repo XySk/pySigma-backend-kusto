@@ -11,7 +11,7 @@ def test_numeric_parent_consumes_retained_values_at_child_window_end(kind, group
     (query,) = convert_documents(numeric_documents(kind, groups))
     assert "ContextEvidence" in query
     assert "| mv-expand _sigma_child_context_row" not in query
-    assert 'todatetime(["WindowEnd"])' in query
+    assert '["WindowEnd"]' in query
     assert {"value_sum": "ValueSum", "value_avg": "ValueAvg", "value_percentile": "ValuePercentile"}[kind] in query
 
 

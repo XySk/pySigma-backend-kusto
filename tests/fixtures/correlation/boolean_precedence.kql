@@ -14,14 +14,16 @@ let Events = datatable(Timestamp:datetime, Case:string, Marker:string) [
 let Actual = () {
 union (Events
 | where Marker =~ "A"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupCase = ["Case"], SourceRule = "A"),
+| project EventTime_1 = ["Timestamp"], GroupCase = ["Case"], SourceRule = "A"
+| where isnotnull(EventTime_1) and isnotempty(GroupCase)),
 (Events
 | where Marker =~ "B"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupCase = ["Case"], SourceRule = "B"),
+| project EventTime_1 = ["Timestamp"], GroupCase = ["Case"], SourceRule = "B"
+| where isnotnull(EventTime_1) and isnotempty(GroupCase)),
 (Events
 | where Marker =~ "C"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupCase = ["Case"], SourceRule = "C")
-| where isnotnull(EventTime_1) and isnotempty(GroupCase)
+| project EventTime_1 = ["Timestamp"], GroupCase = ["Case"], SourceRule = "C"
+| where isnotnull(EventTime_1) and isnotempty(GroupCase))
 // Batch simultaneous source matches before updating inclusive trailing presence.
 | summarize MatchesA = countif(SourceRule == "A") > 0, MatchesB = countif(SourceRule == "B") > 0, MatchesC = countif(SourceRule == "C") > 0 by GroupCase, EventTime_1
 | sort by GroupCase asc, EventTime_1 asc

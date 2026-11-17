@@ -125,12 +125,10 @@ def test_sum_chain_converts_in_every_document_order(order):
     parent = correlation_document("parent", "value_sum", ["child"], condition={"field": "ValueSum", "gte": 0})
 
     documents = [parent, unrelated, child, source]
-    query = next(
-        q for q in convert_documents([documents[index] for index in order]) if 'todatetime(["WindowEnd"])' in q
-    )
+    query = next(q for q in convert_documents([documents[index] for index in order]) if '["WindowEnd"]' in q)
 
     assert len(summary_projections(query)) == 2
-    assert 'EventTime = todatetime(["WindowEnd"])' in query
+    assert 'EventTime = ["WindowEnd"]' in query
     assert 'MeasuredValueSum = ["ValueSum"]' in query
     assert summary_data_query(query).count("| extend ValueSum = ") == 2
 

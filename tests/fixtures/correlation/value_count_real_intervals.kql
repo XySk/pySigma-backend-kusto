@@ -17,9 +17,9 @@ let Events=union (Population | extend Group=real(nan)),(Population | extend Grou
  (Population | extend Group=real(-inf)),(Population | extend Group=real(0))
  | extend Marker="match";
 let Actual=(){
-let ValueCountSources = materialize(union (Events
+let ValueCountSources = materialize(Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupGroup = ["Group"], CountedValue = ["Value"], CountedOther = ["Other"])
+| project EventTime_1 = ["Timestamp"], GroupGroup = ["Group"], CountedValue = ["Value"], CountedOther = ["Other"]
 | where isnotnull(EventTime_1) and isnotempty(GroupGroup));
 let CountedValueActivity = materialize(ValueCountSources
 | where isnotempty(CountedValue)

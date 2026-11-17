@@ -6,7 +6,7 @@ The current contract uses declared native scalar timestamp, grouping, counted/me
 
 Numeric inputs and intermediate arithmetic must stay within sensible native ranges. Integer sums are not widened merely to expand range; custom overflow assertions are retired. All supported current fixtures require successful execution. Historical overflow failures remain in [RUNTIME.md](RUNTIME.md), outside the current contract.
 
-The final integrated candidate passed all 255 fixtures and all 192 repeated benchmark samples. [Current hash-scoped evidence](runtime-evidence/integrated-acceptance-final/README.md) and [per-workload comparisons](BENCHMARK-COMPARISON.md) retain raw results and all earlier failures.
+The source-shaping revision passed all 255 fixtures and 384 repeated benchmark samples. [Current hash-scoped evidence](runtime-evidence/source-shaping-final/README.md) preserves the final raw results and the fixture-contract failure exposed during the first run. The preceding [integrated acceptance](runtime-evidence/integrated-acceptance-final/README.md) and [per-workload comparisons](BENCHMARK-COMPARISON.md) remain the comparison baseline.
 
 ## Coverage and independent oracles
 

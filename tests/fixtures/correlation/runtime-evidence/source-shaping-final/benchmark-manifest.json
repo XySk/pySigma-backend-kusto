@@ -1,0 +1,1304 @@
+{
+  "format": 1,
+  "revision": "f21d489868f042f7187ebe96ae233d2189c5169a",
+  "baseline_revision": "07525ee846878754bda7933eab0684895a156086",
+  "oracle": "direct inclusive-window enumeration; ordered strict-time prefix witnesses",
+  "workloads": [
+    {
+      "name": "sparse-event_count-plain",
+      "fixture": "sparse-event_count-plain.json",
+      "fixture_sha256": "77fc7e69c779eed84e3913d48f4896a21bcc30e47cc458a8be71a24dd8b1a7eb",
+      "query": "sparse-event_count-plain.kql",
+      "query_sha256": "f59a07798e696cbebd61fdf2e94c96c690cad6a52a881b3fa81c2417f82d1d08",
+      "query_bytes": 936,
+      "query_lines": 15,
+      "operators": {
+        "extend": 1,
+        "project": 4,
+        "sort": 1,
+        "summarize": 1,
+        "where": 4
+      },
+      "input_rows": 4,
+      "expected_rows": 2
+    },
+    {
+      "name": "sparse-event_count-context",
+      "fixture": "sparse-event_count-context.json",
+      "fixture_sha256": "381d9d0fd76f1e0fbc0e3d8b4220f3886771473d4b65039c71676a06baa98e5e",
+      "query": "sparse-event_count-context.kql",
+      "query_sha256": "83c322418f94de9b534f54850d5d8040e395ee412c354dbd064a468360768b1f",
+      "query_bytes": 2366,
+      "query_lines": 42,
+      "operators": {
+        "distinct": 1,
+        "extend": 5,
+        "join": 2,
+        "project": 8,
+        "serialize": 1,
+        "sort": 1,
+        "summarize": 3,
+        "where": 8
+      },
+      "input_rows": 4,
+      "expected_rows": 2
+    },
+    {
+      "name": "sparse-value_count-plain",
+      "fixture": "sparse-value_count-plain.json",
+      "fixture_sha256": "4acd3a9e0c4db2268e5677dd4e85d7ca14a73062d24f03770a3a52ac471c147b",
+      "query": "sparse-value_count-plain.kql",
+      "query_sha256": "2d03b208219d761a1df12c1c44d3e4a98da1a8ac97fdd9187ce225637959fa15",
+      "query_bytes": 1657,
+      "query_lines": 23,
+      "operators": {
+        "extend": 2,
+        "project": 5,
+        "sort": 2,
+        "summarize": 2,
+        "where": 7
+      },
+      "input_rows": 4,
+      "expected_rows": 1
+    },
+    {
+      "name": "sparse-value_count-context",
+      "fixture": "sparse-value_count-context.json",
+      "fixture_sha256": "b1d75513284e176d62e9b68b7bb8b726184367186b275ad469dd82583c84026b",
+      "query": "sparse-value_count-context.kql",
+      "query_sha256": "c989163883a44f23860ece5e5e6aa1c32a03dc0eb08bb033cc9feafec9d6c9a1",
+      "query_bytes": 3087,
+      "query_lines": 50,
+      "operators": {
+        "distinct": 1,
+        "extend": 6,
+        "join": 2,
+        "project": 9,
+        "serialize": 1,
+        "sort": 2,
+        "summarize": 4,
+        "where": 11
+      },
+      "input_rows": 4,
+      "expected_rows": 1
+    },
+    {
+      "name": "sparse-value_sum-plain",
+      "fixture": "sparse-value_sum-plain.json",
+      "fixture_sha256": "ee30ba527f4701d9446afc10d7558fcca7db561f1171dadc09b7308f1e4e750c",
+      "query": "sparse-value_sum-plain.kql",
+      "query_sha256": "83bf0e9f8f572ff24a3f2c530d9af886603eaa239d66a2ec3e15ed4cd091d018",
+      "query_bytes": 927,
+      "query_lines": 16,
+      "operators": {
+        "extend": 1,
+        "project": 4,
+        "sort": 1,
+        "summarize": 1,
+        "where": 4
+      },
+      "input_rows": 4,
+      "expected_rows": 3
+    },
+    {
+      "name": "sparse-value_sum-context",
+      "fixture": "sparse-value_sum-context.json",
+      "fixture_sha256": "83f89e8957322606a7870b046b7090b243db23df9beaee80152158767a5b246e",
+      "query": "sparse-value_sum-context.kql",
+      "query_sha256": "f7ea58b5736a42df3dbdbf3c1e5aac810e881a227c104269388e85009787eed2",
+      "query_bytes": 2355,
+      "query_lines": 43,
+      "operators": {
+        "distinct": 1,
+        "extend": 5,
+        "join": 2,
+        "project": 8,
+        "serialize": 1,
+        "sort": 1,
+        "summarize": 3,
+        "where": 8
+      },
+      "input_rows": 4,
+      "expected_rows": 3
+    },
+    {
+      "name": "sparse-value_avg-plain",
+      "fixture": "sparse-value_avg-plain.json",
+      "fixture_sha256": "a0043918e593a07988fb72f1a7d778610037a5b3e5b0b725acdc832caf175763",
+      "query": "sparse-value_avg-plain.kql",
+      "query_sha256": "ce6623c8b4db5ddda0a354c0642763e44b766f03ed707a553474d241bdd55b01",
+      "query_bytes": 870,
+      "query_lines": 15,
+      "operators": {
+        "extend": 1,
+        "join": 1,
+        "mv-expand": 1,
+        "project": 2,
+        "summarize": 2,
+        "where": 4
+      },
+      "input_rows": 4,
+      "expected_rows": 3
+    },
+    {
+      "name": "sparse-value_avg-context",
+      "fixture": "sparse-value_avg-context.json",
+      "fixture_sha256": "4e71fcd29948b7e94630342388d6ad166cae0a6991a8df0e58d1d1f29eb06aef",
+      "query": "sparse-value_avg-context.kql",
+      "query_sha256": "ccdc820d92195d4d073492383c73a627954c334070ee92f7ed5f0cde5c2bdae3",
+      "query_bytes": 2298,
+      "query_lines": 42,
+      "operators": {
+        "distinct": 1,
+        "extend": 5,
+        "join": 3,
+        "mv-expand": 1,
+        "project": 6,
+        "serialize": 1,
+        "summarize": 4,
+        "where": 8
+      },
+      "input_rows": 4,
+      "expected_rows": 3
+    },
+    {
+      "name": "sparse-value_percentile-plain",
+      "fixture": "sparse-value_percentile-plain.json",
+      "fixture_sha256": "92c1ee88bd23e0b6eb22113e0a8d243c00db8267222bc14a8840c44b2c8991e1",
+      "query": "sparse-value_percentile-plain.kql",
+      "query_sha256": "a9b12950833389d93cf692f8c823d37a1b85fc05b467314e220cab0e4e6da951",
+      "query_bytes": 1557,
+      "query_lines": 28,
+      "operators": {
+        "distinct": 1,
+        "extend": 2,
+        "join": 2,
+        "mv-expand": 1,
+        "project": 5,
+        "serialize": 1,
+        "sort": 1,
+        "summarize": 1,
+        "where": 6
+      },
+      "input_rows": 4,
+      "expected_rows": 3
+    },
+    {
+      "name": "sparse-value_percentile-context",
+      "fixture": "sparse-value_percentile-context.json",
+      "fixture_sha256": "607550a0b70a6edeb92f8d9a792122c60e6febc53cbd4ec1894cf8e215910fd1",
+      "query": "sparse-value_percentile-context.kql",
+      "query_sha256": "cd280a8de927c75b121ab839436c9e4155dd10973e151658b73fb1e28c31e50c",
+      "query_bytes": 2992,
+      "query_lines": 55,
+      "operators": {
+        "distinct": 2,
+        "extend": 6,
+        "join": 4,
+        "mv-expand": 1,
+        "project": 9,
+        "serialize": 2,
+        "sort": 1,
+        "summarize": 3,
+        "where": 10
+      },
+      "input_rows": 4,
+      "expected_rows": 3
+    },
+    {
+      "name": "sparse-temporal-plain",
+      "fixture": "sparse-temporal-plain.json",
+      "fixture_sha256": "7ef1d376ab604fa43fc6ca59a1e68605bad946278b31e25f0fbbe88e67ab5fe8",
+      "query": "sparse-temporal-plain.kql",
+      "query_sha256": "05b26d0e49e3b00a2f0cb72ea46b057652f9b20c16cfd0dee35939d17faa18a0",
+      "query_bytes": 1974,
+      "query_lines": 27,
+      "operators": {
+        "extend": 3,
+        "project": 4,
+        "scan": 1,
+        "sort": 1,
+        "summarize": 1,
+        "where": 7
+      },
+      "input_rows": 4,
+      "expected_rows": 0
+    },
+    {
+      "name": "sparse-temporal-context",
+      "fixture": "sparse-temporal-context.json",
+      "fixture_sha256": "bc9fcccc2f02bce5407fd498a7a9d5f63c42cfb046161281791135cbcde0cbc6",
+      "query": "sparse-temporal-context.kql",
+      "query_sha256": "48496664b7660a9f9522316c14c349d18b5ae18d76ce1bd1385a8eb9dcf8e777",
+      "query_bytes": 3858,
+      "query_lines": 64,
+      "operators": {
+        "distinct": 1,
+        "extend": 11,
+        "join": 2,
+        "project": 8,
+        "scan": 1,
+        "serialize": 1,
+        "sort": 1,
+        "summarize": 3,
+        "where": 15
+      },
+      "input_rows": 4,
+      "expected_rows": 0
+    },
+    {
+      "name": "sparse-temporal_ordered-plain",
+      "fixture": "sparse-temporal_ordered-plain.json",
+      "fixture_sha256": "ffbb0cf7213508bbe9bc6073159abfce8dccc1d1d3552beb54e3d2fead6e024f",
+      "query": "sparse-temporal_ordered-plain.kql",
+      "query_sha256": "e8faa42ad4fabf962b961683b92408fa75efb7323e6a7bc77d8af981161718b5",
+      "query_bytes": 2171,
+      "query_lines": 29,
+      "operators": {
+        "extend": 7,
+        "project": 1,
+        "scan": 1,
+        "sort": 1,
+        "summarize": 1,
+        "where": 7
+      },
+      "input_rows": 4,
+      "expected_rows": 0
+    },
+    {
+      "name": "sparse-temporal_ordered-context",
+      "fixture": "sparse-temporal_ordered-context.json",
+      "fixture_sha256": "834bfe88867c6a584fcbcaa51bb6276fd8abf377674196d2ba68ce6ed1fd6fce",
+      "query": "sparse-temporal_ordered-context.kql",
+      "query_sha256": "9a6b9ea3398f2b5c2a0baabc7e05cf82039c55db46dd6b5049219f5d56ad18a7",
+      "query_bytes": 5840,
+      "query_lines": 96,
+      "operators": {
+        "distinct": 2,
+        "extend": 15,
+        "join": 5,
+        "project": 11,
+        "scan": 1,
+        "serialize": 2,
+        "sort": 1,
+        "summarize": 5,
+        "where": 23
+      },
+      "input_rows": 4,
+      "expected_rows": 0
+    },
+    {
+      "name": "sparse-mixed-multilevel-plain",
+      "fixture": "sparse-mixed-multilevel-plain.json",
+      "fixture_sha256": "0278cf803ada84d6b99e33580dd23188484323ac34c29e68b5eaf31b624c05aa",
+      "query": "sparse-mixed-multilevel-plain.kql",
+      "query_sha256": "475d8fa6dc15fc6a8f5841d98160f9e918f97850bbea00f10c742ad1e3690a76",
+      "query_bytes": 1914,
+      "query_lines": 37,
+      "operators": {
+        "distinct": 2,
+        "extend": 2,
+        "project": 9,
+        "sort": 2,
+        "summarize": 1,
+        "where": 9
+      },
+      "input_rows": 4,
+      "expected_rows": 2
+    },
+    {
+      "name": "sparse-mixed-multilevel-context",
+      "fixture": "sparse-mixed-multilevel-context.json",
+      "fixture_sha256": "db8f6d4f9ab92a6a142f40ceebb9fc20865853ad41de9576ce748a556e86ddcc",
+      "query": "sparse-mixed-multilevel-context.kql",
+      "query_sha256": "c0c06d0c6731fcc31f2c06e3edb406e60d7d934c5d92e7b479e4b22ad5aebd9f",
+      "query_bytes": 7929,
+      "query_lines": 132,
+      "operators": {
+        "distinct": 3,
+        "extend": 20,
+        "join": 8,
+        "project": 25,
+        "project-away": 2,
+        "serialize": 3,
+        "sort": 3,
+        "summarize": 5,
+        "where": 30
+      },
+      "input_rows": 4,
+      "expected_rows": 2
+    },
+    {
+      "name": "dense-event_count-plain",
+      "fixture": "dense-event_count-plain.json",
+      "fixture_sha256": "c5d64199af8136c54a6de4fb46dda122f09b89ec4ed47b967cbac32f64138fa7",
+      "query": "dense-event_count-plain.kql",
+      "query_sha256": "5d22d30f1657beda39151ee221a2e943c974ac14a84c99d100969b431531bbef",
+      "query_bytes": 936,
+      "query_lines": 15,
+      "operators": {
+        "extend": 1,
+        "project": 4,
+        "sort": 1,
+        "summarize": 1,
+        "where": 4
+      },
+      "input_rows": 24,
+      "expected_rows": 23
+    },
+    {
+      "name": "dense-event_count-context",
+      "fixture": "dense-event_count-context.json",
+      "fixture_sha256": "8e9d26d51bc3f52bcd0fc47667d714732ff2d09247c996ff4c051656841c1276",
+      "query": "dense-event_count-context.kql",
+      "query_sha256": "c12f7cd2ce08370948c475496da9a1cf37a5f2fc30a0716045334e38d7b890d8",
+      "query_bytes": 2366,
+      "query_lines": 42,
+      "operators": {
+        "distinct": 1,
+        "extend": 5,
+        "join": 2,
+        "project": 8,
+        "serialize": 1,
+        "sort": 1,
+        "summarize": 3,
+        "where": 8
+      },
+      "input_rows": 24,
+      "expected_rows": 23
+    },
+    {
+      "name": "dense-value_count-plain",
+      "fixture": "dense-value_count-plain.json",
+      "fixture_sha256": "32521f4c07c7d484a9dd80272cd43c542d73fe9fdedae115902c2f8aeeace3a4",
+      "query": "dense-value_count-plain.kql",
+      "query_sha256": "8a34633b121f0e11c0f5fac68fe44718baaf0a6ac99395d461c5835b4c3d8b9c",
+      "query_bytes": 1657,
+      "query_lines": 23,
+      "operators": {
+        "extend": 2,
+        "project": 5,
+        "sort": 2,
+        "summarize": 2,
+        "where": 7
+      },
+      "input_rows": 24,
+      "expected_rows": 23
+    },
+    {
+      "name": "dense-value_count-context",
+      "fixture": "dense-value_count-context.json",
+      "fixture_sha256": "56aabd1d91cedb0714aef3ae16cf6856946bbc186a079e362f3a0f790ac14e03",
+      "query": "dense-value_count-context.kql",
+      "query_sha256": "ecc6a4fbd4fa64b92078ec51aecbc07fc209355b5eaeda9a7760fad3a80d25db",
+      "query_bytes": 3087,
+      "query_lines": 50,
+      "operators": {
+        "distinct": 1,
+        "extend": 6,
+        "join": 2,
+        "project": 9,
+        "serialize": 1,
+        "sort": 2,
+        "summarize": 4,
+        "where": 11
+      },
+      "input_rows": 24,
+      "expected_rows": 23
+    },
+    {
+      "name": "dense-value_sum-plain",
+      "fixture": "dense-value_sum-plain.json",
+      "fixture_sha256": "38e095742ad9bd1108961da71db2be2baaf2c46bd7beda12f8e0a0fa892da3a9",
+      "query": "dense-value_sum-plain.kql",
+      "query_sha256": "fadce376a27a0ad69feb475ed99313a77d78fe7aca99f37ca37f99448b96c75d",
+      "query_bytes": 927,
+      "query_lines": 16,
+      "operators": {
+        "extend": 1,
+        "project": 4,
+        "sort": 1,
+        "summarize": 1,
+        "where": 4
+      },
+      "input_rows": 24,
+      "expected_rows": 24
+    },
+    {
+      "name": "dense-value_sum-context",
+      "fixture": "dense-value_sum-context.json",
+      "fixture_sha256": "a6e0e11ebfe8d14868172287bcd7b982f4e5f13f64b393c8c11f83a1fc61ac50",
+      "query": "dense-value_sum-context.kql",
+      "query_sha256": "1fa843c8e0451be9b39dd6e426f4afea342c44779ce5b70363c11248d5861496",
+      "query_bytes": 2355,
+      "query_lines": 43,
+      "operators": {
+        "distinct": 1,
+        "extend": 5,
+        "join": 2,
+        "project": 8,
+        "serialize": 1,
+        "sort": 1,
+        "summarize": 3,
+        "where": 8
+      },
+      "input_rows": 24,
+      "expected_rows": 24
+    },
+    {
+      "name": "dense-value_avg-plain",
+      "fixture": "dense-value_avg-plain.json",
+      "fixture_sha256": "e6c534eab60f989c12ae50239aaeacbe7e35ca75e4457eb4154b9e6bba38dee6",
+      "query": "dense-value_avg-plain.kql",
+      "query_sha256": "67c14b592bacdac482d07f81dfd08ee37f0a73efa28ffd8c4f898ba2952d4090",
+      "query_bytes": 870,
+      "query_lines": 15,
+      "operators": {
+        "extend": 1,
+        "join": 1,
+        "mv-expand": 1,
+        "project": 2,
+        "summarize": 2,
+        "where": 4
+      },
+      "input_rows": 24,
+      "expected_rows": 24
+    },
+    {
+      "name": "dense-value_avg-context",
+      "fixture": "dense-value_avg-context.json",
+      "fixture_sha256": "4d8eaf81239182800a825a6d083d7853ce0c58cf681a0c7528488081c90b6bf4",
+      "query": "dense-value_avg-context.kql",
+      "query_sha256": "df08ce54ac2d4f952f365590ba6421e34eb5c46bed81d5989598e74b4f5cd826",
+      "query_bytes": 2298,
+      "query_lines": 42,
+      "operators": {
+        "distinct": 1,
+        "extend": 5,
+        "join": 3,
+        "mv-expand": 1,
+        "project": 6,
+        "serialize": 1,
+        "summarize": 4,
+        "where": 8
+      },
+      "input_rows": 24,
+      "expected_rows": 24
+    },
+    {
+      "name": "dense-value_percentile-plain",
+      "fixture": "dense-value_percentile-plain.json",
+      "fixture_sha256": "d05d84101be1acf0d1e7b3b44d5f7d4706b3924d44062c5095ab4ea314698488",
+      "query": "dense-value_percentile-plain.kql",
+      "query_sha256": "eb6ca958182299e8af6d8eac38cdae411d7dfb265c979b0816932e788c270e4f",
+      "query_bytes": 1557,
+      "query_lines": 28,
+      "operators": {
+        "distinct": 1,
+        "extend": 2,
+        "join": 2,
+        "mv-expand": 1,
+        "project": 5,
+        "serialize": 1,
+        "sort": 1,
+        "summarize": 1,
+        "where": 6
+      },
+      "input_rows": 24,
+      "expected_rows": 24
+    },
+    {
+      "name": "dense-value_percentile-context",
+      "fixture": "dense-value_percentile-context.json",
+      "fixture_sha256": "430dc2138e267618632848fe730b23288d36c787c0475ec55135ae9bbd6618bc",
+      "query": "dense-value_percentile-context.kql",
+      "query_sha256": "8dcbb2a2712ade3d84c365bd7dceb48aa1c0539467419f76d1ff08531dbfbc8a",
+      "query_bytes": 2992,
+      "query_lines": 55,
+      "operators": {
+        "distinct": 2,
+        "extend": 6,
+        "join": 4,
+        "mv-expand": 1,
+        "project": 9,
+        "serialize": 2,
+        "sort": 1,
+        "summarize": 3,
+        "where": 10
+      },
+      "input_rows": 24,
+      "expected_rows": 24
+    },
+    {
+      "name": "dense-temporal-plain",
+      "fixture": "dense-temporal-plain.json",
+      "fixture_sha256": "791e3d39a1fd54a19c75223ce9225652e9e59982c4c6264a4c4785fe3ba00222",
+      "query": "dense-temporal-plain.kql",
+      "query_sha256": "d3a6008525270a5f9744cfb0be4f52edadc924a9c84598de0a9232cf0f1ad93d",
+      "query_bytes": 1974,
+      "query_lines": 27,
+      "operators": {
+        "extend": 3,
+        "project": 4,
+        "scan": 1,
+        "sort": 1,
+        "summarize": 1,
+        "where": 7
+      },
+      "input_rows": 24,
+      "expected_rows": 22
+    },
+    {
+      "name": "dense-temporal-context",
+      "fixture": "dense-temporal-context.json",
+      "fixture_sha256": "beb1b233f18a11e1fd18e467647298a449fc350066ffffca61457ff0db0c5b33",
+      "query": "dense-temporal-context.kql",
+      "query_sha256": "59536f4567d67da12f85f77bdf63b7ce35591ab1b1600449e25e8ca2d5f75f32",
+      "query_bytes": 3858,
+      "query_lines": 64,
+      "operators": {
+        "distinct": 1,
+        "extend": 11,
+        "join": 2,
+        "project": 8,
+        "scan": 1,
+        "serialize": 1,
+        "sort": 1,
+        "summarize": 3,
+        "where": 15
+      },
+      "input_rows": 24,
+      "expected_rows": 22
+    },
+    {
+      "name": "dense-temporal_ordered-plain",
+      "fixture": "dense-temporal_ordered-plain.json",
+      "fixture_sha256": "2eb713256caf369ec5af24b37c391843257751e9f1703ff8b839afec8316e9eb",
+      "query": "dense-temporal_ordered-plain.kql",
+      "query_sha256": "7de8049a506c663db1798a3995a38cbcaf2d664347a98d3593303d515b9b27d7",
+      "query_bytes": 2171,
+      "query_lines": 29,
+      "operators": {
+        "extend": 7,
+        "project": 1,
+        "scan": 1,
+        "sort": 1,
+        "summarize": 1,
+        "where": 7
+      },
+      "input_rows": 24,
+      "expected_rows": 8
+    },
+    {
+      "name": "dense-temporal_ordered-context",
+      "fixture": "dense-temporal_ordered-context.json",
+      "fixture_sha256": "9447dce640ddaae8888ba96f06a76f00228932ddf24d28a6b8802e7e51ac105c",
+      "query": "dense-temporal_ordered-context.kql",
+      "query_sha256": "c6255469074b04009cc84b781b70bb45c602e0c1bb3ae48c3453963ec073ce22",
+      "query_bytes": 5840,
+      "query_lines": 96,
+      "operators": {
+        "distinct": 2,
+        "extend": 15,
+        "join": 5,
+        "project": 11,
+        "scan": 1,
+        "serialize": 2,
+        "sort": 1,
+        "summarize": 5,
+        "where": 23
+      },
+      "input_rows": 24,
+      "expected_rows": 8
+    },
+    {
+      "name": "dense-mixed-multilevel-plain",
+      "fixture": "dense-mixed-multilevel-plain.json",
+      "fixture_sha256": "e47f318a1e07b140eaa372db1837c6f5396cf2d5909f924210ce37267f162200",
+      "query": "dense-mixed-multilevel-plain.kql",
+      "query_sha256": "8ffc5e67030ae974caa6d1c6e15abe1b01c70d12c9b321e0e5939c2e0dedd2e7",
+      "query_bytes": 1914,
+      "query_lines": 37,
+      "operators": {
+        "distinct": 2,
+        "extend": 2,
+        "project": 9,
+        "sort": 2,
+        "summarize": 1,
+        "where": 9
+      },
+      "input_rows": 24,
+      "expected_rows": 23
+    },
+    {
+      "name": "dense-mixed-multilevel-context",
+      "fixture": "dense-mixed-multilevel-context.json",
+      "fixture_sha256": "17a15c82db79868fbec35f553f37b3cc9a511de2e76f76a16db0406093dfdc00",
+      "query": "dense-mixed-multilevel-context.kql",
+      "query_sha256": "2f0b6f9650dff7c2f5b5a322ea4209c012bf3774db9e4eb10afb26022a395913",
+      "query_bytes": 7929,
+      "query_lines": 132,
+      "operators": {
+        "distinct": 3,
+        "extend": 20,
+        "join": 8,
+        "project": 25,
+        "project-away": 2,
+        "serialize": 3,
+        "sort": 3,
+        "summarize": 5,
+        "where": 30
+      },
+      "input_rows": 24,
+      "expected_rows": 23
+    },
+    {
+      "name": "many-groups-event_count-plain",
+      "fixture": "many-groups-event_count-plain.json",
+      "fixture_sha256": "33f0d1f5f2af927c189bd7cd06b97bc09ee48a83f1734a369f81220755ad2dc0",
+      "query": "many-groups-event_count-plain.kql",
+      "query_sha256": "2b014b8bac0559eb2d8ba8afd524ceb57b0419fe7787a6e848ca38f14aab5e98",
+      "query_bytes": 936,
+      "query_lines": 15,
+      "operators": {
+        "extend": 1,
+        "project": 4,
+        "sort": 1,
+        "summarize": 1,
+        "where": 4
+      },
+      "input_rows": 96,
+      "expected_rows": 84
+    },
+    {
+      "name": "many-groups-event_count-context",
+      "fixture": "many-groups-event_count-context.json",
+      "fixture_sha256": "8e6dc8d7739e409f9b077279c67a6c1f1902e53351c443958559d5edcba9e37c",
+      "query": "many-groups-event_count-context.kql",
+      "query_sha256": "d6b115878fb76dab31fbec8d7bdfc5afb99c7053e10f24205df7ceb12240fe95",
+      "query_bytes": 2366,
+      "query_lines": 42,
+      "operators": {
+        "distinct": 1,
+        "extend": 5,
+        "join": 2,
+        "project": 8,
+        "serialize": 1,
+        "sort": 1,
+        "summarize": 3,
+        "where": 8
+      },
+      "input_rows": 96,
+      "expected_rows": 84
+    },
+    {
+      "name": "many-groups-value_count-plain",
+      "fixture": "many-groups-value_count-plain.json",
+      "fixture_sha256": "659c57ce1896af28d39ba2ca67388a88b14a5d6718f0275d3b0ac21e6f77d485",
+      "query": "many-groups-value_count-plain.kql",
+      "query_sha256": "cc6d1bc943b68882f10f1226c25df4cbb06027c30379844ec9cb7347d7d7e350",
+      "query_bytes": 1657,
+      "query_lines": 23,
+      "operators": {
+        "extend": 2,
+        "project": 5,
+        "sort": 2,
+        "summarize": 2,
+        "where": 7
+      },
+      "input_rows": 96,
+      "expected_rows": 84
+    },
+    {
+      "name": "many-groups-value_count-context",
+      "fixture": "many-groups-value_count-context.json",
+      "fixture_sha256": "7398d180b4a136ef3a7df81da11fc1ebdc8fd1592340d2d6cbf3deaf49ac2f9f",
+      "query": "many-groups-value_count-context.kql",
+      "query_sha256": "d67b6db0546ab34da89eb7cc4a02a2ed0ddcbcbf9df560d8c85aa6aefdb7bf18",
+      "query_bytes": 3087,
+      "query_lines": 50,
+      "operators": {
+        "distinct": 1,
+        "extend": 6,
+        "join": 2,
+        "project": 9,
+        "serialize": 1,
+        "sort": 2,
+        "summarize": 4,
+        "where": 11
+      },
+      "input_rows": 96,
+      "expected_rows": 84
+    },
+    {
+      "name": "many-groups-value_sum-plain",
+      "fixture": "many-groups-value_sum-plain.json",
+      "fixture_sha256": "d06edd80bfeb7ef2682dd29ddb00e3f1f2a4fcb2ec13f06832dd4f853fd16faa",
+      "query": "many-groups-value_sum-plain.kql",
+      "query_sha256": "159877228475654c14f353d47869afa37f74a67658908142e0bdff58983e5d61",
+      "query_bytes": 927,
+      "query_lines": 16,
+      "operators": {
+        "extend": 1,
+        "project": 4,
+        "sort": 1,
+        "summarize": 1,
+        "where": 4
+      },
+      "input_rows": 96,
+      "expected_rows": 96
+    },
+    {
+      "name": "many-groups-value_sum-context",
+      "fixture": "many-groups-value_sum-context.json",
+      "fixture_sha256": "8861814f0f391b66373a8882cda92cbbe0f9764c1e1405585832bea6345ba003",
+      "query": "many-groups-value_sum-context.kql",
+      "query_sha256": "d80262d6cc673cc84a0b41452676c2d1faad106ab68f5a8077fb0c10ffe69a7a",
+      "query_bytes": 2355,
+      "query_lines": 43,
+      "operators": {
+        "distinct": 1,
+        "extend": 5,
+        "join": 2,
+        "project": 8,
+        "serialize": 1,
+        "sort": 1,
+        "summarize": 3,
+        "where": 8
+      },
+      "input_rows": 96,
+      "expected_rows": 96
+    },
+    {
+      "name": "many-groups-value_avg-plain",
+      "fixture": "many-groups-value_avg-plain.json",
+      "fixture_sha256": "a8a264e637f98cdd84bd30e6a58f3c0525352fa05c2a41c94e9ec254ffdd4bba",
+      "query": "many-groups-value_avg-plain.kql",
+      "query_sha256": "73e88dc2120496c9c9453adcc03d507a4362dff962f8e25385458671f10f2a65",
+      "query_bytes": 870,
+      "query_lines": 15,
+      "operators": {
+        "extend": 1,
+        "join": 1,
+        "mv-expand": 1,
+        "project": 2,
+        "summarize": 2,
+        "where": 4
+      },
+      "input_rows": 96,
+      "expected_rows": 96
+    },
+    {
+      "name": "many-groups-value_avg-context",
+      "fixture": "many-groups-value_avg-context.json",
+      "fixture_sha256": "632ffbf0b33317b685b4546cb1cd08dff647382397495f8b46b310ee69d4cdbd",
+      "query": "many-groups-value_avg-context.kql",
+      "query_sha256": "88c64aedf1300196785c7c14a337e928fb3961435ab0779313d359338cdfd660",
+      "query_bytes": 2298,
+      "query_lines": 42,
+      "operators": {
+        "distinct": 1,
+        "extend": 5,
+        "join": 3,
+        "mv-expand": 1,
+        "project": 6,
+        "serialize": 1,
+        "summarize": 4,
+        "where": 8
+      },
+      "input_rows": 96,
+      "expected_rows": 96
+    },
+    {
+      "name": "many-groups-value_percentile-plain",
+      "fixture": "many-groups-value_percentile-plain.json",
+      "fixture_sha256": "c937c2951fa0cafacededa6ff8c355e34a0cf31bc2bc9c4349436216382f3bc2",
+      "query": "many-groups-value_percentile-plain.kql",
+      "query_sha256": "fa8526dbe322cf97fef3e384f8f90e3f3508c2389c1823e72e99ff2e3b6908b2",
+      "query_bytes": 1557,
+      "query_lines": 28,
+      "operators": {
+        "distinct": 1,
+        "extend": 2,
+        "join": 2,
+        "mv-expand": 1,
+        "project": 5,
+        "serialize": 1,
+        "sort": 1,
+        "summarize": 1,
+        "where": 6
+      },
+      "input_rows": 96,
+      "expected_rows": 96
+    },
+    {
+      "name": "many-groups-value_percentile-context",
+      "fixture": "many-groups-value_percentile-context.json",
+      "fixture_sha256": "c15cb96961a39a3141e83cba8c59ea15e3e6ec1d2640ed38f295d01134e44984",
+      "query": "many-groups-value_percentile-context.kql",
+      "query_sha256": "096502950333381f67c4a07c01d4e03005167e4e49aa93d4f0f4b675ecca6756",
+      "query_bytes": 2992,
+      "query_lines": 55,
+      "operators": {
+        "distinct": 2,
+        "extend": 6,
+        "join": 4,
+        "mv-expand": 1,
+        "project": 9,
+        "serialize": 2,
+        "sort": 1,
+        "summarize": 3,
+        "where": 10
+      },
+      "input_rows": 96,
+      "expected_rows": 96
+    },
+    {
+      "name": "many-groups-temporal-plain",
+      "fixture": "many-groups-temporal-plain.json",
+      "fixture_sha256": "f1b3aa3ad4ad8bacdde41c51e72c7f95046769c25f3f629706d64d1c3f0e2970",
+      "query": "many-groups-temporal-plain.kql",
+      "query_sha256": "e5e36841b74f3c59a12048df6ecd410837c0f4543dd936590ca9edb1e5e771b6",
+      "query_bytes": 1974,
+      "query_lines": 27,
+      "operators": {
+        "extend": 3,
+        "project": 4,
+        "scan": 1,
+        "sort": 1,
+        "summarize": 1,
+        "where": 7
+      },
+      "input_rows": 96,
+      "expected_rows": 72
+    },
+    {
+      "name": "many-groups-temporal-context",
+      "fixture": "many-groups-temporal-context.json",
+      "fixture_sha256": "7cdfc1b96603e38c40580aaf0704ba07d4fe207d34b6d7b3f6d20ed9fe3d4845",
+      "query": "many-groups-temporal-context.kql",
+      "query_sha256": "ea2e54ead024cc10c4dd05eacc1d397c385721670fcfb21f1a104daf776cc616",
+      "query_bytes": 3858,
+      "query_lines": 64,
+      "operators": {
+        "distinct": 1,
+        "extend": 11,
+        "join": 2,
+        "project": 8,
+        "scan": 1,
+        "serialize": 1,
+        "sort": 1,
+        "summarize": 3,
+        "where": 15
+      },
+      "input_rows": 96,
+      "expected_rows": 72
+    },
+    {
+      "name": "many-groups-temporal_ordered-plain",
+      "fixture": "many-groups-temporal_ordered-plain.json",
+      "fixture_sha256": "308b702d647d50efd3cb5a98d5b0c51c208b77ca42f60bd2bcc600ff19abbd31",
+      "query": "many-groups-temporal_ordered-plain.kql",
+      "query_sha256": "9399fc0f72d5101fc422ae22ca70007d74dd26e506d65d85653efeec5e98067e",
+      "query_bytes": 2171,
+      "query_lines": 29,
+      "operators": {
+        "extend": 7,
+        "project": 1,
+        "scan": 1,
+        "sort": 1,
+        "summarize": 1,
+        "where": 7
+      },
+      "input_rows": 96,
+      "expected_rows": 24
+    },
+    {
+      "name": "many-groups-temporal_ordered-context",
+      "fixture": "many-groups-temporal_ordered-context.json",
+      "fixture_sha256": "ee2e577b4517947e065bbb41f68f38cdf84e4e545dab27b62985706084a29835",
+      "query": "many-groups-temporal_ordered-context.kql",
+      "query_sha256": "9dbecdd5d0df734be4621adc82f705bb73efbfe25ce702670bf40cca28989ee1",
+      "query_bytes": 5840,
+      "query_lines": 96,
+      "operators": {
+        "distinct": 2,
+        "extend": 15,
+        "join": 5,
+        "project": 11,
+        "scan": 1,
+        "serialize": 2,
+        "sort": 1,
+        "summarize": 5,
+        "where": 23
+      },
+      "input_rows": 96,
+      "expected_rows": 24
+    },
+    {
+      "name": "many-groups-mixed-multilevel-plain",
+      "fixture": "many-groups-mixed-multilevel-plain.json",
+      "fixture_sha256": "61793b5baf3dbdecb6dbb6d23db3ffbb48ab25a32c35f3dae7c064dd5f74aea3",
+      "query": "many-groups-mixed-multilevel-plain.kql",
+      "query_sha256": "5385481b9c45132812c3540578e7a5f0daab9859d3b95a5e6a61ab2592ad500b",
+      "query_bytes": 1914,
+      "query_lines": 37,
+      "operators": {
+        "distinct": 2,
+        "extend": 2,
+        "project": 9,
+        "sort": 2,
+        "summarize": 1,
+        "where": 9
+      },
+      "input_rows": 96,
+      "expected_rows": 84
+    },
+    {
+      "name": "many-groups-mixed-multilevel-context",
+      "fixture": "many-groups-mixed-multilevel-context.json",
+      "fixture_sha256": "92c247e101edebaaee92a93a6cdf3b63671b7ddfc8b42f96655374308b4eba1b",
+      "query": "many-groups-mixed-multilevel-context.kql",
+      "query_sha256": "ff25e1405f04abf0ab57cda874942e9a8056fb8c7ee261aaf69f041833120c5f",
+      "query_bytes": 7929,
+      "query_lines": 132,
+      "operators": {
+        "distinct": 3,
+        "extend": 20,
+        "join": 8,
+        "project": 25,
+        "project-away": 2,
+        "serialize": 3,
+        "sort": 3,
+        "summarize": 5,
+        "where": 30
+      },
+      "input_rows": 96,
+      "expected_rows": 84
+    },
+    {
+      "name": "hot-group-event_count-plain",
+      "fixture": "hot-group-event_count-plain.json",
+      "fixture_sha256": "805191187b0665ba77b5e494cda48615201c2f9e63582af266e23535b50653ca",
+      "query": "hot-group-event_count-plain.kql",
+      "query_sha256": "d5b5e32da10a02d2b5ed5b56e6bc73cba69fe607339aae3fa1db3cb140d90ace",
+      "query_bytes": 940,
+      "query_lines": 15,
+      "operators": {
+        "extend": 1,
+        "project": 4,
+        "sort": 1,
+        "summarize": 1,
+        "where": 4
+      },
+      "input_rows": 96,
+      "expected_rows": 0
+    },
+    {
+      "name": "hot-group-event_count-context",
+      "fixture": "hot-group-event_count-context.json",
+      "fixture_sha256": "c836aab90a8f38e9288fdb1fe92a5d553d11ade9429a87aa7b3044a6ea108725",
+      "query": "hot-group-event_count-context.kql",
+      "query_sha256": "28a459775d93b9b009baaf402b3c1b428787ae864c55a30ea21a3ed6cb8d591e",
+      "query_bytes": 2370,
+      "query_lines": 42,
+      "operators": {
+        "distinct": 1,
+        "extend": 5,
+        "join": 2,
+        "project": 8,
+        "serialize": 1,
+        "sort": 1,
+        "summarize": 3,
+        "where": 8
+      },
+      "input_rows": 96,
+      "expected_rows": 0
+    },
+    {
+      "name": "hot-group-value_count-plain",
+      "fixture": "hot-group-value_count-plain.json",
+      "fixture_sha256": "b120646e5a2bfea0b0d9f765337bc1260248b8016f64972d7ba861d68d2a5d89",
+      "query": "hot-group-value_count-plain.kql",
+      "query_sha256": "44c0b492a8c3a4efa7ad5aa59f5ec991e6e0e4dbba84e313e339617f0db4a4a9",
+      "query_bytes": 1661,
+      "query_lines": 23,
+      "operators": {
+        "extend": 2,
+        "project": 5,
+        "sort": 2,
+        "summarize": 2,
+        "where": 7
+      },
+      "input_rows": 96,
+      "expected_rows": 0
+    },
+    {
+      "name": "hot-group-value_count-context",
+      "fixture": "hot-group-value_count-context.json",
+      "fixture_sha256": "52ede1c3ae29ae342be55c11256c392a16863be7a16bd6dd4d1d22681c687ff6",
+      "query": "hot-group-value_count-context.kql",
+      "query_sha256": "17c94c4ebf709a7c44fe98011458edac5c3af1d2d3286e89fe615d7657c272b1",
+      "query_bytes": 3091,
+      "query_lines": 50,
+      "operators": {
+        "distinct": 1,
+        "extend": 6,
+        "join": 2,
+        "project": 9,
+        "serialize": 1,
+        "sort": 2,
+        "summarize": 4,
+        "where": 11
+      },
+      "input_rows": 96,
+      "expected_rows": 0
+    },
+    {
+      "name": "hot-group-value_sum-plain",
+      "fixture": "hot-group-value_sum-plain.json",
+      "fixture_sha256": "b02035a2a7d45b3c4b4a5e526479d4d6c7f180ca11657247ca3092149c913a7f",
+      "query": "hot-group-value_sum-plain.kql",
+      "query_sha256": "ce6923d24599398a36fb3b55a2227caaac373487d8302ebeea5213e51a78752e",
+      "query_bytes": 931,
+      "query_lines": 16,
+      "operators": {
+        "extend": 1,
+        "project": 4,
+        "sort": 1,
+        "summarize": 1,
+        "where": 4
+      },
+      "input_rows": 96,
+      "expected_rows": 0
+    },
+    {
+      "name": "hot-group-value_sum-context",
+      "fixture": "hot-group-value_sum-context.json",
+      "fixture_sha256": "a916facf63f0371eda0c6f6724869b184634586f0c2fa3255649336f73a6f5ec",
+      "query": "hot-group-value_sum-context.kql",
+      "query_sha256": "8e78e23cba6ef612b148a7febbfc47c44b1d837c6feccab43a7b923cc95b1f35",
+      "query_bytes": 2359,
+      "query_lines": 43,
+      "operators": {
+        "distinct": 1,
+        "extend": 5,
+        "join": 2,
+        "project": 8,
+        "serialize": 1,
+        "sort": 1,
+        "summarize": 3,
+        "where": 8
+      },
+      "input_rows": 96,
+      "expected_rows": 0
+    },
+    {
+      "name": "hot-group-value_avg-plain",
+      "fixture": "hot-group-value_avg-plain.json",
+      "fixture_sha256": "952f21ef09bf811cad7f940ca7ff52cb32b6bcd5d677e96a347474adc2941301",
+      "query": "hot-group-value_avg-plain.kql",
+      "query_sha256": "c8c8ec747ef99cae0a88b774c4fb7b7fb55ceee60377eb457488b4b7fbb19380",
+      "query_bytes": 874,
+      "query_lines": 15,
+      "operators": {
+        "extend": 1,
+        "join": 1,
+        "mv-expand": 1,
+        "project": 2,
+        "summarize": 2,
+        "where": 4
+      },
+      "input_rows": 96,
+      "expected_rows": 0
+    },
+    {
+      "name": "hot-group-value_avg-context",
+      "fixture": "hot-group-value_avg-context.json",
+      "fixture_sha256": "52a19a909b8d895ca15aa5c94f645474db9a1f3c57d0778afab80406c5fcb1a2",
+      "query": "hot-group-value_avg-context.kql",
+      "query_sha256": "b07d79382f6af2a22288a4e358392afe9bbc5135877cc2b9080f762e42dc5709",
+      "query_bytes": 2302,
+      "query_lines": 42,
+      "operators": {
+        "distinct": 1,
+        "extend": 5,
+        "join": 3,
+        "mv-expand": 1,
+        "project": 6,
+        "serialize": 1,
+        "summarize": 4,
+        "where": 8
+      },
+      "input_rows": 96,
+      "expected_rows": 0
+    },
+    {
+      "name": "hot-group-value_percentile-plain",
+      "fixture": "hot-group-value_percentile-plain.json",
+      "fixture_sha256": "d679bc7017ab10d56f1693f725f33991f35308a9e7fcb25005cf6964e67e0f67",
+      "query": "hot-group-value_percentile-plain.kql",
+      "query_sha256": "471e8d24eed72104a83b267e705d8a6dabeff1365e0f9cebc5d420a51429f842",
+      "query_bytes": 1561,
+      "query_lines": 28,
+      "operators": {
+        "distinct": 1,
+        "extend": 2,
+        "join": 2,
+        "mv-expand": 1,
+        "project": 5,
+        "serialize": 1,
+        "sort": 1,
+        "summarize": 1,
+        "where": 6
+      },
+      "input_rows": 96,
+      "expected_rows": 0
+    },
+    {
+      "name": "hot-group-value_percentile-context",
+      "fixture": "hot-group-value_percentile-context.json",
+      "fixture_sha256": "5fc33cd451c4ade8a71ec49fb00b83a5965b8de86c73a77b0c1c7d60605f7ac3",
+      "query": "hot-group-value_percentile-context.kql",
+      "query_sha256": "0078f7c51cb2dbb7d5b2a848c61b6687d1069fe4ab8db1423a64d34aa13736b5",
+      "query_bytes": 2996,
+      "query_lines": 55,
+      "operators": {
+        "distinct": 2,
+        "extend": 6,
+        "join": 4,
+        "mv-expand": 1,
+        "project": 9,
+        "serialize": 2,
+        "sort": 1,
+        "summarize": 3,
+        "where": 10
+      },
+      "input_rows": 96,
+      "expected_rows": 0
+    },
+    {
+      "name": "hot-group-temporal-plain",
+      "fixture": "hot-group-temporal-plain.json",
+      "fixture_sha256": "5bc37ed7f487b486a167251fa66e85a6742418e4f0552d2b5aa350b3dfce331a",
+      "query": "hot-group-temporal-plain.kql",
+      "query_sha256": "44f67d889e4122062e3675cd28d6dd8fdaf562bc27c95138f154eae4980b182c",
+      "query_bytes": 2456,
+      "query_lines": 32,
+      "operators": {
+        "extend": 3,
+        "project": 5,
+        "scan": 1,
+        "sort": 1,
+        "summarize": 1,
+        "where": 9
+      },
+      "input_rows": 96,
+      "expected_rows": 47
+    },
+    {
+      "name": "hot-group-temporal-context",
+      "fixture": "hot-group-temporal-context.json",
+      "fixture_sha256": "d2974099f6b21d2b0a60e5a8387dca8e77a5680b809464323a56dcc040cbd43b",
+      "query": "hot-group-temporal-context.kql",
+      "query_sha256": "df27257aaddd83ff7ad67310dd0af7eb106911c735a1451ee7d71607ad2c07b7",
+      "query_bytes": 4575,
+      "query_lines": 74,
+      "operators": {
+        "distinct": 1,
+        "extend": 13,
+        "join": 2,
+        "project": 9,
+        "scan": 1,
+        "serialize": 1,
+        "sort": 1,
+        "summarize": 3,
+        "where": 19
+      },
+      "input_rows": 96,
+      "expected_rows": 47
+    },
+    {
+      "name": "hot-group-temporal_ordered-plain",
+      "fixture": "hot-group-temporal_ordered-plain.json",
+      "fixture_sha256": "163484ca699827bfa9be21f3eb7e4299bebfdd50a49daea8c27c3789646848ce",
+      "query": "hot-group-temporal_ordered-plain.kql",
+      "query_sha256": "9c57dd72658af9e3d124bd8361dd9ae6d9a205b59f7a10b9db54b88051516bec",
+      "query_bytes": 3010,
+      "query_lines": 35,
+      "operators": {
+        "extend": 9,
+        "project": 1,
+        "scan": 1,
+        "sort": 1,
+        "summarize": 1,
+        "where": 9
+      },
+      "input_rows": 96,
+      "expected_rows": 22
+    },
+    {
+      "name": "hot-group-temporal_ordered-context",
+      "fixture": "hot-group-temporal_ordered-context.json",
+      "fixture_sha256": "5cfaa3cc614707094783c9e4b04eb06b8bfde9567690a329f9e382eb2b29b2af",
+      "query": "hot-group-temporal_ordered-context.kql",
+      "query_sha256": "ba9f12327f9cb064ac1b8c0c9c2e8d94ade65558244d6d7e0fddaca943721b42",
+      "query_bytes": 7859,
+      "query_lines": 123,
+      "operators": {
+        "distinct": 2,
+        "extend": 19,
+        "join": 9,
+        "project": 13,
+        "scan": 1,
+        "serialize": 2,
+        "sort": 1,
+        "summarize": 7,
+        "where": 32
+      },
+      "input_rows": 96,
+      "expected_rows": 22
+    },
+    {
+      "name": "hot-group-mixed-multilevel-plain",
+      "fixture": "hot-group-mixed-multilevel-plain.json",
+      "fixture_sha256": "6988d1d29a91b7cc1721597eb8412025c0b7f7904bb9a645e20a39e9244fd2d8",
+      "query": "hot-group-mixed-multilevel-plain.kql",
+      "query_sha256": "2fab503a87bb7223a9f3a30306ae12222045d0a7e8f34a266453c7d9b88ddb67",
+      "query_bytes": 2304,
+      "query_lines": 42,
+      "operators": {
+        "distinct": 1,
+        "extend": 2,
+        "project": 11,
+        "sort": 2,
+        "summarize": 2,
+        "where": 10
+      },
+      "input_rows": 96,
+      "expected_rows": 24
+    },
+    {
+      "name": "hot-group-mixed-multilevel-context",
+      "fixture": "hot-group-mixed-multilevel-context.json",
+      "fixture_sha256": "23e824a039a991e643f05b672f2859bba0df68ce300dad59ef076f1d82de2410",
+      "query": "hot-group-mixed-multilevel-context.kql",
+      "query_sha256": "2a1935d6ca676215e59809740f941e3deb569870e740ffb634b4d3c84e1f8fe6",
+      "query_bytes": 7933,
+      "query_lines": 132,
+      "operators": {
+        "distinct": 3,
+        "extend": 20,
+        "join": 8,
+        "project": 25,
+        "project-away": 2,
+        "serialize": 3,
+        "sort": 3,
+        "summarize": 5,
+        "where": 30
+      },
+      "input_rows": 96,
+      "expected_rows": 24
+    }
+  ]
+}

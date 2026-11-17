@@ -12,10 +12,10 @@ let ReportEnd_ = datetime(2026-01-01T10:19:00.0000000Z);
 let Child = () {
 let ReportStart = datetime(2026-01-01T10:18:00.0000000Z);
 let ReportEnd = datetime(2026-01-01T10:19:00.0000000Z);
-union (Events
+Events
 | where Marker =~ "match"
 | where ["Timestamp"] >= ReportStart - 1260s and ["Timestamp"] < ReportEnd
-| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"])
+| project EventTime_1 = ["Timestamp"], GroupHost = ["Host"]
 | where isnotnull(EventTime_1) and isnotempty(GroupHost)
 // Preserve individual source matches, including timestamp ties, before the threshold lookup.
 | sort by GroupHost asc, EventTime_1 asc
@@ -24,8 +24,8 @@ union (Events
 | distinct EventTime_1, GroupHost
 | project WindowStart = EventTime_1 - 3m, WindowEnd = EventTime_1, ["Host"] = GroupHost
 };
-let SourceMatchArrivals = union (Child()
-| project EventTime = todatetime(["WindowEnd"]), GroupHost = ["Host"])
+let SourceMatchArrivals = Child()
+| project EventTime = ["WindowEnd"], GroupHost = ["Host"]
 | where isnotnull(EventTime) and isnotempty(GroupHost)
 | summarize SourceMatchCount = count() by EventTime, GroupHost;
 union (SourceMatchArrivals
@@ -49,10 +49,10 @@ let ReportEnd_ = datetime(2026-01-01T10:19:00.0000000Z);
 let Child = () {
 let ReportStart = datetime(2026-01-01T10:18:00.0000000Z);
 let ReportEnd = datetime(2026-01-01T10:19:00.0000000Z);
-union (Events
+Events
 | where Marker =~ "match"
 | where ["Timestamp"] >= ReportStart - 1260s and ["Timestamp"] < ReportEnd
-| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"])
+| project EventTime_1 = ["Timestamp"], GroupHost = ["Host"]
 | where isnotnull(EventTime_1) and isnotempty(GroupHost)
 // Preserve individual source matches, including timestamp ties, before the threshold lookup.
 | sort by GroupHost asc, EventTime_1 asc
@@ -61,22 +61,23 @@ union (Events
 | distinct EventTime_1, GroupHost
 | project WindowStart = EventTime_1 - 3m, WindowEnd = EventTime_1, ["Host"] = GroupHost
 };
-union (Child()
-| project EventTime = todatetime(["WindowEnd"]), GroupHost = ["Host"])
+Child()
+| project EventTime = ["WindowEnd"], GroupHost = ["Host"]
 | where isnotnull(EventTime) and isnotempty(GroupHost)
 | distinct EventTime, GroupHost
 | project WindowStart = EventTime - 7m, WindowEnd = EventTime, ["Host"] = GroupHost
 };
 // Strict sequence: "far" -> "success". Total inclusive span: 11m.
 union (Far()
-| extend EventTime_1 = todatetime(["WindowEnd"]), GroupHost = ["Host"]
+| extend EventTime_1 = ["WindowEnd"], GroupHost = ["Host"]
+| where isnotnull(EventTime_1) and isnotempty(GroupHost)
 | extend SourceRule = "far"),
 (Events
 | where Marker =~ "success"
 | where ["Timestamp"] >= ReportStart__ - 660s and ["Timestamp"] < ReportEnd__
-| extend EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"]
-| extend SourceRule = "success")
+| extend EventTime_1 = ["Timestamp"], GroupHost = ["Host"]
 | where isnotnull(EventTime_1) and isnotempty(GroupHost)
+| extend SourceRule = "success")
 // Batch equal timestamps: simultaneous source matches cannot advance strict sequence positions.
 | summarize HasFar = countif(SourceRule == "far") > 0, HasSuccess = countif(SourceRule == "success") > 0 by EventTime_1, GroupHost
 | sort by GroupHost asc, EventTime_1 asc

@@ -10,9 +10,9 @@ let Events=datatable(Timestamp:datetime,Host:string,Marker:string,User:dynamic,S
 let Actual=(){
 let Child = () {
 let ContextSummary = () {
-let SourceMatchArrivals = union (Events
+let SourceMatchArrivals = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"])
+| project EventTime_1 = ["Timestamp"], GroupHost = ["Host"]
 | where isnotnull(EventTime_1) and isnotempty(GroupHost)
 | summarize SourceMatchCount = count() by EventTime_1, GroupHost;
 union (SourceMatchArrivals
@@ -31,10 +31,11 @@ let CorrelationMatches = materialize(ContextSummary()
 let WindowSourceMatches = materialize(
 CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, ContextGroupHost = ["Host"], ContextPartition = 1
 | join kind=inner (
-union (Events
+Events
 | where Marker =~ "match"
-| extend ContextEventTime = todatetime(["Timestamp"]), ContextGroupHost = ["Host"], ContextUser = ["User"], ContextServer = ["Server"]
-| extend ContextSourceRule = "source-rule")
+| extend ContextEventTime = ["Timestamp"], ContextGroupHost = ["Host"], ContextUser = ["User"], ContextServer = ["Server"]
+| where isnotnull(ContextEventTime) and isnotempty(ContextGroupHost)
+| extend ContextSourceRule = "source-rule"
 | project ContextEventTime, ContextSourceRule, ContextGroupHost, ContextUser, ContextServer, ContextPartition = 1
 ) on ContextGroupHost
 | where ContextEventTime between ((CompletionTime - 5m) .. CompletionTime));
@@ -47,13 +48,14 @@ let ChildResults = materialize(Child());
 let ParentSourceMatches = materialize(union (ChildResults
 | where ["ContextRowKind"] == "ContextEvidence"
 | extend ChildCorrelationMatch = strcat("Child", "_", tostring(["CorrelationMatchId"]))
-| project EventTime_1 = todatetime(["WindowEnd"]), GroupUser = ["ContextUser"], GroupServer = ["ContextServer"], ChildCorrelationMatch),
+| project EventTime_1 = ["WindowEnd"], GroupUser = ["ContextUser"], GroupServer = ["ContextServer"], ChildCorrelationMatch
+| where isnotnull(EventTime_1) and isnotempty(GroupUser) and isnotempty(GroupServer)),
 (Events
 | where Marker =~ "direct"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupUser = ["User"], GroupServer = ["Server"])
+| project EventTime_1 = ["Timestamp"], GroupUser = ["User"], GroupServer = ["Server"]
+| where isnotnull(EventTime_1) and isnotempty(GroupUser) and isnotempty(GroupServer))
 | extend ChildCorrelationMatch = tostring(column_ifexists("ChildCorrelationMatch", "")));
 let SourceMatchArrivals = union (ParentSourceMatches | where isempty(ChildCorrelationMatch)), (ParentSourceMatches | where isnotempty(ChildCorrelationMatch) | summarize take_any(*) by ChildCorrelationMatch, GroupUser, GroupServer)
-| where isnotnull(EventTime_1) and isnotempty(GroupUser) and isnotempty(GroupServer)
 | summarize SourceMatchCount = count() by EventTime_1, GroupUser, GroupServer;
 union (SourceMatchArrivals
 | project GroupUser, GroupServer, CountBoundaryTime = EventTime_1, CountBoundaryOrder = 0, SourceMatchDelta = SourceMatchCount),

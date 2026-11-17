@@ -42,7 +42,7 @@ def test_average_consumes_available_scalar_child_metrics_once_at_window_end(kind
     parent = correlation_document("parent", "value_avg", ["child"], condition={"field": metric, "gte": 0})
     (query,) = convert_documents([parent, source_document(), child])
 
-    assert 'todatetime(["WindowEnd"])' in query
+    assert '["WindowEnd"]' in query
     assert f'Measured{metric} = ["{metric}"]' in query
     assert final_summary_projection(query).endswith('["Host"] = GroupHost, ValueAvg')
 
@@ -110,7 +110,7 @@ def test_average_child_composes_with_every_supported_consumer(kind, condition):
     (query,) = convert_documents([source_document(), child, parent])
 
     assert "ValueAvg = avgif(" in query
-    assert 'todatetime(["WindowEnd"])' in query
+    assert '["WindowEnd"]' in query
 
 
 @pytest.mark.parametrize("kind", ["int", "long", "real", "decimal"])

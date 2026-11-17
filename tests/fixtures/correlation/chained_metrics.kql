@@ -26,9 +26,9 @@ let Events=datatable(Timestamp:string, Case:string, Host:dynamic, Marker:string)
 | extend Host=tostring(Host), Timestamp=todatetime(Timestamp);
 let Actual = () {
 let C = () {
-let SourceMatchArrivals = union (Events
+let SourceMatchArrivals = Events
 | where Marker =~ "E"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupCase = ["Case"], GroupHost = ["Host"])
+| project EventTime_1 = ["Timestamp"], GroupCase = ["Case"], GroupHost = ["Host"]
 | where isnotnull(EventTime_1) and isnotempty(GroupCase) and isnotempty(GroupHost)
 | summarize SourceMatchCount = count() by EventTime_1, GroupCase, GroupHost;
 union (SourceMatchArrivals
@@ -42,8 +42,8 @@ union (SourceMatchArrivals
 | where EventCount >= 2
 | project WindowStart = CountBoundaryTime - 5m, WindowEnd = CountBoundaryTime, ["Case"] = GroupCase, ["Host"] = GroupHost, EventCount
 };
-let ValueCountSources = materialize(union (C()
-| project EventTime = todatetime(["WindowEnd"]), GroupCase = ["Case"], CountedEventCount = ["EventCount"], CountedHost = ["Host"])
+let ValueCountSources = materialize(C()
+| project EventTime = ["WindowEnd"], GroupCase = ["Case"], CountedEventCount = ["EventCount"], CountedHost = ["Host"]
 | where isnotnull(EventTime) and isnotempty(GroupCase));
 let CountedEventCountActivity = materialize(ValueCountSources
 | where isnotempty(CountedEventCount)

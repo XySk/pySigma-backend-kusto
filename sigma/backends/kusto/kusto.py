@@ -77,7 +77,6 @@ class _PreparedCorrelationInput:
     definitions: str
     search: str
     columns: dict
-    valid_rows: str
     span: str
     query_operator: str
     threshold: int | float
@@ -1420,9 +1419,14 @@ class KustoBackend(TextQueryBackend):
                         )
                 if context_evidence and not preserves_context_presence:
                     searches[-1] = f"({searches[-1]}\n| extend {context_evidence} = true)"
-        return "".join(definitions), "union " + self.correlation_search_multi_rule_query_expression_joiner.join(
-            searches
-        )
+        return "".join(definitions), self._combine_correlation_sources(searches)
+
+    def _combine_correlation_sources(self, searches):
+        """Avoid a union operator when conversion produced only one source relation."""
+        if len(searches) == 1:
+            search = searches[0]
+            return search[1:-1] if search.startswith("(") and search.endswith(")") else search
+        return "union " + self.correlation_search_multi_rule_query_expression_joiner.join(searches)
 
     def _convert_count(self, rule, timestamp_field, query_operator, counted_fields, metrics):
         ordered = rule.type == SigmaCorrelationType.TEMPORAL_ORDERED
@@ -1555,13 +1559,11 @@ class KustoBackend(TextQueryBackend):
         # Sigma's weeks, months, and years have fixed second lengths. Kusto
         # timespan literals do not accept those units.
         span = rule.timespan.spec if rule.timespan.unit in "smhd" else f"{rule.timespan.seconds}s"
-        valid_rows = " and ".join([f"isnotnull({timestamp})", *(f"isnotempty({field})" for field in groups)])
         prepared = _PreparedCorrelationInput(
             rule=rule,
             definitions=definitions,
             search=search,
             columns=columns,
-            valid_rows=valid_rows,
             span=span,
             query_operator=query_operator,
             threshold=threshold,
@@ -1614,7 +1616,7 @@ class KustoBackend(TextQueryBackend):
         # Preserve every observation, including duplicates and unusable values.
         # The anchor's own row guarantees exact-time membership even if every
         # other candidate in its bin has already expired.
-        definitions += f"let {observations} = {prepared.search}\n| where {prepared.valid_rows};\n"
+        definitions += f"let {observations} = {prepared.search};\n"
         return _CorrelationQuery(
             definitions,
             f"{observations}\n| summarize by {anchors}\n"
@@ -1645,7 +1647,7 @@ class KustoBackend(TextQueryBackend):
         anchors = ", ".join(
             [*groups, f"{window_end} = {event_time}", f"{time_bin} = bin({event_time}, {prepared.span})"]
         )
-        definitions += f"let {observations} = {prepared.search}\n| where {prepared.valid_rows};\n"
+        definitions += f"let {observations} = {prepared.search};\n"
         # Original observations provide anchors even when their measurement is
         # missing. Only usable observations participate in selection.
         pairs = (
@@ -1707,7 +1709,7 @@ class KustoBackend(TextQueryBackend):
             comparison = f"ValueSum {prepared.query_operator} decimal({prepared.threshold})"
         elif kind in ("int", "long") and prepared.threshold != int(prepared.threshold):
             comparison = f"todecimal(ValueSum) {prepared.query_operator} decimal({prepared.threshold})"
-        definitions += f"let {sources} = {prepared.search}\n| where {prepared.valid_rows};\n"
+        definitions += f"let {sources} = {prepared.search};\n"
         if kind in ("int", "long"):
             arrivals = allocate("SumArrivals")
             arrival_sum, boundary_time, boundary_order, delta = [
@@ -1760,7 +1762,7 @@ class KustoBackend(TextQueryBackend):
         event_time, groups = columns["timestamp"], columns["groups"]
         boundary_time, boundary_order = [allocate(name) for name in ("ValueBoundaryTime", "ValueBoundaryOrder")]
         deltas = [allocate(value + "Delta") for value in columns["values"]]
-        definitions += f"let {matches} = materialize({prepared.search}\n| where {prepared.valid_rows});\n"
+        definitions += f"let {matches} = materialize({prepared.search});\n"
 
         branches = []
 
@@ -1828,7 +1830,7 @@ class KustoBackend(TextQueryBackend):
         rule, columns, allocate = prepared.rule, prepared.columns, prepared.allocate
         definitions = prepared.definitions
         event_time, groups = columns["timestamp"], columns["groups"]
-        body = f"{prepared.search}\n| where {prepared.valid_rows}\n"
+        body = f"{prepared.search}\n"
         if threshold > 1:
             offset = threshold - 1
             predecessor = allocate("ThresholdPredecessorTime")
@@ -1900,7 +1902,7 @@ class KustoBackend(TextQueryBackend):
         order = ", ".join(f"{field} asc" for field in [*groups, event_time])
         projection = self._correlation_result_projection(rule, groups, event_time, prepared.span, ["RuleCount"])
         body = (
-            f"{prepared.search}\n| where {prepared.valid_rows}\n"
+            f"{prepared.search}\n"
             "// Batch simultaneous source matches before updating inclusive trailing presence.\n"
             f"| summarize {memberships} by {keys}\n"
             f"| sort by {order}\n"
@@ -1941,7 +1943,7 @@ class KustoBackend(TextQueryBackend):
             comparison = f"todecimal(EventCount) {prepared.query_operator} decimal({prepared.threshold})"
         projection = self._correlation_result_projection(rule, groups, boundary_time, prepared.span, ["EventCount"])
         definitions += (
-            f"let {arrivals} = {prepared.search}\n| where {prepared.valid_rows}\n"
+            f"let {arrivals} = {prepared.search}\n"
             f"| summarize {match_count} = count() by {event_time}"
             + (f", {', '.join(groups)}" if groups else "")
             + ";\n"
@@ -2026,7 +2028,7 @@ class KustoBackend(TextQueryBackend):
         sequence = " -> ".join(json.dumps(identity, ensure_ascii=False) for identity in identities)
         query = (
             f"// Strict sequence: {sequence}. Total inclusive span: {prepared.span}.\n"
-            f"{prepared.search}\n| where {prepared.valid_rows}\n"
+            f"{prepared.search}\n"
             "// Batch equal timestamps: simultaneous source matches cannot advance strict sequence positions.\n"
             f"| summarize {batch_summary}\n"
         )
@@ -2260,18 +2262,17 @@ class KustoBackend(TextQueryBackend):
         )
         timestamp_type = self._correlation_scalar_type(rule_reference.rule, source_state, timestamp_field)
         columns = self._correlation_columns
-        fields = [f"{columns['timestamp']} = todatetime({self._quote_correlation_field(timestamp_field)})"]
+        source_timestamp = self._quote_correlation_field(timestamp_field)
+        canonical_timestamp = source_timestamp if timestamp_type == "datetime" else f"todatetime({source_timestamp})"
+        fields = [f"{columns['timestamp']} = {canonical_timestamp}"]
         source_filter = ""
         if not child:
             names = getattr(self, "_correlation_report_names", {})
-            source_time = self._quote_correlation_field(timestamp_field)
-            if timestamp_type != "datetime":
-                source_time = f"todatetime({source_time})"
             conditions = []
             if "start" in names:
-                conditions.append(f"{source_time} >= {names['start']} - {self._correlation_report_lookback}s")
+                conditions.append(f"{canonical_timestamp} >= {names['start']} - {self._correlation_report_lookback}s")
             if "end" in names:
-                conditions.append(f"{source_time} < {names['end']}")
+                conditions.append(f"{canonical_timestamp} < {names['end']}")
             if conditions:
                 source_filter = "\n| where " + " and ".join(conditions)
         context_fields = source_state.processing_state.get("kusto_context_fields", ()) if child else ()
@@ -2332,7 +2333,12 @@ class KustoBackend(TextQueryBackend):
             identity = json.dumps(str(rule_reference.rule.name or rule_reference.rule.id), ensure_ascii=False)
             fields.append(f"{columns['rule']} = {identity}")
         operator = "project" if columns.get("narrow_source") else "extend"
-        result = _CorrelationNormalization(source_filter + f"\n| {operator} " + ", ".join(fields), columns["rule"])
+        valid_rows = " and ".join(
+            [f"isnotnull({columns['timestamp']})", *(f"isnotempty({field})" for field in columns["groups"])]
+        )
+        result = _CorrelationNormalization(
+            source_filter + f"\n| {operator} " + ", ".join(fields) + f"\n| where {valid_rows}", columns["rule"]
+        )
         result.expands_context = expanded
         result.preserve_empty_context = bool(
             expanded

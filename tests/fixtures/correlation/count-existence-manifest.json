@@ -3,37 +3,37 @@
   "fixtures": [
     {
       "name": "count_existence_high_thresholds.kql",
-      "sha256": "b099cd4fb27407971d8114c03b8ad6c82bf095e26fc130a7106743b590b6887e",
+      "sha256": "a6919229f765606c85d292979472f23144029464dc88c2cab0f616c818483a3b",
       "expected_error": null
     },
     {
       "name": "count_existence_targeted_logon.kql",
-      "sha256": "2c486150b52ce58bbfd5efdc4e9016a8721c3dca6fbab4e447cc0196cd47bba1",
+      "sha256": "c45e39bc00c8f9125b5c322de0722324a7a9747c5cf1a0ee0954e99e7380d637",
       "expected_error": null
     },
     {
       "name": "count_existence_one.kql",
-      "sha256": "a4399e5e8b7892b79c67c405f58724fee933ad7eafa7ab49c001c92d87077b78",
+      "sha256": "e0423b563ecc250fe1e5260311e763bcd18069b8d9a209e88177881db1a174d0",
       "expected_error": null
     },
     {
       "name": "count_existence_duplicates.kql",
-      "sha256": "566b51b05e7cb474a8a627942778fa0209758cc5d3c8dec8c74228c4535f5794",
+      "sha256": "cd87901f788628b1ba4a96ee44f9270bf2789e9f8cd122ce75dffca6a1e75e08",
       "expected_error": null
     },
     {
       "name": "count_existence_ten.kql",
-      "sha256": "4457a26d8ba044a1611652c52f42fa375e106fc8419ba61a7750df9e6aac764b",
+      "sha256": "4d15c4532daaaccb89fd6134fe0d89e7f859ca2fcb73b3ed1044826b5a680d87",
       "expected_error": null
     },
     {
       "name": "count_existence_real_groups.kql",
-      "sha256": "cee1bb6c8a9198f02ce6cb11aabbfc0d4b9deabb4feea74e4d237188e503889d",
+      "sha256": "c651484ec61234abc054695b91d1540a1f0332bf7f9681c5eb0e749dce0457a2",
       "expected_error": null
     },
     {
       "name": "count_existence_inherited_metric.kql",
-      "sha256": "0bdf355c09cac50b83e0b235016da6702fc7f79622e8a62c27291cfc9feccae6",
+      "sha256": "a7ae794316b3335943b923cff5f27985e645024b4af85ebe7c348ba0022dec3f",
       "expected_error": null
     }
   ]

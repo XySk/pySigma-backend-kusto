@@ -7,9 +7,9 @@ let Events=datatable(Timestamp:datetime,Amount:long,Marker:string) [
  datetime(2026-01-01T12:06:00Z),long(null),"match"
 ];
 let Sum_gt=(){
-let SumObservations = union (Events
+let SumObservations = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), MeasuredAmount = ["Amount"])
+| project EventTime_1 = ["Timestamp"], MeasuredAmount = ["Amount"]
 | where isnotnull(EventTime_1);
 let SumArrivals = SumObservations
 | summarize ArrivalSum = sum(MeasuredAmount) by EventTime_1;
@@ -25,9 +25,9 @@ union (SumArrivals
 | project WindowStart = SumBoundaryTime - 5m, WindowEnd = SumBoundaryTime, ValueSum
 };
 let Sum_gte=(){
-let SumObservations = union (Events
+let SumObservations = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), MeasuredAmount = ["Amount"])
+| project EventTime_1 = ["Timestamp"], MeasuredAmount = ["Amount"]
 | where isnotnull(EventTime_1);
 let SumArrivals = SumObservations
 | summarize ArrivalSum = sum(MeasuredAmount) by EventTime_1;
@@ -43,9 +43,9 @@ union (SumArrivals
 | project WindowStart = SumBoundaryTime - 5m, WindowEnd = SumBoundaryTime, ValueSum
 };
 let Sum_lt=(){
-let SumObservations = union (Events
+let SumObservations = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), MeasuredAmount = ["Amount"])
+| project EventTime_1 = ["Timestamp"], MeasuredAmount = ["Amount"]
 | where isnotnull(EventTime_1);
 let SumArrivals = SumObservations
 | summarize ArrivalSum = sum(MeasuredAmount) by EventTime_1;
@@ -61,9 +61,9 @@ union (SumArrivals
 | project WindowStart = SumBoundaryTime - 5m, WindowEnd = SumBoundaryTime, ValueSum
 };
 let Sum_lte=(){
-let SumObservations = union (Events
+let SumObservations = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), MeasuredAmount = ["Amount"])
+| project EventTime_1 = ["Timestamp"], MeasuredAmount = ["Amount"]
 | where isnotnull(EventTime_1);
 let SumArrivals = SumObservations
 | summarize ArrivalSum = sum(MeasuredAmount) by EventTime_1;
@@ -79,9 +79,9 @@ union (SumArrivals
 | project WindowStart = SumBoundaryTime - 5m, WindowEnd = SumBoundaryTime, ValueSum
 };
 let Sum_eq=(){
-let SumObservations = union (Events
+let SumObservations = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), MeasuredAmount = ["Amount"])
+| project EventTime_1 = ["Timestamp"], MeasuredAmount = ["Amount"]
 | where isnotnull(EventTime_1);
 let SumArrivals = SumObservations
 | summarize ArrivalSum = sum(MeasuredAmount) by EventTime_1;
@@ -97,9 +97,9 @@ union (SumArrivals
 | project WindowStart = SumBoundaryTime - 5m, WindowEnd = SumBoundaryTime, ValueSum
 };
 let Sum_neq=(){
-let SumObservations = union (Events
+let SumObservations = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), MeasuredAmount = ["Amount"])
+| project EventTime_1 = ["Timestamp"], MeasuredAmount = ["Amount"]
 | where isnotnull(EventTime_1);
 let SumArrivals = SumObservations
 | summarize ArrivalSum = sum(MeasuredAmount) by EventTime_1;

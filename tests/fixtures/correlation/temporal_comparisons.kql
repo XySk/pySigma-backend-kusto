@@ -23,23 +23,28 @@ let Events=datatable(Timestamp:string, Marker:string) [
 let gt_2 = () {
 union (Events
 | where Marker =~ "A"
-| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "source-rule"),
+| project EventTime_1 = ["Timestamp"], SourceRule = "source-rule"
+| where isnotnull(EventTime_1)),
 (Events
 | where Marker =~ "A"
-| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "source-rule"),
+| project EventTime_1 = ["Timestamp"], SourceRule = "source-rule"
+| where isnotnull(EventTime_1)),
 (Events
 | where Marker =~ "B"
-| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "other-rule"),
+| project EventTime_1 = ["Timestamp"], SourceRule = "other-rule"
+| where isnotnull(EventTime_1)),
 (Events
 | where Marker =~ "B"
-| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "other-rule"),
+| project EventTime_1 = ["Timestamp"], SourceRule = "other-rule"
+| where isnotnull(EventTime_1)),
 (Events
 | where Marker =~ "C"
-| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "third-rule"),
+| project EventTime_1 = ["Timestamp"], SourceRule = "third-rule"
+| where isnotnull(EventTime_1)),
 (Events
 | where Marker =~ "C"
-| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "third-rule")
-| where isnotnull(EventTime_1)
+| project EventTime_1 = ["Timestamp"], SourceRule = "third-rule"
+| where isnotnull(EventTime_1))
 // Batch simultaneous source matches before updating inclusive trailing presence.
 | summarize MatchesSourcerule = countif(SourceRule == "source-rule") > 0, MatchesOtherrule = countif(SourceRule == "other-rule") > 0, MatchesThirdrule = countif(SourceRule == "third-rule") > 0 by EventTime_1
 | sort by EventTime_1 asc
@@ -59,23 +64,28 @@ union (Events
 let gte_2 = () {
 union (Events
 | where Marker =~ "A"
-| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "source-rule"),
+| project EventTime_1 = ["Timestamp"], SourceRule = "source-rule"
+| where isnotnull(EventTime_1)),
 (Events
 | where Marker =~ "A"
-| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "source-rule"),
+| project EventTime_1 = ["Timestamp"], SourceRule = "source-rule"
+| where isnotnull(EventTime_1)),
 (Events
 | where Marker =~ "B"
-| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "other-rule"),
+| project EventTime_1 = ["Timestamp"], SourceRule = "other-rule"
+| where isnotnull(EventTime_1)),
 (Events
 | where Marker =~ "B"
-| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "other-rule"),
+| project EventTime_1 = ["Timestamp"], SourceRule = "other-rule"
+| where isnotnull(EventTime_1)),
 (Events
 | where Marker =~ "C"
-| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "third-rule"),
+| project EventTime_1 = ["Timestamp"], SourceRule = "third-rule"
+| where isnotnull(EventTime_1)),
 (Events
 | where Marker =~ "C"
-| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "third-rule")
-| where isnotnull(EventTime_1)
+| project EventTime_1 = ["Timestamp"], SourceRule = "third-rule"
+| where isnotnull(EventTime_1))
 // Batch simultaneous source matches before updating inclusive trailing presence.
 | summarize MatchesSourcerule = countif(SourceRule == "source-rule") > 0, MatchesOtherrule = countif(SourceRule == "other-rule") > 0, MatchesThirdrule = countif(SourceRule == "third-rule") > 0 by EventTime_1
 | sort by EventTime_1 asc
@@ -95,23 +105,28 @@ union (Events
 let lt_2 = () {
 union (Events
 | where Marker =~ "A"
-| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "source-rule"),
+| project EventTime_1 = ["Timestamp"], SourceRule = "source-rule"
+| where isnotnull(EventTime_1)),
 (Events
 | where Marker =~ "A"
-| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "source-rule"),
+| project EventTime_1 = ["Timestamp"], SourceRule = "source-rule"
+| where isnotnull(EventTime_1)),
 (Events
 | where Marker =~ "B"
-| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "other-rule"),
+| project EventTime_1 = ["Timestamp"], SourceRule = "other-rule"
+| where isnotnull(EventTime_1)),
 (Events
 | where Marker =~ "B"
-| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "other-rule"),
+| project EventTime_1 = ["Timestamp"], SourceRule = "other-rule"
+| where isnotnull(EventTime_1)),
 (Events
 | where Marker =~ "C"
-| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "third-rule"),
+| project EventTime_1 = ["Timestamp"], SourceRule = "third-rule"
+| where isnotnull(EventTime_1)),
 (Events
 | where Marker =~ "C"
-| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "third-rule")
-| where isnotnull(EventTime_1)
+| project EventTime_1 = ["Timestamp"], SourceRule = "third-rule"
+| where isnotnull(EventTime_1))
 // Batch simultaneous source matches before updating inclusive trailing presence.
 | summarize MatchesSourcerule = countif(SourceRule == "source-rule") > 0, MatchesOtherrule = countif(SourceRule == "other-rule") > 0, MatchesThirdrule = countif(SourceRule == "third-rule") > 0 by EventTime_1
 | sort by EventTime_1 asc
@@ -131,23 +146,28 @@ union (Events
 let lte_2 = () {
 union (Events
 | where Marker =~ "A"
-| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "source-rule"),
+| project EventTime_1 = ["Timestamp"], SourceRule = "source-rule"
+| where isnotnull(EventTime_1)),
 (Events
 | where Marker =~ "A"
-| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "source-rule"),
+| project EventTime_1 = ["Timestamp"], SourceRule = "source-rule"
+| where isnotnull(EventTime_1)),
 (Events
 | where Marker =~ "B"
-| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "other-rule"),
+| project EventTime_1 = ["Timestamp"], SourceRule = "other-rule"
+| where isnotnull(EventTime_1)),
 (Events
 | where Marker =~ "B"
-| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "other-rule"),
+| project EventTime_1 = ["Timestamp"], SourceRule = "other-rule"
+| where isnotnull(EventTime_1)),
 (Events
 | where Marker =~ "C"
-| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "third-rule"),
+| project EventTime_1 = ["Timestamp"], SourceRule = "third-rule"
+| where isnotnull(EventTime_1)),
 (Events
 | where Marker =~ "C"
-| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "third-rule")
-| where isnotnull(EventTime_1)
+| project EventTime_1 = ["Timestamp"], SourceRule = "third-rule"
+| where isnotnull(EventTime_1))
 // Batch simultaneous source matches before updating inclusive trailing presence.
 | summarize MatchesSourcerule = countif(SourceRule == "source-rule") > 0, MatchesOtherrule = countif(SourceRule == "other-rule") > 0, MatchesThirdrule = countif(SourceRule == "third-rule") > 0 by EventTime_1
 | sort by EventTime_1 asc
@@ -167,23 +187,28 @@ union (Events
 let eq_2 = () {
 union (Events
 | where Marker =~ "A"
-| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "source-rule"),
+| project EventTime_1 = ["Timestamp"], SourceRule = "source-rule"
+| where isnotnull(EventTime_1)),
 (Events
 | where Marker =~ "A"
-| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "source-rule"),
+| project EventTime_1 = ["Timestamp"], SourceRule = "source-rule"
+| where isnotnull(EventTime_1)),
 (Events
 | where Marker =~ "B"
-| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "other-rule"),
+| project EventTime_1 = ["Timestamp"], SourceRule = "other-rule"
+| where isnotnull(EventTime_1)),
 (Events
 | where Marker =~ "B"
-| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "other-rule"),
+| project EventTime_1 = ["Timestamp"], SourceRule = "other-rule"
+| where isnotnull(EventTime_1)),
 (Events
 | where Marker =~ "C"
-| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "third-rule"),
+| project EventTime_1 = ["Timestamp"], SourceRule = "third-rule"
+| where isnotnull(EventTime_1)),
 (Events
 | where Marker =~ "C"
-| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "third-rule")
-| where isnotnull(EventTime_1)
+| project EventTime_1 = ["Timestamp"], SourceRule = "third-rule"
+| where isnotnull(EventTime_1))
 // Batch simultaneous source matches before updating inclusive trailing presence.
 | summarize MatchesSourcerule = countif(SourceRule == "source-rule") > 0, MatchesOtherrule = countif(SourceRule == "other-rule") > 0, MatchesThirdrule = countif(SourceRule == "third-rule") > 0 by EventTime_1
 | sort by EventTime_1 asc
@@ -203,23 +228,28 @@ union (Events
 let neq_2 = () {
 union (Events
 | where Marker =~ "A"
-| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "source-rule"),
+| project EventTime_1 = ["Timestamp"], SourceRule = "source-rule"
+| where isnotnull(EventTime_1)),
 (Events
 | where Marker =~ "A"
-| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "source-rule"),
+| project EventTime_1 = ["Timestamp"], SourceRule = "source-rule"
+| where isnotnull(EventTime_1)),
 (Events
 | where Marker =~ "B"
-| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "other-rule"),
+| project EventTime_1 = ["Timestamp"], SourceRule = "other-rule"
+| where isnotnull(EventTime_1)),
 (Events
 | where Marker =~ "B"
-| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "other-rule"),
+| project EventTime_1 = ["Timestamp"], SourceRule = "other-rule"
+| where isnotnull(EventTime_1)),
 (Events
 | where Marker =~ "C"
-| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "third-rule"),
+| project EventTime_1 = ["Timestamp"], SourceRule = "third-rule"
+| where isnotnull(EventTime_1)),
 (Events
 | where Marker =~ "C"
-| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "third-rule")
-| where isnotnull(EventTime_1)
+| project EventTime_1 = ["Timestamp"], SourceRule = "third-rule"
+| where isnotnull(EventTime_1))
 // Batch simultaneous source matches before updating inclusive trailing presence.
 | summarize MatchesSourcerule = countif(SourceRule == "source-rule") > 0, MatchesOtherrule = countif(SourceRule == "other-rule") > 0, MatchesThirdrule = countif(SourceRule == "third-rule") > 0 by EventTime_1
 | sort by EventTime_1 asc
@@ -239,23 +269,28 @@ union (Events
 let eq_0 = () {
 union (Events
 | where Marker =~ "A"
-| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "source-rule"),
+| project EventTime_1 = ["Timestamp"], SourceRule = "source-rule"
+| where isnotnull(EventTime_1)),
 (Events
 | where Marker =~ "A"
-| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "source-rule"),
+| project EventTime_1 = ["Timestamp"], SourceRule = "source-rule"
+| where isnotnull(EventTime_1)),
 (Events
 | where Marker =~ "B"
-| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "other-rule"),
+| project EventTime_1 = ["Timestamp"], SourceRule = "other-rule"
+| where isnotnull(EventTime_1)),
 (Events
 | where Marker =~ "B"
-| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "other-rule"),
+| project EventTime_1 = ["Timestamp"], SourceRule = "other-rule"
+| where isnotnull(EventTime_1)),
 (Events
 | where Marker =~ "C"
-| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "third-rule"),
+| project EventTime_1 = ["Timestamp"], SourceRule = "third-rule"
+| where isnotnull(EventTime_1)),
 (Events
 | where Marker =~ "C"
-| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "third-rule")
-| where isnotnull(EventTime_1)
+| project EventTime_1 = ["Timestamp"], SourceRule = "third-rule"
+| where isnotnull(EventTime_1))
 // Batch simultaneous source matches before updating inclusive trailing presence.
 | summarize MatchesSourcerule = countif(SourceRule == "source-rule") > 0, MatchesOtherrule = countif(SourceRule == "other-rule") > 0, MatchesThirdrule = countif(SourceRule == "third-rule") > 0 by EventTime_1
 | sort by EventTime_1 asc

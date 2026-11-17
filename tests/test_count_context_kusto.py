@@ -17,7 +17,7 @@ def documents(kind="event_count", groups=("User", "Server"), **kwargs):
 def test_count_parent_converts_observed_child_context_without_counting_display_lists(kind):
     (query,) = convert_documents(documents(kind))
     assert "dynamic identity" not in query
-    assert 'todatetime(["WindowEnd"])' in query
+    assert '["WindowEnd"]' in query
     assert ("EventCount" if kind == "event_count" else "ValueCount") in query
     assert "ContextEvidence" in query
     assert "| mv-expand _sigma_child_context_row" not in query

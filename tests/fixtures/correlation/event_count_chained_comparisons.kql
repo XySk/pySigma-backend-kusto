@@ -18,9 +18,9 @@ let Events=datatable(ProcessTime:string, Marker:string) [
 | extend ProcessTime=todatetime(ProcessTime);
 let gt_2 = () {
 let ChildRule = () {
-union (Events
+Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["ProcessTime"]))
+| project EventTime_1 = ["ProcessTime"]
 | where isnotnull(EventTime_1)
 // Preserve individual source matches, including timestamp ties, before the threshold lookup.
 | sort by EventTime_1 asc
@@ -29,8 +29,8 @@ union (Events
 | distinct EventTime_1
 | project WindowStart = EventTime_1 - 5m, WindowEnd = EventTime_1
 };
-let SourceMatchArrivals = union (ChildRule()
-| project EventTime = todatetime(["WindowEnd"]))
+let SourceMatchArrivals = ChildRule()
+| project EventTime = ["WindowEnd"]
 | where isnotnull(EventTime)
 | summarize SourceMatchCount = count() by EventTime;
 union (SourceMatchArrivals
@@ -46,9 +46,9 @@ union (SourceMatchArrivals
 };
 let gte_2 = () {
 let ChildRule = () {
-union (Events
+Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["ProcessTime"]))
+| project EventTime_1 = ["ProcessTime"]
 | where isnotnull(EventTime_1)
 // Preserve individual source matches, including timestamp ties, before the threshold lookup.
 | sort by EventTime_1 asc
@@ -57,8 +57,8 @@ union (Events
 | distinct EventTime_1
 | project WindowStart = EventTime_1 - 5m, WindowEnd = EventTime_1
 };
-let SourceMatchArrivals = union (ChildRule()
-| project EventTime = todatetime(["WindowEnd"]))
+let SourceMatchArrivals = ChildRule()
+| project EventTime = ["WindowEnd"]
 | where isnotnull(EventTime)
 | summarize SourceMatchCount = count() by EventTime;
 union (SourceMatchArrivals
@@ -74,9 +74,9 @@ union (SourceMatchArrivals
 };
 let lt_2 = () {
 let ChildRule = () {
-union (Events
+Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["ProcessTime"]))
+| project EventTime_1 = ["ProcessTime"]
 | where isnotnull(EventTime_1)
 // Preserve individual source matches, including timestamp ties, before the threshold lookup.
 | sort by EventTime_1 asc
@@ -85,8 +85,8 @@ union (Events
 | distinct EventTime_1
 | project WindowStart = EventTime_1 - 5m, WindowEnd = EventTime_1
 };
-let SourceMatchArrivals = union (ChildRule()
-| project EventTime = todatetime(["WindowEnd"]))
+let SourceMatchArrivals = ChildRule()
+| project EventTime = ["WindowEnd"]
 | where isnotnull(EventTime)
 | summarize SourceMatchCount = count() by EventTime;
 union (SourceMatchArrivals
@@ -102,9 +102,9 @@ union (SourceMatchArrivals
 };
 let lte_2 = () {
 let ChildRule = () {
-union (Events
+Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["ProcessTime"]))
+| project EventTime_1 = ["ProcessTime"]
 | where isnotnull(EventTime_1)
 // Preserve individual source matches, including timestamp ties, before the threshold lookup.
 | sort by EventTime_1 asc
@@ -113,8 +113,8 @@ union (Events
 | distinct EventTime_1
 | project WindowStart = EventTime_1 - 5m, WindowEnd = EventTime_1
 };
-let SourceMatchArrivals = union (ChildRule()
-| project EventTime = todatetime(["WindowEnd"]))
+let SourceMatchArrivals = ChildRule()
+| project EventTime = ["WindowEnd"]
 | where isnotnull(EventTime)
 | summarize SourceMatchCount = count() by EventTime;
 union (SourceMatchArrivals
@@ -130,9 +130,9 @@ union (SourceMatchArrivals
 };
 let eq_2 = () {
 let ChildRule = () {
-union (Events
+Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["ProcessTime"]))
+| project EventTime_1 = ["ProcessTime"]
 | where isnotnull(EventTime_1)
 // Preserve individual source matches, including timestamp ties, before the threshold lookup.
 | sort by EventTime_1 asc
@@ -141,8 +141,8 @@ union (Events
 | distinct EventTime_1
 | project WindowStart = EventTime_1 - 5m, WindowEnd = EventTime_1
 };
-let SourceMatchArrivals = union (ChildRule()
-| project EventTime = todatetime(["WindowEnd"]))
+let SourceMatchArrivals = ChildRule()
+| project EventTime = ["WindowEnd"]
 | where isnotnull(EventTime)
 | summarize SourceMatchCount = count() by EventTime;
 union (SourceMatchArrivals
@@ -158,9 +158,9 @@ union (SourceMatchArrivals
 };
 let neq_2 = () {
 let ChildRule = () {
-union (Events
+Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["ProcessTime"]))
+| project EventTime_1 = ["ProcessTime"]
 | where isnotnull(EventTime_1)
 // Preserve individual source matches, including timestamp ties, before the threshold lookup.
 | sort by EventTime_1 asc
@@ -169,8 +169,8 @@ union (Events
 | distinct EventTime_1
 | project WindowStart = EventTime_1 - 5m, WindowEnd = EventTime_1
 };
-let SourceMatchArrivals = union (ChildRule()
-| project EventTime = todatetime(["WindowEnd"]))
+let SourceMatchArrivals = ChildRule()
+| project EventTime = ["WindowEnd"]
 | where isnotnull(EventTime)
 | summarize SourceMatchCount = count() by EventTime;
 union (SourceMatchArrivals
@@ -186,9 +186,9 @@ union (SourceMatchArrivals
 };
 let eq_0 = () {
 let ChildRule = () {
-union (Events
+Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["ProcessTime"]))
+| project EventTime_1 = ["ProcessTime"]
 | where isnotnull(EventTime_1)
 // Preserve individual source matches, including timestamp ties, before the threshold lookup.
 | sort by EventTime_1 asc
@@ -197,8 +197,8 @@ union (Events
 | distinct EventTime_1
 | project WindowStart = EventTime_1 - 5m, WindowEnd = EventTime_1
 };
-let SourceMatchArrivals = union (ChildRule()
-| project EventTime = todatetime(["WindowEnd"]))
+let SourceMatchArrivals = ChildRule()
+| project EventTime = ["WindowEnd"]
 | where isnotnull(EventTime)
 | summarize SourceMatchCount = count() by EventTime;
 union (SourceMatchArrivals

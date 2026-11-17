@@ -30,7 +30,7 @@ def test_scalar_value_count_uses_narrow_native_sources_and_avoids_window_pair_ex
     )
 
     assert (
-        '| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"], CountedUser = ["User"], CountedTarget = ["Target"]'
+        '| project EventTime_1 = ["Timestamp"], GroupHost = ["Host"], CountedUser = ["User"], CountedTarget = ["Target"]'
         in query
     )
     assert "row_cumsum(" in query

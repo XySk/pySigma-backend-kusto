@@ -12,9 +12,9 @@ let Events=datatable(Timestamp:datetime, Host:string, Amount:dynamic, Marker:str
 | extend Amount=iff(gettype(Amount) in ("int","long","real","double","decimal"), toreal(Amount), real(null));
 let Actual = () {
 let Child = () {
-let AverageObservations = union (Events
+let AverageObservations = Events
 | where Marker =~ "child"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"], MeasuredAmount = ["Amount"])
+| project EventTime_1 = ["Timestamp"], GroupHost = ["Host"], MeasuredAmount = ["Amount"]
 | where isnotnull(EventTime_1) and isnotempty(GroupHost);
 AverageObservations
 | summarize by GroupHost, AverageWindowEnd = EventTime_1, AverageTimeBin = bin(EventTime_1, 5m)
@@ -29,11 +29,12 @@ AverageObservations
 | project WindowStart = AverageWindowEnd - 5m, WindowEnd = AverageWindowEnd, ["Host"] = GroupHost, ValueAvg
 };
 let AverageObservations = union (Child()
-| project EventTime_1 = todatetime(["WindowEnd"]), GroupHost = ["Host"], MeasuredMeasured = ["ValueAvg"]),
+| project EventTime_1 = ["WindowEnd"], GroupHost = ["Host"], MeasuredMeasured = ["ValueAvg"]
+| where isnotnull(EventTime_1) and isnotempty(GroupHost)),
 (Events
 | where Marker =~ "direct"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"], MeasuredMeasured = ["Amount"])
-| where isnotnull(EventTime_1) and isnotempty(GroupHost);
+| project EventTime_1 = ["Timestamp"], GroupHost = ["Host"], MeasuredMeasured = ["Amount"]
+| where isnotnull(EventTime_1) and isnotempty(GroupHost));
 AverageObservations
 | summarize by GroupHost, AverageWindowEnd = EventTime_1, AverageTimeBin = bin(EventTime_1, 5m)
 | join kind=inner (

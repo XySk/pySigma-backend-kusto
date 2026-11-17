@@ -21,7 +21,7 @@ def chain(kind="temporal"):
 def test_temporal_chain_carries_inherited_requests_and_scalar_group_relationships(kind):
     (query,) = convert_documents(chain(kind))
     assert '["Server"]' in query
-    assert 'todatetime(["WindowEnd"])' in query
+    assert '["WindowEnd"]' in query
 
 
 @pytest.mark.parametrize(

@@ -9,9 +9,9 @@ datetime(2026-01-01T12:00:00Z),100,"match",
 datetime(2026-01-01T12:00:00Z),200,"match"
 ];
 let Actual=(){
-let PercentileObservations = union (Events
+let PercentileObservations = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), MeasuredAmount = ["Amount"])
+| project EventTime_1 = ["Timestamp"], MeasuredAmount = ["Amount"]
 | where isnotnull(EventTime_1);
 let PercentileWindowValues = materialize(
 PercentileObservations

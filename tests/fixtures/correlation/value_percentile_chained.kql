@@ -12,9 +12,9 @@ datetime(2026-01-01T12:01:00Z), "alice", 100, "match"
 let Actual = () {
 let Sum = () {
 let Child = () {
-let PercentileObservations = union (Events
+let PercentileObservations = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"], MeasuredAmount = ["Amount"])
+| project EventTime_1 = ["Timestamp"], GroupHost = ["Host"], MeasuredAmount = ["Amount"]
 | where isnotnull(EventTime_1) and isnotempty(GroupHost);
 let PercentileWindowValues = materialize(
 PercentileObservations
@@ -41,8 +41,8 @@ PercentileWindowValues | summarize PercentilePopulation = count() by GroupHost, 
 | where ValuePercentile >= 0
 | project WindowStart = PercentileWindowEnd - 5m, WindowEnd = PercentileWindowEnd, ["Host"] = GroupHost, ValuePercentile
 };
-let SumObservations = union (Child()
-| project EventTime = todatetime(["WindowEnd"]), GroupHost = ["Host"], MeasuredValuePercentile = ["ValuePercentile"])
+let SumObservations = Child()
+| project EventTime = ["WindowEnd"], GroupHost = ["Host"], MeasuredValuePercentile = ["ValuePercentile"]
 | where isnotnull(EventTime) and isnotempty(GroupHost);
 let SumArrivals = SumObservations
 | summarize ArrivalSum = sum(MeasuredValuePercentile) by EventTime, GroupHost;
@@ -57,8 +57,8 @@ union (SumArrivals
 | where ValueSum >= 0
 | project WindowStart = SumBoundaryTime - 5m, WindowEnd = SumBoundaryTime, ["Host"] = GroupHost, ValueSum
 };
-let PercentileObservations = union (Sum()
-| project EventTime = todatetime(["WindowEnd"]), GroupHost = ["Host"], MeasuredValueSum = ["ValueSum"])
+let PercentileObservations = Sum()
+| project EventTime = ["WindowEnd"], GroupHost = ["Host"], MeasuredValueSum = ["ValueSum"]
 | where isnotnull(EventTime) and isnotempty(GroupHost);
 PercentileObservations
 | project GroupHost, PercentileWindowEnd = EventTime, PercentileTimeBin = bin(EventTime, 5m)

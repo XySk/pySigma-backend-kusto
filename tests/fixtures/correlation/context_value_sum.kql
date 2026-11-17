@@ -9,9 +9,9 @@ let Events=datatable(Timestamp:datetime, Host:string, Marker:string, User:dynami
 | extend User=tostring(User);
 let Actual = () {
 let ContextSummary = () {
-let SumObservations = union (Events
+let SumObservations = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"], MeasuredAmount = ["Amount"])
+| project EventTime_1 = ["Timestamp"], GroupHost = ["Host"], MeasuredAmount = ["Amount"]
 | where isnotnull(EventTime_1) and isnotempty(GroupHost);
 let SumArrivals = SumObservations
 | summarize ArrivalSum = sum(MeasuredAmount) by EventTime_1, GroupHost;
@@ -31,10 +31,11 @@ let CorrelationMatches = materialize(ContextSummary()
 let WindowSourceMatches = materialize(
 CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, ContextGroupHost = ["Host"], ContextPartition = 1
 | join kind=inner (
-union (Events
+Events
 | where Marker =~ "match"
-| extend ContextEventTime = todatetime(["Timestamp"]), ContextGroupHost = ["Host"], ContextServer = ["Server"], ContextUser = ["User"]
-| extend ContextSourceRule = "source-rule")
+| extend ContextEventTime = ["Timestamp"], ContextGroupHost = ["Host"], ContextServer = ["Server"], ContextUser = ["User"]
+| where isnotnull(ContextEventTime) and isnotempty(ContextGroupHost)
+| extend ContextSourceRule = "source-rule"
 | project ContextEventTime, ContextSourceRule, ContextGroupHost, ContextServer, ContextUser, ContextPartition = 1
 ) on ContextGroupHost
 | where ContextEventTime between ((CompletionTime - 5m) .. CompletionTime));

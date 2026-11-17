@@ -17,9 +17,9 @@ let Events=datatable(Timestamp:string, Host:string, Amount:dynamic, Marker:strin
 // Normalize Events scalar fixture inputs explicitly.
 | extend Amount=iff(gettype(Amount) in ("int","long","real","double","decimal"), toreal(Amount), real(null)), Timestamp=todatetime(Timestamp);
 let average_0 = () {
-let AverageObservations = union (Events
+let AverageObservations = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"], MeasuredAmount = ["Amount"])
+| project EventTime_1 = ["Timestamp"], GroupHost = ["Host"], MeasuredAmount = ["Amount"]
 | where isnotnull(EventTime_1) and isnotempty(GroupHost);
 AverageObservations
 | summarize by GroupHost, AverageWindowEnd = EventTime_1, AverageTimeBin = bin(EventTime_1, 5m)
@@ -34,9 +34,9 @@ AverageObservations
 | project WindowStart = AverageWindowEnd - 5m, WindowEnd = AverageWindowEnd, ["Host"] = GroupHost, ValueAvg
 };
 let average_1 = () {
-let AverageObservations = union (Events
+let AverageObservations = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"], MeasuredAmount = ["Amount"])
+| project EventTime_1 = ["Timestamp"], GroupHost = ["Host"], MeasuredAmount = ["Amount"]
 | where isnotnull(EventTime_1) and isnotempty(GroupHost);
 AverageObservations
 | summarize by GroupHost, AverageWindowEnd = EventTime_1, AverageTimeBin = bin(EventTime_1, 5m)
@@ -51,9 +51,9 @@ AverageObservations
 | project WindowStart = AverageWindowEnd - 5m, WindowEnd = AverageWindowEnd, ["Host"] = GroupHost, ValueAvg
 };
 let average_2 = () {
-let AverageObservations = union (Events
+let AverageObservations = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"], MeasuredAmount = ["Amount"])
+| project EventTime_1 = ["Timestamp"], GroupHost = ["Host"], MeasuredAmount = ["Amount"]
 | where isnotnull(EventTime_1) and isnotempty(GroupHost);
 AverageObservations
 | summarize by GroupHost, AverageWindowEnd = EventTime_1, AverageTimeBin = bin(EventTime_1, 5m)
@@ -68,9 +68,9 @@ AverageObservations
 | project WindowStart = AverageWindowEnd - 5m, WindowEnd = AverageWindowEnd, ["Host"] = GroupHost, ValueAvg
 };
 let average_3 = () {
-let AverageObservations = union (Events
+let AverageObservations = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"], MeasuredAmount = ["Amount"])
+| project EventTime_1 = ["Timestamp"], GroupHost = ["Host"], MeasuredAmount = ["Amount"]
 | where isnotnull(EventTime_1) and isnotempty(GroupHost);
 AverageObservations
 | summarize by GroupHost, AverageWindowEnd = EventTime_1, AverageTimeBin = bin(EventTime_1, 5m)
@@ -85,9 +85,9 @@ AverageObservations
 | project WindowStart = AverageWindowEnd - 5m, WindowEnd = AverageWindowEnd, ["Host"] = GroupHost, ValueAvg
 };
 let average_4 = () {
-let AverageObservations = union (Events
+let AverageObservations = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"], MeasuredAmount = ["Amount"])
+| project EventTime_1 = ["Timestamp"], GroupHost = ["Host"], MeasuredAmount = ["Amount"]
 | where isnotnull(EventTime_1) and isnotempty(GroupHost);
 AverageObservations
 | summarize by GroupHost, AverageWindowEnd = EventTime_1, AverageTimeBin = bin(EventTime_1, 5m)
@@ -102,9 +102,9 @@ AverageObservations
 | project WindowStart = AverageWindowEnd - 5m, WindowEnd = AverageWindowEnd, ["Host"] = GroupHost, ValueAvg
 };
 let average_5 = () {
-let AverageObservations = union (Events
+let AverageObservations = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"], MeasuredAmount = ["Amount"])
+| project EventTime_1 = ["Timestamp"], GroupHost = ["Host"], MeasuredAmount = ["Amount"]
 | where isnotnull(EventTime_1) and isnotempty(GroupHost);
 AverageObservations
 | summarize by GroupHost, AverageWindowEnd = EventTime_1, AverageTimeBin = bin(EventTime_1, 5m)
@@ -119,9 +119,9 @@ AverageObservations
 | project WindowStart = AverageWindowEnd - 5m, WindowEnd = AverageWindowEnd, ["Host"] = GroupHost, ValueAvg
 };
 let average_6 = () {
-let AverageObservations = union (Events
+let AverageObservations = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"], MeasuredAmount = ["Amount"])
+| project EventTime_1 = ["Timestamp"], GroupHost = ["Host"], MeasuredAmount = ["Amount"]
 | where isnotnull(EventTime_1) and isnotempty(GroupHost);
 AverageObservations
 | summarize by GroupHost, AverageWindowEnd = EventTime_1, AverageTimeBin = bin(EventTime_1, 5m)

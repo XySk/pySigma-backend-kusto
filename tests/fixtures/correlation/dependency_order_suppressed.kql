@@ -13,9 +13,9 @@ datetime(2026-01-01T12:07:00Z), "host", "direct"
 let Actual = () {
 let Middle = () {
 let Child = () {
-let SourceMatchArrivals = union (Events
+let SourceMatchArrivals = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"])
+| project EventTime_1 = ["Timestamp"], GroupHost = ["Host"]
 | where isnotnull(EventTime_1) and isnotempty(GroupHost)
 | summarize SourceMatchCount = count() by EventTime_1, GroupHost;
 union (SourceMatchArrivals
@@ -29,8 +29,8 @@ union (SourceMatchArrivals
 | where EventCount >= 2
 | project WindowStart = CountBoundaryTime - 5m, WindowEnd = CountBoundaryTime, ["Host"] = GroupHost, EventCount
 };
-let ValueCountSources = materialize(union (Child()
-| project EventTime = todatetime(["WindowEnd"]), GroupHost = ["Host"], CountedEventCount = ["EventCount"])
+let ValueCountSources = materialize(Child()
+| project EventTime = ["WindowEnd"], GroupHost = ["Host"], CountedEventCount = ["EventCount"]
 | where isnotnull(EventTime) and isnotempty(GroupHost));
 let CountedEventCountActivity = materialize(ValueCountSources
 | where isnotempty(CountedEventCount)
@@ -53,9 +53,9 @@ union (ValueCountSources | summarize by GroupHost, EventTime
 | project WindowStart = ValueBoundaryTime - 5m, WindowEnd = ValueBoundaryTime, ["Host"] = GroupHost, ValueCount
 };
 let Child = () {
-let SourceMatchArrivals = union (Events
+let SourceMatchArrivals = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"])
+| project EventTime_1 = ["Timestamp"], GroupHost = ["Host"]
 | where isnotnull(EventTime_1) and isnotempty(GroupHost)
 | summarize SourceMatchCount = count() by EventTime_1, GroupHost;
 union (SourceMatchArrivals
@@ -70,13 +70,15 @@ union (SourceMatchArrivals
 | project WindowStart = CountBoundaryTime - 5m, WindowEnd = CountBoundaryTime, ["Host"] = GroupHost, EventCount
 };
 union (Middle()
-| project EventTime_1 = todatetime(["WindowEnd"]), GroupHost = ["Host"], SourceRule = "middle"),
+| project EventTime_1 = ["WindowEnd"], GroupHost = ["Host"], SourceRule = "middle"
+| where isnotnull(EventTime_1) and isnotempty(GroupHost)),
 (Child()
-| project EventTime_1 = todatetime(["WindowEnd"]), GroupHost = ["Host"], SourceRule = "child"),
+| project EventTime_1 = ["WindowEnd"], GroupHost = ["Host"], SourceRule = "child"
+| where isnotnull(EventTime_1) and isnotempty(GroupHost)),
 (NetworkEvents
 | where Marker =~ "direct"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"], SourceRule = "direct")
-| where isnotnull(EventTime_1) and isnotempty(GroupHost)
+| project EventTime_1 = ["Timestamp"], GroupHost = ["Host"], SourceRule = "direct"
+| where isnotnull(EventTime_1) and isnotempty(GroupHost))
 // Batch simultaneous source matches before updating inclusive trailing presence.
 | summarize MatchesMiddle = countif(SourceRule == "middle") > 0, MatchesChild = countif(SourceRule == "child") > 0, MatchesDirect = countif(SourceRule == "direct") > 0 by GroupHost, EventTime_1
 | sort by GroupHost asc, EventTime_1 asc

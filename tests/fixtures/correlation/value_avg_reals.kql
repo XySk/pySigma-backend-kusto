@@ -23,9 +23,9 @@ let Events=datatable(Timestamp:datetime, Host:string, Amount:dynamic, Marker:str
 // Normalize Events scalar fixture inputs explicitly.
 | extend Amount=iff(gettype(Amount) in ("int","long","real","double","decimal"), toreal(Amount), real(null));
 let Actual = () {
-let AverageObservations = union (Events
+let AverageObservations = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"], MeasuredAmount = ["Amount"])
+| project EventTime_1 = ["Timestamp"], GroupHost = ["Host"], MeasuredAmount = ["Amount"]
 | where isnotnull(EventTime_1) and isnotempty(GroupHost);
 AverageObservations
 | summarize by GroupHost, AverageWindowEnd = EventTime_1, AverageTimeBin = bin(EventTime_1, 5m)

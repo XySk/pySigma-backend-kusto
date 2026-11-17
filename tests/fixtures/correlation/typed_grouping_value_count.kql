@@ -7,9 +7,9 @@ let Events=datatable(Timestamp:datetime,Host:string,Marker:string,User:long,Serv
  datetime(2026-01-01T12:00:00Z),"h","match",1,"",100
 ];
 let Actual=(){
-let ValueCountSources = materialize(union (Events
+let ValueCountSources = materialize(Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupUser = ["User"], GroupServer = ["Server"], CountedUser = ["User"])
+| project EventTime_1 = ["Timestamp"], GroupUser = ["User"], GroupServer = ["Server"], CountedUser = ["User"]
 | where isnotnull(EventTime_1) and isnotempty(GroupUser) and isnotempty(GroupServer));
 let CountedUserActivity = materialize(ValueCountSources
 | where isnotempty(CountedUser)

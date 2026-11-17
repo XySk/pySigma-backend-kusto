@@ -11,9 +11,9 @@ let Events=datatable(Timestamp:datetime,Host:string,Marker:string,User:string,Am
 let Actual=(){
 let Child = () {
 let ContextSummary = () {
-let SourceMatchArrivals = union (Events
+let SourceMatchArrivals = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"])
+| project EventTime_1 = ["Timestamp"], GroupHost = ["Host"]
 | where isnotnull(EventTime_1) and isnotempty(GroupHost)
 | summarize SourceMatchCount = count() by EventTime_1, GroupHost;
 union (SourceMatchArrivals
@@ -32,10 +32,11 @@ let CorrelationMatches = materialize(ContextSummary()
 let WindowSourceMatches = materialize(
 CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, ContextGroupHost = ["Host"], ContextPartition = 1
 | join kind=inner (
-union (Events
+Events
 | where Marker =~ "match"
-| extend ContextEventTime = todatetime(["Timestamp"]), ContextGroupHost = ["Host"], ContextUser = ["User"], ContextAmount = ["Amount"]
-| extend ContextSourceRule = "source-rule")
+| extend ContextEventTime = ["Timestamp"], ContextGroupHost = ["Host"], ContextUser = ["User"], ContextAmount = ["Amount"]
+| where isnotnull(ContextEventTime) and isnotempty(ContextGroupHost)
+| extend ContextSourceRule = "source-rule"
 | project ContextEventTime, ContextSourceRule, ContextGroupHost, ContextUser, ContextAmount, ContextPartition = 1
 ) on ContextGroupHost
 | where ContextEventTime between ((CompletionTime - 5m) .. CompletionTime));
@@ -49,13 +50,14 @@ let ContextSummary = () {
 let ParentSourceMatches = materialize(union (ChildResults
 | where ["ContextRowKind"] == "ContextEvidence"
 | extend ChildCorrelationMatch = strcat("Child", "_", tostring(["CorrelationMatchId"]))
-| project EventTime_1 = todatetime(["WindowEnd"]), GroupActor = ["ContextUser"], MeasuredAmount = ["ContextAmount"], ChildCorrelationMatch),
+| project EventTime_1 = ["WindowEnd"], GroupActor = ["ContextUser"], MeasuredAmount = ["ContextAmount"], ChildCorrelationMatch
+| where isnotnull(EventTime_1) and isnotempty(GroupActor)),
 (Events
 | where Marker =~ "direct"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupActor = ["User"], MeasuredAmount = ["Amount"])
+| project EventTime_1 = ["Timestamp"], GroupActor = ["User"], MeasuredAmount = ["Amount"]
+| where isnotnull(EventTime_1) and isnotempty(GroupActor))
 | extend ChildCorrelationMatch = tostring(column_ifexists("ChildCorrelationMatch", "")));
-let SumObservations = union (ParentSourceMatches | where isempty(ChildCorrelationMatch)), (ParentSourceMatches | where isnotempty(ChildCorrelationMatch) | extend RetainedNumericValue = MeasuredAmount | summarize take_any(*) by ChildCorrelationMatch, GroupActor, RetainedNumericValue)
-| where isnotnull(EventTime_1) and isnotempty(GroupActor);
+let SumObservations = union (ParentSourceMatches | where isempty(ChildCorrelationMatch)), (ParentSourceMatches | where isnotempty(ChildCorrelationMatch) | extend RetainedNumericValue = MeasuredAmount | summarize take_any(*) by ChildCorrelationMatch, GroupActor, RetainedNumericValue);
 let SumArrivals = SumObservations
 | summarize ArrivalSum = sum(MeasuredAmount) by EventTime_1, GroupActor;
 union (SumArrivals
@@ -77,11 +79,13 @@ CorrelationMatches | project CorrelationMatchId_1, CompletionTime = WindowEnd, C
 union (ChildResults | where ["ContextRowKind"] == "Summary"
 | project-away ["ContextUser"], ["ContextAmount"]
 | join kind=leftouter (ChildResults | where ["ContextRowKind"] == "ContextEvidence" | project ["CorrelationMatchId"], ["ContextUser"], ["ContextAmount"], HasContextEvidence = true) on ["CorrelationMatchId"]
-| extend ContextEventTime = todatetime(["WindowEnd"]), ContextGroupActor = ["ContextUser"], ContextAmount_1 = ["ContextAmount"]
+| extend ContextEventTime = ["WindowEnd"], ContextGroupActor = ["ContextUser"], ContextAmount_1 = ["ContextAmount"]
+| where isnotnull(ContextEventTime) and isnotempty(ContextGroupActor)
 | extend ContextSourceRule = "child"),
 ((Events
 | where Marker =~ "direct"
-| extend ContextEventTime = todatetime(["Timestamp"]), ContextGroupActor = ["User"], ContextAmount_1 = ["Amount"]
+| extend ContextEventTime = ["Timestamp"], ContextGroupActor = ["User"], ContextAmount_1 = ["Amount"]
+| where isnotnull(ContextEventTime) and isnotempty(ContextGroupActor)
 | extend ContextSourceRule = "direct")
 | extend HasContextEvidence = true)
 | project ContextEventTime, ContextSourceRule, ContextGroupActor, ContextAmount_1, HasContextEvidence, ContextPartition = 1

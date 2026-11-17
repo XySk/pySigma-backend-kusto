@@ -4,9 +4,9 @@
 // Nonempty rows identify a missing, additional, or duplicated summary.
 let Events = datatable(Timestamp:datetime, Marker:string) [];
 let Actual = () {
-let SourceMatchArrivals = union (Events
+let SourceMatchArrivals = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]))
+| project EventTime_1 = ["Timestamp"]
 | where isnotnull(EventTime_1)
 | summarize SourceMatchCount = count() by EventTime_1;
 union (SourceMatchArrivals
