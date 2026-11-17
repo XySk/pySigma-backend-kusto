@@ -55,3 +55,8 @@ result cache, and 30-second client / 28-second server limits.
   response, transport record, and failed prototype.
 - `raw-evidence.tar.gz` contains those exact artifacts.
 - `SHA256SUMS` authenticates the published files.
+
+The [review-fix supplement](../context-transport-review-fixes/README.md) corrects
+the child-only transport-growth estimate and publishes the missing successful
+corrected-candidate focused correctness evidence. It does not change this paired
+performance rejection or production strategy.

@@ -2,12 +2,10 @@
 
 import argparse
 import json
-import re
-import subprocess
-from collections import Counter
 from pathlib import Path
 
 from tests.fixtures.correlation import benchmark
+from tests.fixtures.correlation.focused_benchmark_manifest import FocusedBenchmarkManifest
 
 
 def _multiple_display_expected(rows):
@@ -73,9 +71,6 @@ def _boolean_documents():
 
 def freeze(destination: Path):
     """Freeze focused cases without changing the established 64-workload corpus."""
-    destination.mkdir(parents=True, exist_ok=True)
-    if (destination / "manifest.json").exists():
-        raise FileExistsError("frozen manifest already exists; choose a new output directory")
     cases = []
     for name, profile in (
         ("sparse-single-display", "sparse"),
@@ -125,13 +120,11 @@ def freeze(destination: Path):
         )
     )
 
-    record = {
-        "format": 1,
-        "revision": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
-        "baseline_revision": benchmark.BASELINE_REVISION,
-        "oracle": "direct inclusive-window enumeration with explicit Boolean participants",
-        "workloads": [],
-    }
+    manifest = FocusedBenchmarkManifest.begin(
+        destination,
+        baseline_revision=benchmark.BASELINE_REVISION,
+        oracle="direct inclusive-window enumeration with explicit Boolean participants",
+    )
     for name, rows, documents, expected, metric, context_fields in cases:
         query = benchmark.convert(documents)
         schema = {
@@ -150,26 +143,16 @@ def freeze(destination: Path):
             "schema": schema,
             "expected": expected,
         }
-        fixture_path = destination / f"{name}.json"
-        query_path = destination / f"{name}.kql"
-        fixture_path.write_text(json.dumps(fixture, indent=2) + "\n")
-        query_path.write_text(benchmark.input_query(rows) + query + "\n")
-        operators = Counter(re.findall(r"\|\s*([a-z][\w-]*)", query))
-        record["workloads"].append(
-            {
-                "name": name,
-                "fixture": fixture_path.name,
-                "fixture_sha256": benchmark.sha(fixture_path.read_bytes()),
-                "query": query_path.name,
-                "query_sha256": benchmark.sha(query_path.read_bytes()),
-                "query_bytes": len(query.encode()),
-                "query_lines": len(query.splitlines()),
-                "operators": dict(sorted(operators.items())),
-                "input_rows": len(rows),
-                "expected_rows": len(expected),
-            }
+        manifest.add(
+            name,
+            fixture,
+            benchmark.input_query(rows) + query + "\n",
+            query,
+            measured_query=query,
+            input_rows=len(rows),
+            expected_rows=len(expected),
         )
-    (destination / "manifest.json").write_text(json.dumps(record, indent=2) + "\n")
+    manifest.write()
 
 
 if __name__ == "__main__":

@@ -21,7 +21,10 @@ consumer counts, safe reductions, sort locality, and focused measurement cases.
 The [context-transport scale decision](CONTEXT-TRANSPORT.md) records the rejected
 separate-summary/evidence prototype and the retained union contract. Its
 [hash-scoped evidence](runtime-evidence/context-transport-final/README.md)
-contains 150 paired scale samples and both initial failed prototype queries.
+contains 150 paired scale samples and both initial failed prototype queries. The
+[review-fix supplement](runtime-evidence/context-transport-review-fixes/README.md)
+corrects transport growth across every relation/use and records successful
+corrected-candidate and retained-production focused matrices.
 
 ## Coverage and independent oracles
 
