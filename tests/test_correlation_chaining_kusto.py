@@ -17,7 +17,7 @@ def test_value_count_parent_counts_child_value_metric_as_one_exact_value_per_sum
 
     (query,) = convert_documents(documents)
 
-    assert 'EventTime = todatetime(["WindowEnd"])' in query
+    assert 'EventTime = ["WindowEnd"]' in query
     assert 'CountedValueCount = ["ValueCount"]' in query
     assert summary_data_query(query).count("ValueCount = row_cumsum(") == 2
     assert final_summary_projection(query).endswith('["Host"] = GroupHost, ValueCount')
@@ -36,8 +36,8 @@ def test_ordered_parent_scopes_complete_temporal_child_before_strict_window_end_
 
     assert "union (Events\n" in summary_data_query(query)
     assert "union (Child()\n" in summary_data_query(query)
-    assert 'todatetime(["WindowEnd"]), GroupHost = ["Host"]' in query
-    assert 'todatetime(["Timestamp"]), GroupHost = ["Host"]' in query
+    assert '["WindowEnd"], GroupHost = ["Host"]' in query
+    assert '["Timestamp"], GroupHost = ["Host"]' in query
     assert 'countif(SourceRule == "child") > 0' in query
     assert 'countif(SourceRule == "direct-rule") > 0' in query
     assert "| where CompleteNow" in query
@@ -79,7 +79,7 @@ def test_all_supported_types_produce_and_consume_child_summaries(producer, consu
         if consumer in ("event_count", "value_count", "value_sum", "value_percentile", "temporal", "temporal_ordered")
         else ("_sigma_timestamp", "_sigma_group_0", "_sigma_rule")
     )
-    assert f'{timestamp} = todatetime(["WindowEnd"]), {group} = ["Host"]' in parent
+    assert f'{timestamp} = ["WindowEnd"], {group} = ["Host"]' in parent
     if consumer not in ("event_count", "value_count", "value_sum", "value_percentile"):
         assert f'{source} = "child"' in parent
     consumer_metric = "RuleCount = tolong(1)" if consumer == "temporal_ordered" else METRICS[consumer]
@@ -130,13 +130,13 @@ def test_child_window_fields_group_and_actual_metric_can_all_be_aliased_without_
     (query,) = convert_documents([source_document(), child, parent], mappings=mappings)
 
     parent_query = query.split("\n};\n", 1)[1]
-    assert 'EventTime = todatetime(["WindowEnd"])' in parent_query
+    assert 'EventTime = ["WindowEnd"]' in parent_query
     for column, field in zip(
         ["ChildStart", "ChildEnd", "ChildMetric", "Host"], ["WindowStart", "WindowEnd", METRICS[producer], "Host"]
     ):
         assert f'Counted{column} = ["{field}"]' in parent_query
     assert "Wrong" not in query
-    assert 'todatetime(["PhysicalTime"])' in query
+    assert '["PhysicalTime"]' in query
     assert '["PhysicalHost"]' in query
 
 
@@ -300,20 +300,20 @@ def test_multilevel_mixed_sources_keep_result_names_and_scope_bindings_separate_
     assert len(summary_projections(query)) == 3
     assert summary_projections(query)[0].endswith(', ["Case"] = GroupCase, ["Host"] = GroupHost, EventCount')
     assert summary_projections(query)[1].endswith(', ["Tenant"] = GroupTenant, ValueCount')
-    assert "union (Child()" in query
+    assert "let ValueCountSources = materialize(Child()" in query
     assert "_sigma_correlation_error" not in summary_data_query(query)
     assert "assert(" not in query
     assert "_sigma_identity" not in query
-    assert '(Events\n| where Marker =~ "match"' in query
+    assert 'let SourceMatchArrivals = Events\n| where Marker =~ "match"' in query
     assert '(NetworkEvents\n| where Marker =~ "direct"' in query
-    assert 'todatetime(["ProcessTime"])' in query
-    assert 'todatetime(["NetworkTime"])' in query
+    assert '["ProcessTime"]' in query
+    assert '["NetworkTime"]' in query
     assert '["ProcessCase"]' in query
     assert '["NetworkScope"]' in query
     assert '["Case"]' in query
     assert '["Tenant"]' in query
     assert '["EventCount"]' in query
-    assert summary_data_query(query).count('todatetime(["WindowEnd"])') == 2
+    assert summary_data_query(query).count('["WindowEnd"]') == 2
     assert "Wrong" not in query
     assert "ago(" not in query
     assert ">= EventTime_1 - 4m" in query
@@ -327,8 +327,8 @@ def test_chain_bindings_do_not_shadow_known_tables_in_direct_or_descendant_sourc
     # Scoped child functions must avoid raw tables at every descendant level.
     assert "let Child_1 = () {\n" in query
     assert "let Middle_1 = () {\n" in query
-    assert "union (Child_1()" in query
-    assert '(Child\n| where Marker =~ "match"' in query
+    assert "let ValueCountSources = materialize(Child_1()" in query
+    assert 'let SourceMatchArrivals = Child\n| where Marker =~ "match"' in query
     assert '(Middle\n| where Marker =~ "direct"' in query
     assert "let Child =" not in query
     assert "let Middle =" not in query
@@ -385,4 +385,4 @@ def test_shared_child_remains_available_to_each_parent_and_any_consumer_can_supp
     assert final_summary_projection(queries[-1]).endswith("ValueCount")
     for parent in queries[-2:]:
         assert summary_data_query(parent).count("let Child = () {") == 1
-        assert 'todatetime(["WindowEnd"])' in parent
+        assert '["WindowEnd"]' in parent

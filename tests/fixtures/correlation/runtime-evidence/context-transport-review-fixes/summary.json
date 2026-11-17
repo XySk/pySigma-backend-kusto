@@ -1,0 +1,249 @@
+{
+  "status": "PASS",
+  "decision": "retain-production-summary-evidence-union",
+  "revision": "0e047fdf98284758cb30791d4981b93be3e93ee9",
+  "transport_manifest_sha256": "39a2a7d4437a98ce8c9b7bfc31c40c344b1e86f8941058e0d1a2b77e130a10a8",
+  "transport_growth": {
+    "sparse-64": {
+      "relations": 1,
+      "current": {
+        "rows_across_uses": 753,
+        "estimated_bytes_across_uses": 41118
+      },
+      "candidate": {
+        "rows_across_uses": 439,
+        "estimated_bytes_across_uses": 15428
+      }
+    },
+    "dense-64": {
+      "relations": 1,
+      "current": {
+        "rows_across_uses": 6426,
+        "estimated_bytes_across_uses": 357084
+      },
+      "candidate": {
+        "rows_across_uses": 4221,
+        "estimated_bytes_across_uses": 136029
+      }
+    },
+    "dense-256": {
+      "relations": 1,
+      "current": {
+        "rows_across_uses": 99450,
+        "estimated_bytes_across_uses": 5825301
+      },
+      "candidate": {
+        "rows_across_uses": 66045,
+        "estimated_bytes_across_uses": 2182798
+      }
+    },
+    "many-groups-256": {
+      "relations": 1,
+      "current": {
+        "rows_across_uses": 4032,
+        "estimated_bytes_across_uses": 223068
+      },
+      "candidate": {
+        "rows_across_uses": 2464,
+        "estimated_bytes_across_uses": 84632
+      }
+    },
+    "hot-repeated-256": {
+      "relations": 1,
+      "current": {
+        "rows_across_uses": 99450,
+        "estimated_bytes_across_uses": 5825301
+      },
+      "candidate": {
+        "rows_across_uses": 66045,
+        "estimated_bytes_across_uses": 2182798
+      }
+    },
+    "hot-unique-256": {
+      "relations": 1,
+      "current": {
+        "rows_across_uses": 99450,
+        "estimated_bytes_across_uses": 6081063
+      },
+      "candidate": {
+        "rows_across_uses": 66045,
+        "estimated_bytes_across_uses": 2353306
+      }
+    },
+    "low-selectivity-256": {
+      "relations": 1,
+      "current": {
+        "rows_across_uses": 39159,
+        "estimated_bytes_across_uses": 2314425
+      },
+      "candidate": {
+        "rows_across_uses": 26049,
+        "estimated_bytes_across_uses": 864764
+      }
+    },
+    "high-selectivity-256": {
+      "relations": 1,
+      "current": {
+        "rows_across_uses": 99450,
+        "estimated_bytes_across_uses": 5825301
+      },
+      "candidate": {
+        "rows_across_uses": 66045,
+        "estimated_bytes_across_uses": 2182798
+      }
+    },
+    "one-context-field": {
+      "relations": 1,
+      "current": {
+        "rows_across_uses": 632,
+        "estimated_bytes_across_uses": 28992
+      },
+      "candidate": {
+        "rows_across_uses": 505,
+        "estimated_bytes_across_uses": 11694
+      }
+    },
+    "three-context-fields": {
+      "relations": 1,
+      "current": {
+        "rows_across_uses": 25146,
+        "estimated_bytes_across_uses": 1434765
+      },
+      "candidate": {
+        "rows_across_uses": 16637,
+        "estimated_bytes_across_uses": 542430
+      }
+    },
+    "shared-child-consumers": {
+      "relations": 4,
+      "current": {
+        "rows_across_uses": 103896,
+        "estimated_bytes_across_uses": 6619767
+      },
+      "candidate": {
+        "rows_across_uses": 52500,
+        "estimated_bytes_across_uses": 1983572
+      }
+    },
+    "chain-depth-one": {
+      "relations": 1,
+      "current": {
+        "rows_across_uses": 25146,
+        "estimated_bytes_across_uses": 1434765
+      },
+      "candidate": {
+        "rows_across_uses": 16637,
+        "estimated_bytes_across_uses": 542430
+      }
+    },
+    "chain-depth-three": {
+      "relations": 3,
+      "current": {
+        "rows_across_uses": 77706,
+        "estimated_bytes_across_uses": 5128461
+      },
+      "candidate": {
+        "rows_across_uses": 35167,
+        "estimated_bytes_across_uses": 1418972
+      }
+    },
+    "numeric-pairing-repeated": {
+      "relations": 1,
+      "current": {
+        "rows_across_uses": 25146,
+        "estimated_bytes_across_uses": 1434765
+      },
+      "candidate": {
+        "rows_across_uses": 16637,
+        "estimated_bytes_across_uses": 542430
+      }
+    },
+    "numeric-pairing-unique": {
+      "relations": 1,
+      "current": {
+        "rows_across_uses": 25146,
+        "estimated_bytes_across_uses": 1479327
+      },
+      "candidate": {
+        "rows_across_uses": 16637,
+        "estimated_bytes_across_uses": 572138
+      }
+    }
+  },
+  "corrected_candidate": {
+    "strategy": "corrected-separate-summary-evidence",
+    "manifest_sha256": "7acbb8b2bcfafc835751bfc9fb0d6b16a555c84010c7e3433088201e414fa648",
+    "passed": 19,
+    "failed": 0
+  },
+  "retained_production": {
+    "strategy": "retained-summary-evidence-union",
+    "manifest_sha256": "aa2d0032109389f2962ee23529099d4fe15c1afbe88990de50ff0c19d91e5d98",
+    "passed": 19,
+    "failed": 0
+  },
+  "failed_corrected_candidate_attempts": [
+    {
+      "run": "spec34-corrected-candidate-run-2",
+      "manifest_sha256": "9d4c1c3a59b0bd3d283d3ee629e11756a49c5a7eb32b1c7093e2edf8af4bc4e0",
+      "fixture": "relational_callback_metric.kql",
+      "query_sha256": "41b6492125f5ae404149b6865643857876fefc04f8e23378b9ef7b201f7ffb0f",
+      "detail": "HTTP 400: response is not a v2 frame array"
+    },
+    {
+      "run": "spec34-corrected-candidate-run-v2",
+      "manifest_sha256": "cf0a0b757315cb89a58801ff8f56fd769235b842d49a7e9a78056cd5acbb0bef",
+      "fixture": "relational_callback_metric.kql",
+      "query_sha256": "c9a00b4ae1d4c51904aa354586d2be563085c4a0d1db4fcbe51c53f98ff3a570",
+      "detail": "HTTP 400: response is not a v2 frame array"
+    }
+  ],
+  "engine_version": {
+    "Tables": [
+      {
+        "TableName": "Table_0",
+        "Columns": [
+          {
+            "ColumnName": "BuildVersion",
+            "DataType": "String"
+          },
+          {
+            "ColumnName": "BuildTime",
+            "DataType": "DateTime"
+          },
+          {
+            "ColumnName": "ServiceType",
+            "DataType": "String"
+          },
+          {
+            "ColumnName": "ProductVersion",
+            "DataType": "String"
+          },
+          {
+            "ColumnName": "ServiceOffering",
+            "DataType": "String"
+          }
+        ],
+        "Rows": [
+          [
+            "1.0.9815.14081",
+            "2026-11-15T07:49:22Z",
+            "Engine",
+            "2026.11.15.0741-2645-8e3387b-master",
+            ""
+          ]
+        ]
+      }
+    ]
+  },
+  "coverage": [
+    "direct",
+    "shared",
+    "multilevel",
+    "callback",
+    "display-boundaries",
+    "hidden-parent-values",
+    "cross-field-relationships",
+    "stable-consumer-identities"
+  ]
+}

@@ -12,9 +12,9 @@ let Expected=datatable(WindowEnd:datetime,ValueAvg:real) [
  datetime(2026-01-01T00:01:00),4.0
 ] | extend WindowStart=WindowEnd-5m;
 let Actual=(){
-let AverageObservations = union (Events
+let AverageObservations = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), MeasuredAmount = ["Amount"])
+| project EventTime_1 = ["Timestamp"], MeasuredAmount = ["Amount"]
 | where isnotnull(EventTime_1);
 AverageObservations
 | summarize by AverageWindowEnd = EventTime_1, AverageTimeBin = bin(EventTime_1, 5m)

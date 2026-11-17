@@ -1,0 +1,1197 @@
+{
+  "status": "PASS",
+  "decision": "reject-separate-transport",
+  "adoption_gate": {
+    "required_target_cpu_or_memory_improvement": 0.15,
+    "maximum_representative_regression": 0.1,
+    "target_improvements": [
+      "sparse-64",
+      "dense-64",
+      "many-groups-256",
+      "low-selectivity-256",
+      "one-context-field",
+      "shared-child-consumers",
+      "chain-depth-three"
+    ],
+    "representative_regressions": [
+      "dense-64",
+      "dense-256",
+      "many-groups-256",
+      "hot-repeated-256",
+      "hot-unique-256",
+      "low-selectivity-256",
+      "high-selectivity-256",
+      "one-context-field",
+      "three-context-fields",
+      "shared-child-consumers",
+      "chain-depth-one",
+      "chain-depth-three",
+      "numeric-pairing-repeated",
+      "numeric-pairing-unique"
+    ],
+    "adopted": false
+  },
+  "baseline_revision": "68347b11bb0d9aba08c799c1ff7e640bf60df033",
+  "candidate_revision": "68347b11bb0d9aba08c799c1ff7e640bf60df033",
+  "baseline_manifest_sha256": "078076e14150e66c798006c7e5e0ad33803f2e89ed09e02f1b010c8ec9a1ed41",
+  "candidate_manifest_sha256": "a395a58a94217468e6eb510c58f799fb776ed455f048313215853e769d4eef98",
+  "baseline_samples": 75,
+  "candidate_samples": 75,
+  "failed_prototypes": [
+    {
+      "directory": "ticket53-focused-evidence-2",
+      "status": "FAIL",
+      "manifest_sha256": "2cb3de09556aecf3e546d149445a9c59fd2fbc0c44604916f33e17d602d9c955",
+      "failure": "HTTP 400: response is not a v2 frame array",
+      "queries": [
+        {
+          "name": "relational_callback_metric.request",
+          "query_sha256": "1c8f09dfa646398dd7662e6ab68e1ef48877e39910b7e2b2efc11618728f2ce8"
+        }
+      ],
+      "workloads": [
+        {
+          "name": "relational_callback_metric.kql",
+          "workload_sha256": "1c8f09dfa646398dd7662e6ab68e1ef48877e39910b7e2b2efc11618728f2ce8"
+        }
+      ]
+    },
+    {
+      "directory": "ticket53-complete-parent-evidence",
+      "status": "FAIL",
+      "manifest_sha256": "2cb3de09556aecf3e546d149445a9c59fd2fbc0c44604916f33e17d602d9c955",
+      "failure": "HTTP 400: response is not a v2 frame array",
+      "queries": [
+        {
+          "name": "relational_complete_parent.request",
+          "query_sha256": "dc8532b5c430781bc1ae09255c9d132871daef0d8abc3a06710f0ac2f07df65c"
+        }
+      ],
+      "workloads": [
+        {
+          "name": "relational_complete_parent.kql",
+          "workload_sha256": "dc8532b5c430781bc1ae09255c9d132871daef0d8abc3a06710f0ac2f07df65c"
+        }
+      ]
+    }
+  ],
+  "engine_version": {
+    "status": "PASS",
+    "response": {
+      "Tables": [
+        {
+          "TableName": "Table_0",
+          "Columns": [
+            {
+              "ColumnName": "BuildVersion",
+              "DataType": "String"
+            },
+            {
+              "ColumnName": "BuildTime",
+              "DataType": "DateTime"
+            },
+            {
+              "ColumnName": "ServiceType",
+              "DataType": "String"
+            },
+            {
+              "ColumnName": "ProductVersion",
+              "DataType": "String"
+            },
+            {
+              "ColumnName": "ServiceOffering",
+              "DataType": "String"
+            }
+          ],
+          "Rows": [
+            [
+              "1.0.9815.14081",
+              "2026-11-15T07:49:22Z",
+              "Engine",
+              "2026.11.15.0741-2645-8e3387b-master",
+              ""
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  "container": {
+    "image": "sha256:65e8298d9350856dec696e0e41327288e7bc105146768a1429fce62f3640acd8",
+    "memory": 12884901888,
+    "memory_swap": 12884901888,
+    "cpu_quota": 0,
+    "nano_cpus": 0
+  },
+  "request_options": {
+    "max_memory_consumption_per_query_per_node": 12884901888,
+    "query_results_cache_max_age": "00:00:00",
+    "servertimeout": "00:00:28"
+  },
+  "workloads": [
+    {
+      "name": "sparse-64",
+      "dimensions": [
+        "density"
+      ],
+      "workload_sha256": "9c8bd4fd9a849f161a7aa9af176121552099c271d2e6e1520bbccdb3a3eebc50",
+      "baseline_query_sha256": "1fe0f1128f209ce02a97e013ef398d40517905e90a6dad5a3854a39b17c11857",
+      "candidate_query_sha256": "4a2789264fe976568f1b2b79b500b35a301c499ad21f36a75e9a3911fcf97323",
+      "query_bytes": {
+        "baseline": 18033,
+        "candidate": 19918
+      },
+      "operators": {
+        "baseline": {
+          "distinct": 2,
+          "extend": 13,
+          "join": 6,
+          "project": 16,
+          "project-away": 1,
+          "serialize": 2,
+          "sort": 2,
+          "summarize": 7,
+          "where": 20
+        },
+        "candidate": {
+          "distinct": 3,
+          "extend": 17,
+          "join": 7,
+          "project": 23,
+          "sort": 3,
+          "summarize": 8,
+          "where": 24
+        }
+      },
+      "transport_model": {
+        "summary_rows": 63,
+        "evidence_rows": 188,
+        "union_rows": 251,
+        "separate_rows_when_both_consumed": 251,
+        "union_estimated_bytes": 9470,
+        "separate_estimated_bytes_when_both_consumed": 7966,
+        "operator_cardinality": "not exposed by the local Kusto response protocol"
+      },
+      "samples": {
+        "baseline": 5,
+        "candidate": 5
+      },
+      "median_cpu_seconds": {
+        "baseline": 0.124187,
+        "candidate": 0.082846
+      },
+      "cpu_change": -0.3328931369628061,
+      "median_peak_memory_bytes": {
+        "baseline": 20369232,
+        "candidate": 21707392
+      },
+      "peak_memory_change": 0.06569516219364568,
+      "median_elapsed_seconds": {
+        "baseline": 0.152937,
+        "candidate": 0.11265
+      },
+      "median_engine_elapsed_seconds": {
+        "baseline": 0.1458821,
+        "candidate": 0.1024512
+      },
+      "failures": {
+        "baseline": 0,
+        "candidate": 0
+      },
+      "operator_cardinality": "unavailable from response frames"
+    },
+    {
+      "name": "dense-64",
+      "dimensions": [
+        "density"
+      ],
+      "workload_sha256": "e3f295f59595e0d4a565f1f56bd53f2f82f070b6a7ae848a043dc8c76b18713c",
+      "baseline_query_sha256": "1d6abc0fd3fd66a124e1da2c8ab40074406e4341ad7cb79c355af802c7c8db92",
+      "candidate_query_sha256": "0ae08b3aab36c661aaa6504dbe5309e7afeca9bfe9d2652e283d393fac1cd429",
+      "query_bytes": {
+        "baseline": 20747,
+        "candidate": 22632
+      },
+      "operators": {
+        "baseline": {
+          "distinct": 2,
+          "extend": 13,
+          "join": 6,
+          "project": 16,
+          "project-away": 1,
+          "serialize": 2,
+          "sort": 2,
+          "summarize": 7,
+          "where": 20
+        },
+        "candidate": {
+          "distinct": 3,
+          "extend": 17,
+          "join": 7,
+          "project": 23,
+          "sort": 3,
+          "summarize": 8,
+          "where": 24
+        }
+      },
+      "transport_model": {
+        "summary_rows": 63,
+        "evidence_rows": 2079,
+        "union_rows": 2142,
+        "separate_rows_when_both_consumed": 2142,
+        "union_estimated_bytes": 86961,
+        "separate_estimated_bytes_when_both_consumed": 68294,
+        "operator_cardinality": "not exposed by the local Kusto response protocol"
+      },
+      "samples": {
+        "baseline": 5,
+        "candidate": 5
+      },
+      "median_cpu_seconds": {
+        "baseline": 0.145516,
+        "candidate": 0.079949
+      },
+      "cpu_change": -0.4505827537865251,
+      "median_peak_memory_bytes": {
+        "baseline": 39186384,
+        "candidate": 64976304
+      },
+      "peak_memory_change": 0.6581347235304997,
+      "median_elapsed_seconds": {
+        "baseline": 0.165543,
+        "candidate": 0.115005
+      },
+      "median_engine_elapsed_seconds": {
+        "baseline": 0.1586477,
+        "candidate": 0.1082509
+      },
+      "failures": {
+        "baseline": 0,
+        "candidate": 0
+      },
+      "operator_cardinality": "unavailable from response frames"
+    },
+    {
+      "name": "dense-256",
+      "dimensions": [
+        "density"
+      ],
+      "workload_sha256": "9ceea70cfc062120940c08f1993ed748946e69c529bbb99b6dc6531d3877b5a3",
+      "baseline_query_sha256": "10ce351b957b68f5f746ac2bf29e19a26aee5a179714b1844b16b35bd222e8e2",
+      "candidate_query_sha256": "b4ebdf561d65813d4ec7429d8e2ae0eec0b3eb319ba34553b0f5f326dff46258",
+      "query_bytes": {
+        "baseline": 65564,
+        "candidate": 67449
+      },
+      "operators": {
+        "baseline": {
+          "distinct": 2,
+          "extend": 13,
+          "join": 6,
+          "project": 16,
+          "project-away": 1,
+          "serialize": 2,
+          "sort": 2,
+          "summarize": 7,
+          "where": 20
+        },
+        "candidate": {
+          "distinct": 3,
+          "extend": 17,
+          "join": 7,
+          "project": 23,
+          "sort": 3,
+          "summarize": 8,
+          "where": 24
+        }
+      },
+      "transport_model": {
+        "summary_rows": 255,
+        "evidence_rows": 32895,
+        "union_rows": 33150,
+        "separate_rows_when_both_consumed": 33150,
+        "union_estimated_bytes": 1416578,
+        "separate_estimated_bytes_when_both_consumed": 1092621,
+        "operator_cardinality": "not exposed by the local Kusto response protocol"
+      },
+      "samples": {
+        "baseline": 5,
+        "candidate": 5
+      },
+      "median_cpu_seconds": {
+        "baseline": 0.560332,
+        "candidate": 0.831931
+      },
+      "cpu_change": 0.4847108499960735,
+      "median_peak_memory_bytes": {
+        "baseline": 792451104,
+        "candidate": 1676857344
+      },
+      "peak_memory_change": 1.1160388767658276,
+      "median_elapsed_seconds": {
+        "baseline": 0.622966,
+        "candidate": 0.882534
+      },
+      "median_engine_elapsed_seconds": {
+        "baseline": 0.6123324,
+        "candidate": 0.8740497
+      },
+      "failures": {
+        "baseline": 0,
+        "candidate": 0
+      },
+      "operator_cardinality": "unavailable from response frames"
+    },
+    {
+      "name": "many-groups-256",
+      "dimensions": [
+        "groups"
+      ],
+      "workload_sha256": "086806c2e466a044e4529ed69fedde6979865994826494e2fe068583c5871729",
+      "baseline_query_sha256": "19b52966fb07080d2eb1e38d89ccd60c27eb12b000f903913f9218dd3f8e4e28",
+      "candidate_query_sha256": "0dbf60610380af80366d6f2f55d4cc3ae7a1c95b3f7c8d8d1abcfee1847895cc",
+      "query_bytes": {
+        "baseline": 31813,
+        "candidate": 33698
+      },
+      "operators": {
+        "baseline": {
+          "distinct": 2,
+          "extend": 13,
+          "join": 6,
+          "project": 16,
+          "project-away": 1,
+          "serialize": 2,
+          "sort": 2,
+          "summarize": 7,
+          "where": 20
+        },
+        "candidate": {
+          "distinct": 3,
+          "extend": 17,
+          "join": 7,
+          "project": 23,
+          "sort": 3,
+          "summarize": 8,
+          "where": 24
+        }
+      },
+      "transport_model": {
+        "summary_rows": 224,
+        "evidence_rows": 1120,
+        "union_rows": 1344,
+        "separate_rows_when_both_consumed": 1344,
+        "union_estimated_bytes": 52172,
+        "separate_estimated_bytes_when_both_consumed": 43212,
+        "operator_cardinality": "not exposed by the local Kusto response protocol"
+      },
+      "samples": {
+        "baseline": 5,
+        "candidate": 5
+      },
+      "median_cpu_seconds": {
+        "baseline": 0.131219,
+        "candidate": 0.082864
+      },
+      "cpu_change": -0.3685060852468012,
+      "median_peak_memory_bytes": {
+        "baseline": 20449952,
+        "candidate": 39005568
+      },
+      "peak_memory_change": 0.9073672153362511,
+      "median_elapsed_seconds": {
+        "baseline": 0.181119,
+        "candidate": 0.128688
+      },
+      "median_engine_elapsed_seconds": {
+        "baseline": 0.1738459,
+        "candidate": 0.1207565
+      },
+      "failures": {
+        "baseline": 0,
+        "candidate": 0
+      },
+      "operator_cardinality": "unavailable from response frames"
+    },
+    {
+      "name": "hot-repeated-256",
+      "dimensions": [
+        "repetition"
+      ],
+      "workload_sha256": "cce879421a5ca0622664e6f0a8e9ecf36260bed85b32430a6ac28f7c9ec6ab09",
+      "baseline_query_sha256": "10ce351b957b68f5f746ac2bf29e19a26aee5a179714b1844b16b35bd222e8e2",
+      "candidate_query_sha256": "b4ebdf561d65813d4ec7429d8e2ae0eec0b3eb319ba34553b0f5f326dff46258",
+      "query_bytes": {
+        "baseline": 65564,
+        "candidate": 67449
+      },
+      "operators": {
+        "baseline": {
+          "distinct": 2,
+          "extend": 13,
+          "join": 6,
+          "project": 16,
+          "project-away": 1,
+          "serialize": 2,
+          "sort": 2,
+          "summarize": 7,
+          "where": 20
+        },
+        "candidate": {
+          "distinct": 3,
+          "extend": 17,
+          "join": 7,
+          "project": 23,
+          "sort": 3,
+          "summarize": 8,
+          "where": 24
+        }
+      },
+      "transport_model": {
+        "summary_rows": 255,
+        "evidence_rows": 32895,
+        "union_rows": 33150,
+        "separate_rows_when_both_consumed": 33150,
+        "union_estimated_bytes": 1416578,
+        "separate_estimated_bytes_when_both_consumed": 1092621,
+        "operator_cardinality": "not exposed by the local Kusto response protocol"
+      },
+      "samples": {
+        "baseline": 5,
+        "candidate": 5
+      },
+      "median_cpu_seconds": {
+        "baseline": 0.566789,
+        "candidate": 0.770447
+      },
+      "cpu_change": 0.35931889997865163,
+      "median_peak_memory_bytes": {
+        "baseline": 792451136,
+        "candidate": 1676856544
+      },
+      "peak_memory_change": 1.116037781792012,
+      "median_elapsed_seconds": {
+        "baseline": 0.613011,
+        "candidate": 0.825302
+      },
+      "median_engine_elapsed_seconds": {
+        "baseline": 0.6049887,
+        "candidate": 0.8167462
+      },
+      "failures": {
+        "baseline": 0,
+        "candidate": 0
+      },
+      "operator_cardinality": "unavailable from response frames"
+    },
+    {
+      "name": "hot-unique-256",
+      "dimensions": [
+        "repetition"
+      ],
+      "workload_sha256": "4b9cc7e67eb5508ad0bda5db5d516bf306f443075c218e31030eee3b75b5cda4",
+      "baseline_query_sha256": "ee918b944321788c95f220997f4e772b9e1d9051049d08f01344910fd5cad8c7",
+      "candidate_query_sha256": "38fb3529a6e8913f6501c575e15511ff8667706b8450f81015984967bed4f600",
+      "query_bytes": {
+        "baseline": 1457420,
+        "candidate": 1459305
+      },
+      "operators": {
+        "baseline": {
+          "distinct": 2,
+          "extend": 13,
+          "join": 6,
+          "project": 16,
+          "project-away": 1,
+          "serialize": 2,
+          "sort": 2,
+          "summarize": 7,
+          "where": 20
+        },
+        "candidate": {
+          "distinct": 3,
+          "extend": 17,
+          "join": 7,
+          "project": 23,
+          "sort": 3,
+          "summarize": 8,
+          "where": 24
+        }
+      },
+      "transport_model": {
+        "summary_rows": 255,
+        "evidence_rows": 32895,
+        "union_rows": 33150,
+        "separate_rows_when_both_consumed": 33150,
+        "union_estimated_bytes": 1501832,
+        "separate_estimated_bytes_when_both_consumed": 1177875,
+        "operator_cardinality": "not exposed by the local Kusto response protocol"
+      },
+      "samples": {
+        "baseline": 5,
+        "candidate": 5
+      },
+      "median_cpu_seconds": {
+        "baseline": 0.68282,
+        "candidate": 0.944548
+      },
+      "cpu_change": 0.3833045312088106,
+      "median_peak_memory_bytes": {
+        "baseline": 863346400,
+        "candidate": 1552288496
+      },
+      "peak_memory_change": 0.7979903501074423,
+      "median_elapsed_seconds": {
+        "baseline": 0.786452,
+        "candidate": 1.056665
+      },
+      "median_engine_elapsed_seconds": {
+        "baseline": 0.761628,
+        "candidate": 1.034118
+      },
+      "failures": {
+        "baseline": 0,
+        "candidate": 0
+      },
+      "operator_cardinality": "unavailable from response frames"
+    },
+    {
+      "name": "low-selectivity-256",
+      "dimensions": [
+        "selectivity"
+      ],
+      "workload_sha256": "a52eab7b54928349e01fd743da6daef1ac622c73f64ca4adfafef6b2d564bebb",
+      "baseline_query_sha256": "af2aaa56bd5464d13b1cc209b869580a710e65425b86692d2033fbb657314ef1",
+      "candidate_query_sha256": "7edc4092b0a89951219277a13f06c0ad30b6b2fbd4b5c8bc2df5c4a75655c2c2",
+      "query_bytes": {
+        "baseline": 31807,
+        "candidate": 33694
+      },
+      "operators": {
+        "baseline": {
+          "distinct": 2,
+          "extend": 13,
+          "join": 6,
+          "project": 16,
+          "project-away": 1,
+          "serialize": 2,
+          "sort": 2,
+          "summarize": 7,
+          "where": 20
+        },
+        "candidate": {
+          "distinct": 3,
+          "extend": 17,
+          "join": 7,
+          "project": 23,
+          "sort": 3,
+          "summarize": 8,
+          "where": 24
+        }
+      },
+      "transport_model": {
+        "summary_rows": 57,
+        "evidence_rows": 12996,
+        "union_rows": 13053,
+        "separate_rows_when_both_consumed": 13053,
+        "union_estimated_bytes": 562627,
+        "separate_estimated_bytes_when_both_consumed": 432667,
+        "operator_cardinality": "not exposed by the local Kusto response protocol"
+      },
+      "samples": {
+        "baseline": 5,
+        "candidate": 5
+      },
+      "median_cpu_seconds": {
+        "baseline": 0.171441,
+        "candidate": 0.139046
+      },
+      "cpu_change": -0.18895713394112268,
+      "median_peak_memory_bytes": {
+        "baseline": 137170576,
+        "candidate": 307787680
+      },
+      "peak_memory_change": 1.2438316508928269,
+      "median_elapsed_seconds": {
+        "baseline": 0.217456,
+        "candidate": 0.187644
+      },
+      "median_engine_elapsed_seconds": {
+        "baseline": 0.2099995,
+        "candidate": 0.1790061
+      },
+      "failures": {
+        "baseline": 0,
+        "candidate": 0
+      },
+      "operator_cardinality": "unavailable from response frames"
+    },
+    {
+      "name": "high-selectivity-256",
+      "dimensions": [
+        "selectivity"
+      ],
+      "workload_sha256": "c20704f2bcc07c5fe0b2438a2b620a2f4ffeee5531f72d02c5bbed9abe847417",
+      "baseline_query_sha256": "10ce351b957b68f5f746ac2bf29e19a26aee5a179714b1844b16b35bd222e8e2",
+      "candidate_query_sha256": "b4ebdf561d65813d4ec7429d8e2ae0eec0b3eb319ba34553b0f5f326dff46258",
+      "query_bytes": {
+        "baseline": 65564,
+        "candidate": 67449
+      },
+      "operators": {
+        "baseline": {
+          "distinct": 2,
+          "extend": 13,
+          "join": 6,
+          "project": 16,
+          "project-away": 1,
+          "serialize": 2,
+          "sort": 2,
+          "summarize": 7,
+          "where": 20
+        },
+        "candidate": {
+          "distinct": 3,
+          "extend": 17,
+          "join": 7,
+          "project": 23,
+          "sort": 3,
+          "summarize": 8,
+          "where": 24
+        }
+      },
+      "transport_model": {
+        "summary_rows": 255,
+        "evidence_rows": 32895,
+        "union_rows": 33150,
+        "separate_rows_when_both_consumed": 33150,
+        "union_estimated_bytes": 1416578,
+        "separate_estimated_bytes_when_both_consumed": 1092621,
+        "operator_cardinality": "not exposed by the local Kusto response protocol"
+      },
+      "samples": {
+        "baseline": 5,
+        "candidate": 5
+      },
+      "median_cpu_seconds": {
+        "baseline": 0.552175,
+        "candidate": 0.759159
+      },
+      "cpu_change": 0.37485217548784355,
+      "median_peak_memory_bytes": {
+        "baseline": 792450368,
+        "candidate": 1676856544
+      },
+      "peak_memory_change": 1.1160398325412855,
+      "median_elapsed_seconds": {
+        "baseline": 0.602258,
+        "candidate": 0.811512
+      },
+      "median_engine_elapsed_seconds": {
+        "baseline": 0.5938609,
+        "candidate": 0.8031048
+      },
+      "failures": {
+        "baseline": 0,
+        "candidate": 0
+      },
+      "operator_cardinality": "unavailable from response frames"
+    },
+    {
+      "name": "one-context-field",
+      "dimensions": [
+        "context-fanout"
+      ],
+      "workload_sha256": "637f6a237fa4b86ebedc5bdcb046079fdfad3d0c30951204e92cc34d8fed947d",
+      "baseline_query_sha256": "1c1a93a8b3edbccafe03479d221db7c82bb5262e24d3aa11a7a6142c7569d129",
+      "candidate_query_sha256": "ceb5a8df285cfc458e2b895d458407228d7836f39f03581a0d82c502b763504b",
+      "query_bytes": {
+        "baseline": 33177,
+        "candidate": 33098
+      },
+      "operators": {
+        "baseline": {
+          "distinct": 1,
+          "extend": 9,
+          "join": 2,
+          "project": 11,
+          "serialize": 1,
+          "sort": 2,
+          "summarize": 3,
+          "where": 13
+        },
+        "candidate": {
+          "distinct": 1,
+          "extend": 8,
+          "join": 2,
+          "project": 11,
+          "sort": 2,
+          "summarize": 3,
+          "where": 12
+        }
+      },
+      "transport_model": {
+        "summary_rows": 127,
+        "evidence_rows": 505,
+        "union_rows": 632,
+        "separate_rows_when_both_consumed": 632,
+        "union_estimated_bytes": 19414,
+        "separate_estimated_bytes_when_both_consumed": 14782,
+        "operator_cardinality": "not exposed by the local Kusto response protocol"
+      },
+      "samples": {
+        "baseline": 5,
+        "candidate": 5
+      },
+      "median_cpu_seconds": {
+        "baseline": 0.030549,
+        "candidate": 0.01997
+      },
+      "cpu_change": -0.3462961144390978,
+      "median_peak_memory_bytes": {
+        "baseline": 9589040,
+        "candidate": 24114064
+      },
+      "peak_memory_change": 1.5147526759717342,
+      "median_elapsed_seconds": {
+        "baseline": 0.043944,
+        "candidate": 0.038974
+      },
+      "median_engine_elapsed_seconds": {
+        "baseline": 0.0368411,
+        "candidate": 0.0317857
+      },
+      "failures": {
+        "baseline": 0,
+        "candidate": 0
+      },
+      "operator_cardinality": "unavailable from response frames"
+    },
+    {
+      "name": "three-context-fields",
+      "dimensions": [
+        "context-fanout"
+      ],
+      "workload_sha256": "46a66727daa1f32fe0ec05fe2ff152e453d10505a02442ccbe37aa60af65f57a",
+      "baseline_query_sha256": "058843419154b8961848afb3d4ef398d67243d13e1a529cd017862476ef0545c",
+      "candidate_query_sha256": "7f97e4c19eaffd525093515812b0cb9f6e0b811a27eacca299eb3938c9b19df1",
+      "query_bytes": {
+        "baseline": 35588,
+        "candidate": 37473
+      },
+      "operators": {
+        "baseline": {
+          "distinct": 2,
+          "extend": 13,
+          "join": 6,
+          "project": 16,
+          "project-away": 1,
+          "serialize": 2,
+          "sort": 2,
+          "summarize": 7,
+          "where": 20
+        },
+        "candidate": {
+          "distinct": 3,
+          "extend": 17,
+          "join": 7,
+          "project": 23,
+          "sort": 3,
+          "summarize": 8,
+          "where": 24
+        }
+      },
+      "transport_model": {
+        "summary_rows": 127,
+        "evidence_rows": 8255,
+        "union_rows": 8382,
+        "separate_rows_when_both_consumed": 8382,
+        "union_estimated_bytes": 349354,
+        "separate_estimated_bytes_when_both_consumed": 271797,
+        "operator_cardinality": "not exposed by the local Kusto response protocol"
+      },
+      "samples": {
+        "baseline": 5,
+        "candidate": 5
+      },
+      "median_cpu_seconds": {
+        "baseline": 0.173641,
+        "candidate": 0.162424
+      },
+      "cpu_change": -0.06459879867082075,
+      "median_peak_memory_bytes": {
+        "baseline": 136699536,
+        "candidate": 311519168
+      },
+      "peak_memory_change": 1.2788604637253487,
+      "median_elapsed_seconds": {
+        "baseline": 0.210552,
+        "candidate": 0.19786
+      },
+      "median_engine_elapsed_seconds": {
+        "baseline": 0.2031604,
+        "candidate": 0.1906697
+      },
+      "failures": {
+        "baseline": 0,
+        "candidate": 0
+      },
+      "operator_cardinality": "unavailable from response frames"
+    },
+    {
+      "name": "shared-child-consumers",
+      "dimensions": [
+        "child-reuse"
+      ],
+      "workload_sha256": "f0152ab8fae9a58ecbfbb760dedb9d14e6d31c802d00ed6a5458861222db861d",
+      "baseline_query_sha256": "fe03fe46f02c5b5dec4b4fbd4de0b667e148970fa4e51a21ebbf5226d2d939d5",
+      "candidate_query_sha256": "0f62f273c91ed86609aa70702832cdc84e9f976e12a37c74fbbf06a9a3c6e65c",
+      "query_bytes": {
+        "baseline": 27890,
+        "candidate": 45091
+      },
+      "operators": {
+        "baseline": {
+          "distinct": 5,
+          "extend": 35,
+          "join": 16,
+          "project": 41,
+          "project-away": 4,
+          "serialize": 5,
+          "sort": 5,
+          "summarize": 13,
+          "where": 53
+        },
+        "candidate": {
+          "distinct": 13,
+          "extend": 68,
+          "join": 28,
+          "project": 99,
+          "sort": 13,
+          "summarize": 23,
+          "where": 99
+        }
+      },
+      "transport_model": {
+        "summary_rows": 127,
+        "evidence_rows": 8255,
+        "union_rows": 8382,
+        "separate_rows_when_both_consumed": 8382,
+        "union_estimated_bytes": 349354,
+        "separate_estimated_bytes_when_both_consumed": 271797,
+        "operator_cardinality": "not exposed by the local Kusto response protocol"
+      },
+      "samples": {
+        "baseline": 5,
+        "candidate": 5
+      },
+      "median_cpu_seconds": {
+        "baseline": 6.82448,
+        "candidate": 2.020132
+      },
+      "cpu_change": -0.7039874100297752,
+      "median_peak_memory_bytes": {
+        "baseline": 433373168,
+        "candidate": 787330096
+      },
+      "peak_memory_change": 0.816748599442594,
+      "median_elapsed_seconds": {
+        "baseline": 7.346722,
+        "candidate": 2.388022
+      },
+      "median_engine_elapsed_seconds": {
+        "baseline": 7.3397894,
+        "candidate": 2.3806027
+      },
+      "failures": {
+        "baseline": 0,
+        "candidate": 0
+      },
+      "operator_cardinality": "unavailable from response frames"
+    },
+    {
+      "name": "chain-depth-one",
+      "dimensions": [
+        "chain-depth"
+      ],
+      "workload_sha256": "41503b31849d0c953ba8b3e2c458ee4d84c84ee80b4cd29680b97252faa04012",
+      "baseline_query_sha256": "058843419154b8961848afb3d4ef398d67243d13e1a529cd017862476ef0545c",
+      "candidate_query_sha256": "7f97e4c19eaffd525093515812b0cb9f6e0b811a27eacca299eb3938c9b19df1",
+      "query_bytes": {
+        "baseline": 35588,
+        "candidate": 37473
+      },
+      "operators": {
+        "baseline": {
+          "distinct": 2,
+          "extend": 13,
+          "join": 6,
+          "project": 16,
+          "project-away": 1,
+          "serialize": 2,
+          "sort": 2,
+          "summarize": 7,
+          "where": 20
+        },
+        "candidate": {
+          "distinct": 3,
+          "extend": 17,
+          "join": 7,
+          "project": 23,
+          "sort": 3,
+          "summarize": 8,
+          "where": 24
+        }
+      },
+      "transport_model": {
+        "summary_rows": 127,
+        "evidence_rows": 8255,
+        "union_rows": 8382,
+        "separate_rows_when_both_consumed": 8382,
+        "union_estimated_bytes": 349354,
+        "separate_estimated_bytes_when_both_consumed": 271797,
+        "operator_cardinality": "not exposed by the local Kusto response protocol"
+      },
+      "samples": {
+        "baseline": 5,
+        "candidate": 5
+      },
+      "median_cpu_seconds": {
+        "baseline": 0.174958,
+        "candidate": 0.163329
+      },
+      "cpu_change": -0.06646738074280689,
+      "median_peak_memory_bytes": {
+        "baseline": 136699536,
+        "candidate": 311519168
+      },
+      "peak_memory_change": 1.2788604637253487,
+      "median_elapsed_seconds": {
+        "baseline": 0.214083,
+        "candidate": 0.197511
+      },
+      "median_engine_elapsed_seconds": {
+        "baseline": 0.2068565,
+        "candidate": 0.1903893
+      },
+      "failures": {
+        "baseline": 0,
+        "candidate": 0
+      },
+      "operator_cardinality": "unavailable from response frames"
+    },
+    {
+      "name": "chain-depth-three",
+      "dimensions": [
+        "chain-depth"
+      ],
+      "workload_sha256": "9eb217d02415f095084760cb874dbe31c22f105a3b0e5baa99f958b98e2c09ec",
+      "baseline_query_sha256": "87fa6b506b134e19bc2c0703993903c2d82b5b98c9f7cdd79bc58738dcc4f4c4",
+      "candidate_query_sha256": "be137b8f773c4c4583818118639c324508b024f4b631f013638d894b675b3538",
+      "query_bytes": {
+        "baseline": 40920,
+        "candidate": 65662
+      },
+      "operators": {
+        "baseline": {
+          "distinct": 4,
+          "extend": 25,
+          "join": 12,
+          "project": 32,
+          "project-away": 3,
+          "serialize": 4,
+          "sort": 4,
+          "summarize": 9,
+          "where": 38
+        },
+        "candidate": {
+          "distinct": 15,
+          "extend": 74,
+          "join": 31,
+          "project": 113,
+          "sort": 15,
+          "summarize": 23,
+          "where": 108
+        }
+      },
+      "transport_model": {
+        "summary_rows": 127,
+        "evidence_rows": 8255,
+        "union_rows": 8382,
+        "separate_rows_when_both_consumed": 8382,
+        "union_estimated_bytes": 349354,
+        "separate_estimated_bytes_when_both_consumed": 271797,
+        "operator_cardinality": "not exposed by the local Kusto response protocol"
+      },
+      "samples": {
+        "baseline": 5,
+        "candidate": 5
+      },
+      "median_cpu_seconds": {
+        "baseline": 21.693578,
+        "candidate": 1.695112
+      },
+      "cpu_change": -0.9218611148423741,
+      "median_peak_memory_bytes": {
+        "baseline": 248168816,
+        "candidate": 473391472
+      },
+      "peak_memory_change": 0.9075381009997645,
+      "median_elapsed_seconds": {
+        "baseline": 23.156901,
+        "candidate": 1.973803
+      },
+      "median_engine_elapsed_seconds": {
+        "baseline": 23.1453346,
+        "candidate": 1.9662223
+      },
+      "failures": {
+        "baseline": 0,
+        "candidate": 0
+      },
+      "operator_cardinality": "unavailable from response frames"
+    },
+    {
+      "name": "numeric-pairing-repeated",
+      "dimensions": [
+        "numeric-pairing"
+      ],
+      "workload_sha256": "6565683d3774ab94ebc7f8c942c5dcd7c7784c026e75754cbdb8b04e912988ce",
+      "baseline_query_sha256": "211413d784174e1cb9f27a7dc5a29ff1ac688c6ad96e59aeaefaa84153d26b35",
+      "candidate_query_sha256": "ababe5da532487288e987377d6ccfc4d1a70cd259a16c5c50aa9083b9e04de3e",
+      "query_bytes": {
+        "baseline": 36403,
+        "candidate": 38288
+      },
+      "operators": {
+        "baseline": {
+          "distinct": 2,
+          "extend": 14,
+          "join": 6,
+          "project": 16,
+          "project-away": 1,
+          "serialize": 2,
+          "sort": 2,
+          "summarize": 7,
+          "where": 20
+        },
+        "candidate": {
+          "distinct": 3,
+          "extend": 18,
+          "join": 7,
+          "project": 23,
+          "sort": 3,
+          "summarize": 8,
+          "where": 24
+        }
+      },
+      "transport_model": {
+        "summary_rows": 127,
+        "evidence_rows": 8255,
+        "union_rows": 8382,
+        "separate_rows_when_both_consumed": 8382,
+        "union_estimated_bytes": 349354,
+        "separate_estimated_bytes_when_both_consumed": 271797,
+        "operator_cardinality": "not exposed by the local Kusto response protocol"
+      },
+      "samples": {
+        "baseline": 5,
+        "candidate": 5
+      },
+      "median_cpu_seconds": {
+        "baseline": 0.171928,
+        "candidate": 0.162604
+      },
+      "cpu_change": -0.054232004094737274,
+      "median_peak_memory_bytes": {
+        "baseline": 136815504,
+        "candidate": 311568512
+      },
+      "peak_memory_change": 1.2772895095281016,
+      "median_elapsed_seconds": {
+        "baseline": 0.209818,
+        "candidate": 0.204156
+      },
+      "median_engine_elapsed_seconds": {
+        "baseline": 0.2024455,
+        "candidate": 0.1965704
+      },
+      "failures": {
+        "baseline": 0,
+        "candidate": 0
+      },
+      "operator_cardinality": "unavailable from response frames"
+    },
+    {
+      "name": "numeric-pairing-unique",
+      "dimensions": [
+        "numeric-pairing"
+      ],
+      "workload_sha256": "6032d52c35cfaa0d0a122c7b016cede2dc65285152a6c20d98156cfe33dc546e",
+      "baseline_query_sha256": "c0d1b12284e6d1056377070666dde70b7cfe9b6feba1fc1688fe7a6e1a8daead",
+      "candidate_query_sha256": "7a10c45cb5cc065de8f65784f62dba0dc7a521b803be5e84675a2ce1ee2110e7",
+      "query_bytes": {
+        "baseline": 374056,
+        "candidate": 375941
+      },
+      "operators": {
+        "baseline": {
+          "distinct": 2,
+          "extend": 14,
+          "join": 6,
+          "project": 16,
+          "project-away": 1,
+          "serialize": 2,
+          "sort": 2,
+          "summarize": 7,
+          "where": 20
+        },
+        "candidate": {
+          "distinct": 3,
+          "extend": 18,
+          "join": 7,
+          "project": 23,
+          "sort": 3,
+          "summarize": 8,
+          "where": 24
+        }
+      },
+      "transport_model": {
+        "summary_rows": 127,
+        "evidence_rows": 8255,
+        "union_rows": 8382,
+        "separate_rows_when_both_consumed": 8382,
+        "union_estimated_bytes": 364208,
+        "separate_estimated_bytes_when_both_consumed": 286651,
+        "operator_cardinality": "not exposed by the local Kusto response protocol"
+      },
+      "samples": {
+        "baseline": 5,
+        "candidate": 5
+      },
+      "median_cpu_seconds": {
+        "baseline": 0.21344,
+        "candidate": 0.212129
+      },
+      "cpu_change": -0.006142241379310298,
+      "median_peak_memory_bytes": {
+        "baseline": 141191504,
+        "candidate": 305202768
+      },
+      "peak_memory_change": 1.1616227559981231,
+      "median_elapsed_seconds": {
+        "baseline": 0.264047,
+        "candidate": 0.259871
+      },
+      "median_engine_elapsed_seconds": {
+        "baseline": 0.2519181,
+        "candidate": 0.2499207
+      },
+      "failures": {
+        "baseline": 0,
+        "candidate": 0
+      },
+      "operator_cardinality": "unavailable from response frames"
+    }
+  ]
+}

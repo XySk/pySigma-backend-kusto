@@ -7,9 +7,9 @@ datetime(2026-01-01T00:00:00Z),"g","A",
 ] | extend Device=Host;
 let Actual=(){
 let Child = () {
-union (Events
+Events
 | where Marker =~ "A"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"])
+| project EventTime_1 = ["Timestamp"], GroupHost = ["Host"]
 | where isnotnull(EventTime_1) and isnotempty(GroupHost)
 // Preserve individual source matches, including timestamp ties, before the threshold lookup.
 | sort by GroupHost asc, EventTime_1 asc
@@ -19,11 +19,12 @@ union (Events
 | project WindowStart = EventTime_1 - 5m, WindowEnd = EventTime_1, ["Host"] = GroupHost
 };
 union (Child()
-| project EventTime_1 = todatetime(["WindowEnd"]), GroupActor = ["Host"], SourceRule = "child"),
+| project EventTime_1 = ["WindowEnd"], GroupActor = ["Host"], SourceRule = "child"
+| where isnotnull(EventTime_1) and isnotempty(GroupActor)),
 (Events
 | where Marker =~ "B"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupActor = ["Device"], SourceRule = "B")
-| where isnotnull(EventTime_1) and isnotempty(GroupActor)
+| project EventTime_1 = ["Timestamp"], GroupActor = ["Device"], SourceRule = "B"
+| where isnotnull(EventTime_1) and isnotempty(GroupActor))
 // Batch simultaneous source matches before updating inclusive trailing presence.
 | summarize MatchesChild = countif(SourceRule == "child") > 0, MatchesB = countif(SourceRule == "B") > 0 by GroupActor, EventTime_1
 | sort by GroupActor asc, EventTime_1 asc

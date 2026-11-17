@@ -4,22 +4,22 @@
   "fixtures": [
     {
       "name": "value_count_fractional.kql",
-      "sha256": "37256d816f3c5bb131785356ac000819133884010572bf7a494487629abfeef7",
+      "sha256": "de41fd5cc9f08b977d366803db1052ea728e8a4b1a00a8ab66210771d026b343",
       "expected_error": null
     },
     {
       "name": "value_count_grouped_counted_context.kql",
-      "sha256": "dbc2ddf726718424d68ac47c8074d4f79feccce1b84ddf3e93df9689599bea21",
+      "sha256": "7ffe6792e56e1396ae7fcf298f74b2ccf5c6e7064757535c5c031a6efd354081",
       "expected_error": null
     },
     {
       "name": "value_count_native_types.kql",
-      "sha256": "845c1ca5cc9c3548082d7dfb9a6c274536d390a0e6dad84a0e7f9a601f3c00c5",
+      "sha256": "cbbed0b3113c9c8604d32c9dcd47f34fe6488e40cefc5717b49f21f8af589328",
       "expected_error": null
     },
     {
       "name": "value_count_real_intervals.kql",
-      "sha256": "e6c9bcc44d49dae996f20a782bcaa22ece37d1538e49e7747ae8c622bff5b37b",
+      "sha256": "f5134c61a0dc96ca0a6ccfc7c925da0e7041a66158953703ec046c62c08adaf3",
       "expected_error": null
     }
   ]

@@ -5,9 +5,9 @@ let Events=datatable(Timestamp:datetime,Marker:string,Amount:real) [
 let Actual=(){
 let Child = () {
 let ContextSummary = () {
-union (Events
+Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "source-rule")
+| project EventTime_1 = ["Timestamp"], SourceRule = "source-rule"
 | where isnotnull(EventTime_1)
 // Batch simultaneous source matches before updating inclusive trailing presence.
 | summarize MatchesSourcerule = countif(SourceRule == "source-rule") > 0 by EventTime_1
@@ -25,16 +25,17 @@ union (Events
 };
 let CorrelationMatches = materialize(ContextSummary()
 | serialize CorrelationMatchId = row_number());
-let WindowSourceMatches = materialize(
+let WindowSourceMatches =
 CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, ContextPartition = 1
 | join kind=inner (
-union (Events
+Events
 | where Marker =~ "match"
-| extend ContextEventTime = todatetime(["Timestamp"]), ContextAmount = ["Amount"]
-| extend ContextSourceRule = "source-rule")
+| extend ContextEventTime = ["Timestamp"], ContextAmount = ["Amount"]
+| where isnotnull(ContextEventTime)
+| extend ContextSourceRule = "source-rule"
 | project ContextEventTime, ContextSourceRule, ContextAmount, ContextPartition = 1
 ) on ContextPartition
-| where ContextEventTime between ((CompletionTime - 1m) .. CompletionTime));
+| where ContextEventTime between ((CompletionTime - 1m) .. CompletionTime);
 let CompleteContextRelationships = materialize(WindowSourceMatches
 | project CorrelationMatchId, ContextAmount
 | distinct *);
@@ -43,35 +44,36 @@ union (CorrelationMatches | extend ContextRowKind = "Summary"), (CorrelationMatc
 let ChildResults = materialize(Child());
 let ContextSummary = () {
 // Strict sequence: "child". Total inclusive span: 5m.
-union (ChildResults
+ChildResults
 | where ["ContextRowKind"] == "Summary"
-| extend EventTime = todatetime(["WindowEnd"])
-| extend SourceRule = "child")
+| extend EventTime = ["WindowEnd"]
 | where isnotnull(EventTime)
+| extend SourceRule = "child"
 // Batch equal timestamps: simultaneous source matches cannot advance strict sequence positions.
 | summarize by EventTime
 | project WindowStart = EventTime - 5m, WindowEnd = EventTime, RuleCount = tolong(1)
 };
 let CorrelationMatches = materialize(ContextSummary()
 | serialize CorrelationMatchId = row_number());
-let WindowSourceMatches = materialize(
+let WindowSourceMatches =
 CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, ContextPartition = 1
 | join kind=inner (
-union (ChildResults | where ["ContextRowKind"] == "Summary"
+ChildResults | where ["ContextRowKind"] == "Summary"
 | project-away ["ContextAmount"]
 | join kind=leftouter (ChildResults | where ["ContextRowKind"] == "ContextEvidence" | project ["CorrelationMatchId"], ["ContextAmount"], HasContextEvidence = true) on ["CorrelationMatchId"]
-| extend ContextEventTime = todatetime(["WindowEnd"]), ContextAmount = ["ContextAmount"]
-| extend ContextSourceRule = "child")
+| extend ContextEventTime = ["WindowEnd"], ContextAmount = ["ContextAmount"]
+| where isnotnull(ContextEventTime)
+| extend ContextSourceRule = "child"
 | project ContextEventTime, ContextSourceRule, ContextAmount, HasContextEvidence, ContextPartition = 1
 ) on ContextPartition
-| where ContextEventTime between ((CompletionTime - 5m) .. CompletionTime));
+| where ContextEventTime between ((CompletionTime - 5m) .. CompletionTime);
 // Successful one/two-step completions need only endpoint participant filters.
-let OrderedSourceRelationships = materialize(WindowSourceMatches
-| where (ContextSourceRule == "child" and ContextEventTime == CompletionTime));
-let CompleteContextRelationships = materialize(OrderedSourceRelationships
+let OrderedSourceRelationships = WindowSourceMatches
+| where (ContextSourceRule == "child" and ContextEventTime == CompletionTime);
+let CompleteContextRelationships = OrderedSourceRelationships
 | where HasContextEvidence
 | project CorrelationMatchId, ContextAmount
-| distinct *);
+| distinct *;
 let ValuesForAmount = CompleteContextRelationships
 | where isnotnull(ContextAmount)
 | summarize by CorrelationMatchId, ContextAmount

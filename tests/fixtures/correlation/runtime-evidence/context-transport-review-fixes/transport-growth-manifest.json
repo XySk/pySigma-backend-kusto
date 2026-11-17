@@ -1,0 +1,991 @@
+{
+  "format": 1,
+  "revision": "0e047fdf98284758cb30791d4981b93be3e93ee9",
+  "oracle": "independent inclusive-window summary and complete-relationship model",
+  "dimensions": [
+    "chain-depth",
+    "child-reuse",
+    "context-fanout",
+    "density",
+    "groups",
+    "numeric-pairing",
+    "repetition",
+    "selectivity"
+  ],
+  "workloads": [
+    {
+      "name": "sparse-64",
+      "fixture": "sparse-64.json",
+      "fixture_sha256": "78826d4abaf3afd4bab7d4e37ae7b676d21466c39970bf7cb31dca6a307bc232",
+      "workload_sha256": "78826d4abaf3afd4bab7d4e37ae7b676d21466c39970bf7cb31dca6a307bc232",
+      "query": "sparse-64.kql",
+      "query_sha256": "1fe0f1128f209ce02a97e013ef398d40517905e90a6dad5a3854a39b17c11857",
+      "query_bytes": 18033,
+      "query_lines": 352,
+      "operators": {
+        "distinct": 2,
+        "extend": 13,
+        "join": 6,
+        "project": 16,
+        "project-away": 1,
+        "serialize": 2,
+        "sort": 2,
+        "summarize": 7,
+        "where": 20
+      },
+      "input_rows": 64,
+      "expected_rows": 188,
+      "dimensions": [
+        "density"
+      ],
+      "transport_model": {
+        "summary_rows": 63,
+        "evidence_rows": 188,
+        "union_rows": 251,
+        "separate_rows_when_both_consumed": 251,
+        "union_estimated_bytes": 13706,
+        "separate_estimated_bytes_when_both_consumed": 9029,
+        "relations": [
+          {
+            "name": "ScaleChild",
+            "consumer": "ContextParent1",
+            "summary_references": 1,
+            "evidence_references": 2,
+            "summary_rows": 63,
+            "evidence_rows": 188,
+            "summary_estimated_bytes": 2630,
+            "union_evidence_estimated_bytes": 11076,
+            "separate_evidence_estimated_bytes": 6399,
+            "current_rows_across_uses": 753,
+            "candidate_rows_across_uses": 439,
+            "current_estimated_bytes_across_uses": 41118,
+            "candidate_estimated_bytes_across_uses": 15428
+          }
+        ],
+        "current": {
+          "rows_across_uses": 753,
+          "estimated_bytes_across_uses": 41118
+        },
+        "candidate": {
+          "rows_across_uses": 439,
+          "estimated_bytes_across_uses": 15428
+        },
+        "operator_cardinality": "not exposed by the local Kusto response protocol"
+      }
+    },
+    {
+      "name": "dense-64",
+      "fixture": "dense-64.json",
+      "fixture_sha256": "96e41d0b5e47063fa1c656fc529cb6a2cd0e3fd90499b73a4a7ab22034fed615",
+      "workload_sha256": "96e41d0b5e47063fa1c656fc529cb6a2cd0e3fd90499b73a4a7ab22034fed615",
+      "query": "dense-64.kql",
+      "query_sha256": "1d6abc0fd3fd66a124e1da2c8ab40074406e4341ad7cb79c355af802c7c8db92",
+      "query_bytes": 20747,
+      "query_lines": 413,
+      "operators": {
+        "distinct": 2,
+        "extend": 13,
+        "join": 6,
+        "project": 16,
+        "project-away": 1,
+        "serialize": 2,
+        "sort": 2,
+        "summarize": 7,
+        "where": 20
+      },
+      "input_rows": 64,
+      "expected_rows": 249,
+      "dimensions": [
+        "density"
+      ],
+      "transport_model": {
+        "summary_rows": 63,
+        "evidence_rows": 2079,
+        "union_rows": 2142,
+        "separate_rows_when_both_consumed": 2142,
+        "union_estimated_bytes": 119028,
+        "separate_estimated_bytes_when_both_consumed": 69230,
+        "relations": [
+          {
+            "name": "ScaleChild",
+            "consumer": "ContextParent1",
+            "summary_references": 1,
+            "evidence_references": 2,
+            "summary_rows": 63,
+            "evidence_rows": 2079,
+            "summary_estimated_bytes": 2431,
+            "union_evidence_estimated_bytes": 116597,
+            "separate_evidence_estimated_bytes": 66799,
+            "current_rows_across_uses": 6426,
+            "candidate_rows_across_uses": 4221,
+            "current_estimated_bytes_across_uses": 357084,
+            "candidate_estimated_bytes_across_uses": 136029
+          }
+        ],
+        "current": {
+          "rows_across_uses": 6426,
+          "estimated_bytes_across_uses": 357084
+        },
+        "candidate": {
+          "rows_across_uses": 4221,
+          "estimated_bytes_across_uses": 136029
+        },
+        "operator_cardinality": "not exposed by the local Kusto response protocol"
+      }
+    },
+    {
+      "name": "dense-256",
+      "fixture": "dense-256.json",
+      "fixture_sha256": "a67a704ce1237c0a3bf8d6e4ba2ce69a9e6cee26e45707957999d591657b78c5",
+      "workload_sha256": "a67a704ce1237c0a3bf8d6e4ba2ce69a9e6cee26e45707957999d591657b78c5",
+      "query": "dense-256.kql",
+      "query_sha256": "10ce351b957b68f5f746ac2bf29e19a26aee5a179714b1844b16b35bd222e8e2",
+      "query_bytes": 65564,
+      "query_lines": 1373,
+      "operators": {
+        "distinct": 2,
+        "extend": 13,
+        "join": 6,
+        "project": 16,
+        "project-away": 1,
+        "serialize": 2,
+        "sort": 2,
+        "summarize": 7,
+        "where": 20
+      },
+      "input_rows": 256,
+      "expected_rows": 1017,
+      "dimensions": [
+        "density"
+      ],
+      "transport_model": {
+        "summary_rows": 255,
+        "evidence_rows": 32895,
+        "union_rows": 33150,
+        "separate_rows_when_both_consumed": 33150,
+        "union_estimated_bytes": 1941767,
+        "separate_estimated_bytes_when_both_consumed": 1096593,
+        "relations": [
+          {
+            "name": "ScaleChild",
+            "consumer": "ContextParent1",
+            "summary_references": 1,
+            "evidence_references": 2,
+            "summary_rows": 255,
+            "evidence_rows": 32895,
+            "summary_estimated_bytes": 10388,
+            "union_evidence_estimated_bytes": 1931379,
+            "separate_evidence_estimated_bytes": 1086205,
+            "current_rows_across_uses": 99450,
+            "candidate_rows_across_uses": 66045,
+            "current_estimated_bytes_across_uses": 5825301,
+            "candidate_estimated_bytes_across_uses": 2182798
+          }
+        ],
+        "current": {
+          "rows_across_uses": 99450,
+          "estimated_bytes_across_uses": 5825301
+        },
+        "candidate": {
+          "rows_across_uses": 66045,
+          "estimated_bytes_across_uses": 2182798
+        },
+        "operator_cardinality": "not exposed by the local Kusto response protocol"
+      }
+    },
+    {
+      "name": "many-groups-256",
+      "fixture": "many-groups-256.json",
+      "fixture_sha256": "de8c7f9025b6e17a5539d585027fc706de0a8c150cf27ba9d3f948389b7d6077",
+      "workload_sha256": "de8c7f9025b6e17a5539d585027fc706de0a8c150cf27ba9d3f948389b7d6077",
+      "query": "many-groups-256.kql",
+      "query_sha256": "19b52966fb07080d2eb1e38d89ccd60c27eb12b000f903913f9218dd3f8e4e28",
+      "query_bytes": 31813,
+      "query_lines": 580,
+      "operators": {
+        "distinct": 2,
+        "extend": 13,
+        "join": 6,
+        "project": 16,
+        "project-away": 1,
+        "serialize": 2,
+        "sort": 2,
+        "summarize": 7,
+        "where": 20
+      },
+      "input_rows": 256,
+      "expected_rows": 224,
+      "dimensions": [
+        "groups"
+      ],
+      "transport_model": {
+        "summary_rows": 224,
+        "evidence_rows": 1120,
+        "union_rows": 1344,
+        "separate_rows_when_both_consumed": 1344,
+        "union_estimated_bytes": 74356,
+        "separate_estimated_bytes_when_both_consumed": 46882,
+        "relations": [
+          {
+            "name": "ScaleChild",
+            "consumer": "ContextParent1",
+            "summary_references": 1,
+            "evidence_references": 2,
+            "summary_rows": 224,
+            "evidence_rows": 1120,
+            "summary_estimated_bytes": 9132,
+            "union_evidence_estimated_bytes": 65224,
+            "separate_evidence_estimated_bytes": 37750,
+            "current_rows_across_uses": 4032,
+            "candidate_rows_across_uses": 2464,
+            "current_estimated_bytes_across_uses": 223068,
+            "candidate_estimated_bytes_across_uses": 84632
+          }
+        ],
+        "current": {
+          "rows_across_uses": 4032,
+          "estimated_bytes_across_uses": 223068
+        },
+        "candidate": {
+          "rows_across_uses": 2464,
+          "estimated_bytes_across_uses": 84632
+        },
+        "operator_cardinality": "not exposed by the local Kusto response protocol"
+      }
+    },
+    {
+      "name": "hot-repeated-256",
+      "fixture": "hot-repeated-256.json",
+      "fixture_sha256": "6fae8323812186f6d56c197ae3e346cc87110f8199e48d3767bbc707b23deeba",
+      "workload_sha256": "6fae8323812186f6d56c197ae3e346cc87110f8199e48d3767bbc707b23deeba",
+      "query": "hot-repeated-256.kql",
+      "query_sha256": "10ce351b957b68f5f746ac2bf29e19a26aee5a179714b1844b16b35bd222e8e2",
+      "query_bytes": 65564,
+      "query_lines": 1373,
+      "operators": {
+        "distinct": 2,
+        "extend": 13,
+        "join": 6,
+        "project": 16,
+        "project-away": 1,
+        "serialize": 2,
+        "sort": 2,
+        "summarize": 7,
+        "where": 20
+      },
+      "input_rows": 256,
+      "expected_rows": 1017,
+      "dimensions": [
+        "repetition"
+      ],
+      "transport_model": {
+        "summary_rows": 255,
+        "evidence_rows": 32895,
+        "union_rows": 33150,
+        "separate_rows_when_both_consumed": 33150,
+        "union_estimated_bytes": 1941767,
+        "separate_estimated_bytes_when_both_consumed": 1096593,
+        "relations": [
+          {
+            "name": "ScaleChild",
+            "consumer": "ContextParent1",
+            "summary_references": 1,
+            "evidence_references": 2,
+            "summary_rows": 255,
+            "evidence_rows": 32895,
+            "summary_estimated_bytes": 10388,
+            "union_evidence_estimated_bytes": 1931379,
+            "separate_evidence_estimated_bytes": 1086205,
+            "current_rows_across_uses": 99450,
+            "candidate_rows_across_uses": 66045,
+            "current_estimated_bytes_across_uses": 5825301,
+            "candidate_estimated_bytes_across_uses": 2182798
+          }
+        ],
+        "current": {
+          "rows_across_uses": 99450,
+          "estimated_bytes_across_uses": 5825301
+        },
+        "candidate": {
+          "rows_across_uses": 66045,
+          "estimated_bytes_across_uses": 2182798
+        },
+        "operator_cardinality": "not exposed by the local Kusto response protocol"
+      }
+    },
+    {
+      "name": "hot-unique-256",
+      "fixture": "hot-unique-256.json",
+      "fixture_sha256": "612e94d3b1d252396f302b00ba4eaa22e8f6e66d6bbdd18b5d1b1aa36de2cb3d",
+      "workload_sha256": "612e94d3b1d252396f302b00ba4eaa22e8f6e66d6bbdd18b5d1b1aa36de2cb3d",
+      "query": "hot-unique-256.kql",
+      "query_sha256": "ee918b944321788c95f220997f4e772b9e1d9051049d08f01344910fd5cad8c7",
+      "query_bytes": 1457420,
+      "query_lines": 33251,
+      "operators": {
+        "distinct": 2,
+        "extend": 13,
+        "join": 6,
+        "project": 16,
+        "project-away": 1,
+        "serialize": 2,
+        "sort": 2,
+        "summarize": 7,
+        "where": 20
+      },
+      "input_rows": 256,
+      "expected_rows": 32895,
+      "dimensions": [
+        "repetition"
+      ],
+      "transport_model": {
+        "summary_rows": 255,
+        "evidence_rows": 32895,
+        "union_rows": 33150,
+        "separate_rows_when_both_consumed": 33150,
+        "union_estimated_bytes": 2027021,
+        "separate_estimated_bytes_when_both_consumed": 1181847,
+        "relations": [
+          {
+            "name": "ScaleChild",
+            "consumer": "ContextParent1",
+            "summary_references": 1,
+            "evidence_references": 2,
+            "summary_rows": 255,
+            "evidence_rows": 32895,
+            "summary_estimated_bytes": 10388,
+            "union_evidence_estimated_bytes": 2016633,
+            "separate_evidence_estimated_bytes": 1171459,
+            "current_rows_across_uses": 99450,
+            "candidate_rows_across_uses": 66045,
+            "current_estimated_bytes_across_uses": 6081063,
+            "candidate_estimated_bytes_across_uses": 2353306
+          }
+        ],
+        "current": {
+          "rows_across_uses": 99450,
+          "estimated_bytes_across_uses": 6081063
+        },
+        "candidate": {
+          "rows_across_uses": 66045,
+          "estimated_bytes_across_uses": 2353306
+        },
+        "operator_cardinality": "not exposed by the local Kusto response protocol"
+      }
+    },
+    {
+      "name": "low-selectivity-256",
+      "fixture": "low-selectivity-256.json",
+      "fixture_sha256": "2085ec19052f7c4787a125b29f2655f6626c57c6e4f2166a3534aa40b03b6661",
+      "workload_sha256": "2085ec19052f7c4787a125b29f2655f6626c57c6e4f2166a3534aa40b03b6661",
+      "query": "low-selectivity-256.kql",
+      "query_sha256": "af2aaa56bd5464d13b1cc209b869580a710e65425b86692d2033fbb657314ef1",
+      "query_bytes": 31807,
+      "query_lines": 584,
+      "operators": {
+        "distinct": 2,
+        "extend": 13,
+        "join": 6,
+        "project": 16,
+        "project-away": 1,
+        "serialize": 2,
+        "sort": 2,
+        "summarize": 7,
+        "where": 20
+      },
+      "input_rows": 256,
+      "expected_rows": 228,
+      "dimensions": [
+        "selectivity"
+      ],
+      "transport_model": {
+        "summary_rows": 57,
+        "evidence_rows": 12996,
+        "union_rows": 13053,
+        "separate_rows_when_both_consumed": 13053,
+        "union_estimated_bytes": 771475,
+        "separate_estimated_bytes_when_both_consumed": 433579,
+        "relations": [
+          {
+            "name": "ScaleChild",
+            "consumer": "ContextParent1",
+            "summary_references": 1,
+            "evidence_references": 2,
+            "summary_rows": 57,
+            "evidence_rows": 12996,
+            "summary_estimated_bytes": 2394,
+            "union_evidence_estimated_bytes": 769081,
+            "separate_evidence_estimated_bytes": 431185,
+            "current_rows_across_uses": 39159,
+            "candidate_rows_across_uses": 26049,
+            "current_estimated_bytes_across_uses": 2314425,
+            "candidate_estimated_bytes_across_uses": 864764
+          }
+        ],
+        "current": {
+          "rows_across_uses": 39159,
+          "estimated_bytes_across_uses": 2314425
+        },
+        "candidate": {
+          "rows_across_uses": 26049,
+          "estimated_bytes_across_uses": 864764
+        },
+        "operator_cardinality": "not exposed by the local Kusto response protocol"
+      }
+    },
+    {
+      "name": "high-selectivity-256",
+      "fixture": "high-selectivity-256.json",
+      "fixture_sha256": "f838ff29a5cd279887c8f5be913ba9a52b410b8ca4be8c10528fde1e7f18bbb7",
+      "workload_sha256": "f838ff29a5cd279887c8f5be913ba9a52b410b8ca4be8c10528fde1e7f18bbb7",
+      "query": "high-selectivity-256.kql",
+      "query_sha256": "10ce351b957b68f5f746ac2bf29e19a26aee5a179714b1844b16b35bd222e8e2",
+      "query_bytes": 65564,
+      "query_lines": 1373,
+      "operators": {
+        "distinct": 2,
+        "extend": 13,
+        "join": 6,
+        "project": 16,
+        "project-away": 1,
+        "serialize": 2,
+        "sort": 2,
+        "summarize": 7,
+        "where": 20
+      },
+      "input_rows": 256,
+      "expected_rows": 1017,
+      "dimensions": [
+        "selectivity"
+      ],
+      "transport_model": {
+        "summary_rows": 255,
+        "evidence_rows": 32895,
+        "union_rows": 33150,
+        "separate_rows_when_both_consumed": 33150,
+        "union_estimated_bytes": 1941767,
+        "separate_estimated_bytes_when_both_consumed": 1096593,
+        "relations": [
+          {
+            "name": "ScaleChild",
+            "consumer": "ContextParent1",
+            "summary_references": 1,
+            "evidence_references": 2,
+            "summary_rows": 255,
+            "evidence_rows": 32895,
+            "summary_estimated_bytes": 10388,
+            "union_evidence_estimated_bytes": 1931379,
+            "separate_evidence_estimated_bytes": 1086205,
+            "current_rows_across_uses": 99450,
+            "candidate_rows_across_uses": 66045,
+            "current_estimated_bytes_across_uses": 5825301,
+            "candidate_estimated_bytes_across_uses": 2182798
+          }
+        ],
+        "current": {
+          "rows_across_uses": 99450,
+          "estimated_bytes_across_uses": 5825301
+        },
+        "candidate": {
+          "rows_across_uses": 66045,
+          "estimated_bytes_across_uses": 2182798
+        },
+        "operator_cardinality": "not exposed by the local Kusto response protocol"
+      }
+    },
+    {
+      "name": "one-context-field",
+      "fixture": "one-context-field.json",
+      "fixture_sha256": "b634faa929165dd6e82a7c6b7d42bc24bc21c3626692cd6e4e7afb2fe47eb5da",
+      "workload_sha256": "b634faa929165dd6e82a7c6b7d42bc24bc21c3626692cd6e4e7afb2fe47eb5da",
+      "query": "one-context-field.kql",
+      "query_sha256": "1c1a93a8b3edbccafe03479d221db7c82bb5262e24d3aa11a7a6142c7569d129",
+      "query_bytes": 33177,
+      "query_lines": 699,
+      "operators": {
+        "distinct": 1,
+        "extend": 9,
+        "join": 2,
+        "project": 11,
+        "serialize": 1,
+        "sort": 2,
+        "summarize": 3,
+        "where": 13
+      },
+      "input_rows": 128,
+      "expected_rows": 505,
+      "dimensions": [
+        "context-fanout"
+      ],
+      "transport_model": {
+        "summary_rows": 127,
+        "evidence_rows": 505,
+        "union_rows": 632,
+        "separate_rows_when_both_consumed": 632,
+        "union_estimated_bytes": 28992,
+        "separate_estimated_bytes_when_both_consumed": 16706,
+        "relations": [
+          {
+            "name": "ScaleChild",
+            "consumer": "ContextParent1",
+            "summary_references": 0,
+            "evidence_references": 1,
+            "summary_rows": 127,
+            "evidence_rows": 505,
+            "summary_estimated_bytes": 5012,
+            "union_evidence_estimated_bytes": 23980,
+            "separate_evidence_estimated_bytes": 11694,
+            "current_rows_across_uses": 632,
+            "candidate_rows_across_uses": 505,
+            "current_estimated_bytes_across_uses": 28992,
+            "candidate_estimated_bytes_across_uses": 11694
+          }
+        ],
+        "current": {
+          "rows_across_uses": 632,
+          "estimated_bytes_across_uses": 28992
+        },
+        "candidate": {
+          "rows_across_uses": 505,
+          "estimated_bytes_across_uses": 11694
+        },
+        "operator_cardinality": "not exposed by the local Kusto response protocol"
+      }
+    },
+    {
+      "name": "three-context-fields",
+      "fixture": "three-context-fields.json",
+      "fixture_sha256": "994480f2ace5ea78521f5ceef6025ceae2779a566d8123b6b42094df7de89494",
+      "workload_sha256": "994480f2ace5ea78521f5ceef6025ceae2779a566d8123b6b42094df7de89494",
+      "query": "three-context-fields.kql",
+      "query_sha256": "058843419154b8961848afb3d4ef398d67243d13e1a529cd017862476ef0545c",
+      "query_bytes": 35588,
+      "query_lines": 733,
+      "operators": {
+        "distinct": 2,
+        "extend": 13,
+        "join": 6,
+        "project": 16,
+        "project-away": 1,
+        "serialize": 2,
+        "sort": 2,
+        "summarize": 7,
+        "where": 20
+      },
+      "input_rows": 128,
+      "expected_rows": 505,
+      "dimensions": [
+        "context-fanout"
+      ],
+      "transport_model": {
+        "summary_rows": 127,
+        "evidence_rows": 8255,
+        "union_rows": 8382,
+        "separate_rows_when_both_consumed": 8382,
+        "union_estimated_bytes": 478255,
+        "separate_estimated_bytes_when_both_consumed": 273721,
+        "relations": [
+          {
+            "name": "ScaleChild",
+            "consumer": "ContextParent1",
+            "summary_references": 1,
+            "evidence_references": 2,
+            "summary_rows": 127,
+            "evidence_rows": 8255,
+            "summary_estimated_bytes": 5012,
+            "union_evidence_estimated_bytes": 473243,
+            "separate_evidence_estimated_bytes": 268709,
+            "current_rows_across_uses": 25146,
+            "candidate_rows_across_uses": 16637,
+            "current_estimated_bytes_across_uses": 1434765,
+            "candidate_estimated_bytes_across_uses": 542430
+          }
+        ],
+        "current": {
+          "rows_across_uses": 25146,
+          "estimated_bytes_across_uses": 1434765
+        },
+        "candidate": {
+          "rows_across_uses": 16637,
+          "estimated_bytes_across_uses": 542430
+        },
+        "operator_cardinality": "not exposed by the local Kusto response protocol"
+      }
+    },
+    {
+      "name": "shared-child-consumers",
+      "fixture": "shared-child-consumers.json",
+      "fixture_sha256": "5088e791ec17a948b43f2a18510c5e7be04ab528bfa980738332ace2b28341e3",
+      "workload_sha256": "5088e791ec17a948b43f2a18510c5e7be04ab528bfa980738332ace2b28341e3",
+      "query": "shared-child-consumers.kql",
+      "query_sha256": "fe03fe46f02c5b5dec4b4fbd4de0b667e148970fa4e51a21ebbf5226d2d939d5",
+      "query_bytes": 27890,
+      "query_lines": 491,
+      "operators": {
+        "distinct": 5,
+        "extend": 35,
+        "join": 16,
+        "project": 41,
+        "project-away": 4,
+        "serialize": 5,
+        "sort": 5,
+        "summarize": 13,
+        "where": 53
+      },
+      "input_rows": 128,
+      "expected_rows": 127,
+      "dimensions": [
+        "child-reuse"
+      ],
+      "transport_model": {
+        "summary_rows": 127,
+        "evidence_rows": 8255,
+        "union_rows": 8382,
+        "separate_rows_when_both_consumed": 8382,
+        "union_estimated_bytes": 478255,
+        "separate_estimated_bytes_when_both_consumed": 273721,
+        "relations": [
+          {
+            "name": "ScaleChild",
+            "consumer": "ParentByUser",
+            "summary_references": 1,
+            "evidence_references": 2,
+            "summary_rows": 127,
+            "evidence_rows": 8255,
+            "summary_estimated_bytes": 5012,
+            "union_evidence_estimated_bytes": 473243,
+            "separate_evidence_estimated_bytes": 268709,
+            "current_rows_across_uses": 25146,
+            "candidate_rows_across_uses": 16637,
+            "current_estimated_bytes_across_uses": 1434765,
+            "candidate_estimated_bytes_across_uses": 542430
+          },
+          {
+            "name": "ScaleChild",
+            "consumer": "ParentByServer",
+            "summary_references": 1,
+            "evidence_references": 2,
+            "summary_rows": 127,
+            "evidence_rows": 8255,
+            "summary_estimated_bytes": 5012,
+            "union_evidence_estimated_bytes": 473243,
+            "separate_evidence_estimated_bytes": 268709,
+            "current_rows_across_uses": 25146,
+            "candidate_rows_across_uses": 16637,
+            "current_estimated_bytes_across_uses": 1434765,
+            "candidate_estimated_bytes_across_uses": 542430
+          },
+          {
+            "name": "ParentByUser",
+            "consumer": "SharedRoot",
+            "summary_references": 2,
+            "evidence_references": 1,
+            "summary_rows": 505,
+            "evidence_rows": 8255,
+            "summary_estimated_bytes": 25986,
+            "union_evidence_estimated_bytes": 572110,
+            "separate_evidence_estimated_bytes": 367769,
+            "current_rows_across_uses": 26280,
+            "candidate_rows_across_uses": 9265,
+            "current_estimated_bytes_across_uses": 1794288,
+            "candidate_estimated_bytes_across_uses": 419741
+          },
+          {
+            "name": "ParentByServer",
+            "consumer": "SharedRoot",
+            "summary_references": 2,
+            "evidence_references": 1,
+            "summary_rows": 853,
+            "evidence_rows": 8255,
+            "summary_estimated_bytes": 47346,
+            "union_evidence_estimated_bytes": 604637,
+            "separate_evidence_estimated_bytes": 384279,
+            "current_rows_across_uses": 27324,
+            "candidate_rows_across_uses": 9961,
+            "current_estimated_bytes_across_uses": 1955949,
+            "candidate_estimated_bytes_across_uses": 478971
+          }
+        ],
+        "current": {
+          "rows_across_uses": 103896,
+          "estimated_bytes_across_uses": 6619767
+        },
+        "candidate": {
+          "rows_across_uses": 52500,
+          "estimated_bytes_across_uses": 1983572
+        },
+        "operator_cardinality": "not exposed by the local Kusto response protocol"
+      }
+    },
+    {
+      "name": "chain-depth-one",
+      "fixture": "chain-depth-one.json",
+      "fixture_sha256": "32458984bc21154c58eb5a5f4392a8b6b68bb1f8341d64f96fe47ad0185a5a50",
+      "workload_sha256": "32458984bc21154c58eb5a5f4392a8b6b68bb1f8341d64f96fe47ad0185a5a50",
+      "query": "chain-depth-one.kql",
+      "query_sha256": "058843419154b8961848afb3d4ef398d67243d13e1a529cd017862476ef0545c",
+      "query_bytes": 35588,
+      "query_lines": 733,
+      "operators": {
+        "distinct": 2,
+        "extend": 13,
+        "join": 6,
+        "project": 16,
+        "project-away": 1,
+        "serialize": 2,
+        "sort": 2,
+        "summarize": 7,
+        "where": 20
+      },
+      "input_rows": 128,
+      "expected_rows": 505,
+      "dimensions": [
+        "chain-depth"
+      ],
+      "transport_model": {
+        "summary_rows": 127,
+        "evidence_rows": 8255,
+        "union_rows": 8382,
+        "separate_rows_when_both_consumed": 8382,
+        "union_estimated_bytes": 478255,
+        "separate_estimated_bytes_when_both_consumed": 273721,
+        "relations": [
+          {
+            "name": "ScaleChild",
+            "consumer": "ContextParent1",
+            "summary_references": 1,
+            "evidence_references": 2,
+            "summary_rows": 127,
+            "evidence_rows": 8255,
+            "summary_estimated_bytes": 5012,
+            "union_evidence_estimated_bytes": 473243,
+            "separate_evidence_estimated_bytes": 268709,
+            "current_rows_across_uses": 25146,
+            "candidate_rows_across_uses": 16637,
+            "current_estimated_bytes_across_uses": 1434765,
+            "candidate_estimated_bytes_across_uses": 542430
+          }
+        ],
+        "current": {
+          "rows_across_uses": 25146,
+          "estimated_bytes_across_uses": 1434765
+        },
+        "candidate": {
+          "rows_across_uses": 16637,
+          "estimated_bytes_across_uses": 542430
+        },
+        "operator_cardinality": "not exposed by the local Kusto response protocol"
+      }
+    },
+    {
+      "name": "chain-depth-three",
+      "fixture": "chain-depth-three.json",
+      "fixture_sha256": "afa053d661ea1be40ae701a8d3d14884a041f66ebd9cc8f60e7fac950086f1e0",
+      "workload_sha256": "afa053d661ea1be40ae701a8d3d14884a041f66ebd9cc8f60e7fac950086f1e0",
+      "query": "chain-depth-three.kql",
+      "query_sha256": "87fa6b506b134e19bc2c0703993903c2d82b5b98c9f7cdd79bc58738dcc4f4c4",
+      "query_bytes": 40920,
+      "query_lines": 813,
+      "operators": {
+        "distinct": 4,
+        "extend": 25,
+        "join": 12,
+        "project": 32,
+        "project-away": 3,
+        "serialize": 4,
+        "sort": 4,
+        "summarize": 9,
+        "where": 38
+      },
+      "input_rows": 128,
+      "expected_rows": 505,
+      "dimensions": [
+        "chain-depth"
+      ],
+      "transport_model": {
+        "summary_rows": 127,
+        "evidence_rows": 8255,
+        "union_rows": 8382,
+        "separate_rows_when_both_consumed": 8382,
+        "union_estimated_bytes": 478255,
+        "separate_estimated_bytes_when_both_consumed": 273721,
+        "relations": [
+          {
+            "name": "ScaleChild",
+            "consumer": "ContextParent1",
+            "summary_references": 1,
+            "evidence_references": 2,
+            "summary_rows": 127,
+            "evidence_rows": 8255,
+            "summary_estimated_bytes": 5012,
+            "union_evidence_estimated_bytes": 473243,
+            "separate_evidence_estimated_bytes": 268709,
+            "current_rows_across_uses": 25146,
+            "candidate_rows_across_uses": 16637,
+            "current_estimated_bytes_across_uses": 1434765,
+            "candidate_estimated_bytes_across_uses": 542430
+          },
+          {
+            "name": "ContextParent1",
+            "consumer": "ContextParent2",
+            "summary_references": 2,
+            "evidence_references": 1,
+            "summary_rows": 505,
+            "evidence_rows": 8255,
+            "summary_estimated_bytes": 26996,
+            "union_evidence_estimated_bytes": 588620,
+            "separate_evidence_estimated_bytes": 384279,
+            "current_rows_across_uses": 26280,
+            "candidate_rows_across_uses": 9265,
+            "current_estimated_bytes_across_uses": 1846848,
+            "candidate_estimated_bytes_across_uses": 438271
+          },
+          {
+            "name": "ContextParent2",
+            "consumer": "ContextParent3",
+            "summary_references": 2,
+            "evidence_references": 1,
+            "summary_rows": 505,
+            "evidence_rows": 8255,
+            "summary_estimated_bytes": 26996,
+            "union_evidence_estimated_bytes": 588620,
+            "separate_evidence_estimated_bytes": 384279,
+            "current_rows_across_uses": 26280,
+            "candidate_rows_across_uses": 9265,
+            "current_estimated_bytes_across_uses": 1846848,
+            "candidate_estimated_bytes_across_uses": 438271
+          }
+        ],
+        "current": {
+          "rows_across_uses": 77706,
+          "estimated_bytes_across_uses": 5128461
+        },
+        "candidate": {
+          "rows_across_uses": 35167,
+          "estimated_bytes_across_uses": 1418972
+        },
+        "operator_cardinality": "not exposed by the local Kusto response protocol"
+      }
+    },
+    {
+      "name": "numeric-pairing-repeated",
+      "fixture": "numeric-pairing-repeated.json",
+      "fixture_sha256": "56defcf8e255c71b17d098331b7ea43ab3defbcd8e20ab9b79d9f56a1f173a21",
+      "workload_sha256": "56defcf8e255c71b17d098331b7ea43ab3defbcd8e20ab9b79d9f56a1f173a21",
+      "query": "numeric-pairing-repeated.kql",
+      "query_sha256": "211413d784174e1cb9f27a7dc5a29ff1ac688c6ad96e59aeaefaa84153d26b35",
+      "query_bytes": 36403,
+      "query_lines": 734,
+      "operators": {
+        "distinct": 2,
+        "extend": 14,
+        "join": 6,
+        "project": 16,
+        "project-away": 1,
+        "serialize": 2,
+        "sort": 2,
+        "summarize": 7,
+        "where": 20
+      },
+      "input_rows": 128,
+      "expected_rows": 505,
+      "dimensions": [
+        "numeric-pairing"
+      ],
+      "transport_model": {
+        "summary_rows": 127,
+        "evidence_rows": 8255,
+        "union_rows": 8382,
+        "separate_rows_when_both_consumed": 8382,
+        "union_estimated_bytes": 478255,
+        "separate_estimated_bytes_when_both_consumed": 273721,
+        "relations": [
+          {
+            "name": "ScaleChild",
+            "consumer": "NumericParent",
+            "summary_references": 1,
+            "evidence_references": 2,
+            "summary_rows": 127,
+            "evidence_rows": 8255,
+            "summary_estimated_bytes": 5012,
+            "union_evidence_estimated_bytes": 473243,
+            "separate_evidence_estimated_bytes": 268709,
+            "current_rows_across_uses": 25146,
+            "candidate_rows_across_uses": 16637,
+            "current_estimated_bytes_across_uses": 1434765,
+            "candidate_estimated_bytes_across_uses": 542430
+          }
+        ],
+        "current": {
+          "rows_across_uses": 25146,
+          "estimated_bytes_across_uses": 1434765
+        },
+        "candidate": {
+          "rows_across_uses": 16637,
+          "estimated_bytes_across_uses": 542430
+        },
+        "operator_cardinality": "not exposed by the local Kusto response protocol"
+      }
+    },
+    {
+      "name": "numeric-pairing-unique",
+      "fixture": "numeric-pairing-unique.json",
+      "fixture_sha256": "eed2b4db6ff28a91a4d583f8fef90a72c6b75e8545c66875d609cdf773658b86",
+      "workload_sha256": "eed2b4db6ff28a91a4d583f8fef90a72c6b75e8545c66875d609cdf773658b86",
+      "query": "numeric-pairing-unique.kql",
+      "query_sha256": "c0d1b12284e6d1056377070666dde70b7cfe9b6feba1fc1688fe7a6e1a8daead",
+      "query_bytes": 374056,
+      "query_lines": 8484,
+      "operators": {
+        "distinct": 2,
+        "extend": 14,
+        "join": 6,
+        "project": 16,
+        "project-away": 1,
+        "serialize": 2,
+        "sort": 2,
+        "summarize": 7,
+        "where": 20
+      },
+      "input_rows": 128,
+      "expected_rows": 8255,
+      "dimensions": [
+        "numeric-pairing"
+      ],
+      "transport_model": {
+        "summary_rows": 127,
+        "evidence_rows": 8255,
+        "union_rows": 8382,
+        "separate_rows_when_both_consumed": 8382,
+        "union_estimated_bytes": 493109,
+        "separate_estimated_bytes_when_both_consumed": 288575,
+        "relations": [
+          {
+            "name": "ScaleChild",
+            "consumer": "NumericParent",
+            "summary_references": 1,
+            "evidence_references": 2,
+            "summary_rows": 127,
+            "evidence_rows": 8255,
+            "summary_estimated_bytes": 5012,
+            "union_evidence_estimated_bytes": 488097,
+            "separate_evidence_estimated_bytes": 283563,
+            "current_rows_across_uses": 25146,
+            "candidate_rows_across_uses": 16637,
+            "current_estimated_bytes_across_uses": 1479327,
+            "candidate_estimated_bytes_across_uses": 572138
+          }
+        ],
+        "current": {
+          "rows_across_uses": 25146,
+          "estimated_bytes_across_uses": 1479327
+        },
+        "candidate": {
+          "rows_across_uses": 16637,
+          "estimated_bytes_across_uses": 572138
+        },
+        "operator_cardinality": "not exposed by the local Kusto response protocol"
+      }
+    }
+  ]
+}

@@ -4,32 +4,32 @@
   "fixtures": [
     {
       "name": "participants_single.kql",
-      "sha256": "0c8759f215b727066086450794add19910e89dddc71f630fc8e2eb475e9cd3cc",
+      "sha256": "b2bb3d334149af4f1f2b844dd1bf79da8747af1f4bf88f5a67aa69212fe61e7e",
       "expected_error": null
     },
     {
       "name": "participants_real_groups.kql",
-      "sha256": "cdc62b18cf02b647bd886fe27e6e5434dd4d841b9c20ed9c57caa81fa08c528d",
+      "sha256": "33c0687493caeb4e8998f6a36f8c815f7cd70fa898d4791adf74af32857fd4d8",
       "expected_error": null
     },
     {
       "name": "participants_ordered_empty_child.kql",
-      "sha256": "e171154de23bcb2e6a4dd31f85db8ebf3a6ca9fd6b2cec78989de6249189a5ff",
+      "sha256": "98e240ae71b44b84ab175755b5a2c1bdbdb5a0613afbd0b795ea145f479b8370",
       "expected_error": null
     },
     {
       "name": "participants_boolean_empty_child.kql",
-      "sha256": "bb9e2e4dcb25183ed48206c6844134913e4ba3dcd67af5d5a58db57c7d9bc7a6",
+      "sha256": "0cd2c2546d905c6d61faa0fa1cf550d32abbc4715590b9ec37948f3ee48500df",
       "expected_error": null
     },
     {
       "name": "participants_repeated_long.kql",
-      "sha256": "39b2b6f9839c7fe1fe0b71336beaf62263701ae5adb59bbe95dd0e69436f56b0",
+      "sha256": "07c2f84918c566ea75be0a33e7dd37f7fbbf909f167930999bbc6b0f02b88076",
       "expected_error": null
     },
     {
       "name": "participants_repeated_seven.kql",
-      "sha256": "5c4fd0657f5f38b51b7978d80481abc52a10b045a923f76e6cbf4e8fe710095a",
+      "sha256": "3c91fc771e4c1cf0d30788f8f23a9ffddeff69462baced91fe6877736b990313",
       "expected_error": null
     }
   ]

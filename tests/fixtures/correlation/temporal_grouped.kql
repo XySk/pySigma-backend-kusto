@@ -54,23 +54,28 @@ let OtherEvents=datatable(NetworkTime:string, Case:string, NetworkHost:dynamic, 
 let DefaultAll = () {
 union (Events
 | where Marker =~ "A"
-| project EventTime_1 = todatetime(["ProcessTime"]), GroupCase = ["Case"], GroupHost = ["ProcessHost"], SourceRule = "source-rule"),
+| project EventTime_1 = ["ProcessTime"], GroupCase = ["Case"], GroupHost = ["ProcessHost"], SourceRule = "source-rule"
+| where isnotnull(EventTime_1) and isnotempty(GroupCase) and isnotempty(GroupHost)),
 (Events
 | where Marker =~ "A"
-| project EventTime_1 = todatetime(["ProcessTime"]), GroupCase = ["Case"], GroupHost = ["ProcessHost"], SourceRule = "source-rule"),
+| project EventTime_1 = ["ProcessTime"], GroupCase = ["Case"], GroupHost = ["ProcessHost"], SourceRule = "source-rule"
+| where isnotnull(EventTime_1) and isnotempty(GroupCase) and isnotempty(GroupHost)),
 (OtherEvents
 | where Marker =~ "B"
-| project EventTime_1 = todatetime(["NetworkTime"]), GroupCase = ["Case"], GroupHost = ["NetworkHost"], SourceRule = "other-rule"),
+| project EventTime_1 = ["NetworkTime"], GroupCase = ["Case"], GroupHost = ["NetworkHost"], SourceRule = "other-rule"
+| where isnotnull(EventTime_1) and isnotempty(GroupCase) and isnotempty(GroupHost)),
 (OtherEvents
 | where Marker =~ "B"
-| project EventTime_1 = todatetime(["NetworkTime"]), GroupCase = ["Case"], GroupHost = ["NetworkHost"], SourceRule = "other-rule"),
+| project EventTime_1 = ["NetworkTime"], GroupCase = ["Case"], GroupHost = ["NetworkHost"], SourceRule = "other-rule"
+| where isnotnull(EventTime_1) and isnotempty(GroupCase) and isnotempty(GroupHost)),
 (Events
 | where Marker =~ "C"
-| project EventTime_1 = todatetime(["ProcessTime"]), GroupCase = ["Case"], GroupHost = ["ProcessHost"], SourceRule = "third-rule"),
+| project EventTime_1 = ["ProcessTime"], GroupCase = ["Case"], GroupHost = ["ProcessHost"], SourceRule = "third-rule"
+| where isnotnull(EventTime_1) and isnotempty(GroupCase) and isnotempty(GroupHost)),
 (Events
 | where Marker =~ "C"
-| project EventTime_1 = todatetime(["ProcessTime"]), GroupCase = ["Case"], GroupHost = ["ProcessHost"], SourceRule = "third-rule")
-| where isnotnull(EventTime_1) and isnotempty(GroupCase) and isnotempty(GroupHost)
+| project EventTime_1 = ["ProcessTime"], GroupCase = ["Case"], GroupHost = ["ProcessHost"], SourceRule = "third-rule"
+| where isnotnull(EventTime_1) and isnotempty(GroupCase) and isnotempty(GroupHost))
 // Batch simultaneous source matches before updating inclusive trailing presence.
 | summarize MatchesSourcerule = countif(SourceRule == "source-rule") > 0, MatchesOtherrule = countif(SourceRule == "other-rule") > 0, MatchesThirdrule = countif(SourceRule == "third-rule") > 0 by GroupCase, GroupHost, EventTime_1
 | sort by GroupCase asc, GroupHost asc, EventTime_1 asc
@@ -90,23 +95,28 @@ union (Events
 let TwoOfThree = () {
 union (Events
 | where Marker =~ "A"
-| project EventTime_1 = todatetime(["ProcessTime"]), GroupCase = ["Case"], GroupHost = ["ProcessHost"], SourceRule = "source-rule"),
+| project EventTime_1 = ["ProcessTime"], GroupCase = ["Case"], GroupHost = ["ProcessHost"], SourceRule = "source-rule"
+| where isnotnull(EventTime_1) and isnotempty(GroupCase) and isnotempty(GroupHost)),
 (Events
 | where Marker =~ "A"
-| project EventTime_1 = todatetime(["ProcessTime"]), GroupCase = ["Case"], GroupHost = ["ProcessHost"], SourceRule = "source-rule"),
+| project EventTime_1 = ["ProcessTime"], GroupCase = ["Case"], GroupHost = ["ProcessHost"], SourceRule = "source-rule"
+| where isnotnull(EventTime_1) and isnotempty(GroupCase) and isnotempty(GroupHost)),
 (OtherEvents
 | where Marker =~ "B"
-| project EventTime_1 = todatetime(["NetworkTime"]), GroupCase = ["Case"], GroupHost = ["NetworkHost"], SourceRule = "other-rule"),
+| project EventTime_1 = ["NetworkTime"], GroupCase = ["Case"], GroupHost = ["NetworkHost"], SourceRule = "other-rule"
+| where isnotnull(EventTime_1) and isnotempty(GroupCase) and isnotempty(GroupHost)),
 (OtherEvents
 | where Marker =~ "B"
-| project EventTime_1 = todatetime(["NetworkTime"]), GroupCase = ["Case"], GroupHost = ["NetworkHost"], SourceRule = "other-rule"),
+| project EventTime_1 = ["NetworkTime"], GroupCase = ["Case"], GroupHost = ["NetworkHost"], SourceRule = "other-rule"
+| where isnotnull(EventTime_1) and isnotempty(GroupCase) and isnotempty(GroupHost)),
 (Events
 | where Marker =~ "C"
-| project EventTime_1 = todatetime(["ProcessTime"]), GroupCase = ["Case"], GroupHost = ["ProcessHost"], SourceRule = "third-rule"),
+| project EventTime_1 = ["ProcessTime"], GroupCase = ["Case"], GroupHost = ["ProcessHost"], SourceRule = "third-rule"
+| where isnotnull(EventTime_1) and isnotempty(GroupCase) and isnotempty(GroupHost)),
 (Events
 | where Marker =~ "C"
-| project EventTime_1 = todatetime(["ProcessTime"]), GroupCase = ["Case"], GroupHost = ["ProcessHost"], SourceRule = "third-rule")
-| where isnotnull(EventTime_1) and isnotempty(GroupCase) and isnotempty(GroupHost)
+| project EventTime_1 = ["ProcessTime"], GroupCase = ["Case"], GroupHost = ["ProcessHost"], SourceRule = "third-rule"
+| where isnotnull(EventTime_1) and isnotempty(GroupCase) and isnotempty(GroupHost))
 // Batch simultaneous source matches before updating inclusive trailing presence.
 | summarize MatchesSourcerule = countif(SourceRule == "source-rule") > 0, MatchesOtherrule = countif(SourceRule == "other-rule") > 0, MatchesThirdrule = countif(SourceRule == "third-rule") > 0 by GroupCase, GroupHost, EventTime_1
 | sort by GroupCase asc, GroupHost asc, EventTime_1 asc

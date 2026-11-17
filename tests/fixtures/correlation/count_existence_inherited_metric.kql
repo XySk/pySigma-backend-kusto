@@ -8,9 +8,9 @@ let Events=union
 let Actual=() {
 let ContextSummary = () {
 let FailedLogonBursts = () {
-let SourceMatchArrivals = union (Events
+let SourceMatchArrivals = Events
 | where Marker =~ "failure"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"])
+| project EventTime_1 = ["Timestamp"], GroupHost = ["Host"]
 | where isnotnull(EventTime_1) and isnotempty(GroupHost)
 | summarize SourceMatchCount = count() by EventTime_1, GroupHost;
 union (SourceMatchArrivals
@@ -26,13 +26,14 @@ union (SourceMatchArrivals
 };
 // Strict sequence: "failed-logon-bursts" -> "successful-logon". Total inclusive span: 3m.
 union (FailedLogonBursts()
-| extend EventTime_1 = todatetime(["WindowEnd"]), GroupHost = ["Host"]
+| extend EventTime_1 = ["WindowEnd"], GroupHost = ["Host"]
+| where isnotnull(EventTime_1) and isnotempty(GroupHost)
 | extend SourceRule = "failed-logon-bursts"),
 (Events
 | where Marker =~ "success"
-| extend EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"]
-| extend SourceRule = "successful-logon")
+| extend EventTime_1 = ["Timestamp"], GroupHost = ["Host"]
 | where isnotnull(EventTime_1) and isnotempty(GroupHost)
+| extend SourceRule = "successful-logon")
 // Batch equal timestamps: simultaneous source matches cannot advance strict sequence positions.
 | summarize HasFailedLogonBursts = countif(SourceRule == "failed-logon-bursts") > 0, HasSuccessfulLogon = countif(SourceRule == "successful-logon") > 0 by EventTime_1, GroupHost
 | sort by GroupHost asc, EventTime_1 asc
@@ -47,9 +48,9 @@ union (FailedLogonBursts()
 | project WindowStart = EventTime_1 - 3m, WindowEnd = EventTime_1, ["Host"] = GroupHost, RuleCount = tolong(2)
 };
 let FailedLogonBursts_1 = () {
-let SourceMatchArrivals = union (Events
+let SourceMatchArrivals = Events
 | where Marker =~ "failure"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"])
+| project EventTime_1 = ["Timestamp"], GroupHost = ["Host"]
 | where isnotnull(EventTime_1) and isnotempty(GroupHost)
 | summarize SourceMatchCount = count() by EventTime_1, GroupHost;
 union (SourceMatchArrivals
@@ -65,25 +66,27 @@ union (SourceMatchArrivals
 };
 let CorrelationMatches = materialize(ContextSummary()
 | serialize CorrelationMatchId = row_number());
-let WindowSourceMatches = materialize(
+let WindowSourceMatches =
 CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, ContextGroupHost = ["Host"], ContextPartition = 1
 | join kind=inner (
 union (FailedLogonBursts_1()
-| extend ContextEventTime = todatetime(["WindowEnd"]), ContextGroupHost = ["Host"], ContextFailureCount = ["EventCount"]
+| extend ContextEventTime = ["WindowEnd"], ContextGroupHost = ["Host"], ContextFailureCount = ["EventCount"]
+| where isnotnull(ContextEventTime) and isnotempty(ContextGroupHost)
 | extend ContextSourceRule = "failed-logon-bursts"),
 (Events
 | where Marker =~ "success"
-| extend ContextEventTime = todatetime(["Timestamp"]), ContextGroupHost = ["Host"], ContextFailureCount = ["Amount"]
+| extend ContextEventTime = ["Timestamp"], ContextGroupHost = ["Host"], ContextFailureCount = ["Amount"]
+| where isnotnull(ContextEventTime) and isnotempty(ContextGroupHost)
 | extend ContextSourceRule = "successful-logon")
 | project ContextEventTime, ContextSourceRule, ContextGroupHost, ContextFailureCount, ContextPartition = 1
 ) on ContextGroupHost
-| where ContextEventTime between ((CompletionTime - 3m) .. CompletionTime));
+| where ContextEventTime between ((CompletionTime - 3m) .. CompletionTime);
 // Successful one/two-step completions need only endpoint participant filters.
-let OrderedSourceRelationships = materialize(WindowSourceMatches
-| where (ContextSourceRule == "failed-logon-bursts" and ContextEventTime < CompletionTime) or (ContextSourceRule == "successful-logon" and ContextEventTime == CompletionTime));
-let CompleteContextRelationships = materialize(OrderedSourceRelationships
+let OrderedSourceRelationships = WindowSourceMatches
+| where (ContextSourceRule == "failed-logon-bursts" and ContextEventTime < CompletionTime) or (ContextSourceRule == "successful-logon" and ContextEventTime == CompletionTime);
+let CompleteContextRelationships = OrderedSourceRelationships
 | project CorrelationMatchId, ContextFailureCount
-| distinct *);
+| distinct *;
 let ValuesForFailureCount = CompleteContextRelationships
 | where isnotnull(ContextFailureCount)
 | summarize by CorrelationMatchId, ContextFailureCount

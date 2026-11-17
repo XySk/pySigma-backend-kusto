@@ -54,7 +54,7 @@ def test_weighted_count_names_do_not_shadow_source_fields_or_tables():
 
     assert 'SourceMatchArrivals\n| where Marker =~ "match"' in query
     assert "let SourceMatchArrivals_1 = " in query
-    assert 'EventTime_1 = todatetime(["Timestamp"])' in query
+    assert 'EventTime_1 = ["Timestamp"]' in query
     assert 'GroupHost_1 = ["Host"]' in query
     assert "SourceMatchCount_1 = count()" in query
     assert "EventCount = row_cumsum(SourceMatchDelta_1" in query

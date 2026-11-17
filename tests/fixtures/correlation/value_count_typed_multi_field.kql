@@ -9,9 +9,9 @@ let Events=datatable(Timestamp:datetime,Case:string,Value:long,Payload:dynamic,M
  datetime(2026-01-01T12:03:00Z),"both",long(null),dynamic(null),"match"
 ] | extend Other=tolong(Payload.a);
 let Actual = () {
-let ValueCountSources = materialize(union (Events
+let ValueCountSources = materialize(Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupCase = ["Case"], CountedValue = ["Value"], CountedOther = ["Other"])
+| project EventTime_1 = ["Timestamp"], GroupCase = ["Case"], CountedValue = ["Value"], CountedOther = ["Other"]
 | where isnotnull(EventTime_1) and isnotempty(GroupCase));
 let CountedValueActivity = materialize(ValueCountSources
 | where isnotempty(CountedValue)

@@ -6,6 +6,45 @@ Sections describing recursive nested identity, boxed values, generated assertion
 
 The [original 64-workload benchmark](BENCHMARK-BASELINE.md) preserves all 195 original attempts and distinguishes 28 verified plain workloads from 36 failed context/chain workloads. Later [value-count](VALUE-COUNT.md), [sum](runtime-evidence/native-sums/README.md), [average](runtime-evidence/native-averages/README.md), [percentile](runtime-evidence/native-percentiles/README.md), [ordered-context](TEMPORAL-PARTICIPANTS.md), and [existence](COUNT-EXISTENCE.md) studies use their own frozen revisions and settings. Timing comparisons and current combined acceptance require exact final query hashes; older passing hashes do not cover changed KQL.
 
+## Reference-aware relation binding (#52)
+
+Revision `fce80ed7500252227d6a50f6d3fabdd442c7c22c` passed **255/255**
+strict fixtures, **384/384** broad benchmark samples, and **42/42** focused
+samples. A single explicit renderer now selects ordinary bindings by default and
+materialization only for reuse, stable evaluation, or paired measured benefit.
+The 64-workload corpus contains 102 materializations versus 166 at the #51
+baseline. Contract-specific deduplication stays at event-count
+group/timestamp, value-count group/value/timestamp, and exact context tuple
+identities; raw multiplicity and overlapping correlation matches remain intact.
+
+[Hash-scoped relation-binding evidence](runtime-evidence/relation-binding-final/README.md)
+includes the complete audit, final/prototype queries, exact result ledgers,
+same-engine paired reruns, rejected candidates, and raw engine/container
+evidence. Measured exceptions retain the exact-window cache for value-count,
+value-average, and percentile, plus the complete relationship cache for
+value-average. These small synthetic measurements establish the recorded
+decisions, not production capacity.
+
+## Source-shaping acceptance (#51)
+
+Revision `f21d489868f042f7187ebe96ae233d2189c5169a` passed **255/255**
+strict fixtures and **384/384** benchmark samples across six repetitions of all
+64 workloads. The generated source relation is now bare for one converted search,
+uses a union only for multiple searches, applies timestamp/group validation in
+each canonical source branch, and projects schema-proven datetime values without
+redundant conversion. String timestamps retain conversion, report lookback, and
+invalid-conversion filtering. Empty measured/count values still establish
+anchors. [Hash-scoped evidence](runtime-evidence/source-shaping-final/README.md)
+includes the final ledgers, raw requests/responses, engine/container provenance,
+and the initial failure that revealed and corrected a fixture schema mismatch.
+
+All workloads completed with exact independent results and schemas under the
+same engine/image and 12 GiB limits as the preceding final comparison. Six-sample
+median per-workload ratios versus that comparison were 0.928 client elapsed,
+0.934 engine elapsed, 0.925 total CPU, and 1.000 peak memory. No new failure or
+confirmed material regression was observed. These small synthetic measurements
+remain a correctness and regression gate, not a production capacity claim.
+
 ## Final integrated acceptance and repeated comparison (#49)
 
 On 2026-11-16, the final candidate at `59c455b5a5b008c042727eaef06f92c0da832044`

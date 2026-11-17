@@ -7,9 +7,9 @@ let Events=datatable(Timestamp:datetime,Host:string,Region:string,Marker:string,
 let Actual=(){
 let Child = () {
 let ContextSummary = () {
-let SourceMatchArrivals = union (Events
+let SourceMatchArrivals = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"], GroupRegion = ["Region"])
+| project EventTime_1 = ["Timestamp"], GroupHost = ["Host"], GroupRegion = ["Region"]
 | where isnotnull(EventTime_1) and isnotempty(GroupHost) and isnotempty(GroupRegion)
 | summarize SourceMatchCount = count() by EventTime_1, GroupHost, GroupRegion;
 union (SourceMatchArrivals
@@ -25,29 +25,30 @@ union (SourceMatchArrivals
 };
 let CorrelationMatches = materialize(ContextSummary()
 | serialize CorrelationMatchId = row_number());
-let WindowSourceMatches = materialize(
+let WindowSourceMatches =
 CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, ContextGroupHost = ["Host"], ContextGroupRegion = ["Region"], ContextPartition = 1
 | join kind=inner (
-union (Events
+Events
 | where Marker =~ "match"
-| extend ContextEventTime = todatetime(["Timestamp"]), ContextGroupHost = ["Host"], ContextGroupRegion = ["Region"], ContextUser = ["User"], ContextServer = ["Server"]
-| extend ContextSourceRule = "source-rule")
+| extend ContextEventTime = ["Timestamp"], ContextGroupHost = ["Host"], ContextGroupRegion = ["Region"], ContextUser = ["User"], ContextServer = ["Server"]
+| where isnotnull(ContextEventTime) and isnotempty(ContextGroupHost) and isnotempty(ContextGroupRegion)
+| extend ContextSourceRule = "source-rule"
 | project ContextEventTime, ContextSourceRule, ContextGroupHost, ContextGroupRegion, ContextUser, ContextServer, ContextPartition = 1
 ) on ContextGroupHost, ContextGroupRegion
-| where ContextEventTime between ((CompletionTime - 5m) .. CompletionTime));
+| where ContextEventTime between ((CompletionTime - 5m) .. CompletionTime);
 let CompleteContextRelationships = materialize(WindowSourceMatches
 | project CorrelationMatchId, ContextUser, ContextServer
 | distinct *);
 union (CorrelationMatches | extend ContextRowKind = "Summary"), (CorrelationMatches | join kind=inner (CompleteContextRelationships) on CorrelationMatchId | extend ContextRowKind = "ContextEvidence")
 };
 let ChildResults = materialize(Child());
-let ParentSourceMatches = materialize(union (ChildResults
+let ParentSourceMatches = materialize(ChildResults
 | where ["ContextRowKind"] == "ContextEvidence"
 | extend ChildCorrelationMatch = strcat("Child", "_", tostring(["CorrelationMatchId"]))
-| project EventTime = todatetime(["WindowEnd"]), GroupHost = ["Host"], GroupRegion = ["Region"], GroupUser = ["ContextUser"], GroupServer = ["ContextServer"], ChildCorrelationMatch)
+| project EventTime = ["WindowEnd"], GroupHost = ["Host"], GroupRegion = ["Region"], GroupUser = ["ContextUser"], GroupServer = ["ContextServer"], ChildCorrelationMatch
+| where isnotnull(EventTime) and isnotempty(GroupHost) and isnotempty(GroupRegion) and isnotempty(GroupUser) and isnotempty(GroupServer)
 | extend ChildCorrelationMatch = tostring(column_ifexists("ChildCorrelationMatch", "")));
 let SourceMatchArrivals = union (ParentSourceMatches | where isempty(ChildCorrelationMatch)), (ParentSourceMatches | where isnotempty(ChildCorrelationMatch) | summarize take_any(*) by ChildCorrelationMatch, GroupHost, GroupRegion, GroupUser, GroupServer)
-| where isnotnull(EventTime) and isnotempty(GroupHost) and isnotempty(GroupRegion) and isnotempty(GroupUser) and isnotempty(GroupServer)
 | summarize SourceMatchCount = count() by EventTime, GroupHost, GroupRegion, GroupUser, GroupServer;
 union (SourceMatchArrivals
 | project GroupHost, GroupRegion, GroupUser, GroupServer, CountBoundaryTime = EventTime, CountBoundaryOrder = 0, SourceMatchDelta = SourceMatchCount),

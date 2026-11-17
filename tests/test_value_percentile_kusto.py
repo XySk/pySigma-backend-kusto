@@ -56,7 +56,7 @@ def test_percentile_scalar_metric_chaining_uses_child_window_end():
         condition={"field": "ValuePercentile", "percentile": 100, "gte": 0},
     )
     (query,) = convert_documents([parent, percentile(), source_document()])
-    assert 'EventTime = todatetime(["WindowEnd"])' in query
+    assert 'EventTime = ["WindowEnd"]' in query
     assert 'MeasuredValuePercentile = ["ValuePercentile"]' in query
 
 

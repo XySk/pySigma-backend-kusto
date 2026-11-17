@@ -28,17 +28,19 @@ let Actual = () {
 // Strict sequence: "a" -> "b" -> "c". Total inclusive span: 5m.
 union (Events
 | where Marker in~ ("a", "shared")
-| extend EventTime_1 = todatetime(["Timestamp"])
+| extend EventTime_1 = ["Timestamp"]
+| where isnotnull(EventTime_1)
 | extend SourceRule = "a"),
 (Events
 | where Marker in~ ("b", "shared")
-| extend EventTime_1 = todatetime(["Timestamp"])
+| extend EventTime_1 = ["Timestamp"]
+| where isnotnull(EventTime_1)
 | extend SourceRule = "b"),
 (Events
 | where Marker =~ "c"
-| extend EventTime_1 = todatetime(["Timestamp"])
-| extend SourceRule = "c")
+| extend EventTime_1 = ["Timestamp"]
 | where isnotnull(EventTime_1)
+| extend SourceRule = "c")
 // Batch equal timestamps: simultaneous source matches cannot advance strict sequence positions.
 | summarize HasA = countif(SourceRule == "a") > 0, HasB = countif(SourceRule == "b") > 0, HasC = countif(SourceRule == "c") > 0 by EventTime_1
 | sort by EventTime_1 asc

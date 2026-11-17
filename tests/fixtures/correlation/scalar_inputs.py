@@ -31,7 +31,13 @@ def scalar_inputs(**types):
                     if declared.get_field_type(field) == "datetime"
                 )
                 if "BaseEvents" in expression:
-                    fields.update(re.findall(r"\b(\w+)\s*:\s*dynamic\b", text[: match.start()]))
+                    base = text[: match.start()]
+                    fields.update(re.findall(r"\b(\w+)\s*:\s*dynamic\b", base))
+                    fields.update(
+                        field
+                        for field in re.findall(r"\b(\w+)\s*:\s*string\b", base)
+                        if declared.get_field_type(field) == "datetime"
+                    )
                 # Some fixtures construct non-finite numbers after the datatable.
                 fields.update(re.findall(r"\b(\w+)\s*=\s*(?:pack_array|case)\(", expression))
                 changes = []

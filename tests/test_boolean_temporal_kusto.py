@@ -73,7 +73,7 @@ def test_boolean_child_and_detection_sources_preserve_aliases_and_generation():
         },
     }
     (query,) = convert_documents([parent, source_document("B", "B"), child, source_document("A", "A")])
-    assert 'todatetime(["WindowEnd"])' in query
+    assert '["WindowEnd"]' in query
     assert '["Host"]' in query
     assert '["Device"]' in query
     assert 'countif(SourceRule == "child") > 0' in query

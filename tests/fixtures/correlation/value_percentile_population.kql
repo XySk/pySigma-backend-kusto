@@ -5,9 +5,9 @@
 let Events = range Amount from 1 to 101 step 1
 | extend Timestamp=datetime(2026-01-01T12:00:00Z), Marker="match";
 let p_0 = () {
-let PercentileObservations = union (Events
+let PercentileObservations = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), MeasuredAmount = ["Amount"])
+| project EventTime_1 = ["Timestamp"], MeasuredAmount = ["Amount"]
 | where isnotnull(EventTime_1);
 PercentileObservations
 | project PercentileWindowEnd = EventTime_1, PercentileTimeBin = bin(EventTime_1, 5m)
@@ -25,9 +25,9 @@ PercentileObservations
 | project WindowStart = PercentileWindowEnd - 5m, WindowEnd = PercentileWindowEnd, ValuePercentile
 };
 let p_1 = () {
-let PercentileObservations = union (Events
+let PercentileObservations = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), MeasuredAmount = ["Amount"])
+| project EventTime_1 = ["Timestamp"], MeasuredAmount = ["Amount"]
 | where isnotnull(EventTime_1);
 let PercentileWindowValues = materialize(
 PercentileObservations
@@ -55,9 +55,9 @@ PercentileWindowValues | summarize PercentilePopulation = count() by PercentileW
 | project WindowStart = PercentileWindowEnd - 5m, WindowEnd = PercentileWindowEnd, ValuePercentile
 };
 let p_50 = () {
-let PercentileObservations = union (Events
+let PercentileObservations = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), MeasuredAmount = ["Amount"])
+| project EventTime_1 = ["Timestamp"], MeasuredAmount = ["Amount"]
 | where isnotnull(EventTime_1);
 let PercentileWindowValues = materialize(
 PercentileObservations
@@ -85,9 +85,9 @@ PercentileWindowValues | summarize PercentilePopulation = count() by PercentileW
 | project WindowStart = PercentileWindowEnd - 5m, WindowEnd = PercentileWindowEnd, ValuePercentile
 };
 let p_99 = () {
-let PercentileObservations = union (Events
+let PercentileObservations = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), MeasuredAmount = ["Amount"])
+| project EventTime_1 = ["Timestamp"], MeasuredAmount = ["Amount"]
 | where isnotnull(EventTime_1);
 let PercentileWindowValues = materialize(
 PercentileObservations
@@ -115,9 +115,9 @@ PercentileWindowValues | summarize PercentilePopulation = count() by PercentileW
 | project WindowStart = PercentileWindowEnd - 5m, WindowEnd = PercentileWindowEnd, ValuePercentile
 };
 let p_100 = () {
-let PercentileObservations = union (Events
+let PercentileObservations = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), MeasuredAmount = ["Amount"])
+| project EventTime_1 = ["Timestamp"], MeasuredAmount = ["Amount"]
 | where isnotnull(EventTime_1);
 PercentileObservations
 | project PercentileWindowEnd = EventTime_1, PercentileTimeBin = bin(EventTime_1, 5m)

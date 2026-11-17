@@ -13,9 +13,9 @@ let Events=datatable(Timestamp:string, Host:string, Amount:dynamic, Marker:strin
 | extend Amount=iff(gettype(Amount) in ("int","long","real","double","decimal"), tolong(Amount), long(null)), Timestamp=todatetime(Timestamp);
 let Actual = () {
 let Child = () {
-let SumObservations = union (Events
+let SumObservations = Events
 | where Marker =~ "child"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"], MeasuredAmount = ["Amount"])
+| project EventTime_1 = ["Timestamp"], GroupHost = ["Host"], MeasuredAmount = ["Amount"]
 | where isnotnull(EventTime_1) and isnotempty(GroupHost);
 let SumArrivals = SumObservations
 | summarize ArrivalSum = sum(MeasuredAmount) by EventTime_1, GroupHost;
@@ -31,11 +31,12 @@ union (SumArrivals
 | project WindowStart = SumBoundaryTime - 5m, WindowEnd = SumBoundaryTime, ["Host"] = GroupHost, ValueSum
 };
 let SumObservations = union (Child()
-| project EventTime_1 = todatetime(["WindowEnd"]), GroupHost = ["Host"], MeasuredMeasured = ["ValueSum"]),
+| project EventTime_1 = ["WindowEnd"], GroupHost = ["Host"], MeasuredMeasured = ["ValueSum"]
+| where isnotnull(EventTime_1) and isnotempty(GroupHost)),
 (Events
 | where Marker =~ "direct"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"], MeasuredMeasured = ["Amount"])
-| where isnotnull(EventTime_1) and isnotempty(GroupHost);
+| project EventTime_1 = ["Timestamp"], GroupHost = ["Host"], MeasuredMeasured = ["Amount"]
+| where isnotnull(EventTime_1) and isnotempty(GroupHost));
 let SumArrivals = SumObservations
 | summarize ArrivalSum = sum(MeasuredMeasured) by EventTime_1, GroupHost;
 union (SumArrivals

@@ -1612,22 +1612,23 @@ datetime(2026-01-01T00:00:00.0000001), "", "success"
 ];
 let Specialized = () {
 let FailedLogonBursts = () {
-union (Events
+Events
 | where Marker =~ "failure"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupUser = ["User"])
+| project EventTime_1 = ["Timestamp"], GroupUser = ["User"]
 | where isnotnull(EventTime_1) and isnotempty(GroupUser)
 | distinct EventTime_1, GroupUser
 | project WindowStart = EventTime_1 - 5m, WindowEnd = EventTime_1, ["User"] = GroupUser
 };
 // Strict sequence: "failed-logon-bursts" -> "successful-logon". Total inclusive span: 3m.
 union (FailedLogonBursts()
-| extend EventTime_1 = todatetime(["WindowEnd"]), GroupUser = ["User"]
+| extend EventTime_1 = ["WindowEnd"], GroupUser = ["User"]
+| where isnotnull(EventTime_1) and isnotempty(GroupUser)
 | extend SourceRule = "failed-logon-bursts"),
 (Events
 | where Marker =~ "success"
-| extend EventTime_1 = todatetime(["Timestamp"]), GroupUser = ["User"]
-| extend SourceRule = "successful-logon")
+| extend EventTime_1 = ["Timestamp"], GroupUser = ["User"]
 | where isnotnull(EventTime_1) and isnotempty(GroupUser)
+| extend SourceRule = "successful-logon")
 // Batch equal timestamps: simultaneous source matches cannot advance strict sequence positions.
 | summarize HasFailedLogonBursts = countif(SourceRule == "failed-logon-bursts") > 0, HasSuccessfulLogon = countif(SourceRule == "successful-logon") > 0 by EventTime_1, GroupUser
 | sort by GroupUser asc, EventTime_1 asc
@@ -1643,9 +1644,9 @@ union (FailedLogonBursts()
 };
 let General = () {
 let FailedLogonBursts = () {
-let SourceMatchArrivals = union (Events
+let SourceMatchArrivals = Events
 | where Marker =~ "failure"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupUser = ["User"])
+| project EventTime_1 = ["Timestamp"], GroupUser = ["User"]
 | where isnotnull(EventTime_1) and isnotempty(GroupUser)
 | summarize SourceMatchCount = count() by EventTime_1, GroupUser;
 union (SourceMatchArrivals
@@ -1661,13 +1662,14 @@ union (SourceMatchArrivals
 };
 // Strict sequence: "failed-logon-bursts" -> "successful-logon". Total inclusive span: 3m.
 union (FailedLogonBursts()
-| extend EventTime_1 = todatetime(["WindowEnd"]), GroupUser = ["User"]
+| extend EventTime_1 = ["WindowEnd"], GroupUser = ["User"]
+| where isnotnull(EventTime_1) and isnotempty(GroupUser)
 | extend SourceRule = "failed-logon-bursts"),
 (Events
 | where Marker =~ "success"
-| extend EventTime_1 = todatetime(["Timestamp"]), GroupUser = ["User"]
-| extend SourceRule = "successful-logon")
+| extend EventTime_1 = ["Timestamp"], GroupUser = ["User"]
 | where isnotnull(EventTime_1) and isnotempty(GroupUser)
+| extend SourceRule = "successful-logon")
 // Batch equal timestamps: simultaneous source matches cannot advance strict sequence positions.
 | summarize HasFailedLogonBursts = countif(SourceRule == "failed-logon-bursts") > 0, HasSuccessfulLogon = countif(SourceRule == "successful-logon") > 0 by EventTime_1, GroupUser
 | sort by GroupUser asc, EventTime_1 asc

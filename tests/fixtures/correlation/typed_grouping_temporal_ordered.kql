@@ -8,11 +8,11 @@ let Events=datatable(Timestamp:datetime,Host:string,Marker:string,User:long,Serv
 ];
 let Actual=(){
 // Strict sequence: "source-rule". Total inclusive span: 5m.
-union (Events
+Events
 | where Marker =~ "match"
-| extend EventTime_1 = todatetime(["Timestamp"]), GroupUser = ["User"], GroupServer = ["Server"]
-| extend SourceRule = "source-rule")
+| extend EventTime_1 = ["Timestamp"], GroupUser = ["User"], GroupServer = ["Server"]
 | where isnotnull(EventTime_1) and isnotempty(GroupUser) and isnotempty(GroupServer)
+| extend SourceRule = "source-rule"
 // Batch equal timestamps: simultaneous source matches cannot advance strict sequence positions.
 | summarize by EventTime_1, GroupUser, GroupServer
 | project WindowStart = EventTime_1 - 5m, WindowEnd = EventTime_1, ["User"] = GroupUser, ["Server"] = GroupServer, RuleCount = tolong(1)

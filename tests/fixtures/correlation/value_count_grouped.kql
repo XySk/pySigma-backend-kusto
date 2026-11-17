@@ -37,17 +37,20 @@ let OtherEvents=datatable(NetworkTime:string, Case:string, NetworkHost:dynamic, 
 let Actual = () {
 let ValueCountSources = materialize(union (Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["ProcessTime"]), GroupCase = ["Case"], GroupHost = ["ProcessHost"], CountedActor = ["ProcessUser"]),
+| project EventTime_1 = ["ProcessTime"], GroupCase = ["Case"], GroupHost = ["ProcessHost"], CountedActor = ["ProcessUser"]
+| where isnotnull(EventTime_1) and isnotempty(GroupCase) and isnotempty(GroupHost)),
 (Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["ProcessTime"]), GroupCase = ["Case"], GroupHost = ["ProcessHost"], CountedActor = ["ProcessUser"]),
+| project EventTime_1 = ["ProcessTime"], GroupCase = ["Case"], GroupHost = ["ProcessHost"], CountedActor = ["ProcessUser"]
+| where isnotnull(EventTime_1) and isnotempty(GroupCase) and isnotempty(GroupHost)),
 (OtherEvents
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["NetworkTime"]), GroupCase = ["Case"], GroupHost = ["NetworkHost"], CountedActor = ["NetworkUser"]),
+| project EventTime_1 = ["NetworkTime"], GroupCase = ["Case"], GroupHost = ["NetworkHost"], CountedActor = ["NetworkUser"]
+| where isnotnull(EventTime_1) and isnotempty(GroupCase) and isnotempty(GroupHost)),
 (OtherEvents
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["NetworkTime"]), GroupCase = ["Case"], GroupHost = ["NetworkHost"], CountedActor = ["NetworkUser"])
-| where isnotnull(EventTime_1) and isnotempty(GroupCase) and isnotempty(GroupHost));
+| project EventTime_1 = ["NetworkTime"], GroupCase = ["Case"], GroupHost = ["NetworkHost"], CountedActor = ["NetworkUser"]
+| where isnotnull(EventTime_1) and isnotempty(GroupCase) and isnotempty(GroupHost)));
 let CountedActorActivity = materialize(ValueCountSources
 | where isnotempty(CountedActor)
 | summarize by GroupCase, GroupHost, CountedActor, EventTime_1

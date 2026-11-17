@@ -46,6 +46,6 @@ def test_temporal_parent_accepts_child_context_with_scalar_grouping():
         correlation_document("parent", "temporal", ["child"]),
     ]
     (query,) = convert_documents(documents)
-    assert 'todatetime(["WindowEnd"])' in query
+    assert '["WindowEnd"]' in query
     assert "RuleCount" in query
     assert '["User"]' in query

@@ -27,9 +27,9 @@ let Events=datatable(Timestamp:string, Case:string, User:dynamic, Marker:string)
 // Normalize Events scalar fixture inputs explicitly.
 | extend Timestamp=todatetime(Timestamp), User=tostring(User);
 let Actual = () {
-let SourceMatchArrivals = union (Events
+let SourceMatchArrivals = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupCase = ["Case"], GroupUser = ["User"])
+| project EventTime_1 = ["Timestamp"], GroupCase = ["Case"], GroupUser = ["User"]
 | where isnotnull(EventTime_1) and isnotempty(GroupCase) and isnotempty(GroupUser)
 | summarize SourceMatchCount = count() by EventTime_1, GroupCase, GroupUser;
 union (SourceMatchArrivals

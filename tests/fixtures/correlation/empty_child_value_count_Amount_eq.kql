@@ -4,11 +4,12 @@ let Child = () {
 let ContextSummary = () {
 union (Events
 | where Marker =~ "A"
-| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "A"),
+| project EventTime_1 = ["Timestamp"], SourceRule = "A"
+| where isnotnull(EventTime_1)),
 (Events
 | where Marker =~ "B"
-| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "B")
-| where isnotnull(EventTime_1)
+| project EventTime_1 = ["Timestamp"], SourceRule = "B"
+| where isnotnull(EventTime_1))
 // Batch simultaneous source matches before updating inclusive trailing presence.
 | summarize MatchesA = countif(SourceRule == "A") > 0, MatchesB = countif(SourceRule == "B") > 0 by EventTime_1
 | sort by EventTime_1 asc
@@ -31,27 +32,29 @@ CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, Con
 | join kind=inner (
 union (Events
 | where Marker =~ "A"
-| extend ContextEventTime = todatetime(["Timestamp"]), ContextAmount = ["Amount"]
+| extend ContextEventTime = ["Timestamp"], ContextAmount = ["Amount"]
+| where isnotnull(ContextEventTime)
 | extend ContextSourceRule = "A"),
 (Events
 | where Marker =~ "B"
-| extend ContextEventTime = todatetime(["Timestamp"]), ContextAmount = ["Amount"]
+| extend ContextEventTime = ["Timestamp"], ContextAmount = ["Amount"]
+| where isnotnull(ContextEventTime)
 | extend ContextSourceRule = "B")
 | project ContextEventTime, ContextSourceRule, ContextAmount, ContextPartition = 1
 ) on ContextPartition
 | where ContextEventTime between ((CompletionTime - 5m) .. CompletionTime));
-let BooleanParticipants = materialize(WindowSourceMatches
+let BooleanParticipants = WindowSourceMatches
 | join kind=inner (WindowSourceMatches | summarize HasA_1 = countif(ContextSourceRule == "A") > 0, HasB_1 = countif(ContextSourceRule == "B") > 0 by CorrelationMatchId) on CorrelationMatchId
-| where ((not(HasA_1) and (false)) or (not(HasB_1) and (false))));
+| where ((not(HasA_1) and (false)) or (not(HasB_1) and (false)));
 let CompleteContextRelationships = materialize(BooleanParticipants
 | project CorrelationMatchId, ContextAmount
 | distinct *);
 union (CorrelationMatches | extend ContextRowKind = "Summary"), (CorrelationMatches | join kind=inner (CompleteContextRelationships) on CorrelationMatchId | extend ContextRowKind = "ContextEvidence")
 };
 let ChildResults = materialize(Child());
-let ValueCountSources = materialize(union (ChildResults
+let ValueCountSources = materialize(ChildResults
 | where ["ContextRowKind"] == "ContextEvidence"
-| project EventTime = todatetime(["WindowEnd"]), GroupAmount = ["ContextAmount"], CountedAmount = ["ContextAmount"])
+| project EventTime = ["WindowEnd"], GroupAmount = ["ContextAmount"], CountedAmount = ["ContextAmount"]
 | where isnotnull(EventTime) and isnotempty(GroupAmount));
 let CountedAmountActivity = materialize(ValueCountSources
 | where isnotempty(CountedAmount)

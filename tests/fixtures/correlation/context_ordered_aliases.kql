@@ -22,17 +22,19 @@ let ContextSummary = () {
 // Strict sequence: "a" -> "b" -> "c". Total inclusive span: 5m.
 union (Events
 | where Marker =~ "a"
-| extend EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"]
+| extend EventTime_1 = ["Timestamp"], GroupHost = ["Host"]
+| where isnotnull(EventTime_1) and isnotempty(GroupHost)
 | extend SourceRule = "a"),
 (Events
 | where Marker =~ "b"
-| extend EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"]
+| extend EventTime_1 = ["Timestamp"], GroupHost = ["Host"]
+| where isnotnull(EventTime_1) and isnotempty(GroupHost)
 | extend SourceRule = "b"),
 (Events
 | where Marker =~ "c"
-| extend EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"]
-| extend SourceRule = "c")
+| extend EventTime_1 = ["Timestamp"], GroupHost = ["Host"]
 | where isnotnull(EventTime_1) and isnotempty(GroupHost)
+| extend SourceRule = "c")
 // Batch equal timestamps: simultaneous source matches cannot advance strict sequence positions.
 | summarize HasA = countif(SourceRule == "a") > 0, HasB = countif(SourceRule == "b") > 0, HasC = countif(SourceRule == "c") > 0 by EventTime_1, GroupHost
 | sort by GroupHost asc, EventTime_1 asc
@@ -54,15 +56,18 @@ CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, Con
 | join kind=inner (
 union (Events
 | where Marker =~ "a"
-| extend ContextEventTime = todatetime(["Timestamp"]), ContextGroupHost = ["Host"], ContextUser = ["Actor"], ContextServer = ["Server"]
+| extend ContextEventTime = ["Timestamp"], ContextGroupHost = ["Host"], ContextUser = ["Actor"], ContextServer = ["Server"]
+| where isnotnull(ContextEventTime) and isnotempty(ContextGroupHost)
 | extend ContextSourceRule = "a"),
 (Events
 | where Marker =~ "b"
-| extend ContextEventTime = todatetime(["Timestamp"]), ContextGroupHost = ["Host"], ContextUser = ["User"], ContextServer = ["Server"]
+| extend ContextEventTime = ["Timestamp"], ContextGroupHost = ["Host"], ContextUser = ["User"], ContextServer = ["Server"]
+| where isnotnull(ContextEventTime) and isnotempty(ContextGroupHost)
 | extend ContextSourceRule = "b"),
 (Events
 | where Marker =~ "c"
-| extend ContextEventTime = todatetime(["Timestamp"]), ContextGroupHost = ["Host"], ContextUser = ["Actor"], ContextServer = ["Server"]
+| extend ContextEventTime = ["Timestamp"], ContextGroupHost = ["Host"], ContextUser = ["Actor"], ContextServer = ["Server"]
+| where isnotnull(ContextEventTime) and isnotempty(ContextGroupHost)
 | extend ContextSourceRule = "c")
 | project ContextEventTime, ContextSourceRule, ContextGroupHost, ContextUser, ContextServer, ContextPartition = 1
 ) on ContextGroupHost
@@ -79,11 +84,11 @@ let CandidatesForb = WindowSourceMatches
 let CandidatesForc = WindowSourceMatches
 | where ContextSourceRule == "c"
 | project CorrelationMatchId, CompletionTime, SourceRelationshipId, ContextEventTime;
-let EarliestaPrefix = materialize(CandidatesFora
-| summarize PrefixEndTime = min(ContextEventTime) by CorrelationMatchId);
-let LatestbSuffix = materialize(CandidatesForb
+let EarliestaPrefix = CandidatesFora
+| summarize PrefixEndTime = min(ContextEventTime) by CorrelationMatchId;
+let LatestbSuffix = CandidatesForb
 | where ContextEventTime < CompletionTime
-| summarize SuffixStartTime = max(ContextEventTime) by CorrelationMatchId);
+| summarize SuffixStartTime = max(ContextEventTime) by CorrelationMatchId;
 let OrderedParticipants = union (CandidatesFora
 | join kind=inner (LatestbSuffix) on CorrelationMatchId
 | where ContextEventTime < SuffixStartTime
@@ -95,8 +100,8 @@ let OrderedParticipants = union (CandidatesFora
 | where ContextEventTime == CompletionTime
 | project CorrelationMatchId, SourceRelationshipId)
 | distinct CorrelationMatchId, SourceRelationshipId;
-let OrderedSourceRelationships = materialize(WindowSourceMatches
-| join kind=leftsemi (OrderedParticipants) on CorrelationMatchId, SourceRelationshipId);
+let OrderedSourceRelationships = WindowSourceMatches
+| join kind=leftsemi (OrderedParticipants) on CorrelationMatchId, SourceRelationshipId;
 let CompleteContextRelationships = materialize(OrderedSourceRelationships
 | project CorrelationMatchId, ContextUser, ContextServer
 | distinct *);

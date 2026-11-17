@@ -28,9 +28,9 @@ let NetworkEvents=datatable(NetworkTime:string, NetworkScope:string, Marker:stri
 let Actual = () {
 let M = () {
 let C = () {
-let SourceMatchArrivals = union (Events
+let SourceMatchArrivals = Events
 | where Marker =~ "E"
-| project EventTime_1 = todatetime(["ProcessTime"]), GroupCase = ["ProcessCase"], GroupHost = ["ProcessHost"])
+| project EventTime_1 = ["ProcessTime"], GroupCase = ["ProcessCase"], GroupHost = ["ProcessHost"]
 | where isnotnull(EventTime_1) and isnotempty(GroupCase) and isnotempty(GroupHost)
 | summarize SourceMatchCount = count() by EventTime_1, GroupCase, GroupHost;
 union (SourceMatchArrivals
@@ -44,8 +44,8 @@ union (SourceMatchArrivals
 | where EventCount >= 2
 | project WindowStart = CountBoundaryTime - 2m, WindowEnd = CountBoundaryTime, ["Case"] = GroupCase, ["Host"] = GroupHost, EventCount
 };
-let ValueCountSources = materialize(union (C()
-| project EventTime = todatetime(["WindowEnd"]), GroupTenant = ["Case"], CountedEventCount = ["EventCount"])
+let ValueCountSources = materialize(C()
+| project EventTime = ["WindowEnd"], GroupTenant = ["Case"], CountedEventCount = ["EventCount"]
 | where isnotnull(EventTime) and isnotempty(GroupTenant));
 let CountedEventCountActivity = materialize(ValueCountSources
 | where isnotempty(CountedEventCount)
@@ -69,13 +69,14 @@ union (ValueCountSources | summarize by GroupTenant, EventTime
 };
 // Strict sequence: "M" -> "D". Total inclusive span: 4m.
 union (M()
-| extend EventTime_1 = todatetime(["WindowEnd"]), GroupTenant = ["Tenant"]
+| extend EventTime_1 = ["WindowEnd"], GroupTenant = ["Tenant"]
+| where isnotnull(EventTime_1) and isnotempty(GroupTenant)
 | extend SourceRule = "M"),
 (NetworkEvents
 | where Marker =~ "D"
-| extend EventTime_1 = todatetime(["NetworkTime"]), GroupTenant = ["NetworkScope"]
-| extend SourceRule = "D")
+| extend EventTime_1 = ["NetworkTime"], GroupTenant = ["NetworkScope"]
 | where isnotnull(EventTime_1) and isnotempty(GroupTenant)
+| extend SourceRule = "D")
 // Batch equal timestamps: simultaneous source matches cannot advance strict sequence positions.
 | summarize HasM = countif(SourceRule == "M") > 0, HasD = countif(SourceRule == "D") > 0 by EventTime_1, GroupTenant
 | sort by GroupTenant asc, EventTime_1 asc

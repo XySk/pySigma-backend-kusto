@@ -15,30 +15,31 @@ datetime(2026-01-01T12:10:00Z), "h", "a", "a10", "a10-server"
 let Actual=() {
 let ContextSummary = () {
 // Strict sequence: "a". Total inclusive span: 7m.
-union (Events
+Events
 | where Marker =~ "a"
-| extend EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"]
-| extend SourceRule = "a")
+| extend EventTime_1 = ["Timestamp"], GroupHost = ["Host"]
 | where isnotnull(EventTime_1) and isnotempty(GroupHost)
+| extend SourceRule = "a"
 // Batch equal timestamps: simultaneous source matches cannot advance strict sequence positions.
 | summarize by EventTime_1, GroupHost
 | project WindowStart = EventTime_1 - 7m, WindowEnd = EventTime_1, ["Host"] = GroupHost, RuleCount = tolong(1)
 };
 let CorrelationMatches = materialize(ContextSummary()
 | serialize CorrelationMatchId = row_number());
-let WindowSourceMatches = materialize(
+let WindowSourceMatches =
 CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, ContextGroupHost = ["Host"], ContextPartition = 1
 | join kind=inner (
-union (Events
+Events
 | where Marker =~ "a"
-| extend ContextEventTime = todatetime(["Timestamp"]), ContextGroupHost = ["Host"], ContextUser = ["User"], ContextServer = ["Server"]
-| extend ContextSourceRule = "a")
+| extend ContextEventTime = ["Timestamp"], ContextGroupHost = ["Host"], ContextUser = ["User"], ContextServer = ["Server"]
+| where isnotnull(ContextEventTime) and isnotempty(ContextGroupHost)
+| extend ContextSourceRule = "a"
 | project ContextEventTime, ContextSourceRule, ContextGroupHost, ContextUser, ContextServer, ContextPartition = 1
 ) on ContextGroupHost
-| where ContextEventTime between ((CompletionTime - 7m) .. CompletionTime));
+| where ContextEventTime between ((CompletionTime - 7m) .. CompletionTime);
 // Successful one/two-step completions need only endpoint participant filters.
-let OrderedSourceRelationships = materialize(WindowSourceMatches
-| where (ContextSourceRule == "a" and ContextEventTime == CompletionTime));
+let OrderedSourceRelationships = WindowSourceMatches
+| where (ContextSourceRule == "a" and ContextEventTime == CompletionTime);
 let CompleteContextRelationships = materialize(OrderedSourceRelationships
 | project CorrelationMatchId, ContextUser, ContextServer
 | distinct *);

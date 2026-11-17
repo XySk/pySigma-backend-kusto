@@ -10,9 +10,9 @@ let Events=datatable(Timestamp:datetime,Amount:long,Marker:string)[
  datetime(2026-01-01T12:05:00.0000001Z),long(null),"match"
 ];
 let Ties_gt_False=(){
-let PercentileObservations = union (Events
+let PercentileObservations = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), MeasuredAmount = ["Amount"])
+| project EventTime_1 = ["Timestamp"], MeasuredAmount = ["Amount"]
 | where isnotnull(EventTime_1);
 let PercentileWindowValues = materialize(
 PercentileObservations
@@ -40,9 +40,9 @@ PercentileWindowValues | summarize PercentilePopulation = count() by PercentileW
 | project WindowStart = PercentileWindowEnd - 5m, WindowEnd = PercentileWindowEnd, ValuePercentile
 };
 let Ties_gt_True=(){
-let PercentileObservations = union (Events
+let PercentileObservations = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), MeasuredAmount = ["Amount"])
+| project EventTime_1 = ["Timestamp"], MeasuredAmount = ["Amount"]
 | where isnotnull(EventTime_1);
 let PercentileWindowValues = materialize(
 PercentileObservations
@@ -71,9 +71,9 @@ PercentileWindowValues | summarize PercentilePopulation = count(), BelowThreshol
 | project WindowStart = PercentileWindowEnd - 5m, WindowEnd = PercentileWindowEnd, ValuePercentile
 };
 let Ties_gte_False=(){
-let PercentileObservations = union (Events
+let PercentileObservations = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), MeasuredAmount = ["Amount"])
+| project EventTime_1 = ["Timestamp"], MeasuredAmount = ["Amount"]
 | where isnotnull(EventTime_1);
 let PercentileWindowValues = materialize(
 PercentileObservations
@@ -101,9 +101,9 @@ PercentileWindowValues | summarize PercentilePopulation = count() by PercentileW
 | project WindowStart = PercentileWindowEnd - 5m, WindowEnd = PercentileWindowEnd, ValuePercentile
 };
 let Ties_gte_True=(){
-let PercentileObservations = union (Events
+let PercentileObservations = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), MeasuredAmount = ["Amount"])
+| project EventTime_1 = ["Timestamp"], MeasuredAmount = ["Amount"]
 | where isnotnull(EventTime_1);
 let PercentileWindowValues = materialize(
 PercentileObservations
@@ -132,9 +132,9 @@ PercentileWindowValues | summarize PercentilePopulation = count(), BelowThreshol
 | project WindowStart = PercentileWindowEnd - 5m, WindowEnd = PercentileWindowEnd, ValuePercentile
 };
 let Ties_lt_False=(){
-let PercentileObservations = union (Events
+let PercentileObservations = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), MeasuredAmount = ["Amount"])
+| project EventTime_1 = ["Timestamp"], MeasuredAmount = ["Amount"]
 | where isnotnull(EventTime_1);
 let PercentileWindowValues = materialize(
 PercentileObservations
@@ -162,9 +162,9 @@ PercentileWindowValues | summarize PercentilePopulation = count() by PercentileW
 | project WindowStart = PercentileWindowEnd - 5m, WindowEnd = PercentileWindowEnd, ValuePercentile
 };
 let Ties_lt_True=(){
-let PercentileObservations = union (Events
+let PercentileObservations = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), MeasuredAmount = ["Amount"])
+| project EventTime_1 = ["Timestamp"], MeasuredAmount = ["Amount"]
 | where isnotnull(EventTime_1);
 let PercentileWindowValues = materialize(
 PercentileObservations
@@ -193,9 +193,9 @@ PercentileWindowValues | summarize PercentilePopulation = count(), BelowThreshol
 | project WindowStart = PercentileWindowEnd - 5m, WindowEnd = PercentileWindowEnd, ValuePercentile
 };
 let Ties_lte_False=(){
-let PercentileObservations = union (Events
+let PercentileObservations = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), MeasuredAmount = ["Amount"])
+| project EventTime_1 = ["Timestamp"], MeasuredAmount = ["Amount"]
 | where isnotnull(EventTime_1);
 let PercentileWindowValues = materialize(
 PercentileObservations
@@ -223,9 +223,9 @@ PercentileWindowValues | summarize PercentilePopulation = count() by PercentileW
 | project WindowStart = PercentileWindowEnd - 5m, WindowEnd = PercentileWindowEnd, ValuePercentile
 };
 let Ties_lte_True=(){
-let PercentileObservations = union (Events
+let PercentileObservations = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), MeasuredAmount = ["Amount"])
+| project EventTime_1 = ["Timestamp"], MeasuredAmount = ["Amount"]
 | where isnotnull(EventTime_1);
 let PercentileWindowValues = materialize(
 PercentileObservations
@@ -254,9 +254,9 @@ PercentileWindowValues | summarize PercentilePopulation = count(), BelowThreshol
 | project WindowStart = PercentileWindowEnd - 5m, WindowEnd = PercentileWindowEnd, ValuePercentile
 };
 let Ties_eq_False=(){
-let PercentileObservations = union (Events
+let PercentileObservations = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), MeasuredAmount = ["Amount"])
+| project EventTime_1 = ["Timestamp"], MeasuredAmount = ["Amount"]
 | where isnotnull(EventTime_1);
 let PercentileWindowValues = materialize(
 PercentileObservations
@@ -284,9 +284,9 @@ PercentileWindowValues | summarize PercentilePopulation = count() by PercentileW
 | project WindowStart = PercentileWindowEnd - 5m, WindowEnd = PercentileWindowEnd, ValuePercentile
 };
 let Ties_eq_True=(){
-let PercentileObservations = union (Events
+let PercentileObservations = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), MeasuredAmount = ["Amount"])
+| project EventTime_1 = ["Timestamp"], MeasuredAmount = ["Amount"]
 | where isnotnull(EventTime_1);
 let PercentileWindowValues = materialize(
 PercentileObservations
@@ -315,9 +315,9 @@ PercentileWindowValues | summarize PercentilePopulation = count(), BelowThreshol
 | project WindowStart = PercentileWindowEnd - 5m, WindowEnd = PercentileWindowEnd, ValuePercentile
 };
 let Ties_neq_False=(){
-let PercentileObservations = union (Events
+let PercentileObservations = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), MeasuredAmount = ["Amount"])
+| project EventTime_1 = ["Timestamp"], MeasuredAmount = ["Amount"]
 | where isnotnull(EventTime_1);
 let PercentileWindowValues = materialize(
 PercentileObservations
@@ -345,9 +345,9 @@ PercentileWindowValues | summarize PercentilePopulation = count() by PercentileW
 | project WindowStart = PercentileWindowEnd - 5m, WindowEnd = PercentileWindowEnd, ValuePercentile
 };
 let Ties_neq_True=(){
-let PercentileObservations = union (Events
+let PercentileObservations = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), MeasuredAmount = ["Amount"])
+| project EventTime_1 = ["Timestamp"], MeasuredAmount = ["Amount"]
 | where isnotnull(EventTime_1);
 let PercentileWindowValues = materialize(
 PercentileObservations
