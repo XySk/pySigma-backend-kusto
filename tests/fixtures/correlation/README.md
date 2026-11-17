@@ -18,6 +18,10 @@ baselines.
 The reference-aware cache and contract-specific deduplication decisions are
 listed in the [relation-binding audit](RELATION-BINDING.md), including their
 consumer counts, safe reductions, sort locality, and focused measurement cases.
+The [context-transport scale decision](CONTEXT-TRANSPORT.md) records the rejected
+separate-summary/evidence prototype and the retained union contract. Its
+[hash-scoped evidence](runtime-evidence/context-transport-final/README.md)
+contains 150 paired scale samples and both initial failed prototype queries.
 
 ## Coverage and independent oracles
 
@@ -30,6 +34,7 @@ consumer counts, safe reductions, sort locality, and focused measurement cases.
 | `native_sum.py`, `native_average.py`, `native_percentile.py`, `average.py` | Native schemas and precision, finite-only measurements, zeros/negatives/multiplicity, null anchors, large expired observations, fractional comparisons, undefined avg/percentile including `neq`, exact nearest rank and extrema |
 | `context.py`, `count_context.py`, `numeric_context.py` | Distinct scalar displays and observed cross-field relationships, once-per-child/group contributions, direct multiplicity, logical aliases and required scalar child metrics |
 | `relational_context.py` | Displays at 999/1000/1001, configurable limit, `ContextComplete`, complete hidden 1001-pair parent inputs, callback-modified metric eligibility, no invented cross-pairs |
+| `context_transport_benchmark.py` | Increasing density/size, hot/many groups, repetition, selectivity, context fan-out, child reuse/depth, numeric pairing, and modeled transport row/byte growth |
 | `ordered_context.py`, `temporal_participants.py`, `boolean_context.py` | Every successful ordered and satisfied positive Boolean alternative; unrelated/absent evidence excluded; structural child presence without fabricated retained values |
 | `empty_child_context.py` | Absence-only children anchor zero sum/count without values; average/percentile stay undefined under `eq` and `neq`; scalar child metric grouping and exclusion of absent retained groups |
 | `temporal_context.py`, `dependency_order.py`, chained fixtures | Mixed/direct/shared/multilevel sources, name/UUID references, aliases, generation controls, reversed document order, accumulated spans and child `WindowEnd` timestamps |

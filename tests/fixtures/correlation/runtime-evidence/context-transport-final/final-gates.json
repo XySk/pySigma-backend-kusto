@@ -1,0 +1,66 @@
+{
+  "status": "PASS",
+  "acceptance_manifest_sha256": "38701686e0a423b30776c5ea1d145fdfe3774100842c24cf5743c81c2f90184e",
+  "strict_fixtures": {
+    "passed": 255,
+    "failed": 0
+  },
+  "broad_manifest_sha256": "6ef498fb6f8850426594ff81bddf53cff6076f962f4c5dce6e8ce7bc7eeb529c",
+  "broad_workloads": {
+    "passed": 64,
+    "failed": 0
+  },
+  "engine_version": {
+    "status": "PASS",
+    "response": {
+      "Tables": [
+        {
+          "TableName": "Table_0",
+          "Columns": [
+            {
+              "ColumnName": "BuildVersion",
+              "DataType": "String"
+            },
+            {
+              "ColumnName": "BuildTime",
+              "DataType": "DateTime"
+            },
+            {
+              "ColumnName": "ServiceType",
+              "DataType": "String"
+            },
+            {
+              "ColumnName": "ProductVersion",
+              "DataType": "String"
+            },
+            {
+              "ColumnName": "ServiceOffering",
+              "DataType": "String"
+            }
+          ],
+          "Rows": [
+            [
+              "1.0.9815.14081",
+              "2026-11-15T07:49:22Z",
+              "Engine",
+              "2026.11.15.0741-2645-8e3387b-master",
+              ""
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  "container": {
+    "image": "sha256:65e8298d9350856dec696e0e41327288e7bc105146768a1429fce62f3640acd8",
+    "memory": 12884901888,
+    "memory_swap": 12884901888,
+    "cpu_quota": 0,
+    "nano_cpus": 0
+  },
+  "request_options": {
+    "max_memory_consumption_per_query_per_node": 12884901888,
+    "query_results_cache_max_age": "00:00:00",
+    "servertimeout": "00:00:13"
+  }
+}
