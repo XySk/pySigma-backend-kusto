@@ -26,7 +26,7 @@ Events
 };
 let CorrelationMatches = materialize(ContextSummary()
 | serialize CorrelationMatchId = row_number());
-let WindowSourceMatches = materialize(
+let WindowSourceMatches =
 CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, ContextGroupHost = ["Host"], ContextPartition = 1
 | join kind=inner (
 Events
@@ -36,10 +36,10 @@ Events
 | extend ContextSourceRule = "a"
 | project ContextEventTime, ContextSourceRule, ContextGroupHost, ContextUser, ContextServer, ContextPartition = 1
 ) on ContextGroupHost
-| where ContextEventTime between ((CompletionTime - 7m) .. CompletionTime));
+| where ContextEventTime between ((CompletionTime - 7m) .. CompletionTime);
 // Successful one/two-step completions need only endpoint participant filters.
-let OrderedSourceRelationships = materialize(WindowSourceMatches
-| where (ContextSourceRule == "a" and ContextEventTime == CompletionTime));
+let OrderedSourceRelationships = WindowSourceMatches
+| where (ContextSourceRule == "a" and ContextEventTime == CompletionTime);
 let CompleteContextRelationships = materialize(OrderedSourceRelationships
 | project CorrelationMatchId, ContextUser, ContextServer
 | distinct *);

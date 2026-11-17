@@ -28,7 +28,7 @@ union (SourceMatchArrivals
 };
 let CorrelationMatches = materialize(ContextSummary()
 | serialize CorrelationMatchId = row_number());
-let WindowSourceMatches = materialize(
+let WindowSourceMatches =
 CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, ContextGroupHost = ["Host"], ContextPartition = 1
 | join kind=inner (
 Events
@@ -38,7 +38,7 @@ Events
 | extend ContextSourceRule = "source-rule"
 | project ContextEventTime, ContextSourceRule, ContextGroupHost, ContextUser, ContextServer, ContextPartition = 1
 ) on ContextGroupHost
-| where ContextEventTime between ((CompletionTime - 5m) .. CompletionTime));
+| where ContextEventTime between ((CompletionTime - 5m) .. CompletionTime);
 let CompleteContextRelationships = materialize(WindowSourceMatches
 | project CorrelationMatchId, ContextUser, ContextServer
 | distinct *);
@@ -84,10 +84,10 @@ ChildResults | where ["ContextRowKind"] == "Summary"
 | project ContextEventTime, ContextSourceRule, ContextGroupServer, ContextUser_1, HasContextEvidence, ContextPartition = 1
 ) on ContextGroupServer
 | where ContextEventTime between ((CompletionTime - 5m) .. CompletionTime));
-let CompleteContextRelationships = materialize(WindowSourceMatches
+let CompleteContextRelationships = WindowSourceMatches
 | where HasContextEvidence
 | project CorrelationMatchId, ContextUser_1
-| distinct *);
+| distinct *;
 let ValuesForUser = CompleteContextRelationships
 | where isnotnull(ContextUser_1)
 | summarize by CorrelationMatchId, ContextUser_1

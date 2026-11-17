@@ -43,9 +43,9 @@ union (Events
 | project ContextEventTime, ContextSourceRule, ContextAmount, ContextPartition = 1
 ) on ContextPartition
 | where ContextEventTime between ((CompletionTime - 5m) .. CompletionTime));
-let BooleanParticipants = materialize(WindowSourceMatches
+let BooleanParticipants = WindowSourceMatches
 | join kind=inner (WindowSourceMatches | summarize HasA_1 = countif(ContextSourceRule == "A") > 0, HasB_1 = countif(ContextSourceRule == "B") > 0 by CorrelationMatchId) on CorrelationMatchId
-| where ((not(HasA_1) and (false)) or (not(HasB_1) and (false))));
+| where ((not(HasA_1) and (false)) or (not(HasB_1) and (false)));
 let CompleteContextRelationships = materialize(BooleanParticipants
 | project CorrelationMatchId, ContextAmount
 | distinct *);

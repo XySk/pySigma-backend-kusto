@@ -83,6 +83,27 @@ class _PreparedCorrelationInput:
     allocate: Callable[[str], str]
 
 
+@dataclass(frozen=True)
+class _CorrelationRelationBinding:
+    """A named correlation relation with an explicit evaluation policy."""
+
+    name: str
+    expression: str
+    consumer_count: int = 1
+    completed_reductions: tuple[str, ...] = ()
+    preserve_evaluation: bool = False
+    measured_materialization: bool = False
+
+    def render(self):
+        if self.consumer_count < 1:
+            raise ValueError("correlation relation bindings require at least one consumer")
+        cache = self.consumer_count > 1 or self.preserve_evaluation or self.measured_materialization
+        if cache:
+            return f"let {self.name} = materialize({self.expression});\n"
+        separator = "" if self.expression.startswith("\n") else " "
+        return f"let {self.name} ={separator}{self.expression};\n"
+
+
 class KustoBackend(TextQueryBackend):
     """Microsoft 365 Defender KQL Backend."""
 
@@ -809,7 +830,12 @@ class KustoBackend(TextQueryBackend):
             shared["definitions"].extend(
                 [
                     f"let {function} = () {{\n{query}\n}};\n",
-                    f"let {results} = materialize({function}());\n",
+                    _CorrelationRelationBinding(
+                        results,
+                        f"{function}()",
+                        preserve_evaluation=True,
+                        completed_reductions=("preserve the child public summary/evidence schema",),
+                    ).render(),
                 ]
             )
             shared["bindings"][key] = (function, results)
@@ -1053,11 +1079,13 @@ class KustoBackend(TextQueryBackend):
         join_fields = ", ".join(groups or [join_key])
         output = []
         for query in queries:
-            prefix = (
-                f"let {summary_function} = () {{\n{query}\n}};\n"
-                f"{definitions}let {summaries} = materialize({summary_function}()\n"
-                f"| serialize {source_id} = row_number());\n"
-            )
+            prefix = f"let {summary_function} = () {{\n{query}\n}};\n{definitions}"
+            prefix += _CorrelationRelationBinding(
+                summaries,
+                f"{summary_function}()\n| serialize {source_id} = row_number()",
+                preserve_evaluation=True,
+                completed_reductions=("project correlation summary rows", "assign stable match identity"),
+            ).render()
             left = f"{summaries} | project {left_projection}"
             right = f"{search}\n| project {right_projection}"
             relationship_key = (
@@ -1065,11 +1093,31 @@ class KustoBackend(TextQueryBackend):
                 if rule.type == SigmaCorrelationType.TEMPORAL_ORDERED and len(rule.referenced_rules) > 2
                 else ""
             )
-            prefix += (
-                f"let {matched} = materialize(\n{left}\n"
-                f"| join kind=inner (\n{right}\n) on {join_fields}\n"
-                f"| where {timestamp} between (({end} - {span}) .. {end}){relationship_key});\n"
+            matched_expression = (
+                f"\n{left}\n| join kind=inner (\n{right}\n) on {join_fields}\n"
+                f"| where {timestamp} between (({end} - {span}) .. {end}){relationship_key}"
             )
+            prefix += _CorrelationRelationBinding(
+                matched,
+                matched_expression,
+                consumer_count=(
+                    2
+                    if isinstance(rule.condition, SigmaExtendedCorrelationCondition)
+                    else (
+                        len(rule.referenced_rules) + 1
+                        if rule.type == SigmaCorrelationType.TEMPORAL_ORDERED and len(rule.referenced_rules) > 2
+                        else 1
+                    )
+                ),
+                completed_reductions=("restrict source matches to the exact correlation window",),
+                preserve_evaluation=bool(relationship_key),
+                measured_materialization=rule.type
+                in (
+                    SigmaCorrelationType.VALUE_COUNT,
+                    SigmaCorrelationType.VALUE_AVG,
+                    SigmaCorrelationType.VALUE_PERCENTILE,
+                ),
+            ).render()
             if rule.type == SigmaCorrelationType.TEMPORAL_ORDERED:
                 membership, matched = self._ordered_context_membership(
                     rule, matched, columns, source_id, end, key, allocate
@@ -1087,11 +1135,13 @@ class KustoBackend(TextQueryBackend):
                     aggregates.append(f"{column} = countif({columns['rule']} == {identity}) > 0")
                 eligible = allocate("BooleanParticipants")
                 evidence = self._boolean_context_expression(rule, rule.condition.parsed, presence, columns["rule"])[1]
-                prefix += (
-                    f"let {eligible} = materialize({matched}\n"
+                prefix += _CorrelationRelationBinding(
+                    eligible,
+                    f"{matched}\n"
                     f"| join kind=inner ({matched} | summarize {', '.join(aggregates)} by {source_id}) on {source_id}\n"
-                    f"| where {evidence});\n"
-                )
+                    f"| where {evidence}",
+                    completed_reductions=("retain only positive participants in satisfied Boolean alternatives",),
+                ).render()
                 context_matches = eligible
             else:
                 context_matches = matched
@@ -1102,10 +1152,17 @@ class KustoBackend(TextQueryBackend):
             relationship_source = context_matches
             if "context_evidence" in columns:
                 relationship_source += f"\n| where {columns['context_evidence']}"
-            prefix += (
-                f"let {relationships} = materialize({relationship_source}\n"
-                f"| project {relationship_fields}\n| distinct *);\n"
-            )
+            has_parent_consumer = bool(getattr(self, "_correlation_graph", {}).get("consumers", {}).get(id(rule)))
+            prefix += _CorrelationRelationBinding(
+                relationships,
+                f"{relationship_source}\n| project {relationship_fields}\n| distinct *",
+                consumer_count=len(context_fields) + int(has_parent_consumer),
+                completed_reductions=(
+                    "project exact retained relationship identity",
+                    "deduplicate exact relationship tuples",
+                ),
+                measured_materialization=rule.type == SigmaCorrelationType.VALUE_AVG,
+            ).render()
             artifact_prefix = prefix
             collections = []
             limit = self.backend_options.get("correlation_context_limit", 1000)
@@ -1167,8 +1224,12 @@ class KustoBackend(TextQueryBackend):
                 comparison = "==" if index == len(rule.referenced_rules) - 1 else "<"
                 predicates.append(f"({rule_column} == {identity} and {timestamp} {comparison} {completion})")
             return (
-                f"// Successful one/two-step completions need only endpoint participant filters.\n"
-                f"let {selected} = materialize({matches}\n| where {' or '.join(predicates)});\n",
+                "// Successful one/two-step completions need only endpoint participant filters.\n"
+                + _CorrelationRelationBinding(
+                    selected,
+                    f"{matches}\n| where {' or '.join(predicates)}",
+                    completed_reductions=("retain only successful ordered endpoint participants",),
+                ).render(),
                 selected,
             )
 
@@ -1197,10 +1258,12 @@ class KustoBackend(TextQueryBackend):
             if index:
                 prior, bound = earliest[-1]
                 expression += f"\n| join kind=inner ({prior}) on {source_id}" f"\n| where {timestamp} > {bound}"
-            definitions += (
-                f"let {relation} = materialize({expression}\n"
-                f"| summarize {threshold} = min({timestamp}) by {source_id});\n"
-            )
+            definitions += _CorrelationRelationBinding(
+                relation,
+                f"{expression}\n| summarize {threshold} = min({timestamp}) by {source_id}",
+                consumer_count=1 + int(index < len(candidates) - 3),
+                completed_reductions=("reduce reachable prefixes to the earliest witness per match",),
+            ).render()
             earliest.append((relation, threshold))
 
         for index in range(len(candidates) - 2, 0, -1):
@@ -1211,10 +1274,12 @@ class KustoBackend(TextQueryBackend):
             else:
                 following, bound = latest[index + 1]
                 expression += f"\n| join kind=inner ({following}) on {source_id}" f"\n| where {timestamp} < {bound}"
-            definitions += (
-                f"let {relation} = materialize({expression}\n"
-                f"| summarize {threshold} = max({timestamp}) by {source_id});\n"
-            )
+            definitions += _CorrelationRelationBinding(
+                relation,
+                f"{expression}\n| summarize {threshold} = max({timestamp}) by {source_id}",
+                consumer_count=1 + int(index > 1),
+                completed_reductions=("reduce reachable suffixes to the latest witness per match",),
+            ).render()
             latest[index] = (relation, threshold)
 
         participants = []
@@ -1233,11 +1298,12 @@ class KustoBackend(TextQueryBackend):
             participants.append(f"({expression}\n| project {source_id}, {key})")
         participating = allocate("OrderedParticipants")
         selected = allocate("OrderedSourceRelationships")
-        definitions += (
-            f"let {participating} = union {', '.join(participants)}\n| distinct {source_id}, {key};\n"
-            f"let {selected} = materialize({matches}\n"
-            f"| join kind=leftsemi ({participating}) on {source_id}, {key});\n"
-        )
+        definitions += f"let {participating} = union {', '.join(participants)}\n| distinct {source_id}, {key};\n"
+        definitions += _CorrelationRelationBinding(
+            selected,
+            f"{matches}\n| join kind=leftsemi ({participating}) on {source_id}, {key}",
+            completed_reductions=("retain only source relationships reachable from a successful ordered sequence",),
+        ).render()
         return definitions, selected
 
     @staticmethod
@@ -1533,7 +1599,15 @@ class KustoBackend(TextQueryBackend):
             if "child_match" in columns and (numeric_context or self._uses_context_groups(rule)):
                 source_matches = allocate("ParentSourceMatches")
                 child_id = columns["child_match"]
-                definitions += f'let {source_matches} = materialize({search}\n| extend {child_id} = tostring(column_ifexists({json.dumps(child_id)}, "")));\n'
+                definitions += _CorrelationRelationBinding(
+                    source_matches,
+                    f'{search}\n| extend {child_id} = tostring(column_ifexists({json.dumps(child_id)}, ""))',
+                    consumer_count=2,
+                    completed_reductions=(
+                        "project canonical correlation inputs in each source branch",
+                        "normalize the optional child match identity before the direct/child split",
+                    ),
+                ).render()
                 child_matches = f"{source_matches} | where isnotempty({child_id})"
                 keys = [child_id, *columns["groups"]]
                 if numeric_context:
@@ -1670,7 +1744,16 @@ class KustoBackend(TextQueryBackend):
             population, rank = allocate("PercentilePopulation"), allocate("PercentileRank")
             # Reuse the exact candidate relation for counting and selection.
             # Projecting it narrowly keeps the one materialization and sort small.
-            definitions += f"let {candidates} = materialize(\n{pairs}\n);\n"
+            definitions += _CorrelationRelationBinding(
+                candidates,
+                f"\n{pairs}\n",
+                consumer_count=2,
+                completed_reductions=(
+                    "filter unusable measurements",
+                    "restrict candidates to exact windows",
+                    "project percentile key and measured value",
+                ),
+            ).render()
             changes = []
             for logical, field in zip(rule.group_by or [], groups):
                 changed = self._scalar_neighbor_changed(field, self._correlation_field_types[logical])
@@ -1762,7 +1845,12 @@ class KustoBackend(TextQueryBackend):
         event_time, groups = columns["timestamp"], columns["groups"]
         boundary_time, boundary_order = [allocate(name) for name in ("ValueBoundaryTime", "ValueBoundaryOrder")]
         deltas = [allocate(value + "Delta") for value in columns["values"]]
-        definitions += f"let {matches} = materialize({prepared.search});\n"
+        definitions += _CorrelationRelationBinding(
+            matches,
+            prepared.search,
+            consumer_count=1 + len(counted_fields),
+            completed_reductions=("project and validate canonical value-count source columns",),
+        ).render()
 
         branches = []
 
@@ -1793,13 +1881,20 @@ class KustoBackend(TextQueryBackend):
                     f"next({event_time}) > {event_time} + {prepared.span}",
                 ]
             )
-            definitions += (
-                f"let {intervals} = materialize({matches}\n| where isnotempty({value})\n"
+            definitions += _CorrelationRelationBinding(
+                intervals,
+                f"{matches}\n| where isnotempty({value})\n"
                 f"| summarize by {', '.join([*keys, event_time])}\n"
                 f"| sort by {', '.join(f'{key} asc' for key in [*keys, event_time])}\n"
                 "// Repeated values whose inclusive active intervals overlap contribute only once.\n"
-                f"| extend {starts} = {start},\n    {ends} = {end});\n"
-            )
+                f"| extend {starts} = {start},\n    {ends} = {end}",
+                consumer_count=2,
+                completed_reductions=(
+                    "exclude unusable counted values without removing anchors",
+                    "deduplicate group/value/timestamp activity identities",
+                    "mark merged inclusive interval boundaries",
+                ),
+            ).render()
             branches.append(boundary(f"{intervals} | where {starts}", event_time, 0, index, 1))
             branches.append(boundary(f"{intervals} | where {ends}", f"{event_time} + {prepared.span}", 2, index, -1))
         restart = " or ".join(self._scalar_neighbor_changed(group, kind) for group, kind in zip(groups, group_kinds))

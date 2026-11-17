@@ -1,0 +1,158 @@
+{
+  "format": 1,
+  "revision": "fce80ed7500252227d6a50f6d3fabdd442c7c22c",
+  "baseline_revision": "07525ee846878754bda7933eab0684895a156086",
+  "oracle": "direct inclusive-window enumeration with explicit Boolean participants",
+  "workloads": [
+    {
+      "name": "sparse-single-display",
+      "fixture": "sparse-single-display.json",
+      "fixture_sha256": "5c528185fd1db52643189c67b593f6af2a5082fa573f0ae4c9f49f7b2cffdf27",
+      "query": "sparse-single-display.kql",
+      "query_sha256": "4f018fe7d8e6e56c8896c773ad0d2017e1f4038fb3bbf791fe49149110f37878",
+      "query_bytes": 2339,
+      "query_lines": 42,
+      "operators": {
+        "distinct": 1,
+        "extend": 5,
+        "join": 2,
+        "project": 8,
+        "serialize": 1,
+        "sort": 1,
+        "summarize": 3,
+        "where": 8
+      },
+      "input_rows": 4,
+      "expected_rows": 2
+    },
+    {
+      "name": "dense-unique-single-display",
+      "fixture": "dense-unique-single-display.json",
+      "fixture_sha256": "77819a24fd28854b7e052e9577e926642ea6e49756e60a6d1c5677cd162f354a",
+      "query": "dense-unique-single-display.kql",
+      "query_sha256": "be7dbbe4eed6b4bae4061fae657d8ccdbf2a0f35dfe6439b6c7fac1ff0ce4855",
+      "query_bytes": 2339,
+      "query_lines": 42,
+      "operators": {
+        "distinct": 1,
+        "extend": 5,
+        "join": 2,
+        "project": 8,
+        "serialize": 1,
+        "sort": 1,
+        "summarize": 3,
+        "where": 8
+      },
+      "input_rows": 24,
+      "expected_rows": 23
+    },
+    {
+      "name": "hot-repeated-single-display",
+      "fixture": "hot-repeated-single-display.json",
+      "fixture_sha256": "80633ee931ae26b827da829161108d31846411f70e3502d4b94e9aa860dba5bd",
+      "query": "hot-repeated-single-display.kql",
+      "query_sha256": "47d9205215d8b959f1a5b181d5cb4ee38f5c1d42e99f0d5a048cbe6b0c6d5831",
+      "query_bytes": 2343,
+      "query_lines": 42,
+      "operators": {
+        "distinct": 1,
+        "extend": 5,
+        "join": 2,
+        "project": 8,
+        "serialize": 1,
+        "sort": 1,
+        "summarize": 3,
+        "where": 8
+      },
+      "input_rows": 96,
+      "expected_rows": 0
+    },
+    {
+      "name": "dense-multiple-display",
+      "fixture": "dense-multiple-display.json",
+      "fixture_sha256": "6d0691b2aeb3d9d4ff7a1d093c6cf43033902f349efaac21d648a48ef4328982",
+      "query": "dense-multiple-display.kql",
+      "query_sha256": "f24c9acb57cd6647d5fcfc8b0befe662460c77dfc3740250d13028f2861c3972",
+      "query_bytes": 2838,
+      "query_lines": 48,
+      "operators": {
+        "distinct": 1,
+        "extend": 6,
+        "join": 3,
+        "project": 8,
+        "serialize": 1,
+        "sort": 1,
+        "summarize": 5,
+        "where": 9
+      },
+      "input_rows": 24,
+      "expected_rows": 23
+    },
+    {
+      "name": "dense-boolean-context",
+      "fixture": "dense-boolean-context.json",
+      "fixture_sha256": "7526a2108f280f0ae929d003d345aca39d94d72f97adfbefa04a654f978facfb",
+      "query": "dense-boolean-context.kql",
+      "query_sha256": "1b36c425e8c518f6a9f1ca90e664b6549a87c5b4d37b8567c8ee1706731f3ec2",
+      "query_bytes": 4118,
+      "query_lines": 67,
+      "operators": {
+        "distinct": 1,
+        "extend": 11,
+        "join": 3,
+        "project": 8,
+        "scan": 1,
+        "serialize": 1,
+        "sort": 1,
+        "summarize": 4,
+        "where": 16
+      },
+      "input_rows": 24,
+      "expected_rows": 23
+    },
+    {
+      "name": "hot-ordered-context",
+      "fixture": "hot-ordered-context.json",
+      "fixture_sha256": "93eb6df57b8a13c71603eb9acdb2a65970992700fea285d5d383bab3bae31c3e",
+      "query": "hot-ordered-context.kql",
+      "query_sha256": "0da28bfd498778db972ebafdacfa04e1ccd48b4e36fb355fd6bfb39295e4075e",
+      "query_bytes": 7807,
+      "query_lines": 123,
+      "operators": {
+        "distinct": 2,
+        "extend": 19,
+        "join": 9,
+        "project": 13,
+        "scan": 1,
+        "serialize": 2,
+        "sort": 1,
+        "summarize": 7,
+        "where": 32
+      },
+      "input_rows": 96,
+      "expected_rows": 22
+    },
+    {
+      "name": "dense-child-reuse",
+      "fixture": "dense-child-reuse.json",
+      "fixture_sha256": "b91bf076ada103700df012ccd1a19d0376b8e3030192cad8d39781053e3cc9e8",
+      "query": "dense-child-reuse.kql",
+      "query_sha256": "9e019ee600b88a0e8b43443595932b0640024360e4b52b266370c3cf31509dc1",
+      "query_bytes": 7874,
+      "query_lines": 132,
+      "operators": {
+        "distinct": 3,
+        "extend": 20,
+        "join": 8,
+        "project": 25,
+        "project-away": 2,
+        "serialize": 3,
+        "sort": 3,
+        "summarize": 5,
+        "where": 30
+      },
+      "input_rows": 24,
+      "expected_rows": 23
+    }
+  ]
+}

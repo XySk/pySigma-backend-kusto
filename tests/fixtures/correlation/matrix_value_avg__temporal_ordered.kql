@@ -53,7 +53,7 @@ ChildResults
 };
 let CorrelationMatches = materialize(ContextSummary()
 | serialize CorrelationMatchId = row_number());
-let WindowSourceMatches = materialize(
+let WindowSourceMatches =
 CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, ContextPartition = 1
 | join kind=inner (
 ChildResults | where ["ContextRowKind"] == "Summary"
@@ -64,14 +64,14 @@ ChildResults | where ["ContextRowKind"] == "Summary"
 | extend ContextSourceRule = "child"
 | project ContextEventTime, ContextSourceRule, ContextAmount, HasContextEvidence, ContextPartition = 1
 ) on ContextPartition
-| where ContextEventTime between ((CompletionTime - 5m) .. CompletionTime));
+| where ContextEventTime between ((CompletionTime - 5m) .. CompletionTime);
 // Successful one/two-step completions need only endpoint participant filters.
-let OrderedSourceRelationships = materialize(WindowSourceMatches
-| where (ContextSourceRule == "child" and ContextEventTime == CompletionTime));
-let CompleteContextRelationships = materialize(OrderedSourceRelationships
+let OrderedSourceRelationships = WindowSourceMatches
+| where (ContextSourceRule == "child" and ContextEventTime == CompletionTime);
+let CompleteContextRelationships = OrderedSourceRelationships
 | where HasContextEvidence
 | project CorrelationMatchId, ContextAmount
-| distinct *);
+| distinct *;
 let ValuesForAmount = CompleteContextRelationships
 | where isnotnull(ContextAmount)
 | summarize by CorrelationMatchId, ContextAmount

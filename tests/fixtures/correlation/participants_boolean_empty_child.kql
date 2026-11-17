@@ -56,9 +56,9 @@ union (Events
 | project ContextEventTime, ContextSourceRule, ContextGroupHost, ContextUser, ContextServer, ContextPartition = 1
 ) on ContextGroupHost
 | where ContextEventTime between ((CompletionTime - 5m) .. CompletionTime));
-let BooleanParticipants = materialize(WindowSourceMatches
+let BooleanParticipants = WindowSourceMatches
 | join kind=inner (WindowSourceMatches | summarize HasA_1 = countif(ContextSourceRule == "A") > 0, HasB_1 = countif(ContextSourceRule == "B") > 0, HasC_1 = countif(ContextSourceRule == "C") > 0 by CorrelationMatchId) on CorrelationMatchId
-| where ((not(HasA_1) and (false)) or ((HasB_1 and HasC_1) and (((HasB_1 and HasC_1) and ((HasB_1 and (ContextSourceRule == "B")) or (HasC_1 and (ContextSourceRule == "C"))))))));
+| where ((not(HasA_1) and (false)) or ((HasB_1 and HasC_1) and (((HasB_1 and HasC_1) and ((HasB_1 and (ContextSourceRule == "B")) or (HasC_1 and (ContextSourceRule == "C")))))));
 let CompleteContextRelationships = materialize(BooleanParticipants
 | project CorrelationMatchId, ContextUser, ContextServer
 | distinct *);
@@ -109,9 +109,9 @@ union (AbsenceChildResults | where ["ContextRowKind"] == "Summary"
 | project ContextEventTime, ContextSourceRule, ContextGroupHost, ContextUser, ContextServer, HasContextEvidence, ContextPartition = 1
 ) on ContextGroupHost
 | where ContextEventTime between ((CompletionTime - 5m) .. CompletionTime));
-let BooleanParticipants = materialize(WindowSourceMatches
+let BooleanParticipants = WindowSourceMatches
 | join kind=inner (WindowSourceMatches | summarize HasAbsenceChild_1 = countif(ContextSourceRule == "AbsenceChild") > 0, HasFinish_1 = countif(ContextSourceRule == "Finish") > 0 by CorrelationMatchId) on CorrelationMatchId
-| where ((HasAbsenceChild_1 and HasFinish_1) and ((HasAbsenceChild_1 and (ContextSourceRule == "AbsenceChild")) or (HasFinish_1 and (ContextSourceRule == "Finish")))));
+| where ((HasAbsenceChild_1 and HasFinish_1) and ((HasAbsenceChild_1 and (ContextSourceRule == "AbsenceChild")) or (HasFinish_1 and (ContextSourceRule == "Finish"))));
 let CompleteContextRelationships = materialize(BooleanParticipants
 | where HasContextEvidence
 | project CorrelationMatchId, ContextUser, ContextServer

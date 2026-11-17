@@ -88,10 +88,10 @@ ChildResults | where ["ContextRowKind"] == "Summary"
 | project ContextEventTime, ContextSourceRule, ContextAmount_1, HasContextEvidence, ContextPartition = 1
 ) on ContextPartition
 | where ContextEventTime between ((CompletionTime - 5m) .. CompletionTime));
-let CompleteContextRelationships = materialize(WindowSourceMatches
+let CompleteContextRelationships = WindowSourceMatches
 | where HasContextEvidence
 | project CorrelationMatchId_1, ContextAmount_1
-| distinct *);
+| distinct *;
 let ValuesForAmount = CompleteContextRelationships
 | where isnotnull(ContextAmount_1)
 | summarize by CorrelationMatchId_1, ContextAmount_1

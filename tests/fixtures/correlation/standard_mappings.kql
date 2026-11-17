@@ -37,7 +37,7 @@ union (SumArrivals
 };
 let CorrelationMatches = materialize(ContextSummary()
 | serialize CorrelationMatchId = row_number());
-let WindowSourceMatches = materialize(
+let WindowSourceMatches =
 CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, ContextGroupHost = ["Host"], ContextPartition = 1
 | join kind=inner (
 union (Events
@@ -57,10 +57,10 @@ union (Events
 | extend ContextSourceRule = "network-rule")
 | project ContextEventTime, ContextSourceRule, ContextGroupHost, ContextUser, ContextPartition = 1
 ) on ContextGroupHost
-| where ContextEventTime between ((CompletionTime - 5m) .. CompletionTime));
-let CompleteContextRelationships = materialize(WindowSourceMatches
+| where ContextEventTime between ((CompletionTime - 5m) .. CompletionTime);
+let CompleteContextRelationships = WindowSourceMatches
 | project CorrelationMatchId, ContextUser
-| distinct *);
+| distinct *;
 let ValuesForUser = CompleteContextRelationships
 | where isnotnull(ContextUser)
 | summarize by CorrelationMatchId, ContextUser

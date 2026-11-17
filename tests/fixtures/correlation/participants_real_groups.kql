@@ -79,11 +79,11 @@ let CandidatesForb = WindowSourceMatches
 let CandidatesForc = WindowSourceMatches
 | where ContextSourceRule == "c"
 | project CorrelationMatchId, CompletionTime, SourceRelationshipId, ContextEventTime;
-let EarliestaPrefix = materialize(CandidatesFora
-| summarize PrefixEndTime = min(ContextEventTime) by CorrelationMatchId);
-let LatestbSuffix = materialize(CandidatesForb
+let EarliestaPrefix = CandidatesFora
+| summarize PrefixEndTime = min(ContextEventTime) by CorrelationMatchId;
+let LatestbSuffix = CandidatesForb
 | where ContextEventTime < CompletionTime
-| summarize SuffixStartTime = max(ContextEventTime) by CorrelationMatchId);
+| summarize SuffixStartTime = max(ContextEventTime) by CorrelationMatchId;
 let OrderedParticipants = union (CandidatesFora
 | join kind=inner (LatestbSuffix) on CorrelationMatchId
 | where ContextEventTime < SuffixStartTime
@@ -95,11 +95,11 @@ let OrderedParticipants = union (CandidatesFora
 | where ContextEventTime == CompletionTime
 | project CorrelationMatchId, SourceRelationshipId)
 | distinct CorrelationMatchId, SourceRelationshipId;
-let OrderedSourceRelationships = materialize(WindowSourceMatches
-| join kind=leftsemi (OrderedParticipants) on CorrelationMatchId, SourceRelationshipId);
-let CompleteContextRelationships = materialize(OrderedSourceRelationships
+let OrderedSourceRelationships = WindowSourceMatches
+| join kind=leftsemi (OrderedParticipants) on CorrelationMatchId, SourceRelationshipId;
+let CompleteContextRelationships = OrderedSourceRelationships
 | project CorrelationMatchId, ContextUser
-| distinct *);
+| distinct *;
 let ValuesForUser = CompleteContextRelationships
 | where isnotnull(ContextUser)
 | summarize by CorrelationMatchId, ContextUser

@@ -21,6 +21,28 @@ def test_freeze_pins_public_collection_queries_and_independent_scalar_results(tm
     assert fixture["schema"]["WindowEnd"] == "datetime"
 
 
+def test_focused_relation_binding_benchmark_covers_density_reuse_and_context_policies(tmp_path):
+    from tests.fixtures.correlation.relation_binding_benchmark import freeze
+
+    freeze(tmp_path)
+    manifest = json.loads((tmp_path / "manifest.json").read_text())
+    names = {item["name"] for item in manifest["workloads"]}
+
+    assert names == {
+        "sparse-single-display",
+        "dense-unique-single-display",
+        "hot-repeated-single-display",
+        "dense-multiple-display",
+        "dense-boolean-context",
+        "hot-ordered-context",
+        "dense-child-reuse",
+    }
+    multiple = (tmp_path / "dense-multiple-display.kql").read_text()
+    assert "let CompleteContextRelationships = materialize(" in multiple
+    boolean = (tmp_path / "dense-boolean-context.kql").read_text()
+    assert "let WindowSourceMatches = materialize(" in boolean
+
+
 def test_benchmark_transport_failure_is_retained_and_never_means_empty_success(tmp_path, monkeypatch):
     import subprocess
 
@@ -71,6 +93,36 @@ def test_candidate_context_requires_public_boolean_completeness_even_when_empty(
     primary["Columns"] = [{"ColumnName": "ContextComplete", "ColumnType": "string"}]
     assert assess([primary, complete], fixture)[0] is False
     primary["Columns"][0]["ColumnType"] = "bool"
+    assert assess([primary, complete], fixture)[0] is True
+
+
+def test_benchmark_compares_each_declared_context_collection_independently():
+    from tests.fixtures.correlation.benchmark import assess
+
+    fixture = {
+        "context": True,
+        "context_fields": ["User", "Amount"],
+        "schema": {
+            "WindowStart": "datetime",
+            "WindowEnd": "datetime",
+            "Host": "string",
+            "EventCount": "long",
+            "User": "dynamic",
+            "Amount": "dynamic",
+        },
+        "expected": [["2026-01-01T11:55:00Z", "2026-01-01T12:00:00Z", "g0", 2, ["a", "b"], [1, 2]]],
+    }
+    columns = [{"ColumnName": name, "ColumnType": kind} for name, kind in fixture["schema"].items()] + [
+        {"ColumnName": "ContextComplete", "ColumnType": "bool"}
+    ]
+    primary = {
+        "FrameType": "DataTable",
+        "TableKind": "PrimaryResult",
+        "Columns": columns,
+        "Rows": [["2026-01-01T11:55:00Z", "2026-01-01T12:00:00Z", "g0", 2, '["b","a"]', "[2,1]", True]],
+    }
+    complete = {"FrameType": "DataSetCompletion", "HasErrors": False}
+
     assert assess([primary, complete], fixture)[0] is True
 
 
