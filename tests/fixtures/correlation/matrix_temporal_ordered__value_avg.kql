@@ -60,7 +60,7 @@ AverageObservations
 };
 let CorrelationMatches = materialize(ContextSummary()
 | serialize CorrelationMatchId_1 = row_number());
-let WindowSourceMatches =
+let WindowSourceMatches = materialize(
 CorrelationMatches | project CorrelationMatchId_1, CompletionTime = WindowEnd, ContextPartition = 1
 | join kind=inner (
 ChildResults | where ["ContextRowKind"] == "Summary"
@@ -71,11 +71,11 @@ ChildResults | where ["ContextRowKind"] == "Summary"
 | extend ContextSourceRule = "child"
 | project ContextEventTime, ContextSourceRule, ContextAmount_1, HasContextEvidence, ContextPartition = 1
 ) on ContextPartition
-| where ContextEventTime between ((CompletionTime - 5m) .. CompletionTime);
-let CompleteContextRelationships = WindowSourceMatches
+| where ContextEventTime between ((CompletionTime - 5m) .. CompletionTime));
+let CompleteContextRelationships = materialize(WindowSourceMatches
 | where HasContextEvidence
 | project CorrelationMatchId_1, ContextAmount_1
-| distinct *;
+| distinct *);
 let ValuesForAmount = CompleteContextRelationships
 | where isnotnull(ContextAmount_1)
 | summarize by CorrelationMatchId_1, ContextAmount_1

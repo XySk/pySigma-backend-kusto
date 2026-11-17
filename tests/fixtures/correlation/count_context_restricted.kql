@@ -72,7 +72,7 @@ union (ValueCountSources | summarize by GroupServer, EventTime
 };
 let CorrelationMatches = materialize(ContextSummary()
 | serialize CorrelationMatchId = row_number());
-let WindowSourceMatches =
+let WindowSourceMatches = materialize(
 CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, ContextGroupServer = ["Server"], ContextPartition = 1
 | join kind=inner (
 ChildResults | where ["ContextRowKind"] == "Summary"
@@ -83,7 +83,7 @@ ChildResults | where ["ContextRowKind"] == "Summary"
 | extend ContextSourceRule = "child"
 | project ContextEventTime, ContextSourceRule, ContextGroupServer, ContextUser_1, HasContextEvidence, ContextPartition = 1
 ) on ContextGroupServer
-| where ContextEventTime between ((CompletionTime - 5m) .. CompletionTime);
+| where ContextEventTime between ((CompletionTime - 5m) .. CompletionTime));
 let CompleteContextRelationships = WindowSourceMatches
 | where HasContextEvidence
 | project CorrelationMatchId, ContextUser_1

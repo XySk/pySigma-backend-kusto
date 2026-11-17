@@ -1109,6 +1109,12 @@ class KustoBackend(TextQueryBackend):
                 ),
                 completed_reductions=("restrict source matches to the exact correlation window",),
                 preserve_evaluation=bool(relationship_key),
+                measured_materialization=rule.type
+                in (
+                    SigmaCorrelationType.VALUE_COUNT,
+                    SigmaCorrelationType.VALUE_AVG,
+                    SigmaCorrelationType.VALUE_PERCENTILE,
+                ),
             ).render()
             if rule.type == SigmaCorrelationType.TEMPORAL_ORDERED:
                 membership, matched = self._ordered_context_membership(
@@ -1155,6 +1161,7 @@ class KustoBackend(TextQueryBackend):
                     "project exact retained relationship identity",
                     "deduplicate exact relationship tuples",
                 ),
+                measured_materialization=rule.type == SigmaCorrelationType.VALUE_AVG,
             ).render()
             artifact_prefix = prefix
             collections = []

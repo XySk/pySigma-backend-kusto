@@ -405,7 +405,7 @@ union (ValueCountSources | summarize by GroupHost, EventTime
 };
 let CorrelationMatches = materialize(ContextSummary()
 | serialize CorrelationMatchId_1 = row_number());
-let WindowSourceMatches =
+let WindowSourceMatches = materialize(
 CorrelationMatches | project CorrelationMatchId_1, CompletionTime = WindowEnd, ContextGroupHost = ["Host"], ContextPartition = 1
 | join kind=inner (
 MiddleResults | where ["ContextRowKind_1"] == "Summary"
@@ -416,7 +416,7 @@ MiddleResults | where ["ContextRowKind_1"] == "Summary"
 | extend ContextSourceRule = "middle"
 | project ContextEventTime, ContextSourceRule, ContextGroupHost, ContextUser_1, HasContextEvidence, ContextPartition = 1
 ) on ContextGroupHost
-| where ContextEventTime between ((CompletionTime - 2m) .. CompletionTime);
+| where ContextEventTime between ((CompletionTime - 2m) .. CompletionTime));
 let CompleteContextRelationships = WindowSourceMatches
 | where HasContextEvidence
 | project CorrelationMatchId_1, ContextUser_1

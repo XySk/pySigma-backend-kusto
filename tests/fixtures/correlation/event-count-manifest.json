@@ -74,12 +74,12 @@
     },
     {
       "name": "count_context_values.kql",
-      "sha256": "2ed4f721cf2567507a99f9cb951bde07c746d8a0799edd958d52e04fc3c62991",
+      "sha256": "0785a01a8129c0f35e67cc39686eaddfbb7abd42abad482c89206d0d3037d109",
       "expected_error": null
     },
     {
       "name": "count_context_restricted.kql",
-      "sha256": "f29bb3b178851da061aa2038b19f76cd2662c9336e3eda528b505255547c313c",
+      "sha256": "707e7de1bc0fce192280282c77a9d8f6ba3360eff32a9c8d4ec92e0494ad925d",
       "expected_error": null
     },
     {

@@ -85,7 +85,7 @@ PercentileWindowValues | summarize PercentilePopulation = count() by GroupActor,
 };
 let CorrelationMatches = materialize(ContextSummary()
 | serialize CorrelationMatchId_1 = row_number());
-let WindowSourceMatches =
+let WindowSourceMatches = materialize(
 CorrelationMatches | project CorrelationMatchId_1, CompletionTime = WindowEnd, ContextGroupActor = ["Actor"], ContextPartition = 1
 | join kind=inner (
 union (ChildResults | where ["ContextRowKind"] == "Summary"
@@ -102,7 +102,7 @@ union (ChildResults | where ["ContextRowKind"] == "Summary"
 | extend HasContextEvidence = true)
 | project ContextEventTime, ContextSourceRule, ContextGroupActor, ContextAmount_1, HasContextEvidence, ContextPartition = 1
 ) on ContextGroupActor
-| where ContextEventTime between ((CompletionTime - 5m) .. CompletionTime);
+| where ContextEventTime between ((CompletionTime - 5m) .. CompletionTime));
 let CompleteContextRelationships = WindowSourceMatches
 | where HasContextEvidence
 | project CorrelationMatchId_1, ContextAmount_1

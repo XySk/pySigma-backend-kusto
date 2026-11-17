@@ -1,5 +1,7 @@
 """Reference-aware relation binding through public collection conversion."""
 
+import pytest
+
 from tests.correlation_helpers import convert_documents, correlation_document, source_document
 
 
@@ -46,3 +48,28 @@ def test_two_step_ordered_context_keeps_sort_locality_without_caching_final_part
     assert "let OrderedSourceRelationships = WindowSourceMatches\n" in query
     assert "let OrderedSourceRelationships = materialize(" not in query
     assert query.index("| sort by GroupHost asc, EventTime_1 asc") < query.index("| scan declare")
+
+
+@pytest.mark.parametrize(
+    ("kind", "window_cached", "relationships_cached"),
+    [
+        ("value_count", True, False),
+        ("value_avg", True, True),
+        ("value_percentile", True, False),
+    ],
+)
+def test_measured_single_display_exceptions_cache_only_the_beneficial_relation(
+    kind, window_cached, relationships_cached
+):
+    condition = {"field": "Amount", "gte": 1}
+    if kind == "value_percentile":
+        condition["percentile"] = 50
+    summary = correlation_document(
+        "summary", kind, ["source-rule"], field="Amount", condition=condition
+    )
+    summary["fields"] = ["User"]
+
+    (query,) = convert_documents([source_document(), summary])
+
+    assert ("let WindowSourceMatches = materialize(" in query) is window_cached
+    assert ("let CompleteContextRelationships = materialize(" in query) is relationships_cached

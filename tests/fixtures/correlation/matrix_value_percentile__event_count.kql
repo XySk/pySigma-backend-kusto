@@ -36,7 +36,7 @@ PercentileWindowValues | summarize PercentilePopulation = count() by PercentileW
 };
 let CorrelationMatches = materialize(ContextSummary()
 | serialize CorrelationMatchId = row_number());
-let WindowSourceMatches =
+let WindowSourceMatches = materialize(
 CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, ContextPartition = 1
 | join kind=inner (
 Events
@@ -46,7 +46,7 @@ Events
 | extend ContextSourceRule = "source-rule"
 | project ContextEventTime, ContextSourceRule, ContextAmount, ContextPartition = 1
 ) on ContextPartition
-| where ContextEventTime between ((CompletionTime - 1m) .. CompletionTime);
+| where ContextEventTime between ((CompletionTime - 1m) .. CompletionTime));
 let CompleteContextRelationships = materialize(WindowSourceMatches
 | project CorrelationMatchId, ContextAmount
 | distinct *);
