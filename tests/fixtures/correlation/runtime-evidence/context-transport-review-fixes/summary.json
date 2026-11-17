@@ -1,172 +1,172 @@
 {
   "status": "PASS",
   "decision": "retain-production-summary-evidence-union",
-  "revision": "7e01f67b04c89b5ae4d5a0c7847689cc9d333010",
-  "transport_manifest_sha256": "458659bbfd048211c87bf832dced5a722c1aa75ea1631015aeb353ad90978940",
+  "revision": "0e047fdf98284758cb30791d4981b93be3e93ee9",
+  "transport_manifest_sha256": "39a2a7d4437a98ce8c9b7bfc31c40c344b1e86f8941058e0d1a2b77e130a10a8",
   "transport_growth": {
     "sparse-64": {
-      "relations": 2,
+      "relations": 1,
       "current": {
-        "rows_across_uses": 687,
-        "estimated_bytes_across_uses": 42276
+        "rows_across_uses": 753,
+        "estimated_bytes_across_uses": 41118
       },
       "candidate": {
         "rows_across_uses": 439,
-        "estimated_bytes_across_uses": 19511
+        "estimated_bytes_across_uses": 15428
       }
     },
     "dense-64": {
-      "relations": 2,
+      "relations": 1,
       "current": {
-        "rows_across_uses": 4470,
-        "estimated_bytes_across_uses": 277808
+        "rows_across_uses": 6426,
+        "estimated_bytes_across_uses": 357084
       },
       "candidate": {
-        "rows_across_uses": 2391,
-        "estimated_bytes_across_uses": 82325
+        "rows_across_uses": 4221,
+        "estimated_bytes_across_uses": 136029
       }
     },
     "dense-256": {
-      "relations": 2,
+      "relations": 1,
       "current": {
-        "rows_across_uses": 67062,
-        "estimated_bytes_across_uses": 4389151
-      },
-      "candidate": {
-        "rows_across_uses": 34167,
-        "estimated_bytes_across_uses": 1152261
-      }
-    },
-    "many-groups-256": {
-      "relations": 2,
-      "current": {
-        "rows_across_uses": 9632,
-        "estimated_bytes_across_uses": 666088
-      },
-      "candidate": {
-        "rows_across_uses": 1568,
-        "estimated_bytes_across_uses": 59030
-      }
-    },
-    "hot-repeated-256": {
-      "relations": 2,
-      "current": {
-        "rows_across_uses": 67062,
-        "estimated_bytes_across_uses": 4389151
-      },
-      "candidate": {
-        "rows_across_uses": 34167,
-        "estimated_bytes_across_uses": 1152261
-      }
-    },
-    "hot-unique-256": {
-      "relations": 2,
-      "current": {
-        "rows_across_uses": 98940,
-        "estimated_bytes_across_uses": 6466077
+        "rows_across_uses": 99450,
+        "estimated_bytes_across_uses": 5825301
       },
       "candidate": {
         "rows_across_uses": 66045,
-        "estimated_bytes_across_uses": 3076254
+        "estimated_bytes_across_uses": 2182798
+      }
+    },
+    "many-groups-256": {
+      "relations": 1,
+      "current": {
+        "rows_across_uses": 4032,
+        "estimated_bytes_across_uses": 223068
+      },
+      "candidate": {
+        "rows_across_uses": 2464,
+        "estimated_bytes_across_uses": 84632
+      }
+    },
+    "hot-repeated-256": {
+      "relations": 1,
+      "current": {
+        "rows_across_uses": 99450,
+        "estimated_bytes_across_uses": 5825301
+      },
+      "candidate": {
+        "rows_across_uses": 66045,
+        "estimated_bytes_across_uses": 2182798
+      }
+    },
+    "hot-unique-256": {
+      "relations": 1,
+      "current": {
+        "rows_across_uses": 99450,
+        "estimated_bytes_across_uses": 6081063
+      },
+      "candidate": {
+        "rows_across_uses": 66045,
+        "estimated_bytes_across_uses": 2353306
       }
     },
     "low-selectivity-256": {
-      "relations": 2,
+      "relations": 1,
       "current": {
-        "rows_across_uses": 26277,
-        "estimated_bytes_across_uses": 1720172
+        "rows_across_uses": 39159,
+        "estimated_bytes_across_uses": 2314425
       },
       "candidate": {
-        "rows_across_uses": 13281,
-        "estimated_bytes_across_uses": 446083
+        "rows_across_uses": 26049,
+        "estimated_bytes_across_uses": 864764
       }
     },
     "high-selectivity-256": {
-      "relations": 2,
+      "relations": 1,
       "current": {
-        "rows_across_uses": 67062,
-        "estimated_bytes_across_uses": 4389151
+        "rows_across_uses": 99450,
+        "estimated_bytes_across_uses": 5825301
       },
       "candidate": {
-        "rows_across_uses": 34167,
-        "estimated_bytes_across_uses": 1152261
+        "rows_across_uses": 66045,
+        "estimated_bytes_across_uses": 2182798
       }
     },
     "one-context-field": {
-      "relations": 2,
+      "relations": 1,
       "current": {
-        "rows_across_uses": 1642,
-        "estimated_bytes_across_uses": 87024
+        "rows_across_uses": 632,
+        "estimated_bytes_across_uses": 28992
       },
       "candidate": {
-        "rows_across_uses": 1137,
-        "estimated_bytes_across_uses": 43702
+        "rows_across_uses": 505,
+        "estimated_bytes_across_uses": 11694
       }
     },
     "three-context-fields": {
-      "relations": 2,
+      "relations": 1,
       "current": {
-        "rows_across_uses": 17142,
-        "estimated_bytes_across_uses": 1093871
+        "rows_across_uses": 25146,
+        "estimated_bytes_across_uses": 1434765
       },
       "candidate": {
-        "rows_across_uses": 8887,
-        "estimated_bytes_across_uses": 300717
+        "rows_across_uses": 16637,
+        "estimated_bytes_across_uses": 542430
       }
     },
     "shared-child-consumers": {
       "relations": 4,
       "current": {
-        "rows_across_uses": 43014,
-        "estimated_bytes_across_uses": 2609743
+        "rows_across_uses": 103896,
+        "estimated_bytes_across_uses": 6619767
       },
       "candidate": {
-        "rows_across_uses": 34759,
-        "estimated_bytes_across_uses": 1376689
+        "rows_across_uses": 52500,
+        "estimated_bytes_across_uses": 1983572
       }
     },
     "chain-depth-one": {
-      "relations": 2,
+      "relations": 1,
       "current": {
-        "rows_across_uses": 17142,
-        "estimated_bytes_across_uses": 1093871
-      },
-      "candidate": {
-        "rows_across_uses": 8887,
-        "estimated_bytes_across_uses": 300717
-      }
-    },
-    "chain-depth-three": {
-      "relations": 4,
-      "current": {
-        "rows_across_uses": 34662,
-        "estimated_bytes_across_uses": 2325103
-      },
-      "candidate": {
-        "rows_across_uses": 26407,
-        "estimated_bytes_across_uses": 1123267
-      }
-    },
-    "numeric-pairing-repeated": {
-      "relations": 2,
-      "current": {
-        "rows_across_uses": 17142,
-        "estimated_bytes_across_uses": 1098486
-      },
-      "candidate": {
-        "rows_across_uses": 8887,
-        "estimated_bytes_across_uses": 300952
-      }
-    },
-    "numeric-pairing-unique": {
-      "relations": 2,
-      "current": {
-        "rows_across_uses": 24892,
-        "estimated_bytes_across_uses": 1561025
+        "rows_across_uses": 25146,
+        "estimated_bytes_across_uses": 1434765
       },
       "candidate": {
         "rows_across_uses": 16637,
-        "estimated_bytes_across_uses": 744240
+        "estimated_bytes_across_uses": 542430
+      }
+    },
+    "chain-depth-three": {
+      "relations": 3,
+      "current": {
+        "rows_across_uses": 77706,
+        "estimated_bytes_across_uses": 5128461
+      },
+      "candidate": {
+        "rows_across_uses": 35167,
+        "estimated_bytes_across_uses": 1418972
+      }
+    },
+    "numeric-pairing-repeated": {
+      "relations": 1,
+      "current": {
+        "rows_across_uses": 25146,
+        "estimated_bytes_across_uses": 1434765
+      },
+      "candidate": {
+        "rows_across_uses": 16637,
+        "estimated_bytes_across_uses": 542430
+      }
+    },
+    "numeric-pairing-unique": {
+      "relations": 1,
+      "current": {
+        "rows_across_uses": 25146,
+        "estimated_bytes_across_uses": 1479327
+      },
+      "candidate": {
+        "rows_across_uses": 16637,
+        "estimated_bytes_across_uses": 572138
       }
     }
   },

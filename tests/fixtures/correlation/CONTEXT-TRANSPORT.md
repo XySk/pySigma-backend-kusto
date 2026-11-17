@@ -31,15 +31,17 @@ repeated/unique numeric-context pairing.
 
 The manifest records input/output sizes, exact workload/query hashes, query
 bytes, textual operator counts, and modeled summary/evidence transport rows and
-bytes. The transport model enumerates every context-bearing relation and every
-parent/public use in the workload. Its totals therefore grow with shared-child
-fan-out and chain depth; they are not the former child-only estimate that made
-depth one, depth three, and shared graphs appear identical. Current-union bytes
-include repeated summary columns on evidence rows; candidate evidence bytes use
-only stable match identity plus the relationship. The runner records CPU, peak
-memory, elapsed time, failures, engine and resource settings. Per-operator
-runtime cardinality is explicitly unavailable from the captured Kusto frames
-and is not approximated from operator text.
+bytes. The transport model enumerates every scoped context-bearing relation and
+each summary/evidence reference from its consuming parent. Final roots return
+`CorrelationMatches` directly and are not counted as transported relations.
+The totals therefore grow with shared-child fan-out and chain depth; they are
+not the former child-only estimate that made depth one, depth three, and shared
+graphs appear identical. Current-union bytes include repeated summary columns
+on evidence rows; candidate evidence bytes use only stable match identity plus
+the relationship. The runner records CPU, peak memory, elapsed time, failures,
+engine and resource settings. Per-operator runtime cardinality is explicitly
+unavailable from the captured Kusto frames and is not approximated from
+operator text.
 
 ## Decision
 

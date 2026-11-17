@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "revision": "7e01f67b04c89b5ae4d5a0c7847689cc9d333010",
+  "revision": "0e047fdf98284758cb30791d4981b93be3e93ee9",
   "oracle": "independent inclusive-window summary and complete-relationship model",
   "dimensions": [
     "chain-depth",
@@ -16,8 +16,8 @@
     {
       "name": "sparse-64",
       "fixture": "sparse-64.json",
-      "fixture_sha256": "5e9af60badf00fdded5a422635face95aa042955a565eebfc623ca4212363526",
-      "workload_sha256": "5e9af60badf00fdded5a422635face95aa042955a565eebfc623ca4212363526",
+      "fixture_sha256": "78826d4abaf3afd4bab7d4e37ae7b676d21466c39970bf7cb31dca6a307bc232",
+      "workload_sha256": "78826d4abaf3afd4bab7d4e37ae7b676d21466c39970bf7cb31dca6a307bc232",
       "query": "sparse-64.kql",
       "query_sha256": "1fe0f1128f209ce02a97e013ef398d40517905e90a6dad5a3854a39b17c11857",
       "query_bytes": 18033,
@@ -48,40 +48,27 @@
         "relations": [
           {
             "name": "ScaleChild",
-            "parent_consumers": 1,
-            "public_consumers": 0,
+            "consumer": "ContextParent1",
+            "summary_references": 1,
+            "evidence_references": 2,
             "summary_rows": 63,
             "evidence_rows": 188,
             "summary_estimated_bytes": 2630,
             "union_evidence_estimated_bytes": 11076,
             "separate_evidence_estimated_bytes": 6399,
-            "current_rows_across_uses": 251,
-            "candidate_rows_across_uses": 251,
-            "current_estimated_bytes_across_uses": 13706,
-            "candidate_estimated_bytes_across_uses": 9029
-          },
-          {
-            "name": "ContextParent1",
-            "parent_consumers": 0,
-            "public_consumers": 1,
-            "summary_rows": 188,
-            "evidence_rows": 248,
-            "summary_estimated_bytes": 10482,
-            "union_evidence_estimated_bytes": 18088,
-            "separate_evidence_estimated_bytes": 11916,
-            "current_rows_across_uses": 436,
-            "candidate_rows_across_uses": 188,
-            "current_estimated_bytes_across_uses": 28570,
-            "candidate_estimated_bytes_across_uses": 10482
+            "current_rows_across_uses": 753,
+            "candidate_rows_across_uses": 439,
+            "current_estimated_bytes_across_uses": 41118,
+            "candidate_estimated_bytes_across_uses": 15428
           }
         ],
         "current": {
-          "rows_across_uses": 687,
-          "estimated_bytes_across_uses": 42276
+          "rows_across_uses": 753,
+          "estimated_bytes_across_uses": 41118
         },
         "candidate": {
           "rows_across_uses": 439,
-          "estimated_bytes_across_uses": 19511
+          "estimated_bytes_across_uses": 15428
         },
         "operator_cardinality": "not exposed by the local Kusto response protocol"
       }
@@ -89,8 +76,8 @@
     {
       "name": "dense-64",
       "fixture": "dense-64.json",
-      "fixture_sha256": "c2df102f63027c23eef0ded9a40bbdf890bfaa16cbcb96644c831ea58ce3cb6e",
-      "workload_sha256": "c2df102f63027c23eef0ded9a40bbdf890bfaa16cbcb96644c831ea58ce3cb6e",
+      "fixture_sha256": "96e41d0b5e47063fa1c656fc529cb6a2cd0e3fd90499b73a4a7ab22034fed615",
+      "workload_sha256": "96e41d0b5e47063fa1c656fc529cb6a2cd0e3fd90499b73a4a7ab22034fed615",
       "query": "dense-64.kql",
       "query_sha256": "1d6abc0fd3fd66a124e1da2c8ab40074406e4341ad7cb79c355af802c7c8db92",
       "query_bytes": 20747,
@@ -121,40 +108,27 @@
         "relations": [
           {
             "name": "ScaleChild",
-            "parent_consumers": 1,
-            "public_consumers": 0,
+            "consumer": "ContextParent1",
+            "summary_references": 1,
+            "evidence_references": 2,
             "summary_rows": 63,
             "evidence_rows": 2079,
             "summary_estimated_bytes": 2431,
             "union_evidence_estimated_bytes": 116597,
             "separate_evidence_estimated_bytes": 66799,
-            "current_rows_across_uses": 2142,
-            "candidate_rows_across_uses": 2142,
-            "current_estimated_bytes_across_uses": 119028,
-            "candidate_estimated_bytes_across_uses": 69230
-          },
-          {
-            "name": "ContextParent1",
-            "parent_consumers": 0,
-            "public_consumers": 1,
-            "summary_rows": 249,
-            "evidence_rows": 2079,
-            "summary_estimated_bytes": 13095,
-            "union_evidence_estimated_bytes": 145685,
-            "separate_evidence_estimated_bytes": 95905,
-            "current_rows_across_uses": 2328,
-            "candidate_rows_across_uses": 249,
-            "current_estimated_bytes_across_uses": 158780,
-            "candidate_estimated_bytes_across_uses": 13095
+            "current_rows_across_uses": 6426,
+            "candidate_rows_across_uses": 4221,
+            "current_estimated_bytes_across_uses": 357084,
+            "candidate_estimated_bytes_across_uses": 136029
           }
         ],
         "current": {
-          "rows_across_uses": 4470,
-          "estimated_bytes_across_uses": 277808
+          "rows_across_uses": 6426,
+          "estimated_bytes_across_uses": 357084
         },
         "candidate": {
-          "rows_across_uses": 2391,
-          "estimated_bytes_across_uses": 82325
+          "rows_across_uses": 4221,
+          "estimated_bytes_across_uses": 136029
         },
         "operator_cardinality": "not exposed by the local Kusto response protocol"
       }
@@ -162,8 +136,8 @@
     {
       "name": "dense-256",
       "fixture": "dense-256.json",
-      "fixture_sha256": "5e978188f87f961acd0296efbfc0860e2bd7f1e60c8667cade0b695016b939ff",
-      "workload_sha256": "5e978188f87f961acd0296efbfc0860e2bd7f1e60c8667cade0b695016b939ff",
+      "fixture_sha256": "a67a704ce1237c0a3bf8d6e4ba2ce69a9e6cee26e45707957999d591657b78c5",
+      "workload_sha256": "a67a704ce1237c0a3bf8d6e4ba2ce69a9e6cee26e45707957999d591657b78c5",
       "query": "dense-256.kql",
       "query_sha256": "10ce351b957b68f5f746ac2bf29e19a26aee5a179714b1844b16b35bd222e8e2",
       "query_bytes": 65564,
@@ -194,40 +168,27 @@
         "relations": [
           {
             "name": "ScaleChild",
-            "parent_consumers": 1,
-            "public_consumers": 0,
+            "consumer": "ContextParent1",
+            "summary_references": 1,
+            "evidence_references": 2,
             "summary_rows": 255,
             "evidence_rows": 32895,
             "summary_estimated_bytes": 10388,
             "union_evidence_estimated_bytes": 1931379,
             "separate_evidence_estimated_bytes": 1086205,
-            "current_rows_across_uses": 33150,
-            "candidate_rows_across_uses": 33150,
-            "current_estimated_bytes_across_uses": 1941767,
-            "candidate_estimated_bytes_across_uses": 1096593
-          },
-          {
-            "name": "ContextParent1",
-            "parent_consumers": 0,
-            "public_consumers": 1,
-            "summary_rows": 1017,
-            "evidence_rows": 32895,
-            "summary_estimated_bytes": 55668,
-            "union_evidence_estimated_bytes": 2391716,
-            "separate_evidence_estimated_bytes": 1546735,
-            "current_rows_across_uses": 33912,
-            "candidate_rows_across_uses": 1017,
-            "current_estimated_bytes_across_uses": 2447384,
-            "candidate_estimated_bytes_across_uses": 55668
+            "current_rows_across_uses": 99450,
+            "candidate_rows_across_uses": 66045,
+            "current_estimated_bytes_across_uses": 5825301,
+            "candidate_estimated_bytes_across_uses": 2182798
           }
         ],
         "current": {
-          "rows_across_uses": 67062,
-          "estimated_bytes_across_uses": 4389151
+          "rows_across_uses": 99450,
+          "estimated_bytes_across_uses": 5825301
         },
         "candidate": {
-          "rows_across_uses": 34167,
-          "estimated_bytes_across_uses": 1152261
+          "rows_across_uses": 66045,
+          "estimated_bytes_across_uses": 2182798
         },
         "operator_cardinality": "not exposed by the local Kusto response protocol"
       }
@@ -235,8 +196,8 @@
     {
       "name": "many-groups-256",
       "fixture": "many-groups-256.json",
-      "fixture_sha256": "42eeb62b302a087e6113f10dc2d3f57a785422a60bdb995f080ac75a7a501810",
-      "workload_sha256": "42eeb62b302a087e6113f10dc2d3f57a785422a60bdb995f080ac75a7a501810",
+      "fixture_sha256": "de8c7f9025b6e17a5539d585027fc706de0a8c150cf27ba9d3f948389b7d6077",
+      "workload_sha256": "de8c7f9025b6e17a5539d585027fc706de0a8c150cf27ba9d3f948389b7d6077",
       "query": "many-groups-256.kql",
       "query_sha256": "19b52966fb07080d2eb1e38d89ccd60c27eb12b000f903913f9218dd3f8e4e28",
       "query_bytes": 31813,
@@ -267,40 +228,27 @@
         "relations": [
           {
             "name": "ScaleChild",
-            "parent_consumers": 1,
-            "public_consumers": 0,
+            "consumer": "ContextParent1",
+            "summary_references": 1,
+            "evidence_references": 2,
             "summary_rows": 224,
             "evidence_rows": 1120,
             "summary_estimated_bytes": 9132,
             "union_evidence_estimated_bytes": 65224,
             "separate_evidence_estimated_bytes": 37750,
-            "current_rows_across_uses": 1344,
-            "candidate_rows_across_uses": 1344,
-            "current_estimated_bytes_across_uses": 74356,
-            "candidate_estimated_bytes_across_uses": 46882
-          },
-          {
-            "name": "ContextParent1",
-            "parent_consumers": 0,
-            "public_consumers": 1,
-            "summary_rows": 224,
-            "evidence_rows": 8064,
-            "summary_estimated_bytes": 12148,
-            "union_evidence_estimated_bytes": 579584,
-            "separate_evidence_estimated_bytes": 379384,
-            "current_rows_across_uses": 8288,
-            "candidate_rows_across_uses": 224,
-            "current_estimated_bytes_across_uses": 591732,
-            "candidate_estimated_bytes_across_uses": 12148
+            "current_rows_across_uses": 4032,
+            "candidate_rows_across_uses": 2464,
+            "current_estimated_bytes_across_uses": 223068,
+            "candidate_estimated_bytes_across_uses": 84632
           }
         ],
         "current": {
-          "rows_across_uses": 9632,
-          "estimated_bytes_across_uses": 666088
+          "rows_across_uses": 4032,
+          "estimated_bytes_across_uses": 223068
         },
         "candidate": {
-          "rows_across_uses": 1568,
-          "estimated_bytes_across_uses": 59030
+          "rows_across_uses": 2464,
+          "estimated_bytes_across_uses": 84632
         },
         "operator_cardinality": "not exposed by the local Kusto response protocol"
       }
@@ -308,8 +256,8 @@
     {
       "name": "hot-repeated-256",
       "fixture": "hot-repeated-256.json",
-      "fixture_sha256": "930511b2ad37c7ac23c238153bce7f53f150301f142d4d6b3457838c262f9d16",
-      "workload_sha256": "930511b2ad37c7ac23c238153bce7f53f150301f142d4d6b3457838c262f9d16",
+      "fixture_sha256": "6fae8323812186f6d56c197ae3e346cc87110f8199e48d3767bbc707b23deeba",
+      "workload_sha256": "6fae8323812186f6d56c197ae3e346cc87110f8199e48d3767bbc707b23deeba",
       "query": "hot-repeated-256.kql",
       "query_sha256": "10ce351b957b68f5f746ac2bf29e19a26aee5a179714b1844b16b35bd222e8e2",
       "query_bytes": 65564,
@@ -340,40 +288,27 @@
         "relations": [
           {
             "name": "ScaleChild",
-            "parent_consumers": 1,
-            "public_consumers": 0,
+            "consumer": "ContextParent1",
+            "summary_references": 1,
+            "evidence_references": 2,
             "summary_rows": 255,
             "evidence_rows": 32895,
             "summary_estimated_bytes": 10388,
             "union_evidence_estimated_bytes": 1931379,
             "separate_evidence_estimated_bytes": 1086205,
-            "current_rows_across_uses": 33150,
-            "candidate_rows_across_uses": 33150,
-            "current_estimated_bytes_across_uses": 1941767,
-            "candidate_estimated_bytes_across_uses": 1096593
-          },
-          {
-            "name": "ContextParent1",
-            "parent_consumers": 0,
-            "public_consumers": 1,
-            "summary_rows": 1017,
-            "evidence_rows": 32895,
-            "summary_estimated_bytes": 55668,
-            "union_evidence_estimated_bytes": 2391716,
-            "separate_evidence_estimated_bytes": 1546735,
-            "current_rows_across_uses": 33912,
-            "candidate_rows_across_uses": 1017,
-            "current_estimated_bytes_across_uses": 2447384,
-            "candidate_estimated_bytes_across_uses": 55668
+            "current_rows_across_uses": 99450,
+            "candidate_rows_across_uses": 66045,
+            "current_estimated_bytes_across_uses": 5825301,
+            "candidate_estimated_bytes_across_uses": 2182798
           }
         ],
         "current": {
-          "rows_across_uses": 67062,
-          "estimated_bytes_across_uses": 4389151
+          "rows_across_uses": 99450,
+          "estimated_bytes_across_uses": 5825301
         },
         "candidate": {
-          "rows_across_uses": 34167,
-          "estimated_bytes_across_uses": 1152261
+          "rows_across_uses": 66045,
+          "estimated_bytes_across_uses": 2182798
         },
         "operator_cardinality": "not exposed by the local Kusto response protocol"
       }
@@ -381,8 +316,8 @@
     {
       "name": "hot-unique-256",
       "fixture": "hot-unique-256.json",
-      "fixture_sha256": "e70fe1a94bff432eb17b99ca38ab72dcd14be23bde06ecc48d52657d8d9684ab",
-      "workload_sha256": "e70fe1a94bff432eb17b99ca38ab72dcd14be23bde06ecc48d52657d8d9684ab",
+      "fixture_sha256": "612e94d3b1d252396f302b00ba4eaa22e8f6e66d6bbdd18b5d1b1aa36de2cb3d",
+      "workload_sha256": "612e94d3b1d252396f302b00ba4eaa22e8f6e66d6bbdd18b5d1b1aa36de2cb3d",
       "query": "hot-unique-256.kql",
       "query_sha256": "ee918b944321788c95f220997f4e772b9e1d9051049d08f01344910fd5cad8c7",
       "query_bytes": 1457420,
@@ -413,40 +348,27 @@
         "relations": [
           {
             "name": "ScaleChild",
-            "parent_consumers": 1,
-            "public_consumers": 0,
+            "consumer": "ContextParent1",
+            "summary_references": 1,
+            "evidence_references": 2,
             "summary_rows": 255,
             "evidence_rows": 32895,
             "summary_estimated_bytes": 10388,
             "union_evidence_estimated_bytes": 2016633,
             "separate_evidence_estimated_bytes": 1171459,
-            "current_rows_across_uses": 33150,
-            "candidate_rows_across_uses": 33150,
-            "current_estimated_bytes_across_uses": 2027021,
-            "candidate_estimated_bytes_across_uses": 1181847
-          },
-          {
-            "name": "ContextParent1",
-            "parent_consumers": 0,
-            "public_consumers": 1,
-            "summary_rows": 32895,
-            "evidence_rows": 32895,
-            "summary_estimated_bytes": 1894407,
-            "union_evidence_estimated_bytes": 2544649,
-            "separate_evidence_estimated_bytes": 1674616,
-            "current_rows_across_uses": 65790,
-            "candidate_rows_across_uses": 32895,
-            "current_estimated_bytes_across_uses": 4439056,
-            "candidate_estimated_bytes_across_uses": 1894407
+            "current_rows_across_uses": 99450,
+            "candidate_rows_across_uses": 66045,
+            "current_estimated_bytes_across_uses": 6081063,
+            "candidate_estimated_bytes_across_uses": 2353306
           }
         ],
         "current": {
-          "rows_across_uses": 98940,
-          "estimated_bytes_across_uses": 6466077
+          "rows_across_uses": 99450,
+          "estimated_bytes_across_uses": 6081063
         },
         "candidate": {
           "rows_across_uses": 66045,
-          "estimated_bytes_across_uses": 3076254
+          "estimated_bytes_across_uses": 2353306
         },
         "operator_cardinality": "not exposed by the local Kusto response protocol"
       }
@@ -454,8 +376,8 @@
     {
       "name": "low-selectivity-256",
       "fixture": "low-selectivity-256.json",
-      "fixture_sha256": "7e3e8513ac03c9769f6486457ed314de19c4490f27ddffd3c85c068c7a0cf004",
-      "workload_sha256": "7e3e8513ac03c9769f6486457ed314de19c4490f27ddffd3c85c068c7a0cf004",
+      "fixture_sha256": "2085ec19052f7c4787a125b29f2655f6626c57c6e4f2166a3534aa40b03b6661",
+      "workload_sha256": "2085ec19052f7c4787a125b29f2655f6626c57c6e4f2166a3534aa40b03b6661",
       "query": "low-selectivity-256.kql",
       "query_sha256": "af2aaa56bd5464d13b1cc209b869580a710e65425b86692d2033fbb657314ef1",
       "query_bytes": 31807,
@@ -486,40 +408,27 @@
         "relations": [
           {
             "name": "ScaleChild",
-            "parent_consumers": 1,
-            "public_consumers": 0,
+            "consumer": "ContextParent1",
+            "summary_references": 1,
+            "evidence_references": 2,
             "summary_rows": 57,
             "evidence_rows": 12996,
             "summary_estimated_bytes": 2394,
             "union_evidence_estimated_bytes": 769081,
             "separate_evidence_estimated_bytes": 431185,
-            "current_rows_across_uses": 13053,
-            "candidate_rows_across_uses": 13053,
-            "current_estimated_bytes_across_uses": 771475,
-            "candidate_estimated_bytes_across_uses": 433579
-          },
-          {
-            "name": "ContextParent1",
-            "parent_consumers": 0,
-            "public_consumers": 1,
-            "summary_rows": 228,
-            "evidence_rows": 12996,
-            "summary_estimated_bytes": 12504,
-            "union_evidence_estimated_bytes": 936193,
-            "separate_evidence_estimated_bytes": 613129,
-            "current_rows_across_uses": 13224,
-            "candidate_rows_across_uses": 228,
-            "current_estimated_bytes_across_uses": 948697,
-            "candidate_estimated_bytes_across_uses": 12504
+            "current_rows_across_uses": 39159,
+            "candidate_rows_across_uses": 26049,
+            "current_estimated_bytes_across_uses": 2314425,
+            "candidate_estimated_bytes_across_uses": 864764
           }
         ],
         "current": {
-          "rows_across_uses": 26277,
-          "estimated_bytes_across_uses": 1720172
+          "rows_across_uses": 39159,
+          "estimated_bytes_across_uses": 2314425
         },
         "candidate": {
-          "rows_across_uses": 13281,
-          "estimated_bytes_across_uses": 446083
+          "rows_across_uses": 26049,
+          "estimated_bytes_across_uses": 864764
         },
         "operator_cardinality": "not exposed by the local Kusto response protocol"
       }
@@ -527,8 +436,8 @@
     {
       "name": "high-selectivity-256",
       "fixture": "high-selectivity-256.json",
-      "fixture_sha256": "d2e720c1b88726bf59388bbd7cd059d1c213100380b0d348f8a0e58c5234b186",
-      "workload_sha256": "d2e720c1b88726bf59388bbd7cd059d1c213100380b0d348f8a0e58c5234b186",
+      "fixture_sha256": "f838ff29a5cd279887c8f5be913ba9a52b410b8ca4be8c10528fde1e7f18bbb7",
+      "workload_sha256": "f838ff29a5cd279887c8f5be913ba9a52b410b8ca4be8c10528fde1e7f18bbb7",
       "query": "high-selectivity-256.kql",
       "query_sha256": "10ce351b957b68f5f746ac2bf29e19a26aee5a179714b1844b16b35bd222e8e2",
       "query_bytes": 65564,
@@ -559,40 +468,27 @@
         "relations": [
           {
             "name": "ScaleChild",
-            "parent_consumers": 1,
-            "public_consumers": 0,
+            "consumer": "ContextParent1",
+            "summary_references": 1,
+            "evidence_references": 2,
             "summary_rows": 255,
             "evidence_rows": 32895,
             "summary_estimated_bytes": 10388,
             "union_evidence_estimated_bytes": 1931379,
             "separate_evidence_estimated_bytes": 1086205,
-            "current_rows_across_uses": 33150,
-            "candidate_rows_across_uses": 33150,
-            "current_estimated_bytes_across_uses": 1941767,
-            "candidate_estimated_bytes_across_uses": 1096593
-          },
-          {
-            "name": "ContextParent1",
-            "parent_consumers": 0,
-            "public_consumers": 1,
-            "summary_rows": 1017,
-            "evidence_rows": 32895,
-            "summary_estimated_bytes": 55668,
-            "union_evidence_estimated_bytes": 2391716,
-            "separate_evidence_estimated_bytes": 1546735,
-            "current_rows_across_uses": 33912,
-            "candidate_rows_across_uses": 1017,
-            "current_estimated_bytes_across_uses": 2447384,
-            "candidate_estimated_bytes_across_uses": 55668
+            "current_rows_across_uses": 99450,
+            "candidate_rows_across_uses": 66045,
+            "current_estimated_bytes_across_uses": 5825301,
+            "candidate_estimated_bytes_across_uses": 2182798
           }
         ],
         "current": {
-          "rows_across_uses": 67062,
-          "estimated_bytes_across_uses": 4389151
+          "rows_across_uses": 99450,
+          "estimated_bytes_across_uses": 5825301
         },
         "candidate": {
-          "rows_across_uses": 34167,
-          "estimated_bytes_across_uses": 1152261
+          "rows_across_uses": 66045,
+          "estimated_bytes_across_uses": 2182798
         },
         "operator_cardinality": "not exposed by the local Kusto response protocol"
       }
@@ -600,8 +496,8 @@
     {
       "name": "one-context-field",
       "fixture": "one-context-field.json",
-      "fixture_sha256": "c3720606f508fec2229549a94c9c12763e919f097e266db91f6c25e8b1e0de96",
-      "workload_sha256": "c3720606f508fec2229549a94c9c12763e919f097e266db91f6c25e8b1e0de96",
+      "fixture_sha256": "b634faa929165dd6e82a7c6b7d42bc24bc21c3626692cd6e4e7afb2fe47eb5da",
+      "workload_sha256": "b634faa929165dd6e82a7c6b7d42bc24bc21c3626692cd6e4e7afb2fe47eb5da",
       "query": "one-context-field.kql",
       "query_sha256": "1c1a93a8b3edbccafe03479d221db7c82bb5262e24d3aa11a7a6142c7569d129",
       "query_bytes": 33177,
@@ -631,40 +527,27 @@
         "relations": [
           {
             "name": "ScaleChild",
-            "parent_consumers": 1,
-            "public_consumers": 0,
+            "consumer": "ContextParent1",
+            "summary_references": 0,
+            "evidence_references": 1,
             "summary_rows": 127,
             "evidence_rows": 505,
             "summary_estimated_bytes": 5012,
             "union_evidence_estimated_bytes": 23980,
             "separate_evidence_estimated_bytes": 11694,
             "current_rows_across_uses": 632,
-            "candidate_rows_across_uses": 632,
-            "current_estimated_bytes_across_uses": 28992,
-            "candidate_estimated_bytes_across_uses": 16706
-          },
-          {
-            "name": "ContextParent1",
-            "parent_consumers": 0,
-            "public_consumers": 1,
-            "summary_rows": 505,
-            "evidence_rows": 505,
-            "summary_estimated_bytes": 26996,
-            "union_evidence_estimated_bytes": 31036,
-            "separate_evidence_estimated_bytes": 18764,
-            "current_rows_across_uses": 1010,
             "candidate_rows_across_uses": 505,
-            "current_estimated_bytes_across_uses": 58032,
-            "candidate_estimated_bytes_across_uses": 26996
+            "current_estimated_bytes_across_uses": 28992,
+            "candidate_estimated_bytes_across_uses": 11694
           }
         ],
         "current": {
-          "rows_across_uses": 1642,
-          "estimated_bytes_across_uses": 87024
+          "rows_across_uses": 632,
+          "estimated_bytes_across_uses": 28992
         },
         "candidate": {
-          "rows_across_uses": 1137,
-          "estimated_bytes_across_uses": 43702
+          "rows_across_uses": 505,
+          "estimated_bytes_across_uses": 11694
         },
         "operator_cardinality": "not exposed by the local Kusto response protocol"
       }
@@ -672,8 +555,8 @@
     {
       "name": "three-context-fields",
       "fixture": "three-context-fields.json",
-      "fixture_sha256": "b324c8c7b7e440f855ed193f95f3557decaceb87ea031961f0fe8b345f374544",
-      "workload_sha256": "b324c8c7b7e440f855ed193f95f3557decaceb87ea031961f0fe8b345f374544",
+      "fixture_sha256": "994480f2ace5ea78521f5ceef6025ceae2779a566d8123b6b42094df7de89494",
+      "workload_sha256": "994480f2ace5ea78521f5ceef6025ceae2779a566d8123b6b42094df7de89494",
       "query": "three-context-fields.kql",
       "query_sha256": "058843419154b8961848afb3d4ef398d67243d13e1a529cd017862476ef0545c",
       "query_bytes": 35588,
@@ -704,40 +587,27 @@
         "relations": [
           {
             "name": "ScaleChild",
-            "parent_consumers": 1,
-            "public_consumers": 0,
+            "consumer": "ContextParent1",
+            "summary_references": 1,
+            "evidence_references": 2,
             "summary_rows": 127,
             "evidence_rows": 8255,
             "summary_estimated_bytes": 5012,
             "union_evidence_estimated_bytes": 473243,
             "separate_evidence_estimated_bytes": 268709,
-            "current_rows_across_uses": 8382,
-            "candidate_rows_across_uses": 8382,
-            "current_estimated_bytes_across_uses": 478255,
-            "candidate_estimated_bytes_across_uses": 273721
-          },
-          {
-            "name": "ContextParent1",
-            "parent_consumers": 0,
-            "public_consumers": 1,
-            "summary_rows": 505,
-            "evidence_rows": 8255,
-            "summary_estimated_bytes": 26996,
-            "union_evidence_estimated_bytes": 588620,
-            "separate_evidence_estimated_bytes": 384279,
-            "current_rows_across_uses": 8760,
-            "candidate_rows_across_uses": 505,
-            "current_estimated_bytes_across_uses": 615616,
-            "candidate_estimated_bytes_across_uses": 26996
+            "current_rows_across_uses": 25146,
+            "candidate_rows_across_uses": 16637,
+            "current_estimated_bytes_across_uses": 1434765,
+            "candidate_estimated_bytes_across_uses": 542430
           }
         ],
         "current": {
-          "rows_across_uses": 17142,
-          "estimated_bytes_across_uses": 1093871
+          "rows_across_uses": 25146,
+          "estimated_bytes_across_uses": 1434765
         },
         "candidate": {
-          "rows_across_uses": 8887,
-          "estimated_bytes_across_uses": 300717
+          "rows_across_uses": 16637,
+          "estimated_bytes_across_uses": 542430
         },
         "operator_cardinality": "not exposed by the local Kusto response protocol"
       }
@@ -745,8 +615,8 @@
     {
       "name": "shared-child-consumers",
       "fixture": "shared-child-consumers.json",
-      "fixture_sha256": "e9d97cae14282a22ac099fc2cfe1cbfbc7232004550a69e5b441c1f6085145e8",
-      "workload_sha256": "e9d97cae14282a22ac099fc2cfe1cbfbc7232004550a69e5b441c1f6085145e8",
+      "fixture_sha256": "5088e791ec17a948b43f2a18510c5e7be04ab528bfa980738332ace2b28341e3",
+      "workload_sha256": "5088e791ec17a948b43f2a18510c5e7be04ab528bfa980738332ace2b28341e3",
       "query": "shared-child-consumers.kql",
       "query_sha256": "fe03fe46f02c5b5dec4b4fbd4de0b667e148970fa4e51a21ebbf5226d2d939d5",
       "query_bytes": 27890,
@@ -777,68 +647,72 @@
         "relations": [
           {
             "name": "ScaleChild",
-            "parent_consumers": 2,
-            "public_consumers": 0,
+            "consumer": "ParentByUser",
+            "summary_references": 1,
+            "evidence_references": 2,
             "summary_rows": 127,
             "evidence_rows": 8255,
             "summary_estimated_bytes": 5012,
             "union_evidence_estimated_bytes": 473243,
             "separate_evidence_estimated_bytes": 268709,
-            "current_rows_across_uses": 16764,
-            "candidate_rows_across_uses": 16764,
-            "current_estimated_bytes_across_uses": 956510,
-            "candidate_estimated_bytes_across_uses": 547442
+            "current_rows_across_uses": 25146,
+            "candidate_rows_across_uses": 16637,
+            "current_estimated_bytes_across_uses": 1434765,
+            "candidate_estimated_bytes_across_uses": 542430
+          },
+          {
+            "name": "ScaleChild",
+            "consumer": "ParentByServer",
+            "summary_references": 1,
+            "evidence_references": 2,
+            "summary_rows": 127,
+            "evidence_rows": 8255,
+            "summary_estimated_bytes": 5012,
+            "union_evidence_estimated_bytes": 473243,
+            "separate_evidence_estimated_bytes": 268709,
+            "current_rows_across_uses": 25146,
+            "candidate_rows_across_uses": 16637,
+            "current_estimated_bytes_across_uses": 1434765,
+            "candidate_estimated_bytes_across_uses": 542430
           },
           {
             "name": "ParentByUser",
-            "parent_consumers": 1,
-            "public_consumers": 0,
+            "consumer": "SharedRoot",
+            "summary_references": 2,
+            "evidence_references": 1,
             "summary_rows": 505,
             "evidence_rows": 8255,
             "summary_estimated_bytes": 25986,
             "union_evidence_estimated_bytes": 572110,
             "separate_evidence_estimated_bytes": 367769,
-            "current_rows_across_uses": 8760,
-            "candidate_rows_across_uses": 8760,
-            "current_estimated_bytes_across_uses": 598096,
-            "candidate_estimated_bytes_across_uses": 393755
+            "current_rows_across_uses": 26280,
+            "candidate_rows_across_uses": 9265,
+            "current_estimated_bytes_across_uses": 1794288,
+            "candidate_estimated_bytes_across_uses": 419741
           },
           {
             "name": "ParentByServer",
-            "parent_consumers": 1,
-            "public_consumers": 0,
+            "consumer": "SharedRoot",
+            "summary_references": 2,
+            "evidence_references": 1,
             "summary_rows": 853,
             "evidence_rows": 8255,
             "summary_estimated_bytes": 47346,
             "union_evidence_estimated_bytes": 604637,
             "separate_evidence_estimated_bytes": 384279,
-            "current_rows_across_uses": 9108,
-            "candidate_rows_across_uses": 9108,
-            "current_estimated_bytes_across_uses": 651983,
-            "candidate_estimated_bytes_across_uses": 431625
-          },
-          {
-            "name": "SharedRoot",
-            "parent_consumers": 0,
-            "public_consumers": 1,
-            "summary_rows": 127,
-            "evidence_rows": 8255,
-            "summary_estimated_bytes": 3867,
-            "union_evidence_estimated_bytes": 399287,
-            "separate_evidence_estimated_bytes": 285219,
-            "current_rows_across_uses": 8382,
-            "candidate_rows_across_uses": 127,
-            "current_estimated_bytes_across_uses": 403154,
-            "candidate_estimated_bytes_across_uses": 3867
+            "current_rows_across_uses": 27324,
+            "candidate_rows_across_uses": 9961,
+            "current_estimated_bytes_across_uses": 1955949,
+            "candidate_estimated_bytes_across_uses": 478971
           }
         ],
         "current": {
-          "rows_across_uses": 43014,
-          "estimated_bytes_across_uses": 2609743
+          "rows_across_uses": 103896,
+          "estimated_bytes_across_uses": 6619767
         },
         "candidate": {
-          "rows_across_uses": 34759,
-          "estimated_bytes_across_uses": 1376689
+          "rows_across_uses": 52500,
+          "estimated_bytes_across_uses": 1983572
         },
         "operator_cardinality": "not exposed by the local Kusto response protocol"
       }
@@ -846,8 +720,8 @@
     {
       "name": "chain-depth-one",
       "fixture": "chain-depth-one.json",
-      "fixture_sha256": "b9a0d432c1724298d84fcf70e3945cc8756c735f322f5ba0759b84294c124ebd",
-      "workload_sha256": "b9a0d432c1724298d84fcf70e3945cc8756c735f322f5ba0759b84294c124ebd",
+      "fixture_sha256": "32458984bc21154c58eb5a5f4392a8b6b68bb1f8341d64f96fe47ad0185a5a50",
+      "workload_sha256": "32458984bc21154c58eb5a5f4392a8b6b68bb1f8341d64f96fe47ad0185a5a50",
       "query": "chain-depth-one.kql",
       "query_sha256": "058843419154b8961848afb3d4ef398d67243d13e1a529cd017862476ef0545c",
       "query_bytes": 35588,
@@ -878,40 +752,27 @@
         "relations": [
           {
             "name": "ScaleChild",
-            "parent_consumers": 1,
-            "public_consumers": 0,
+            "consumer": "ContextParent1",
+            "summary_references": 1,
+            "evidence_references": 2,
             "summary_rows": 127,
             "evidence_rows": 8255,
             "summary_estimated_bytes": 5012,
             "union_evidence_estimated_bytes": 473243,
             "separate_evidence_estimated_bytes": 268709,
-            "current_rows_across_uses": 8382,
-            "candidate_rows_across_uses": 8382,
-            "current_estimated_bytes_across_uses": 478255,
-            "candidate_estimated_bytes_across_uses": 273721
-          },
-          {
-            "name": "ContextParent1",
-            "parent_consumers": 0,
-            "public_consumers": 1,
-            "summary_rows": 505,
-            "evidence_rows": 8255,
-            "summary_estimated_bytes": 26996,
-            "union_evidence_estimated_bytes": 588620,
-            "separate_evidence_estimated_bytes": 384279,
-            "current_rows_across_uses": 8760,
-            "candidate_rows_across_uses": 505,
-            "current_estimated_bytes_across_uses": 615616,
-            "candidate_estimated_bytes_across_uses": 26996
+            "current_rows_across_uses": 25146,
+            "candidate_rows_across_uses": 16637,
+            "current_estimated_bytes_across_uses": 1434765,
+            "candidate_estimated_bytes_across_uses": 542430
           }
         ],
         "current": {
-          "rows_across_uses": 17142,
-          "estimated_bytes_across_uses": 1093871
+          "rows_across_uses": 25146,
+          "estimated_bytes_across_uses": 1434765
         },
         "candidate": {
-          "rows_across_uses": 8887,
-          "estimated_bytes_across_uses": 300717
+          "rows_across_uses": 16637,
+          "estimated_bytes_across_uses": 542430
         },
         "operator_cardinality": "not exposed by the local Kusto response protocol"
       }
@@ -919,8 +780,8 @@
     {
       "name": "chain-depth-three",
       "fixture": "chain-depth-three.json",
-      "fixture_sha256": "aef3f8be6ccf1c14f952865e5e2afd45f59a08c3c058932fe54f1bccb8e07310",
-      "workload_sha256": "aef3f8be6ccf1c14f952865e5e2afd45f59a08c3c058932fe54f1bccb8e07310",
+      "fixture_sha256": "afa053d661ea1be40ae701a8d3d14884a041f66ebd9cc8f60e7fac950086f1e0",
+      "workload_sha256": "afa053d661ea1be40ae701a8d3d14884a041f66ebd9cc8f60e7fac950086f1e0",
       "query": "chain-depth-three.kql",
       "query_sha256": "87fa6b506b134e19bc2c0703993903c2d82b5b98c9f7cdd79bc58738dcc4f4c4",
       "query_bytes": 40920,
@@ -951,68 +812,57 @@
         "relations": [
           {
             "name": "ScaleChild",
-            "parent_consumers": 1,
-            "public_consumers": 0,
+            "consumer": "ContextParent1",
+            "summary_references": 1,
+            "evidence_references": 2,
             "summary_rows": 127,
             "evidence_rows": 8255,
             "summary_estimated_bytes": 5012,
             "union_evidence_estimated_bytes": 473243,
             "separate_evidence_estimated_bytes": 268709,
-            "current_rows_across_uses": 8382,
-            "candidate_rows_across_uses": 8382,
-            "current_estimated_bytes_across_uses": 478255,
-            "candidate_estimated_bytes_across_uses": 273721
+            "current_rows_across_uses": 25146,
+            "candidate_rows_across_uses": 16637,
+            "current_estimated_bytes_across_uses": 1434765,
+            "candidate_estimated_bytes_across_uses": 542430
           },
           {
             "name": "ContextParent1",
-            "parent_consumers": 1,
-            "public_consumers": 0,
+            "consumer": "ContextParent2",
+            "summary_references": 2,
+            "evidence_references": 1,
             "summary_rows": 505,
             "evidence_rows": 8255,
             "summary_estimated_bytes": 26996,
             "union_evidence_estimated_bytes": 588620,
             "separate_evidence_estimated_bytes": 384279,
-            "current_rows_across_uses": 8760,
-            "candidate_rows_across_uses": 8760,
-            "current_estimated_bytes_across_uses": 615616,
-            "candidate_estimated_bytes_across_uses": 411275
+            "current_rows_across_uses": 26280,
+            "candidate_rows_across_uses": 9265,
+            "current_estimated_bytes_across_uses": 1846848,
+            "candidate_estimated_bytes_across_uses": 438271
           },
           {
             "name": "ContextParent2",
-            "parent_consumers": 1,
-            "public_consumers": 0,
+            "consumer": "ContextParent3",
+            "summary_references": 2,
+            "evidence_references": 1,
             "summary_rows": 505,
             "evidence_rows": 8255,
             "summary_estimated_bytes": 26996,
             "union_evidence_estimated_bytes": 588620,
             "separate_evidence_estimated_bytes": 384279,
-            "current_rows_across_uses": 8760,
-            "candidate_rows_across_uses": 8760,
-            "current_estimated_bytes_across_uses": 615616,
-            "candidate_estimated_bytes_across_uses": 411275
-          },
-          {
-            "name": "ContextParent3",
-            "parent_consumers": 0,
-            "public_consumers": 1,
-            "summary_rows": 505,
-            "evidence_rows": 8255,
-            "summary_estimated_bytes": 26996,
-            "union_evidence_estimated_bytes": 588620,
-            "separate_evidence_estimated_bytes": 384279,
-            "current_rows_across_uses": 8760,
-            "candidate_rows_across_uses": 505,
-            "current_estimated_bytes_across_uses": 615616,
-            "candidate_estimated_bytes_across_uses": 26996
+            "current_rows_across_uses": 26280,
+            "candidate_rows_across_uses": 9265,
+            "current_estimated_bytes_across_uses": 1846848,
+            "candidate_estimated_bytes_across_uses": 438271
           }
         ],
         "current": {
-          "rows_across_uses": 34662,
-          "estimated_bytes_across_uses": 2325103
+          "rows_across_uses": 77706,
+          "estimated_bytes_across_uses": 5128461
         },
         "candidate": {
-          "rows_across_uses": 26407,
-          "estimated_bytes_across_uses": 1123267
+          "rows_across_uses": 35167,
+          "estimated_bytes_across_uses": 1418972
         },
         "operator_cardinality": "not exposed by the local Kusto response protocol"
       }
@@ -1020,8 +870,8 @@
     {
       "name": "numeric-pairing-repeated",
       "fixture": "numeric-pairing-repeated.json",
-      "fixture_sha256": "f897cc1a07477ecd3ba883b76b136851e315430a81406ce1a073d0d49449953e",
-      "workload_sha256": "f897cc1a07477ecd3ba883b76b136851e315430a81406ce1a073d0d49449953e",
+      "fixture_sha256": "56defcf8e255c71b17d098331b7ea43ab3defbcd8e20ab9b79d9f56a1f173a21",
+      "workload_sha256": "56defcf8e255c71b17d098331b7ea43ab3defbcd8e20ab9b79d9f56a1f173a21",
       "query": "numeric-pairing-repeated.kql",
       "query_sha256": "211413d784174e1cb9f27a7dc5a29ff1ac688c6ad96e59aeaefaa84153d26b35",
       "query_bytes": 36403,
@@ -1052,40 +902,27 @@
         "relations": [
           {
             "name": "ScaleChild",
-            "parent_consumers": 1,
-            "public_consumers": 0,
+            "consumer": "NumericParent",
+            "summary_references": 1,
+            "evidence_references": 2,
             "summary_rows": 127,
             "evidence_rows": 8255,
             "summary_estimated_bytes": 5012,
             "union_evidence_estimated_bytes": 473243,
             "separate_evidence_estimated_bytes": 268709,
-            "current_rows_across_uses": 8382,
-            "candidate_rows_across_uses": 8382,
-            "current_estimated_bytes_across_uses": 478255,
-            "candidate_estimated_bytes_across_uses": 273721
-          },
-          {
-            "name": "NumericParent",
-            "parent_consumers": 0,
-            "public_consumers": 1,
-            "summary_rows": 505,
-            "evidence_rows": 8255,
-            "summary_estimated_bytes": 27231,
-            "union_evidence_estimated_bytes": 593000,
-            "separate_evidence_estimated_bytes": 376024,
-            "current_rows_across_uses": 8760,
-            "candidate_rows_across_uses": 505,
-            "current_estimated_bytes_across_uses": 620231,
-            "candidate_estimated_bytes_across_uses": 27231
+            "current_rows_across_uses": 25146,
+            "candidate_rows_across_uses": 16637,
+            "current_estimated_bytes_across_uses": 1434765,
+            "candidate_estimated_bytes_across_uses": 542430
           }
         ],
         "current": {
-          "rows_across_uses": 17142,
-          "estimated_bytes_across_uses": 1098486
+          "rows_across_uses": 25146,
+          "estimated_bytes_across_uses": 1434765
         },
         "candidate": {
-          "rows_across_uses": 8887,
-          "estimated_bytes_across_uses": 300952
+          "rows_across_uses": 16637,
+          "estimated_bytes_across_uses": 542430
         },
         "operator_cardinality": "not exposed by the local Kusto response protocol"
       }
@@ -1093,8 +930,8 @@
     {
       "name": "numeric-pairing-unique",
       "fixture": "numeric-pairing-unique.json",
-      "fixture_sha256": "fb428b49edd8c4f21fd330f8cfc6e23fb05b54d3bb9345378c64cf54c37a338d",
-      "workload_sha256": "fb428b49edd8c4f21fd330f8cfc6e23fb05b54d3bb9345378c64cf54c37a338d",
+      "fixture_sha256": "eed2b4db6ff28a91a4d583f8fef90a72c6b75e8545c66875d609cdf773658b86",
+      "workload_sha256": "eed2b4db6ff28a91a4d583f8fef90a72c6b75e8545c66875d609cdf773658b86",
       "query": "numeric-pairing-unique.kql",
       "query_sha256": "c0d1b12284e6d1056377070666dde70b7cfe9b6feba1fc1688fe7a6e1a8daead",
       "query_bytes": 374056,
@@ -1125,40 +962,27 @@
         "relations": [
           {
             "name": "ScaleChild",
-            "parent_consumers": 1,
-            "public_consumers": 0,
+            "consumer": "NumericParent",
+            "summary_references": 1,
+            "evidence_references": 2,
             "summary_rows": 127,
             "evidence_rows": 8255,
             "summary_estimated_bytes": 5012,
             "union_evidence_estimated_bytes": 488097,
             "separate_evidence_estimated_bytes": 283563,
-            "current_rows_across_uses": 8382,
-            "candidate_rows_across_uses": 8382,
-            "current_estimated_bytes_across_uses": 493109,
-            "candidate_estimated_bytes_across_uses": 288575
-          },
-          {
-            "name": "NumericParent",
-            "parent_consumers": 0,
-            "public_consumers": 1,
-            "summary_rows": 8255,
-            "evidence_rows": 8255,
-            "summary_estimated_bytes": 455665,
-            "union_evidence_estimated_bytes": 612251,
-            "separate_evidence_estimated_bytes": 398305,
-            "current_rows_across_uses": 16510,
-            "candidate_rows_across_uses": 8255,
-            "current_estimated_bytes_across_uses": 1067916,
-            "candidate_estimated_bytes_across_uses": 455665
+            "current_rows_across_uses": 25146,
+            "candidate_rows_across_uses": 16637,
+            "current_estimated_bytes_across_uses": 1479327,
+            "candidate_estimated_bytes_across_uses": 572138
           }
         ],
         "current": {
-          "rows_across_uses": 24892,
-          "estimated_bytes_across_uses": 1561025
+          "rows_across_uses": 25146,
+          "estimated_bytes_across_uses": 1479327
         },
         "candidate": {
           "rows_across_uses": 16637,
-          "estimated_bytes_across_uses": 744240
+          "estimated_bytes_across_uses": 572138
         },
         "operator_cardinality": "not exposed by the local Kusto response protocol"
       }

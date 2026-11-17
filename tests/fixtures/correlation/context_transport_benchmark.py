@@ -8,6 +8,7 @@ still rejecting missing, extra, or duplicated results.
 
 import argparse
 import json
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TypeAlias
@@ -53,22 +54,21 @@ class Match:
 class Contribution:
     """One child contribution after expansion into a resulting parent group."""
 
-    id: str
     second: int
     group: Group
     evidence: tuple[Relationship, ...]
-    fields: tuple[str, ...]
     amounts: frozenset[int] = frozenset()
 
 
 @dataclass(frozen=True)
 class Transport:
-    """One context-bearing relation and every semantic consumer of its transport."""
+    """One scoped context relation and its references from one consuming parent."""
 
     name: str
     matches: tuple[Match, ...]
-    parent_consumers: int = 0
-    public_consumers: int = 0
+    consumer: str
+    summary_references: int
+    evidence_references: int
 
 
 def convert(documents):
@@ -183,9 +183,7 @@ def event_count_parent(matches, name, group_fields, context_fields):
     contributions = []
     for match in matches:
         for group, evidence in _expanded(match, group_fields):
-            contributions.append(
-                Contribution(f"{match.id}:{name}:{group!r}", match.second, group, evidence, match.fields)
-            )
+            contributions.append(Contribution(match.second, group, evidence))
     output = []
     for group in sorted({row.group for row in contributions}, key=repr):
         grouped = [row for row in contributions if row.group == group]
@@ -213,11 +211,9 @@ def value_sum_parent(matches, name, group_fields, context_fields):
             amounts = {relationship[amount_index] for relationship in evidence}
             observations.append(
                 Contribution(
-                    f"{match.id}:{name}:{group!r}",
                     match.second,
                     group,
                     evidence,
-                    match.fields,
                     frozenset(amounts),
                 )
             )
@@ -241,7 +237,7 @@ def value_sum_parent(matches, name, group_fields, context_fields):
 
 
 def combine_ungrouped(matches, name="SharedRoot"):
-    contributions = [Contribution(match.id, match.second, (), match.evidence, match.fields) for match in matches]
+    contributions = [Contribution(match.second, (), match.evidence) for match in matches]
     output = []
     for end in sorted({row.second for row in contributions}):
         window = [row for row in contributions if end - 300 <= row.second <= end]
@@ -299,19 +295,18 @@ def _relation_transport(transport):
         for match in matches
         for relationship in match.evidence
     )
-    consumers = transport.parent_consumers + transport.public_consumers
-    current_rows = (summary_rows + evidence_rows) * consumers
-    candidate_rows = (
-        summary_rows + evidence_rows
-    ) * transport.parent_consumers + summary_rows * transport.public_consumers
-    current_bytes = (summary_bytes + union_evidence_bytes) * consumers
+    references = transport.summary_references + transport.evidence_references
+    current_rows = (summary_rows + evidence_rows) * references
+    candidate_rows = summary_rows * transport.summary_references + evidence_rows * transport.evidence_references
+    current_bytes = (summary_bytes + union_evidence_bytes) * references
     candidate_bytes = (
-        summary_bytes + separate_evidence_bytes
-    ) * transport.parent_consumers + summary_bytes * transport.public_consumers
+        summary_bytes * transport.summary_references + separate_evidence_bytes * transport.evidence_references
+    )
     return {
         "name": transport.name,
-        "parent_consumers": transport.parent_consumers,
-        "public_consumers": transport.public_consumers,
+        "consumer": transport.consumer,
+        "summary_references": transport.summary_references,
+        "evidence_references": transport.evidence_references,
         "summary_rows": summary_rows,
         "evidence_rows": evidence_rows,
         "summary_estimated_bytes": summary_bytes,
@@ -353,6 +348,26 @@ def transport_model(transports):
     }
 
 
+def _reference_counts(context_fields, group_fields, matching_role):
+    reconstructs_context = int(any(field not in group_fields for field in context_fields))
+    return (
+        reconstructs_context + int(matching_role == "summary"),
+        reconstructs_context + int(matching_role == "evidence"),
+    )
+
+
+def _validate_transport_references(query, transports):
+    expected = {}
+    for transport in transports:
+        references = expected.setdefault(transport.name, [0, 0])
+        references[0] += transport.summary_references
+        references[1] += transport.evidence_references
+    for name, (summary_references, evidence_references) in expected.items():
+        prefix = re.escape(f"{name}Results") + r'(?:\n| )\| where \["ContextRowKind(?:_\d+)?"\] == '
+        assert len(re.findall(prefix + r'"Summary"', query)) == summary_references
+        assert len(re.findall(prefix + r'"ContextEvidence"', query)) == evidence_references
+
+
 def case(name, events, threshold, context_fields, dimensions, mode="event", depth=1):
     child = child_matches(events, threshold, context_fields)
     transports = []
@@ -368,10 +383,12 @@ def case(name, events, threshold, context_fields, dimensions, mode="event", dept
             correlation_document("NumericParent", ["ScaleChild"], group_fields, context_fields, kind="value_sum")
         )
         current = value_sum_parent(child, "NumericParent", group_fields, context_fields)
-        transports.extend(
-            (
-                Transport("ScaleChild", child, parent_consumers=1),
-                Transport("NumericParent", current, public_consumers=1),
+        transports.append(
+            Transport(
+                "ScaleChild",
+                child,
+                "NumericParent",
+                *_reference_counts(context_fields, group_fields, "evidence"),
             )
         )
         metric = "ValueSum"
@@ -388,10 +405,30 @@ def case(name, events, threshold, context_fields, dimensions, mode="event", dept
         current = combine_ungrouped([*by_user, *by_server])
         transports.extend(
             (
-                Transport("ScaleChild", child, parent_consumers=2),
-                Transport("ParentByUser", by_user, parent_consumers=1),
-                Transport("ParentByServer", by_server, parent_consumers=1),
-                Transport("SharedRoot", current, public_consumers=1),
+                Transport(
+                    "ScaleChild",
+                    child,
+                    "ParentByUser",
+                    *_reference_counts(context_fields, ("User",), "evidence"),
+                ),
+                Transport(
+                    "ScaleChild",
+                    child,
+                    "ParentByServer",
+                    *_reference_counts(context_fields, ("Server",), "evidence"),
+                ),
+                Transport(
+                    "ParentByUser",
+                    by_user,
+                    "SharedRoot",
+                    *_reference_counts(context_fields, (), "summary"),
+                ),
+                Transport(
+                    "ParentByServer",
+                    by_server,
+                    "SharedRoot",
+                    *_reference_counts(context_fields, (), "summary"),
+                ),
             )
         )
         group_fields = ()
@@ -400,10 +437,20 @@ def case(name, events, threshold, context_fields, dimensions, mode="event", dept
         for level in range(depth):
             parent_name = f"ContextParent{level + 1}"
             documents.append(correlation_document(parent_name, [source_name], group_fields, context_fields))
-            transports.append(Transport(source_name, current, parent_consumers=1))
+            transports.append(
+                Transport(
+                    source_name,
+                    current,
+                    parent_name,
+                    *_reference_counts(
+                        context_fields,
+                        group_fields,
+                        "evidence" if level == 0 else "summary",
+                    ),
+                )
+            )
             current = event_count_parent(current, parent_name, group_fields, context_fields)
             source_name = parent_name
-        transports.append(Transport(source_name, current, public_consumers=1))
     return {
         "name": name,
         "rows": events,
@@ -412,6 +459,7 @@ def case(name, events, threshold, context_fields, dimensions, mode="event", dept
         "group_fields": group_fields,
         "metric": metric,
         "dimensions": sorted(dimensions),
+        "transports": transports,
         "transport_model": transport_model(transports),
     }
 
@@ -445,6 +493,7 @@ def freeze(destination: Path):
     )
     for item in cases():
         public_query = convert(item["documents"])
+        _validate_transport_references(public_query, item["transports"])
         query = input_query(item["rows"]) + diagnostic(
             public_query, item["expected"], item["group_fields"], item["metric"]
         )
