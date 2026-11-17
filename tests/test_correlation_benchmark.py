@@ -42,6 +42,7 @@ def test_focused_relation_binding_benchmark_covers_density_reuse_and_context_pol
     boolean = (tmp_path / "dense-boolean-context.kql").read_text()
     assert "let WindowSourceMatches = materialize(" in boolean
 
+
 def test_context_transport_scale_benchmark_covers_ticket_53_dimensions(tmp_path):
     from tests.fixtures.correlation.context_transport_benchmark import freeze
 
@@ -74,6 +75,37 @@ def test_context_transport_scale_benchmark_covers_ticket_53_dimensions(tmp_path)
         depth_three["candidate"]["estimated_bytes_across_uses"] > depth_one["candidate"]["estimated_bytes_across_uses"]
     )
     assert shared["relations"][0]["parent_consumers"] == 2
+
+
+def test_context_transport_correctness_freeze_covers_every_candidate_contract(tmp_path):
+    from tests.fixtures.correlation.context_transport_correctness import freeze
+
+    freeze(tmp_path)
+    manifest = json.loads((tmp_path / "manifest.json").read_text())
+    coverage = set(manifest["coverage"])
+    names = {item["name"] for item in manifest["fixtures"]}
+
+    assert coverage == {
+        "direct",
+        "shared",
+        "multilevel",
+        "callback",
+        "display-boundaries",
+        "hidden-parent-values",
+        "cross-field-relationships",
+        "stable-consumer-identities",
+    }
+    assert {
+        "relational_display_999.kql",
+        "relational_display_1000.kql",
+        "relational_display_1001.kql",
+        "relational_complete_parent.kql",
+        "relational_callback_metric.kql",
+        "relational_temporal_shared.kql",
+        "relational_ordered_multilevel.kql",
+        "relational_boolean_multilevel.kql",
+    }.issubset(names)
+    assert all((tmp_path / item["name"]).is_file() and item["sha256"] for item in manifest["fixtures"])
 
 
 def test_benchmark_transport_failure_is_retained_and_never_means_empty_success(tmp_path, monkeypatch):

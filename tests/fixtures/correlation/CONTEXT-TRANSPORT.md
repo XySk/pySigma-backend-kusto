@@ -53,3 +53,7 @@ The separate transport is therefore rejected.  Production retains the #52
 union, shared materialization, and stable ID assignment.  Exact positive and
 negative evidence is published in
 [`runtime-evidence/context-transport-final`](runtime-evidence/context-transport-final/README.md).
+The [review-fix evidence](runtime-evidence/context-transport-review-fixes/README.md)
+adds complete per-relation/per-use growth totals and 19/19 successful corrected
+candidate and restored-production focused correctness runs, while preserving two
+intermediate callback failures and the exact temporary candidate patch.
