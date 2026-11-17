@@ -33,7 +33,7 @@
     },
     {
       "name": "count_existence_inherited_metric.kql",
-      "sha256": "a7ae794316b3335943b923cff5f27985e645024b4af85ebe7c348ba0022dec3f",
+      "sha256": "a9e645ab214f1457a7431b03ab28f067ba695ffaa2cc2c9c905140aee9d68020",
       "expected_error": null
     }
   ]

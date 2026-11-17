@@ -32,7 +32,7 @@ union (SourceMatchArrivals
 };
 let CorrelationMatches = materialize(ContextSummary()
 | serialize CorrelationMatchId = row_number());
-let WindowSourceMatches = materialize(
+let WindowSourceMatches =
 CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, ContextGroupHost = ["Host"], ContextPartition = 1
 | join kind=inner (
 Events
@@ -42,7 +42,7 @@ Events
 | extend ContextSourceRule = "source-rule"
 | project ContextEventTime, ContextSourceRule, ContextGroupHost, ContextAmount, ContextPartition = 1
 ) on ContextGroupHost
-| where ContextEventTime between ((CompletionTime - 5m) .. CompletionTime));
+| where ContextEventTime between ((CompletionTime - 5m) .. CompletionTime);
 let CompleteContextRelationships = materialize(WindowSourceMatches
 | project CorrelationMatchId, ContextAmount
 | distinct *);
@@ -89,7 +89,7 @@ PercentileWindowValues | summarize PercentilePopulation = count() by GroupHost, 
 };
 let CorrelationMatches = materialize(ContextSummary()
 | serialize CorrelationMatchId_1 = row_number());
-let WindowSourceMatches = materialize(
+let WindowSourceMatches =
 CorrelationMatches | project CorrelationMatchId_1, CompletionTime = WindowEnd, ContextGroupHost = ["Host"], ContextPartition = 1
 | join kind=inner (
 union (ChildResults | where ["ContextRowKind"] == "Summary"
@@ -106,11 +106,11 @@ union (ChildResults | where ["ContextRowKind"] == "Summary"
 | extend HasContextEvidence = true)
 | project ContextEventTime, ContextSourceRule, ContextGroupHost, ContextMeasurement, HasContextEvidence, ContextPartition = 1
 ) on ContextGroupHost
-| where ContextEventTime between ((CompletionTime - 5m) .. CompletionTime));
-let CompleteContextRelationships = materialize(WindowSourceMatches
+| where ContextEventTime between ((CompletionTime - 5m) .. CompletionTime);
+let CompleteContextRelationships = WindowSourceMatches
 | where HasContextEvidence
 | project CorrelationMatchId_1, ContextMeasurement
-| distinct *);
+| distinct *;
 let ValuesForMeasurement = CompleteContextRelationships
 | where isnotnull(ContextMeasurement)
 | summarize by CorrelationMatchId_1, ContextMeasurement

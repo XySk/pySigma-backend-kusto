@@ -347,7 +347,7 @@ def assess(payload, fixture, baseline=False):
                 projected[index] = (
                     datetime.fromisoformat(projected[index].replace("Z", "+00:00")).isoformat().replace("+00:00", "Z")
                 )
-            elif name == "User":
+            elif name in fixture.get("context_fields", ["User"] if fixture.get("context") else []):
                 value = json.loads(projected[index]) if isinstance(projected[index], str) else projected[index]
                 projected[index] = sorted(value)
         observed.append(projected)

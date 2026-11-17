@@ -59,32 +59,32 @@
     },
     {
       "name": "count_context_pairs.kql",
-      "sha256": "849a87484657ee88378ee9306c9631d587dc13ba9e4fda921ba876d6584172e4",
+      "sha256": "6944fadcf6b87f2231a5f526c942da1c79eb43fe7e004422ee5b071c7a638b53",
       "expected_error": null
     },
     {
       "name": "count_context_mixed.kql",
-      "sha256": "375a50c7b623a05bc6511e20bc2290dc98ef3375ed3da57772abefe532f1c382",
+      "sha256": "5469b0f3a306f5897537904fc42a9746b08ed76f275fb363353622c7ad6b02b8",
       "expected_error": null
     },
     {
       "name": "count_context_ungrouped.kql",
-      "sha256": "02364e7c4c2c6110582d068523f2217d8ba225198cab13d9917fac5c62f4f763",
+      "sha256": "95b0ac579a9837043f7eec87ccb38c371b529968108cedb4f32d3590050e4041",
       "expected_error": null
     },
     {
       "name": "count_context_values.kql",
-      "sha256": "fa91f88b43ed43a7190ae94631439960139fd05327a7e23280bf90adf6a507f4",
+      "sha256": "2ed4f721cf2567507a99f9cb951bde07c746d8a0799edd958d52e04fc3c62991",
       "expected_error": null
     },
     {
       "name": "count_context_restricted.kql",
-      "sha256": "8a328f9a763043860212dc0116d0449470c200a000e89f6c92f43df9c4600eff",
+      "sha256": "f29bb3b178851da061aa2038b19f76cd2662c9336e3eda528b505255547c313c",
       "expected_error": null
     },
     {
       "name": "count_context_typed.kql",
-      "sha256": "e17527560fb065e6ee8e33d72823876ae810cd3cd764a499fcfac8308857e840",
+      "sha256": "404c74552ec516d146b8730bf62ccf96d0b5513c50ad2875d9092cf6981e10bb",
       "expected_error": null
     }
   ]

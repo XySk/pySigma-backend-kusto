@@ -62,7 +62,7 @@
     },
     {
       "name": "presence_scalar_child_context.kql",
-      "sha256": "006bb2a334403bb19f0719561b634f88690ef328cfe18f79917befbc531e35a7",
+      "sha256": "92aeca0a646da0648f0ecbcf3c88a4529fe22283808bee86d242efb1bab02410",
       "expected_error": null
     }
   ]

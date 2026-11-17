@@ -8,6 +8,10 @@ Numeric inputs and intermediate arithmetic must stay within sensible native rang
 
 The source-shaping revision passed all 255 fixtures and 384 repeated benchmark samples. [Current hash-scoped evidence](runtime-evidence/source-shaping-final/README.md) preserves the final raw results and the fixture-contract failure exposed during the first run. The preceding [integrated acceptance](runtime-evidence/integrated-acceptance-final/README.md) and [per-workload comparisons](BENCHMARK-COMPARISON.md) remain the comparison baseline.
 
+The reference-aware cache and contract-specific deduplication decisions are
+listed in the [relation-binding audit](RELATION-BINDING.md), including their
+consumer counts, safe reductions, sort locality, and focused measurement cases.
+
 ## Coverage and independent oracles
 
 | Fixture family / generator | Behavior covered |

@@ -9,7 +9,7 @@
     },
     {
       "name": "value_count_grouped_counted_context.kql",
-      "sha256": "fcf7cde54fb4647fc68dfa849ba7b0e9a663d7c719ac92c3f090ab8cf514d13d",
+      "sha256": "7ffe6792e56e1396ae7fcf298f74b2ccf5c6e7064757535c5c031a6efd354081",
       "expected_error": null
     },
     {
