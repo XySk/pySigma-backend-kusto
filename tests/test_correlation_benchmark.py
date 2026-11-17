@@ -43,6 +43,28 @@ def test_focused_relation_binding_benchmark_covers_density_reuse_and_context_pol
     assert "let WindowSourceMatches = materialize(" in boolean
 
 
+def test_context_transport_scale_benchmark_covers_ticket_53_dimensions(tmp_path):
+    from tests.fixtures.correlation.context_transport_benchmark import freeze
+
+    freeze(tmp_path)
+    manifest = json.loads((tmp_path / "manifest.json").read_text())
+    dimensions = {dimension for item in manifest["workloads"] for dimension in item["dimensions"]}
+
+    assert len(manifest["workloads"]) >= 10
+    assert dimensions == {
+        "density",
+        "groups",
+        "repetition",
+        "selectivity",
+        "context-fanout",
+        "child-reuse",
+        "chain-depth",
+        "numeric-pairing",
+    }
+    assert all(item["transport_model"]["summary_rows"] >= 0 for item in manifest["workloads"])
+    assert all(item["query_sha256"] and item["workload_sha256"] for item in manifest["workloads"])
+
+
 def test_benchmark_transport_failure_is_retained_and_never_means_empty_success(tmp_path, monkeypatch):
     import subprocess
 
