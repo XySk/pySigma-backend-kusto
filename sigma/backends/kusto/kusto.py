@@ -97,6 +97,12 @@ class _CorrelationRelationBinding:
     def render(self):
         if self.consumer_count < 1:
             raise ValueError("correlation relation bindings require at least one consumer")
+        if (
+            not self.completed_reductions
+            or any(not isinstance(reduction, str) or not reduction.strip() for reduction in self.completed_reductions)
+            or len(set(self.completed_reductions)) != len(self.completed_reductions)
+        ):
+            raise ValueError("correlation relation bindings require unique, nonempty completed safe reductions")
         cache = self.consumer_count > 1 or self.preserve_evaluation or self.measured_materialization
         if cache:
             return f"let {self.name} = materialize({self.expression});\n"

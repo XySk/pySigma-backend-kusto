@@ -5,7 +5,9 @@ expression, consumer count, completed safe reductions, and whether repeated
 evaluation must preserve a generated identity or other nondeterministic value.
 Ordinary `let` is the default. `materialize()` is selected only for genuine
 reuse, stable evaluation, or a separately measured exception. This revision has
-no measured-only exception.
+two measured-only exceptions: `WindowSourceMatches` for value-count,
+value-average, and percentile context, and `CompleteContextRelationships` for
+value-average context. Their retained-cache measurements are listed below.
 
 ## Decisions
 

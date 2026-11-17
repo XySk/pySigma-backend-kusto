@@ -42,7 +42,6 @@ def test_focused_relation_binding_benchmark_covers_density_reuse_and_context_pol
     boolean = (tmp_path / "dense-boolean-context.kql").read_text()
     assert "let WindowSourceMatches = materialize(" in boolean
 
-
 def test_context_transport_scale_benchmark_covers_ticket_53_dimensions(tmp_path):
     from tests.fixtures.correlation.context_transport_benchmark import freeze
 
@@ -63,6 +62,18 @@ def test_context_transport_scale_benchmark_covers_ticket_53_dimensions(tmp_path)
     }
     assert all(item["transport_model"]["summary_rows"] >= 0 for item in manifest["workloads"])
     assert all(item["query_sha256"] and item["workload_sha256"] for item in manifest["workloads"])
+
+    workloads = {item["name"]: item for item in manifest["workloads"]}
+    depth_one = workloads["chain-depth-one"]["transport_model"]
+    depth_three = workloads["chain-depth-three"]["transport_model"]
+    shared = workloads["shared-child-consumers"]["transport_model"]
+    assert len(depth_one["relations"]) == 2
+    assert len(depth_three["relations"]) == 4
+    assert depth_three["current"]["rows_across_uses"] > depth_one["current"]["rows_across_uses"]
+    assert (
+        depth_three["candidate"]["estimated_bytes_across_uses"] > depth_one["candidate"]["estimated_bytes_across_uses"]
+    )
+    assert shared["relations"][0]["parent_consumers"] == 2
 
 
 def test_benchmark_transport_failure_is_retained_and_never_means_empty_success(tmp_path, monkeypatch):
