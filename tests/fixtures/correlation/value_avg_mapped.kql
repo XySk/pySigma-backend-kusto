@@ -17,11 +17,12 @@ let Expected = datatable(WindowStart:datetime, WindowEnd:datetime, Machine:strin
 let Actual = () {
 let AverageObservations = union (Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["ProcessTime"]), GroupMachine = ["Computer"], MeasuredMeasurement = ["Size"]),
+| project EventTime_1 = ["ProcessTime"], GroupMachine = ["Computer"], MeasuredMeasurement = ["Size"]
+| where isnotnull(EventTime_1) and isnotempty(GroupMachine)),
 (NetworkEvents
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["NetworkTime"]), GroupMachine = ["Server"], MeasuredMeasurement = ["Length"])
-| where isnotnull(EventTime_1) and isnotempty(GroupMachine);
+| project EventTime_1 = ["NetworkTime"], GroupMachine = ["Server"], MeasuredMeasurement = ["Length"]
+| where isnotnull(EventTime_1) and isnotempty(GroupMachine));
 AverageObservations
 | summarize by GroupMachine, AverageWindowEnd = EventTime_1, AverageTimeBin = bin(EventTime_1, 5m)
 | join kind=inner (

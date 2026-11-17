@@ -41,7 +41,7 @@ def test_standard_mapping_resolves_fields_outside_detection_and_preserves_logica
     (query,) = backend.convert(collection)
     assert '["Process Command"] =~ "suspicious.exe"' in query
     assert '["Process Image"] =~ "suspicious.exe"' in query
-    assert query.count('todatetime(["Event Time"])') >= 2
+    assert query.count('["Event Time"]') >= 2
     assert query.count('["Machine Name"]') >= 2
     assert query.count('["Actor Name"]') >= 2
     assert '["Host"] = GroupHost, ValueCount' in query
@@ -84,8 +84,8 @@ def test_source_specific_standard_mapping_and_aliases_use_each_sources_pipeline(
         aliases="  aliases:\n    Actor:\n      source-rule: User\n      other-rule: SourceUser\n",
     )
     (query,) = KustoBackend(processing_pipeline=pipeline, correlation_timestamp_field="Timestamp").convert(collection)
-    assert 'todatetime(["Process Time"])' in query
-    assert 'todatetime(["Network Time"])' in query
+    assert '["Process Time"]' in query
+    assert '["Network Time"]' in query
     assert '["Process Actor"]' in query
     assert '["Network Actor"]' in query
     assert "Port == 443" in query
@@ -165,7 +165,7 @@ def test_standard_mapping_preserves_logical_child_group_fields():
         processing_pipeline=mapping_pipeline({"Host": "Machine Name"}), correlation_timestamp_field="Timestamp"
     ).convert(collection)
     assert '["Machine Name"]' in query
-    assert 'todatetime(["WindowEnd"]), GroupHost = ["Host"]' in query
+    assert '["WindowEnd"], GroupHost = ["Host"]' in query
 
 
 def test_ordinary_detection_still_supports_one_to_many_and_escapes_identifier_quotes():
@@ -205,7 +205,7 @@ def test_mapped_child_context_parent_fixture_is_generated_through_public_convers
     assert (
         Path(__file__).with_name("fixtures").joinpath("correlation/standard_mappings_parent.kql").read_text() == query
     )
-    assert 'todatetime(["WindowEnd"])' in query
+    assert '["WindowEnd"]' in query
     assert 'ContextUser = ["Process Actor"]' in query
     assert 'ContextUser = ["Network Actor"]' in query
     assert '| where ["ContextRowKind"] == "ContextEvidence"' in query

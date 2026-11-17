@@ -3,9 +3,9 @@
 // Run the entire file in one Kusto query. PASS = zero output rows.
 // Nonempty rows identify a missing, additional, or duplicated summary.
 let long0=() { let Events=datatable(Amount:long) [9223372036854775807,9223372036854775806] | extend Timestamp=datetime(2026-01-01T12:00:00Z),Marker="match";
-let PercentileObservations = union (Events
+let PercentileObservations = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), MeasuredAmount = ["Amount"])
+| project EventTime_1 = ["Timestamp"], MeasuredAmount = ["Amount"]
 | where isnotnull(EventTime_1);
 PercentileObservations
 | project PercentileWindowEnd = EventTime_1, PercentileTimeBin = bin(EventTime_1, 5m)
@@ -23,9 +23,9 @@ PercentileObservations
 | project WindowStart = PercentileWindowEnd - 5m, WindowEnd = PercentileWindowEnd, ValuePercentile
 };
 let long50=() { let Events=datatable(Amount:long) [9223372036854775807,9223372036854775806] | extend Timestamp=datetime(2026-01-01T12:00:00Z),Marker="match";
-let PercentileObservations = union (Events
+let PercentileObservations = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), MeasuredAmount = ["Amount"])
+| project EventTime_1 = ["Timestamp"], MeasuredAmount = ["Amount"]
 | where isnotnull(EventTime_1);
 let PercentileWindowValues = materialize(
 PercentileObservations
@@ -53,9 +53,9 @@ PercentileWindowValues | summarize PercentilePopulation = count() by PercentileW
 | project WindowStart = PercentileWindowEnd - 5m, WindowEnd = PercentileWindowEnd, ValuePercentile
 };
 let long100=() { let Events=datatable(Amount:long) [9223372036854775807,9223372036854775806] | extend Timestamp=datetime(2026-01-01T12:00:00Z),Marker="match";
-let PercentileObservations = union (Events
+let PercentileObservations = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), MeasuredAmount = ["Amount"])
+| project EventTime_1 = ["Timestamp"], MeasuredAmount = ["Amount"]
 | where isnotnull(EventTime_1);
 PercentileObservations
 | project PercentileWindowEnd = EventTime_1, PercentileTimeBin = bin(EventTime_1, 5m)
@@ -73,9 +73,9 @@ PercentileObservations
 | project WindowStart = PercentileWindowEnd - 5m, WindowEnd = PercentileWindowEnd, ValuePercentile
 };
 let extreme0=() { let Events=datatable(Amount:real) [real(1e300),real(-1e300)] | extend Timestamp=datetime(2026-01-01T12:00:00Z),Marker="match";
-let PercentileObservations = union (Events
+let PercentileObservations = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), MeasuredAmount = ["Amount"])
+| project EventTime_1 = ["Timestamp"], MeasuredAmount = ["Amount"]
 | where isnotnull(EventTime_1);
 PercentileObservations
 | project PercentileWindowEnd = EventTime_1, PercentileTimeBin = bin(EventTime_1, 5m)
@@ -93,9 +93,9 @@ PercentileObservations
 | project WindowStart = PercentileWindowEnd - 5m, WindowEnd = PercentileWindowEnd, ValuePercentile
 };
 let extreme50=() { let Events=datatable(Amount:real) [real(1e300),real(-1e300)] | extend Timestamp=datetime(2026-01-01T12:00:00Z),Marker="match";
-let PercentileObservations = union (Events
+let PercentileObservations = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), MeasuredAmount = ["Amount"])
+| project EventTime_1 = ["Timestamp"], MeasuredAmount = ["Amount"]
 | where isnotnull(EventTime_1);
 let PercentileWindowValues = materialize(
 PercentileObservations
@@ -123,9 +123,9 @@ PercentileWindowValues | summarize PercentilePopulation = count() by PercentileW
 | project WindowStart = PercentileWindowEnd - 5m, WindowEnd = PercentileWindowEnd, ValuePercentile
 };
 let extreme100=() { let Events=datatable(Amount:real) [real(1e300),real(-1e300)] | extend Timestamp=datetime(2026-01-01T12:00:00Z),Marker="match";
-let PercentileObservations = union (Events
+let PercentileObservations = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), MeasuredAmount = ["Amount"])
+| project EventTime_1 = ["Timestamp"], MeasuredAmount = ["Amount"]
 | where isnotnull(EventTime_1);
 PercentileObservations
 | project PercentileWindowEnd = EventTime_1, PercentileTimeBin = bin(EventTime_1, 5m)

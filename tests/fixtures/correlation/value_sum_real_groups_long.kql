@@ -13,9 +13,9 @@ let Events=datatable(Timestamp:datetime,Group:real,Amount:long,Marker:string) [
  datetime(2026-01-01T00:01:00),real(+0.0),3,"match"
 ];
 let Actual=(){
-let SumObservations = union (Events
+let SumObservations = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupGroup = ["Group"], MeasuredAmount = ["Amount"])
+| project EventTime_1 = ["Timestamp"], GroupGroup = ["Group"], MeasuredAmount = ["Amount"]
 | where isnotnull(EventTime_1) and isnotempty(GroupGroup);
 let SumArrivals = SumObservations
 | summarize ArrivalSum = sum(MeasuredAmount) by EventTime_1, GroupGroup;

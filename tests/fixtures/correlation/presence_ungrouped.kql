@@ -7,14 +7,16 @@ datetime(2026-01-01T00:00:00Z),"a","A",
 let Actual=(){
 union (Events
 | where Marker =~ "A"
-| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "A"),
+| project EventTime_1 = ["Timestamp"], SourceRule = "A"
+| where isnotnull(EventTime_1)),
 (Events
 | where Marker =~ "B"
-| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "B"),
+| project EventTime_1 = ["Timestamp"], SourceRule = "B"
+| where isnotnull(EventTime_1)),
 (Events
 | where Marker =~ "C"
-| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "C")
-| where isnotnull(EventTime_1)
+| project EventTime_1 = ["Timestamp"], SourceRule = "C"
+| where isnotnull(EventTime_1))
 // Batch simultaneous source matches before updating inclusive trailing presence.
 | summarize MatchesA = countif(SourceRule == "A") > 0, MatchesB = countif(SourceRule == "B") > 0, MatchesC = countif(SourceRule == "C") > 0 by EventTime_1
 | sort by EventTime_1 asc

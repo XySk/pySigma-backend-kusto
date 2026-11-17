@@ -10,9 +10,9 @@ let Events=datatable(Timestamp:datetime,Host:string,Marker:string,User:dynamic,S
 let Actual=(){
 let Child = () {
 let ContextSummary = () {
-let SourceMatchArrivals = union (Events
+let SourceMatchArrivals = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"])
+| project EventTime_1 = ["Timestamp"], GroupHost = ["Host"]
 | where isnotnull(EventTime_1) and isnotempty(GroupHost)
 | summarize SourceMatchCount = count() by EventTime_1, GroupHost;
 union (SourceMatchArrivals
@@ -31,10 +31,11 @@ let CorrelationMatches = materialize(ContextSummary()
 let WindowSourceMatches = materialize(
 CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, ContextGroupHost = ["Host"], ContextPartition = 1
 | join kind=inner (
-union (Events
+Events
 | where Marker =~ "match"
-| extend ContextEventTime = todatetime(["Timestamp"]), ContextGroupHost = ["Host"], ContextUser = ["User"], ContextServer = ["Server"]
-| extend ContextSourceRule = "source-rule")
+| extend ContextEventTime = ["Timestamp"], ContextGroupHost = ["Host"], ContextUser = ["User"], ContextServer = ["Server"]
+| where isnotnull(ContextEventTime) and isnotempty(ContextGroupHost)
+| extend ContextSourceRule = "source-rule"
 | project ContextEventTime, ContextSourceRule, ContextGroupHost, ContextUser, ContextServer, ContextPartition = 1
 ) on ContextGroupHost
 | where ContextEventTime between ((CompletionTime - 5m) .. CompletionTime));
@@ -44,9 +45,9 @@ let CompleteContextRelationships = materialize(WindowSourceMatches
 union (CorrelationMatches | extend ContextRowKind = "Summary"), (CorrelationMatches | join kind=inner (CompleteContextRelationships) on CorrelationMatchId | extend ContextRowKind = "ContextEvidence")
 };
 let ChildResults = materialize(Child());
-let ValueCountSources = materialize(union (ChildResults
+let ValueCountSources = materialize(ChildResults
 | where ["ContextRowKind"] == "ContextEvidence"
-| project EventTime = todatetime(["WindowEnd"]), GroupUser = ["ContextUser"], GroupServer = ["ContextServer"], CountedUser = ["ContextUser"])
+| project EventTime = ["WindowEnd"], GroupUser = ["ContextUser"], GroupServer = ["ContextServer"], CountedUser = ["ContextUser"]
 | where isnotnull(EventTime) and isnotempty(GroupUser) and isnotempty(GroupServer));
 let CountedUserActivity = materialize(ValueCountSources
 | where isnotempty(CountedUser)

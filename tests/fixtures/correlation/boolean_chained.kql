@@ -12,19 +12,20 @@ let Events = datatable(Timestamp:datetime, Case:string, Marker:string) [
 ];
 let Actual = () {
 let Child = () {
-union (Events
+Events
 | where Marker =~ "A"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupCase = ["Case"])
+| project EventTime_1 = ["Timestamp"], GroupCase = ["Case"]
 | where isnotnull(EventTime_1) and isnotempty(GroupCase)
 | distinct EventTime_1, GroupCase
 | project WindowStart = EventTime_1 - 5m, WindowEnd = EventTime_1, ["Case"] = GroupCase
 };
 union (Child()
-| project EventTime_1 = todatetime(["WindowEnd"]), GroupCase = ["Case"], SourceRule = "child"),
+| project EventTime_1 = ["WindowEnd"], GroupCase = ["Case"], SourceRule = "child"
+| where isnotnull(EventTime_1) and isnotempty(GroupCase)),
 (Events
 | where Marker =~ "B"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupCase = ["Case"], SourceRule = "B")
-| where isnotnull(EventTime_1) and isnotempty(GroupCase)
+| project EventTime_1 = ["Timestamp"], GroupCase = ["Case"], SourceRule = "B"
+| where isnotnull(EventTime_1) and isnotempty(GroupCase))
 // Batch simultaneous source matches before updating inclusive trailing presence.
 | summarize MatchesChild = countif(SourceRule == "child") > 0, MatchesB = countif(SourceRule == "B") > 0 by GroupCase, EventTime_1
 | sort by GroupCase asc, EventTime_1 asc

@@ -80,29 +80,34 @@ let Actual = () {
 // Strict sequence: "source-rule" -> "other-rule" -> "third-rule". Total inclusive span: 5m.
 union (Events
 | where Marker =~ "A"
-| extend EventTime_1 = todatetime(["ProcessTime"]), GroupCase = ["Case"], GroupHost = ["ProcessHost"]
+| extend EventTime_1 = ["ProcessTime"], GroupCase = ["Case"], GroupHost = ["ProcessHost"]
+| where isnotnull(EventTime_1) and isnotempty(GroupCase) and isnotempty(GroupHost)
 | extend SourceRule = "source-rule"),
 (Events
 | where Marker =~ "A"
-| extend EventTime_1 = todatetime(["ProcessTime"]), GroupCase = ["Case"], GroupHost = ["ProcessHost"]
+| extend EventTime_1 = ["ProcessTime"], GroupCase = ["Case"], GroupHost = ["ProcessHost"]
+| where isnotnull(EventTime_1) and isnotempty(GroupCase) and isnotempty(GroupHost)
 | extend SourceRule = "source-rule"),
 (OtherEvents
 | where Marker =~ "B"
-| extend EventTime_1 = todatetime(["NetworkTime"]), GroupCase = ["Case"], GroupHost = ["NetworkHost"]
+| extend EventTime_1 = ["NetworkTime"], GroupCase = ["Case"], GroupHost = ["NetworkHost"]
+| where isnotnull(EventTime_1) and isnotempty(GroupCase) and isnotempty(GroupHost)
 | extend SourceRule = "other-rule"),
 (OtherEvents
 | where Marker =~ "B"
-| extend EventTime_1 = todatetime(["NetworkTime"]), GroupCase = ["Case"], GroupHost = ["NetworkHost"]
+| extend EventTime_1 = ["NetworkTime"], GroupCase = ["Case"], GroupHost = ["NetworkHost"]
+| where isnotnull(EventTime_1) and isnotempty(GroupCase) and isnotempty(GroupHost)
 | extend SourceRule = "other-rule"),
 (Events
 | where Marker =~ "C"
-| extend EventTime_1 = todatetime(["ProcessTime"]), GroupCase = ["Case"], GroupHost = ["ProcessHost"]
+| extend EventTime_1 = ["ProcessTime"], GroupCase = ["Case"], GroupHost = ["ProcessHost"]
+| where isnotnull(EventTime_1) and isnotempty(GroupCase) and isnotempty(GroupHost)
 | extend SourceRule = "third-rule"),
 (Events
 | where Marker =~ "C"
-| extend EventTime_1 = todatetime(["ProcessTime"]), GroupCase = ["Case"], GroupHost = ["ProcessHost"]
-| extend SourceRule = "third-rule")
+| extend EventTime_1 = ["ProcessTime"], GroupCase = ["Case"], GroupHost = ["ProcessHost"]
 | where isnotnull(EventTime_1) and isnotempty(GroupCase) and isnotempty(GroupHost)
+| extend SourceRule = "third-rule")
 // Batch equal timestamps: simultaneous source matches cannot advance strict sequence positions.
 | summarize HasSourceRule = countif(SourceRule == "source-rule") > 0, HasOtherRule = countif(SourceRule == "other-rule") > 0, HasThirdRule = countif(SourceRule == "third-rule") > 0 by EventTime_1, GroupCase, GroupHost
 | sort by GroupCase asc, GroupHost asc, EventTime_1 asc

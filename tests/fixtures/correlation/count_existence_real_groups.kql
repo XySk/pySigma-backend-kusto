@@ -14,22 +14,23 @@ let Events = datatable(Timestamp:datetime, Marker:string) [
 | project Timestamp,Marker,Group;
 let specialized_1=() {
 let FailedLogonBursts = () {
-union (Events
+Events
 | where Marker =~ "failure"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupGroup = ["Group"])
+| project EventTime_1 = ["Timestamp"], GroupGroup = ["Group"]
 | where isnotnull(EventTime_1) and isnotempty(GroupGroup)
 | distinct EventTime_1, GroupGroup
 | project WindowStart = EventTime_1 - 5m, WindowEnd = EventTime_1, ["Group"] = GroupGroup
 };
 // Strict sequence: "failed-logon-bursts" -> "successful-logon". Total inclusive span: 3m.
 union (FailedLogonBursts()
-| extend EventTime_1 = todatetime(["WindowEnd"]), GroupGroup = ["Group"]
+| extend EventTime_1 = ["WindowEnd"], GroupGroup = ["Group"]
+| where isnotnull(EventTime_1) and isnotempty(GroupGroup)
 | extend SourceRule = "failed-logon-bursts"),
 (Events
 | where Marker =~ "success"
-| extend EventTime_1 = todatetime(["Timestamp"]), GroupGroup = ["Group"]
-| extend SourceRule = "successful-logon")
+| extend EventTime_1 = ["Timestamp"], GroupGroup = ["Group"]
 | where isnotnull(EventTime_1) and isnotempty(GroupGroup)
+| extend SourceRule = "successful-logon")
 // Batch equal timestamps: simultaneous source matches cannot advance strict sequence positions.
 | summarize HasFailedLogonBursts = countif(SourceRule == "failed-logon-bursts") > 0, HasSuccessfulLogon = countif(SourceRule == "successful-logon") > 0 by EventTime_1, GroupGroup
 | sort by GroupGroup asc, EventTime_1 asc
@@ -45,9 +46,9 @@ union (FailedLogonBursts()
 };
 let general_1=() {
 let FailedLogonBursts = () {
-let SourceMatchArrivals = union (Events
+let SourceMatchArrivals = Events
 | where Marker =~ "failure"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupGroup = ["Group"])
+| project EventTime_1 = ["Timestamp"], GroupGroup = ["Group"]
 | where isnotnull(EventTime_1) and isnotempty(GroupGroup)
 | summarize SourceMatchCount = count() by EventTime_1, GroupGroup;
 union (SourceMatchArrivals
@@ -63,13 +64,14 @@ union (SourceMatchArrivals
 };
 // Strict sequence: "failed-logon-bursts" -> "successful-logon". Total inclusive span: 3m.
 union (FailedLogonBursts()
-| extend EventTime_1 = todatetime(["WindowEnd"]), GroupGroup = ["Group"]
+| extend EventTime_1 = ["WindowEnd"], GroupGroup = ["Group"]
+| where isnotnull(EventTime_1) and isnotempty(GroupGroup)
 | extend SourceRule = "failed-logon-bursts"),
 (Events
 | where Marker =~ "success"
-| extend EventTime_1 = todatetime(["Timestamp"]), GroupGroup = ["Group"]
-| extend SourceRule = "successful-logon")
+| extend EventTime_1 = ["Timestamp"], GroupGroup = ["Group"]
 | where isnotnull(EventTime_1) and isnotempty(GroupGroup)
+| extend SourceRule = "successful-logon")
 // Batch equal timestamps: simultaneous source matches cannot advance strict sequence positions.
 | summarize HasFailedLogonBursts = countif(SourceRule == "failed-logon-bursts") > 0, HasSuccessfulLogon = countif(SourceRule == "successful-logon") > 0 by EventTime_1, GroupGroup
 | sort by GroupGroup asc, EventTime_1 asc
@@ -85,9 +87,9 @@ union (FailedLogonBursts()
 };
 let specialized_3=() {
 let FailedLogonBursts = () {
-union (Events
+Events
 | where Marker =~ "failure"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupGroup = ["Group"])
+| project EventTime_1 = ["Timestamp"], GroupGroup = ["Group"]
 | where isnotnull(EventTime_1) and isnotempty(GroupGroup)
 // Preserve individual source matches, including timestamp ties, before the threshold lookup.
 | sort by GroupGroup asc, EventTime_1 asc
@@ -98,13 +100,14 @@ union (Events
 };
 // Strict sequence: "failed-logon-bursts" -> "successful-logon". Total inclusive span: 3m.
 union (FailedLogonBursts()
-| extend EventTime_1 = todatetime(["WindowEnd"]), GroupGroup = ["Group"]
+| extend EventTime_1 = ["WindowEnd"], GroupGroup = ["Group"]
+| where isnotnull(EventTime_1) and isnotempty(GroupGroup)
 | extend SourceRule = "failed-logon-bursts"),
 (Events
 | where Marker =~ "success"
-| extend EventTime_1 = todatetime(["Timestamp"]), GroupGroup = ["Group"]
-| extend SourceRule = "successful-logon")
+| extend EventTime_1 = ["Timestamp"], GroupGroup = ["Group"]
 | where isnotnull(EventTime_1) and isnotempty(GroupGroup)
+| extend SourceRule = "successful-logon")
 // Batch equal timestamps: simultaneous source matches cannot advance strict sequence positions.
 | summarize HasFailedLogonBursts = countif(SourceRule == "failed-logon-bursts") > 0, HasSuccessfulLogon = countif(SourceRule == "successful-logon") > 0 by EventTime_1, GroupGroup
 | sort by GroupGroup asc, EventTime_1 asc
@@ -120,9 +123,9 @@ union (FailedLogonBursts()
 };
 let general_3=() {
 let FailedLogonBursts = () {
-let SourceMatchArrivals = union (Events
+let SourceMatchArrivals = Events
 | where Marker =~ "failure"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupGroup = ["Group"])
+| project EventTime_1 = ["Timestamp"], GroupGroup = ["Group"]
 | where isnotnull(EventTime_1) and isnotempty(GroupGroup)
 | summarize SourceMatchCount = count() by EventTime_1, GroupGroup;
 union (SourceMatchArrivals
@@ -138,13 +141,14 @@ union (SourceMatchArrivals
 };
 // Strict sequence: "failed-logon-bursts" -> "successful-logon". Total inclusive span: 3m.
 union (FailedLogonBursts()
-| extend EventTime_1 = todatetime(["WindowEnd"]), GroupGroup = ["Group"]
+| extend EventTime_1 = ["WindowEnd"], GroupGroup = ["Group"]
+| where isnotnull(EventTime_1) and isnotempty(GroupGroup)
 | extend SourceRule = "failed-logon-bursts"),
 (Events
 | where Marker =~ "success"
-| extend EventTime_1 = todatetime(["Timestamp"]), GroupGroup = ["Group"]
-| extend SourceRule = "successful-logon")
+| extend EventTime_1 = ["Timestamp"], GroupGroup = ["Group"]
 | where isnotnull(EventTime_1) and isnotempty(GroupGroup)
+| extend SourceRule = "successful-logon")
 // Batch equal timestamps: simultaneous source matches cannot advance strict sequence positions.
 | summarize HasFailedLogonBursts = countif(SourceRule == "failed-logon-bursts") > 0, HasSuccessfulLogon = countif(SourceRule == "successful-logon") > 0 by EventTime_1, GroupGroup
 | sort by GroupGroup asc, EventTime_1 asc

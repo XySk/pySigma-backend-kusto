@@ -14,9 +14,9 @@ let Events=datatable(Timestamp:datetime,Host:string,Amount:long,Size:long,Marker
 let Actual=(){
 let Child = () {
 let ContextSummary = () {
-let SourceMatchArrivals = union (Events
+let SourceMatchArrivals = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"])
+| project EventTime_1 = ["Timestamp"], GroupHost = ["Host"]
 | where isnotnull(EventTime_1) and isnotempty(GroupHost)
 | summarize SourceMatchCount = count() by EventTime_1, GroupHost;
 union (SourceMatchArrivals
@@ -35,10 +35,11 @@ let CorrelationMatches = materialize(ContextSummary()
 let WindowSourceMatches = materialize(
 CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, ContextGroupHost = ["Host"], ContextPartition = 1
 | join kind=inner (
-union (Events
+Events
 | where Marker =~ "match"
-| extend ContextEventTime = todatetime(["Timestamp"]), ContextGroupHost = ["Host"], ContextAmount = ["Amount"]
-| extend ContextSourceRule = "source-rule")
+| extend ContextEventTime = ["Timestamp"], ContextGroupHost = ["Host"], ContextAmount = ["Amount"]
+| where isnotnull(ContextEventTime) and isnotempty(ContextGroupHost)
+| extend ContextSourceRule = "source-rule"
 | project ContextEventTime, ContextSourceRule, ContextGroupHost, ContextAmount, ContextPartition = 1
 ) on ContextGroupHost
 | where ContextEventTime between ((CompletionTime - 5m) .. CompletionTime));
@@ -53,13 +54,14 @@ let ParentSourceMatches = materialize(union (ChildResults | where ["ContextRowKi
 | project-away ["ContextAmount"]
 | join kind=leftouter (ChildResults | where ["ContextRowKind"] == "ContextEvidence" | project ["CorrelationMatchId"], ["ContextAmount"]) on ["CorrelationMatchId"]
 | extend ChildCorrelationMatch = strcat("Child", "_", tostring(["CorrelationMatchId"]))
-| project EventTime_1 = todatetime(["WindowEnd"]), GroupHost = ["Host"], MeasuredMeasurement = ["ContextAmount"], ChildCorrelationMatch),
+| project EventTime_1 = ["WindowEnd"], GroupHost = ["Host"], MeasuredMeasurement = ["ContextAmount"], ChildCorrelationMatch
+| where isnotnull(EventTime_1) and isnotempty(GroupHost)),
 (Events
 | where Marker =~ "direct"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"], MeasuredMeasurement = ["Size"])
+| project EventTime_1 = ["Timestamp"], GroupHost = ["Host"], MeasuredMeasurement = ["Size"]
+| where isnotnull(EventTime_1) and isnotempty(GroupHost))
 | extend ChildCorrelationMatch = tostring(column_ifexists("ChildCorrelationMatch", "")));
-let PercentileObservations = union (ParentSourceMatches | where isempty(ChildCorrelationMatch)), (ParentSourceMatches | where isnotempty(ChildCorrelationMatch) | extend RetainedNumericValue = MeasuredMeasurement | summarize take_any(*) by ChildCorrelationMatch, GroupHost, RetainedNumericValue)
-| where isnotnull(EventTime_1) and isnotempty(GroupHost);
+let PercentileObservations = union (ParentSourceMatches | where isempty(ChildCorrelationMatch)), (ParentSourceMatches | where isnotempty(ChildCorrelationMatch) | extend RetainedNumericValue = MeasuredMeasurement | summarize take_any(*) by ChildCorrelationMatch, GroupHost, RetainedNumericValue);
 let PercentileWindowValues = materialize(
 PercentileObservations
 | project GroupHost, PercentileWindowEnd = EventTime_1, PercentileTimeBin = bin(EventTime_1, 5m)
@@ -93,11 +95,13 @@ CorrelationMatches | project CorrelationMatchId_1, CompletionTime = WindowEnd, C
 union (ChildResults | where ["ContextRowKind"] == "Summary"
 | project-away ["ContextAmount"]
 | join kind=leftouter (ChildResults | where ["ContextRowKind"] == "ContextEvidence" | project ["CorrelationMatchId"], ["ContextAmount"], HasContextEvidence = true) on ["CorrelationMatchId"]
-| extend ContextEventTime = todatetime(["WindowEnd"]), ContextGroupHost = ["Host"], ContextMeasurement = ["ContextAmount"]
+| extend ContextEventTime = ["WindowEnd"], ContextGroupHost = ["Host"], ContextMeasurement = ["ContextAmount"]
+| where isnotnull(ContextEventTime) and isnotempty(ContextGroupHost)
 | extend ContextSourceRule = "child"),
 ((Events
 | where Marker =~ "direct"
-| extend ContextEventTime = todatetime(["Timestamp"]), ContextGroupHost = ["Host"], ContextMeasurement = ["Size"]
+| extend ContextEventTime = ["Timestamp"], ContextGroupHost = ["Host"], ContextMeasurement = ["Size"]
+| where isnotnull(ContextEventTime) and isnotempty(ContextGroupHost)
 | extend ContextSourceRule = "direct")
 | extend HasContextEvidence = true)
 | project ContextEventTime, ContextSourceRule, ContextGroupHost, ContextMeasurement, HasContextEvidence, ContextPartition = 1

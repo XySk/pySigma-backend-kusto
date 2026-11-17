@@ -21,9 +21,9 @@ let Events=datatable(Timestamp:datetime,Group:real,Amount:long,Marker:string)[
  datetime(2026-01-01T12:00:00Z),real(+0.0),200,"match"
 ];
 let Actual=(){
-let PercentileObservations = union (Events
+let PercentileObservations = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupGroup = ["Group"], MeasuredAmount = ["Amount"])
+| project EventTime_1 = ["Timestamp"], GroupGroup = ["Group"], MeasuredAmount = ["Amount"]
 | where isnotnull(EventTime_1) and isnotempty(GroupGroup);
 let PercentileWindowValues = materialize(
 PercentileObservations

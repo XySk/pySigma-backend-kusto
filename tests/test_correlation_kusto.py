@@ -278,9 +278,9 @@ def test_temporal_maps_group_aliases_and_timestamps_for_all_searches_across_tabl
     assert summary_data_query(query).count("(DeviceNetworkEvents\n| where ") == 2
     host, user = "GroupHost", "GroupUser"
     for prefix in ("Process", "Network"):
-        assert query.count(f'todatetime(["{prefix}Time"]), {host} = ["{prefix}Host"], {user} = ["{prefix}User"]') == 2
+        assert query.count(f'["{prefix}Time"], {host} = ["{prefix}Host"], {user} = ["{prefix}User"]') == 2
     timestamp = "EventTime_1"
-    assert f"| where isnotnull({timestamp}) and isnotempty({host}) and isnotempty({user})\n" in query
+    assert query.count(f"| where isnotnull({timestamp}) and isnotempty({host}) and isnotempty({user})") == 4
     if ordered:
         assert "| scan declare (" in query
         assert "GroupHost != prev(GroupHost) or GroupUser != prev(GroupUser)" in query
@@ -326,7 +326,7 @@ def test_temporal_preserves_colliding_source_columns_escaped_identity_and_standa
 
     assert len(standalone) == 2
     assert standalone[0] == 'DeviceProcessEvents\n| where ProcessCommandLine =~ "suspicious.exe"'
-    assert query.count('EventTime_1 = todatetime(["Timestamp"])') == 2
+    assert query.count('EventTime_1 = ["Timestamp"]') == 2
     assert len(re.findall(r'(?<![A-Za-z_])SourceRule = "' + re.escape(identity) + '"', query)) == 2
     if ordered:
         assert "| summarize by EventTime_1" in query
@@ -508,8 +508,8 @@ def test_multi_field_value_count_maps_each_counted_alias_for_all_source_searches
     assert summary_data_query(query).count("(DeviceNetworkEvents\n| where ") == 2
     assert summary_data_query(query).count('CountedActor = ["ProcessUser"], CountedTarget = ["ProcessTarget"]') == 2
     assert summary_data_query(query).count('CountedActor = ["NetworkUser"], CountedTarget = ["NetworkTarget"]') == 2
-    assert summary_data_query(query).count('todatetime(["ProcessTime"]), GroupHost = ["ProcessHost"]') == 2
-    assert summary_data_query(query).count('todatetime(["NetworkTime"]), GroupHost = ["NetworkHost"]') == 2
+    assert summary_data_query(query).count('["ProcessTime"], GroupHost = ["ProcessHost"]') == 2
+    assert summary_data_query(query).count('["NetworkTime"], GroupHost = ["NetworkHost"]') == 2
     assert summary_data_query(query).count('["ValueCount_Actor"] = row_cumsum(') == 1
     assert final_summary_projection(query).endswith('["Host"] = GroupHost, ["ValueCount_Actor"], ["ValueCount_Target"]')
 
@@ -528,7 +528,7 @@ def test_multi_field_value_count_quotes_metrics_and_preserves_colliding_source_c
     standalone, query = backend.convert(collection)
 
     assert standalone == 'DeviceProcessEvents\n| where ProcessCommandLine =~ "suspicious.exe"'
-    assert "let ValueCountSources_1 = materialize(union " in query
+    assert "let ValueCountSources_1 = materialize(DeviceProcessEvents\n" in query
     assert 'CountedActorsName_1 = ["Actor\'s \\"Name\\""]' in query
     assert 'Counted_sigma_value_0_1 = ["_sigma_value_0"]' in query
     assert "| project EventTime" in query
@@ -603,8 +603,8 @@ def test_value_count_maps_counted_and_grouping_aliases_per_source_table_and_reta
     assert summary_data_query(query).count("(DeviceNetworkEvents\n| where ") == 1
     assert summary_data_query(query).count('CountedActor = ["ProcessUser"]') == 2
     assert 'CountedActor = ["NetworkUser"]' in query
-    assert 'todatetime(["ProcessTime"]), GroupHost = ["ProcessHost"]' in query
-    assert 'todatetime(["NetworkTime"]), GroupHost = ["NetworkHost"]' in query
+    assert '["ProcessTime"], GroupHost = ["ProcessHost"]' in query
+    assert '["NetworkTime"], GroupHost = ["NetworkHost"]' in query
     assert "| where isnotnull(EventTime_1) and isnotempty(GroupHost) and isnotempty(GroupDeviceName)" in query
     assert summary_data_query(query).count("ValueCount = row_cumsum(") == 1
     assert final_summary_projection(query).endswith(
@@ -632,7 +632,7 @@ def test_single_source_value_count_aliases_quoted_counted_fields_without_overwri
 
     assert "let ValueCountSources_1 = materialize(union " in query
     assert summary_data_query(query).count('CountedActor_1 = ["Actor\'s \\"Name\\""]') == 2
-    assert '| project EventTime_1 = todatetime(["Timestamp"])' in query
+    assert '| project EventTime_1 = ["Timestamp"]' in query
     assert "ValueCount = row_cumsum(CountedActor_1Delta" in query
     assert "join kind=inner" not in summary_data_query(query).split("};", 1)[0]
 
@@ -788,8 +788,8 @@ def test_multi_rule_event_count_maps_aliases_and_timestamp_from_each_source_pipe
     )
     (query,) = backend.convert(collection, callback=change_mapping_for_other_source)
 
-    assert 'todatetime(["ProcessTime"]), GroupActor = ["ProcessUser"]' in query
-    assert 'todatetime(["NetworkTime"]), GroupActor = ["NetworkUser"]' in query
+    assert '["ProcessTime"], GroupActor = ["ProcessUser"]' in query
+    assert '["NetworkTime"], GroupActor = ["NetworkUser"]' in query
 
 
 def test_multi_rule_event_count_quotes_rule_identity_and_special_mapped_fields():
@@ -806,7 +806,7 @@ def test_multi_rule_event_count_quotes_rule_identity_and_special_mapped_fields()
 
     (query,) = backend.convert(collection)
 
-    assert 'todatetime(["Event Time"])' in query
+    assert '["Event Time"]' in query
     assert '["Actor\'s Name"]' in query
 
 
@@ -834,7 +834,7 @@ def test_multi_rule_event_count_preserves_source_columns_that_overlap_normalized
 
     (query,) = backend.convert(collection)
 
-    assert '| project EventTime_1 = todatetime(["_sigma_timestamp_2"]), GroupUser = ["_sigma_group_0"]' in query
+    assert '| project EventTime_1 = ["_sigma_timestamp_2"], GroupUser = ["_sigma_group_0"]' in query
     assert "CountBoundaryTime = EventTime_1 + 5m" in query
     assert "EventCount = row_cumsum(SourceMatchDelta, GroupUser != prev(GroupUser))" in query
     assert "| project " not in query.split("| project EventTime_1")[0]
@@ -850,7 +850,7 @@ def test_event_count_preserves_columns_that_overlap_sliding_window_names():
 
     (query,) = backend.convert(collection)
 
-    assert "let SourceMatchArrivals = union (" in query
+    assert "let SourceMatchArrivals = DeviceProcessEvents\n" in query
     assert "| summarize SourceMatchCount = count() by EventTime_1, GroupUser;" in query
     assert "EventCount = row_cumsum(SourceMatchDelta, GroupUser != prev(GroupUser))" in query
     for field in collection.rules[0].fields:
@@ -913,8 +913,8 @@ def test_event_count_correlation_uses_source_pipeline_and_comparison(operator, q
     )
 
     (query,) = result
-    assert '(DeviceProcessEvents\n| where ProcessCommandLine =~ "suspicious.exe"\n' in query
-    assert 'EventTime_1 = todatetime(["TimestampField"]), GroupUser = ["AccountName"]' in query
+    assert 'let SourceMatchArrivals = DeviceProcessEvents\n| where ProcessCommandLine =~ "suspicious.exe"\n' in query
+    assert 'EventTime_1 = ["TimestampField"], GroupUser = ["AccountName"]' in query
     assert f"| where EventCount {query_operator} 2\n" in query
 
 
@@ -1025,11 +1025,11 @@ def test_event_count_parent_counts_child_summaries_at_window_end_without_expandi
 
     (query,) = backend.convert(chained_event_count_collection())
 
-    assert "union (DeviceProcessEvents\n| where " in summary_data_query(query)
+    assert "let ChildCorrelation = () {\nDeviceProcessEvents\n| where " in summary_data_query(query)
     assert re.search(r"prev\(EventTime(?:_\d+)?, 9\)", query)
     assert "| where EventCount >= 10\n" not in query
-    assert "union (ChildCorrelation()\n" in summary_data_query(query)
-    assert 'EventTime = todatetime(["WindowEnd"])' in query
+    assert "let SourceMatchArrivals = ChildCorrelation()\n" in summary_data_query(query)
+    assert 'EventTime = ["WindowEnd"]' in query
     assert summary_data_query(query).count("| summarize SourceMatchCount = count() by EventTime") == 1
     assert "CountBoundaryTime = EventTime + 2m" in query
     assert final_summary_projection(query).endswith(
@@ -1089,8 +1089,8 @@ def test_event_count_parent_combines_direct_searches_with_child_groups_and_prese
     assert "let ChildCorrelation = () {\n" in query
     assert summary_data_query(query).count("(DeviceProcessEvents\n| where ") == 2
     assert summary_data_query(query).count("(DeviceNetworkEvents\n| where ") == 2
-    assert 'EventTime_1 = todatetime(["WindowEnd"]), GroupActor = ["User"]' in query
-    assert 'EventTime_1 = todatetime(["Timestamp"]), GroupActor = ["InitiatingProcessAccountName"]' in query
+    assert 'EventTime_1 = ["WindowEnd"], GroupActor = ["User"]' in query
+    assert 'EventTime_1 = ["Timestamp"], GroupActor = ["InitiatingProcessAccountName"]' in query
     assert final_summary_projection(query).endswith('["Actor"] = GroupActor, EventCount')
 
 
@@ -1238,7 +1238,9 @@ def test_generate_controls_standalone_source_query():
 
     standalone, correlation = backend.convert(collection)
     assert standalone == 'DeviceProcessEvents\n| where ProcessCommandLine =~ "suspicious.exe"'
-    assert '(DeviceProcessEvents\n| where ProcessCommandLine =~ "suspicious.exe"\n' in correlation
+    assert (
+        'let SourceMatchArrivals = DeviceProcessEvents\n| where ProcessCommandLine =~ "suspicious.exe"\n' in correlation
+    )
     assert "| where EventCount >= 2\n" in correlation
 
 

@@ -13,14 +13,16 @@ datetime(2026-01-01T12:01:00Z), "alice", 300, "b"
 let Actual = () {
 let PercentileObservations = union (Events
 | where Marker =~ "a"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupActor = ["Host"], MeasuredMeasurement = ["Low"]),
+| project EventTime_1 = ["Timestamp"], GroupActor = ["Host"], MeasuredMeasurement = ["Low"]
+| where isnotnull(EventTime_1) and isnotempty(GroupActor)),
 (Events
 | where Marker =~ "a"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupActor = ["Host"], MeasuredMeasurement = ["Low"]),
+| project EventTime_1 = ["Timestamp"], GroupActor = ["Host"], MeasuredMeasurement = ["Low"]
+| where isnotnull(EventTime_1) and isnotempty(GroupActor)),
 (NetworkEvents
 | where Marker =~ "b"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupActor = ["Account"], MeasuredMeasurement = ["High"])
-| where isnotnull(EventTime_1) and isnotempty(GroupActor);
+| project EventTime_1 = ["Timestamp"], GroupActor = ["Account"], MeasuredMeasurement = ["High"]
+| where isnotnull(EventTime_1) and isnotempty(GroupActor));
 let PercentileWindowValues = materialize(
 PercentileObservations
 | project GroupActor, PercentileWindowEnd = EventTime_1, PercentileTimeBin = bin(EventTime_1, 5m)

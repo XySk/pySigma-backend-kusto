@@ -29,11 +29,11 @@ let Events=union BaseEvents,
 (print Timestamp="2026-01-01T12:00:00Z", Host="real", Amount=pack_array(real(-inf))[0], Marker="match"),
 (print Timestamp="2026-01-01T12:00:00Z", Host="real", Amount=dynamic(true), Marker="match")
 // Normalize Events scalar fixture inputs explicitly.
-| extend Amount=iff(gettype(Amount) in ("int","long","real","double","decimal"), toreal(Amount), real(null));
+| extend Amount=iff(gettype(Amount) in ("int","long","real","double","decimal"), toreal(Amount), real(null)), Timestamp=todatetime(Timestamp);
 let p_gt = () {
-let PercentileObservations = union (Events
+let PercentileObservations = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"], MeasuredAmount = ["Amount"])
+| project EventTime_1 = ["Timestamp"], GroupHost = ["Host"], MeasuredAmount = ["Amount"]
 | where isnotnull(EventTime_1) and isnotempty(GroupHost);
 let PercentileWindowValues = materialize(
 PercentileObservations
@@ -61,9 +61,9 @@ PercentileWindowValues | summarize PercentilePopulation = count() by GroupHost, 
 | project WindowStart = PercentileWindowEnd - 5m, WindowEnd = PercentileWindowEnd, ["Host"] = GroupHost, ValuePercentile
 };
 let p_gte = () {
-let PercentileObservations = union (Events
+let PercentileObservations = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"], MeasuredAmount = ["Amount"])
+| project EventTime_1 = ["Timestamp"], GroupHost = ["Host"], MeasuredAmount = ["Amount"]
 | where isnotnull(EventTime_1) and isnotempty(GroupHost);
 let PercentileWindowValues = materialize(
 PercentileObservations
@@ -91,9 +91,9 @@ PercentileWindowValues | summarize PercentilePopulation = count() by GroupHost, 
 | project WindowStart = PercentileWindowEnd - 5m, WindowEnd = PercentileWindowEnd, ["Host"] = GroupHost, ValuePercentile
 };
 let p_lt = () {
-let PercentileObservations = union (Events
+let PercentileObservations = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"], MeasuredAmount = ["Amount"])
+| project EventTime_1 = ["Timestamp"], GroupHost = ["Host"], MeasuredAmount = ["Amount"]
 | where isnotnull(EventTime_1) and isnotempty(GroupHost);
 let PercentileWindowValues = materialize(
 PercentileObservations
@@ -121,9 +121,9 @@ PercentileWindowValues | summarize PercentilePopulation = count() by GroupHost, 
 | project WindowStart = PercentileWindowEnd - 5m, WindowEnd = PercentileWindowEnd, ["Host"] = GroupHost, ValuePercentile
 };
 let p_lte = () {
-let PercentileObservations = union (Events
+let PercentileObservations = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"], MeasuredAmount = ["Amount"])
+| project EventTime_1 = ["Timestamp"], GroupHost = ["Host"], MeasuredAmount = ["Amount"]
 | where isnotnull(EventTime_1) and isnotempty(GroupHost);
 let PercentileWindowValues = materialize(
 PercentileObservations
@@ -151,9 +151,9 @@ PercentileWindowValues | summarize PercentilePopulation = count() by GroupHost, 
 | project WindowStart = PercentileWindowEnd - 5m, WindowEnd = PercentileWindowEnd, ["Host"] = GroupHost, ValuePercentile
 };
 let p_eq = () {
-let PercentileObservations = union (Events
+let PercentileObservations = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"], MeasuredAmount = ["Amount"])
+| project EventTime_1 = ["Timestamp"], GroupHost = ["Host"], MeasuredAmount = ["Amount"]
 | where isnotnull(EventTime_1) and isnotempty(GroupHost);
 let PercentileWindowValues = materialize(
 PercentileObservations
@@ -181,9 +181,9 @@ PercentileWindowValues | summarize PercentilePopulation = count() by GroupHost, 
 | project WindowStart = PercentileWindowEnd - 5m, WindowEnd = PercentileWindowEnd, ["Host"] = GroupHost, ValuePercentile
 };
 let p_neq = () {
-let PercentileObservations = union (Events
+let PercentileObservations = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"], MeasuredAmount = ["Amount"])
+| project EventTime_1 = ["Timestamp"], GroupHost = ["Host"], MeasuredAmount = ["Amount"]
 | where isnotnull(EventTime_1) and isnotempty(GroupHost);
 let PercentileWindowValues = materialize(
 PercentileObservations

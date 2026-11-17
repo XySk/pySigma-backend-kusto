@@ -3,42 +3,42 @@
   "fixtures": [
     {
       "name": "reporting_early_existence.kql",
-      "sha256": "8ace08a6d351667c4bd3be78bfc10d0ab78c00d86b6c0a5f9557164b049860ef",
+      "sha256": "81b72e6c7e51243b7f2f9306b5e38092d23861e990d16b2dd97d05c2ab62979d",
       "expected_error": null
     },
     {
       "name": "reporting_early_general.kql",
-      "sha256": "585cbfb72c551f3afb4eb0bbf3c387f1cec6f4382d4baad7d14d00eb946d5b5e",
+      "sha256": "a0701d3d3dc065b17533db07dd850f4e59ad84e653ad2ec1ef91ab4952821f97",
       "expected_error": null
     },
     {
       "name": "reporting_adjacent_ticks.kql",
-      "sha256": "9b039801bdfd317f18801883954094f6eaf0380c2241da83d753f9e924d4717b",
+      "sha256": "b2dccd375c889a6fdc71b7723b1f9fc91b81b0f3d0f89533b13ebe7f7064565d",
       "expected_error": null
     },
     {
       "name": "reporting_shared_multilevel.kql",
-      "sha256": "8b35d196b11b9ae26967cc9d7e2d29b8c1d9bcc4e19edcbdc46cfc8299b30ab4",
+      "sha256": "e3768d9e25e1ea8d0956a289928a8962d4ae1ee0567e84282ba82ea322e7e52c",
       "expected_error": null
     },
     {
       "name": "reporting_shared_reversed.kql",
-      "sha256": "8b35d196b11b9ae26967cc9d7e2d29b8c1d9bcc4e19edcbdc46cfc8299b30ab4",
+      "sha256": "e3768d9e25e1ea8d0956a289928a8962d4ae1ee0567e84282ba82ea322e7e52c",
       "expected_error": null
     },
     {
       "name": "reporting_context_callback.kql",
-      "sha256": "b95335ddd5cdfdf5e9e50c2e58895c0d51ec1abf3bd3902cc8d1c92613c240a7",
+      "sha256": "3b9f9ca1ffca73d684ef65eefb45a7f79024cc08db67aef5fd84b3d88eaf4806",
       "expected_error": null
     },
     {
       "name": "reporting_name_collision.kql",
-      "sha256": "e7578954bed9998ea180fbfbf786e53ad01e444cf59996d2ca6c8cebd009f984",
+      "sha256": "3221604fd23e6b438facc3962aabb5d28886f304126c63ac42e33947b58f2402",
       "expected_error": null
     },
     {
       "name": "reporting_string_timestamp.kql",
-      "sha256": "26efc3c6a50eda00cf2be01b326404118a7da62f28e662e2b0a129d77f4cb6d2",
+      "sha256": "0b7bc7cc64759424d597b1d4da8618096f7b84cf72451ee363f3a843e5bec930",
       "expected_error": null
     }
   ]

@@ -3,10 +3,10 @@ let Expected=datatable(WindowEnd:datetime,Host:string,EventCount:long) [datetime
 let Actual0 = () {
 let ReportStart_ = datetime(2026-01-01T10:18:00.0000000Z);
 let ReportEnd_ = datetime(2026-01-01T10:19:00.0000000Z);
-let SourceMatchArrivals = union (Events
+let SourceMatchArrivals = Events
 | where Marker =~ "match"
 | where ["Timestamp"] >= ReportStart_ - 300s and ["Timestamp"] < ReportEnd_
-| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"])
+| project EventTime_1 = ["Timestamp"], GroupHost = ["Host"]
 | where isnotnull(EventTime_1) and isnotempty(GroupHost)
 | summarize SourceMatchCount = count() by EventTime_1, GroupHost;
 union (SourceMatchArrivals

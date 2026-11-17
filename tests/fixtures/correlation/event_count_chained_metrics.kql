@@ -14,9 +14,9 @@ let Events=datatable(ProcessTime:string, Case:string, ProcessUser:string, Proces
 | extend ProcessTime=todatetime(ProcessTime);
 let Actual = () {
 let ChildRule = () {
-let SourceMatchArrivals = union (Events
+let SourceMatchArrivals = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["ProcessTime"]), GroupCase = ["Case"], GroupActor = ["ProcessUser"], GroupHost = ["ProcessHost"])
+| project EventTime_1 = ["ProcessTime"], GroupCase = ["Case"], GroupActor = ["ProcessUser"], GroupHost = ["ProcessHost"]
 | where isnotnull(EventTime_1) and isnotempty(GroupCase) and isnotempty(GroupActor) and isnotempty(GroupHost)
 | summarize SourceMatchCount = count() by EventTime_1, GroupCase, GroupActor, GroupHost;
 union (SourceMatchArrivals
@@ -30,8 +30,8 @@ union (SourceMatchArrivals
 | where EventCount >= 2
 | project WindowStart = CountBoundaryTime - 5m, WindowEnd = CountBoundaryTime, ["Case"] = GroupCase, ["Actor"] = GroupActor, ["Host"] = GroupHost, EventCount
 };
-let SourceMatchArrivals = union (ChildRule()
-| project EventTime = todatetime(["WindowEnd"]), GroupCase = ["Case"], GroupActor = ["Actor"], GroupChildCount = ["EventCount"])
+let SourceMatchArrivals = ChildRule()
+| project EventTime = ["WindowEnd"], GroupCase = ["Case"], GroupActor = ["Actor"], GroupChildCount = ["EventCount"]
 | where isnotnull(EventTime) and isnotempty(GroupCase) and isnotempty(GroupActor) and isnotempty(GroupChildCount)
 | summarize SourceMatchCount = count() by EventTime, GroupCase, GroupActor, GroupChildCount;
 union (SourceMatchArrivals

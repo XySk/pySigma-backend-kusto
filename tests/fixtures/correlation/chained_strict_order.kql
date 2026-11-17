@@ -30,11 +30,12 @@ let Actual = () {
 let C = () {
 union (Events
 | where Marker =~ "TA"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupCase = ["Case"], GroupHost = ["Host"], SourceRule = "TA"),
+| project EventTime_1 = ["Timestamp"], GroupCase = ["Case"], GroupHost = ["Host"], SourceRule = "TA"
+| where isnotnull(EventTime_1) and isnotempty(GroupCase) and isnotempty(GroupHost)),
 (Events
 | where Marker =~ "TB"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupCase = ["Case"], GroupHost = ["Host"], SourceRule = "TB")
-| where isnotnull(EventTime_1) and isnotempty(GroupCase) and isnotempty(GroupHost)
+| project EventTime_1 = ["Timestamp"], GroupCase = ["Case"], GroupHost = ["Host"], SourceRule = "TB"
+| where isnotnull(EventTime_1) and isnotempty(GroupCase) and isnotempty(GroupHost))
 // Batch simultaneous source matches before updating inclusive trailing presence.
 | summarize MatchesTA = countif(SourceRule == "TA") > 0, MatchesTB = countif(SourceRule == "TB") > 0 by GroupCase, GroupHost, EventTime_1
 | sort by GroupCase asc, GroupHost asc, EventTime_1 asc
@@ -52,13 +53,14 @@ union (Events
 };
 // Strict sequence: "C" -> "D". Total inclusive span: 5m.
 union (C()
-| extend EventTime_1 = todatetime(["WindowEnd"]), GroupCase = ["Case"], GroupHost = ["Host"]
+| extend EventTime_1 = ["WindowEnd"], GroupCase = ["Case"], GroupHost = ["Host"]
+| where isnotnull(EventTime_1) and isnotempty(GroupCase) and isnotempty(GroupHost)
 | extend SourceRule = "C"),
 (Events
 | where Marker =~ "D"
-| extend EventTime_1 = todatetime(["Timestamp"]), GroupCase = ["Case"], GroupHost = ["Host"]
-| extend SourceRule = "D")
+| extend EventTime_1 = ["Timestamp"], GroupCase = ["Case"], GroupHost = ["Host"]
 | where isnotnull(EventTime_1) and isnotempty(GroupCase) and isnotempty(GroupHost)
+| extend SourceRule = "D")
 // Batch equal timestamps: simultaneous source matches cannot advance strict sequence positions.
 | summarize HasC = countif(SourceRule == "C") > 0, HasD = countif(SourceRule == "D") > 0 by EventTime_1, GroupCase, GroupHost
 | sort by GroupCase asc, GroupHost asc, EventTime_1 asc

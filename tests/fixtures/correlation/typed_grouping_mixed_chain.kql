@@ -3,9 +3,9 @@ let NetworkEvents=datatable(Timestamp:datetime,Marker:string,User:long,Amount:lo
 let Actual=(){
 let Parent = () {
 let Child = () {
-let SourceMatchArrivals = union (Events
+let SourceMatchArrivals = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupHost = ["Host"])
+| project EventTime_1 = ["Timestamp"], GroupHost = ["Host"]
 | where isnotnull(EventTime_1) and isnotempty(GroupHost)
 | summarize SourceMatchCount = count() by EventTime_1, GroupHost;
 union (SourceMatchArrivals
@@ -20,11 +20,12 @@ union (SourceMatchArrivals
 | project WindowStart = CountBoundaryTime - 5m, WindowEnd = CountBoundaryTime, ["Host"] = GroupHost, EventCount
 };
 let SumObservations = union (Child()
-| project EventTime_1 = todatetime(["WindowEnd"]), GroupGroup = ["EventCount"], MeasuredAmount = ["EventCount"]),
+| project EventTime_1 = ["WindowEnd"], GroupGroup = ["EventCount"], MeasuredAmount = ["EventCount"]
+| where isnotnull(EventTime_1) and isnotempty(GroupGroup)),
 (NetworkEvents
 | where Marker =~ "direct"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupGroup = ["User"], MeasuredAmount = ["Amount"])
-| where isnotnull(EventTime_1) and isnotempty(GroupGroup);
+| project EventTime_1 = ["Timestamp"], GroupGroup = ["User"], MeasuredAmount = ["Amount"]
+| where isnotnull(EventTime_1) and isnotempty(GroupGroup));
 let SumArrivals = SumObservations
 | summarize ArrivalSum = sum(MeasuredAmount) by EventTime_1, GroupGroup;
 union (SumArrivals
@@ -38,8 +39,8 @@ union (SumArrivals
 | where ValueSum >= 1
 | project WindowStart = SumBoundaryTime - 5m, WindowEnd = SumBoundaryTime, ["Group"] = GroupGroup, ValueSum
 };
-let SourceMatchArrivals = union (Parent()
-| project EventTime = todatetime(["WindowEnd"]), GroupGroup = ["Group"])
+let SourceMatchArrivals = Parent()
+| project EventTime = ["WindowEnd"], GroupGroup = ["Group"]
 | where isnotnull(EventTime) and isnotempty(GroupGroup)
 | summarize SourceMatchCount = count() by EventTime, GroupGroup;
 union (SourceMatchArrivals

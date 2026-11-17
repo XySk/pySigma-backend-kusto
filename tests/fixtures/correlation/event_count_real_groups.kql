@@ -14,9 +14,9 @@ let Events=datatable(Timestamp:datetime,Group:real,Marker:string) [
  datetime(2026-01-01T00:01:00),real(+0.0),"match"
 ];
 let Actual=(){
-let SourceMatchArrivals = union (Events
+let SourceMatchArrivals = Events
 | where Marker =~ "match"
-| project EventTime_1 = todatetime(["Timestamp"]), GroupGroup = ["Group"])
+| project EventTime_1 = ["Timestamp"], GroupGroup = ["Group"]
 | where isnotnull(EventTime_1) and isnotempty(GroupGroup)
 | summarize SourceMatchCount = count() by EventTime_1, GroupGroup;
 union (SourceMatchArrivals

@@ -61,7 +61,7 @@ def test_context_helpers_reserve_declared_source_schema_names():
         [source_document("a", "a"), summary],
         schema=fixture_schema(ContextEventTime="datetime", CorrelationMatchId="long"),
     )
-    assert 'ContextEventTime_1 = todatetime(["Timestamp"])' in query
+    assert 'ContextEventTime_1 = ["Timestamp"]' in query
     assert "serialize CorrelationMatchId_1 = row_number()" in query
 
 

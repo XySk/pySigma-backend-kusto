@@ -4,11 +4,12 @@ let Child = () {
 let ContextSummary = () {
 union (Events
 | where Marker =~ "A"
-| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "A"),
+| project EventTime_1 = ["Timestamp"], SourceRule = "A"
+| where isnotnull(EventTime_1)),
 (Events
 | where Marker =~ "B"
-| project EventTime_1 = todatetime(["Timestamp"]), SourceRule = "B")
-| where isnotnull(EventTime_1)
+| project EventTime_1 = ["Timestamp"], SourceRule = "B"
+| where isnotnull(EventTime_1))
 // Batch simultaneous source matches before updating inclusive trailing presence.
 | summarize MatchesA = countif(SourceRule == "A") > 0, MatchesB = countif(SourceRule == "B") > 0 by EventTime_1
 | sort by EventTime_1 asc
@@ -31,11 +32,13 @@ CorrelationMatches | project CorrelationMatchId, CompletionTime = WindowEnd, Con
 | join kind=inner (
 union (Events
 | where Marker =~ "A"
-| extend ContextEventTime = todatetime(["Timestamp"]), ContextAmount = ["Amount"]
+| extend ContextEventTime = ["Timestamp"], ContextAmount = ["Amount"]
+| where isnotnull(ContextEventTime)
 | extend ContextSourceRule = "A"),
 (Events
 | where Marker =~ "B"
-| extend ContextEventTime = todatetime(["Timestamp"]), ContextAmount = ["Amount"]
+| extend ContextEventTime = ["Timestamp"], ContextAmount = ["Amount"]
+| where isnotnull(ContextEventTime)
 | extend ContextSourceRule = "B")
 | project ContextEventTime, ContextSourceRule, ContextAmount, ContextPartition = 1
 ) on ContextPartition
@@ -49,13 +52,13 @@ let CompleteContextRelationships = materialize(BooleanParticipants
 union (CorrelationMatches | extend ContextRowKind = "Summary"), (CorrelationMatches | join kind=inner (CompleteContextRelationships) on CorrelationMatchId | extend ContextRowKind = "ContextEvidence")
 };
 let ChildResults = materialize(Child());
-let ParentSourceMatches = materialize(union (ChildResults
+let ParentSourceMatches = materialize(ChildResults
 | where ["ContextRowKind"] == "ContextEvidence"
 | extend ChildCorrelationMatch = strcat("Child", "_", tostring(["CorrelationMatchId"]))
-| project EventTime = todatetime(["WindowEnd"]), GroupAmount = ["ContextAmount"], MeasuredAmount = ["ContextAmount"], ChildCorrelationMatch)
+| project EventTime = ["WindowEnd"], GroupAmount = ["ContextAmount"], MeasuredAmount = ["ContextAmount"], ChildCorrelationMatch
+| where isnotnull(EventTime) and isnotempty(GroupAmount)
 | extend ChildCorrelationMatch = tostring(column_ifexists("ChildCorrelationMatch", "")));
-let SumObservations = union (ParentSourceMatches | where isempty(ChildCorrelationMatch)), (ParentSourceMatches | where isnotempty(ChildCorrelationMatch) | extend RetainedNumericValue = MeasuredAmount | summarize take_any(*) by ChildCorrelationMatch, GroupAmount, RetainedNumericValue)
-| where isnotnull(EventTime) and isnotempty(GroupAmount);
+let SumObservations = union (ParentSourceMatches | where isempty(ChildCorrelationMatch)), (ParentSourceMatches | where isnotempty(ChildCorrelationMatch) | extend RetainedNumericValue = MeasuredAmount | summarize take_any(*) by ChildCorrelationMatch, GroupAmount, RetainedNumericValue);
 let SumArrivals = SumObservations
 | summarize ArrivalSum = sum(MeasuredAmount) by EventTime, GroupAmount;
 union (SumArrivals
